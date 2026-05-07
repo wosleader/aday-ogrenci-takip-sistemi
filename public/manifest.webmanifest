@@ -1,0 +1,10 @@
+{
+  "name": "Aday Öğrenci Takip Sistemi",
+  "short_name": "Aday Takip",
+  "description": "Offline-first aday öğrenci CRM uygulaması",
+  "display": "standalone",
+  "start_url": "/",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f766e",
+  "icons": []
+}
