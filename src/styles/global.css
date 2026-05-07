@@ -123,6 +123,11 @@ textarea {
   font-size: 18px;
 }
 
+.panel p {
+  margin: 6px 0;
+  color: #59676f;
+}
+
 .empty-state p {
   margin: 0 0 18px;
   color: #61717a;
@@ -154,6 +159,129 @@ textarea {
   background: #ffffff;
   border-color: #cbd5d8;
   color: #203138;
+}
+
+.file-picker {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 10px;
+}
+
+.file-picker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.file-picker-button {
+  pointer-events: none;
+}
+
+.error-text {
+  color: #b42318;
+}
+
+.inline-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  color: #40515a;
+}
+
+.inline-field input,
+select {
+  min-height: 36px;
+  border: 1px solid #cbd5d8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #17202a;
+  padding: 6px 10px;
+}
+
+.inline-field input {
+  width: 96px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.summary-metric {
+  display: grid;
+  gap: 6px;
+  min-height: 82px;
+  padding: 16px;
+  border: 1px solid #d9e2e5;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.summary-metric span {
+  color: #61717a;
+}
+
+.summary-metric strong {
+  font-size: 26px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 10px;
+  border-bottom: 1px solid #e5ecef;
+  text-align: left;
+  white-space: nowrap;
+}
+
+th {
+  color: #40515a;
+  font-size: 13px;
+}
+
+.log-list {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 12px 0 0;
+  list-style: none;
+}
+
+.log-list li {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f4f7f8;
+}
+
+.log-list li[data-severity="warning"] {
+  background: #fff7ed;
+}
+
+.log-list li[data-severity="error"] {
+  background: #fef2f2;
+}
+
+.details-block {
+  margin-top: 14px;
+}
+
+.details-block summary {
+  cursor: pointer;
+  color: #0f766e;
+  font-weight: 700;
 }
 
 .shortcut-grid {
