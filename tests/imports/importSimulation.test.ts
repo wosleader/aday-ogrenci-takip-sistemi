@@ -76,10 +76,11 @@ describe("simulateImport", () => {
     expect(summary.skipped_rows).toBe(2);
     expect(summary.readable_rows).toBe(0);
     expect(summary.missing_required_fields[0].field).toBe("student_full_name");
-    expect(summary.logs.some((log) => log.message === "2 satır zorunlu alan eksik olduğu için atlandı.")).toBe(
+    expect(summary.logs.some((log) => log.message === "2 satır içe aktarılmayacak: zorunlu alan bilgisi eksik.")).toBe(
       true
     );
     expect(summary.detailed_logs).toHaveLength(2);
+    expect(summary.detailed_logs[0].message).toBe("Satır 2 içe aktarılmayacak: Ad Soyad alanı boş.");
   });
 
   it("allows manual column mappings during simulation", () => {
@@ -89,5 +90,52 @@ describe("simulateImport", () => {
 
     expect(summary.readable_rows).toBe(1);
     expect(summary.preview_rows[0].student_full_name).toBe("Ayşe Yılmaz");
+  });
+
+  it("separates missing primary phone from fully missing phone records", () => {
+    const summary = simulateImport(
+      worksheet(
+        ["Ad Soyad", "Telefon", "2. Telefon"],
+        [
+          ["Ayşe Yılmaz", "", "5321234567"],
+          ["Mehmet Kaya", "", ""]
+        ]
+      )
+    );
+
+    expect(summary.empty_phone_count).toBe(2);
+    expect(summary.phone1_empty_with_alternative_count).toBe(1);
+    expect(summary.both_phones_empty_count).toBe(1);
+    expect(
+      summary.logs.some((log) =>
+        log.message.includes("Telefon 1 boş, ancak alternatif telefon bulunduğu için kayıtlar içe aktarılabilir")
+      )
+    ).toBe(true);
+    expect(
+      summary.logs.some((log) =>
+        log.message.includes("Telefon 1 ve Telefon 2 boş. Bu kayıtlar kontrol edilmeli")
+      )
+    ).toBe(true);
+  });
+
+  it("uses a user-friendly duplicate phone message with student names", () => {
+    const summary = simulateImport(
+      worksheet(
+        ["Ad Soyad", "Telefon"],
+        [
+          ["Ayşe Yılmaz", "05321234567"],
+          ["Mehmet Kaya", "+90 532 123 45 67"]
+        ]
+      )
+    );
+
+    expect(
+      summary.logs.some((log) =>
+        log.message.includes("Mükerrer telefon uyarısı: 05321234567 numarası 2 farklı öğrencide geçiyor")
+      )
+    ).toBe(true);
+    expect(summary.logs.some((log) => log.message.includes("Öğrenciler: Ayşe Yılmaz, Mehmet Kaya"))).toBe(
+      true
+    );
   });
 });

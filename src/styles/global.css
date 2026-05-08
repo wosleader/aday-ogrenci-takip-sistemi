@@ -87,6 +87,11 @@ textarea {
   color: #ffffff;
 }
 
+.nav-link.active {
+  box-shadow: inset 4px 0 0 #2dd4bf;
+  font-weight: 700;
+}
+
 .content {
   min-width: 0;
   padding: 28px;
@@ -131,6 +136,22 @@ textarea {
 .empty-state p {
   margin: 0 0 18px;
   color: #61717a;
+}
+
+.check-list {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  color: #40515a;
+  list-style: none;
+}
+
+.check-list li::before {
+  content: "✓";
+  margin-right: 8px;
+  color: #0f766e;
+  font-weight: 800;
 }
 
 .button {
@@ -230,6 +251,11 @@ select {
   font-size: 26px;
 }
 
+.summary-metric small {
+  color: #61717a;
+  line-height: 1.35;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
@@ -261,9 +287,31 @@ th {
 }
 
 .log-list li {
+  display: grid;
+  gap: 6px;
   padding: 10px 12px;
   border-radius: 8px;
   background: #f4f7f8;
+}
+
+.log-list small {
+  color: #59676f;
+}
+
+.log-group {
+  margin-top: 16px;
+}
+
+.log-group h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
 }
 
 .log-list li[data-severity="warning"] {

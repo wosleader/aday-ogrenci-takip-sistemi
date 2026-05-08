@@ -5,7 +5,7 @@ const navItems = [
   { to: "/import", label: "Excel İçe Aktar", icon: FileSpreadsheet },
   { to: "/students", label: "Aday Listesi", icon: Users },
   { to: "/call", label: "Arama Ekranı", icon: PhoneCall },
-  { to: "/export", label: "Detaylı Export", icon: FileDown },
+  { to: "/export", label: "Excel Dışa Aktar", icon: FileDown },
   { to: "/settings", label: "Ayarlar", icon: Settings }
 ];
 

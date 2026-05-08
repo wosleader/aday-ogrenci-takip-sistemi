@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
-import { Upload } from "lucide-react";
+import { Clipboard, Download, Upload } from "lucide-react";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/EmptyState";
 import { PageHeader } from "../../components/PageHeader";
@@ -7,6 +7,13 @@ import { COLUMN_DEFINITIONS } from "./services/columnDefinitions";
 import { matchColumns } from "./services/columnMatching";
 import { parseFirstWorksheet, reparseWorksheetWithHeaderRow } from "./services/excelReader";
 import { simulateImport } from "./services/importSimulation";
+import {
+  createImportLogText,
+  createTechnicalSupportLog,
+  downloadTextFile,
+  groupLogsBySeverity,
+  type PrivacyMode
+} from "./services/logExport";
 import type { ImportFieldKey, ImportSimulationSummary, ParsedWorksheet } from "./services/types";
 
 const STORAGE_KEY = "aday-takip:last-import-simulation";
@@ -26,10 +33,15 @@ export function ImportPage() {
   );
   const [error, setError] = useState<string | null>(null);
   const [headerRowNumber, setHeaderRowNumber] = useState(1);
+  const [privacyMode, setPrivacyMode] = useState<PrivacyMode>("private");
 
   const columnMatches = useMemo(
     () => (worksheet ? matchColumns(worksheet.headers, manualMappings).matches : []),
     [manualMappings, worksheet]
+  );
+  const groupedLogs = useMemo(
+    () => (summary ? groupLogsBySeverity([...summary.logs, ...summary.detailed_logs]) : null),
+    [summary]
   );
 
   useEffect(() => {
@@ -123,6 +135,53 @@ export function ImportPage() {
     setError(null);
   }
 
+  function createFileSuffix() {
+    return new Date().toISOString().replace(/[:.]/g, "-");
+  }
+
+  function downloadImportLog() {
+    if (!worksheet || !summary) {
+      return;
+    }
+
+    const content = createImportLogText(worksheet, summary, columnMatches, "full");
+    downloadTextFile(`import-log-${createFileSuffix()}.txt`, content);
+  }
+
+  function createSupportLog() {
+    if (!worksheet || !summary) {
+      return "";
+    }
+
+    return createTechnicalSupportLog({
+      worksheet,
+      summary,
+      columnMatches,
+      activePage: window.location.pathname,
+      privacyMode
+    });
+  }
+
+  async function copySupportLog() {
+    const content = createSupportLog();
+
+    if (!content) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(content);
+  }
+
+  function downloadSupportLog() {
+    const content = createSupportLog();
+
+    if (!content) {
+      return;
+    }
+
+    downloadTextFile(`teknik-destek-logu-${createFileSuffix()}.txt`, content);
+  }
+
   return (
     <div className="page">
       <PageHeader
@@ -135,7 +194,7 @@ export function ImportPage() {
           <input accept=".xlsx,.xls" type="file" onChange={handleFileChange} />
           <Button type="button" variant="secondary" className="file-picker-button">
             <Upload size={18} aria-hidden="true" />
-            Excel Seç ve Simüle Et
+            Excel Dosyası Seç ve Ön Kontrol Yap
           </Button>
         </label>
         {error ? <p className="error-text">{error}</p> : null}
@@ -149,20 +208,32 @@ export function ImportPage() {
       {!summary ? (
         <EmptyState
           title="Henüz simülasyon yok"
-          description="Excel dosyası seçildiğinde ilk sekme okunur; kullanıcı onayı olmadan veritabanına kayıt yapılmaz."
+          description="İlk Excel sekmesi okunur, kolonlar otomatik eşleştirilir, hatalar ve uyarılar gösterilir. Onay vermeden kayıt yapılmaz."
+          action={
+            <ul className="check-list">
+              <li>İlk Excel sekmesi okunur</li>
+              <li>Kolonlar otomatik eşleştirilir</li>
+              <li>Hatalar ve uyarılar gösterilir</li>
+              <li>Onay vermeden kayıt yapılmaz</li>
+            </ul>
+          }
         />
       ) : (
         <>
           <section className="summary-grid" aria-label="Import simülasyon özeti">
             <SummaryMetric label="Toplam satır" value={summary.total_rows} />
             <SummaryMetric label="Okunacak satır" value={summary.readable_rows} />
-            <SummaryMetric label="Atlanacak satır" value={summary.skipped_rows} />
-            <SummaryMetric label="Boş telefon" value={summary.empty_phone_count} />
+            <SummaryMetric label="İçe aktarılmayacak satır" value={summary.skipped_rows} />
+            <SummaryMetric label="Telefon bilgisi eksik kayıt" value={summary.empty_phone_count ?? 0} />
             <SummaryMetric
-              label="Diğer atanacak"
+              label="Kampanyası Diğer yapılacak"
               value={summary.default_campaign_assigned_count}
             />
-            <SummaryMetric label="11:00 atanacak" value={summary.default_time_assigned_count} />
+            <SummaryMetric
+              label="Varsayılan saat atanacak"
+              value={summary.default_time_assigned_count}
+              description="Tekrar arama tarihi var ama saat boş. Sistem bu kayıtları 11:00 olarak planlayacak."
+            />
           </section>
 
           <section className="panel">
@@ -289,28 +360,52 @@ export function ImportPage() {
 
           <section className="panel">
             <h2>Import Log</h2>
-            <p>Varsayılan görünüm en fazla {MAX_VISIBLE_LOGS} mesaj gösterir.</p>
-            <ul className="log-list">
-              {summary.logs.slice(0, MAX_VISIBLE_LOGS).map((log, index) => (
-                <li key={`${log.message}-${index}`} data-severity={log.severity}>
-                  {log.row_number ? `Satır ${log.row_number}: ` : ""}
-                  {log.message}
-                </li>
-              ))}
-            </ul>
+            <p>Önce özet gösterilir; satır detayları Detayları göster içinde tutulur.</p>
+            <div className="toolbar">
+              <Button type="button" variant="secondary" onClick={downloadImportLog}>
+                <Download size={16} aria-hidden="true" />
+                Logu TXT Olarak İndir
+              </Button>
+            </div>
+            {groupedLogs ? (
+              <>
+                <LogGroup title="Hatalar" logs={groupedLogs.error.slice(0, MAX_VISIBLE_LOGS)} />
+                <LogGroup title="Uyarılar" logs={groupedLogs.warning.slice(0, MAX_VISIBLE_LOGS)} />
+                <LogGroup title="Bilgiler" logs={groupedLogs.info.slice(0, MAX_VISIBLE_LOGS)} />
+              </>
+            ) : null}
             {summary.detailed_logs.length ? (
               <details className="details-block">
                 <summary>Detayları göster ({summary.detailed_logs.length})</summary>
-                <ul className="log-list">
-                  {summary.detailed_logs.map((log, index) => (
-                    <li key={`${log.message}-${log.row_number}-${index}`} data-severity={log.severity}>
-                      {log.row_number ? `Satır ${log.row_number}: ` : ""}
-                      {log.message}
-                    </li>
-                  ))}
-                </ul>
+                <LogGroup title="Satır Detayları" logs={summary.detailed_logs} />
               </details>
             ) : null}
+          </section>
+
+          <section className="panel">
+            <h2>Teknik Destek Logu</h2>
+            <p>Destek paylaşımı için import durumu, kolon eşleşmeleri ve sistem bilgileri TXT olarak hazırlanır.</p>
+            <label className="inline-field">
+              Log içeriği
+              <select value={privacyMode} onChange={(event) => setPrivacyMode(event.target.value as PrivacyMode)}>
+                <option value="private">Gizlilik korumalı log</option>
+                <option value="full">Tam log</option>
+              </select>
+            </label>
+            <div className="toolbar">
+              <Button type="button" variant="secondary" onClick={() => void copySupportLog()}>
+                <Clipboard size={16} aria-hidden="true" />
+                Hata Logunu Kopyala
+              </Button>
+              <Button type="button" variant="secondary" onClick={downloadSupportLog}>
+                <Download size={16} aria-hidden="true" />
+                Hata Logunu TXT Olarak İndir
+              </Button>
+              <Button type="button" variant="secondary" onClick={downloadSupportLog}>
+                <Download size={16} aria-hidden="true" />
+                Teknik Destek Paketi Oluştur
+              </Button>
+            </div>
           </section>
 
           <section className="panel">
@@ -326,11 +421,41 @@ export function ImportPage() {
   );
 }
 
-function SummaryMetric({ label, value }: { label: string; value: number }) {
+function SummaryMetric({
+  label,
+  value,
+  description
+}: {
+  label: string;
+  value: number;
+  description?: string;
+}) {
   return (
     <div className="summary-metric">
       <span>{label}</span>
       <strong>{value}</strong>
+      {description ? <small>{description}</small> : null}
     </div>
+  );
+}
+
+function LogGroup({ title, logs }: { title: string; logs: ImportSimulationSummary["logs"] }) {
+  return (
+    <section className="log-group">
+      <h3>{title}</h3>
+      {logs.length ? (
+        <ul className="log-list">
+          {logs.map((log, index) => (
+            <li key={`${title}-${log.message}-${index}`} data-severity={log.severity}>
+              <strong>{log.row_number ? `Satır ${log.row_number}: ` : ""}</strong>
+              {log.message}
+              {log.suggested_action ? <small>Önerilen işlem: {log.suggested_action}</small> : null}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>Bu grupta kayıt yok.</p>
+      )}
+    </section>
   );
 }

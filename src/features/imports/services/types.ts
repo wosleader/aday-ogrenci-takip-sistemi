@@ -88,6 +88,7 @@ export type ImportSimulationSummary = {
     field: ImportFieldKey;
     message: string;
   }>;
+  empty_row_count: number;
   empty_phone_count: number;
   phone1_empty_with_alternative_count: number;
   both_phones_empty_count: number;

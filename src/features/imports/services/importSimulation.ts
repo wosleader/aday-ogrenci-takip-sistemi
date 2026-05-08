@@ -1,6 +1,6 @@
 import { normalizePhone } from "../../../utils/normalizePhone";
 import { normalizeText } from "../../../utils/normalizeText";
-import { REQUIRED_IMPORT_FIELDS } from "./columnDefinitions";
+import { getImportFieldLabel, REQUIRED_IMPORT_FIELDS } from "./columnDefinitions";
 import { matchColumns } from "./columnMatching";
 import { normalizeReminderDate } from "./dateNormalization";
 import { formatColumnRef } from "./excelColumns";
@@ -78,7 +78,7 @@ function collectDuplicatePhoneWarnings(
     string,
     {
       rowNumbers: Set<number>;
-      studentNames: Set<string>;
+      studentNames: Map<string, string>;
     }
   >();
 
@@ -88,10 +88,11 @@ function collectDuplicatePhoneWarnings(
     for (const phone of rowPhones) {
       const existing = phoneMap.get(phone) ?? {
         rowNumbers: new Set<number>(),
-        studentNames: new Set<string>()
+        studentNames: new Map<string, string>()
       };
+      const normalizedStudentName = normalizeText(row.student_full_name);
       existing.rowNumbers.add(row.row_number);
-      existing.studentNames.add(normalizeText(row.student_full_name));
+      existing.studentNames.set(normalizedStudentName, row.student_full_name);
       phoneMap.set(phone, existing);
     }
   }
@@ -101,7 +102,7 @@ function collectDuplicatePhoneWarnings(
     .map(([phoneNumber, value]) => ({
       phone_number: phoneNumber,
       row_numbers: Array.from(value.rowNumbers).sort((a, b) => a - b),
-      student_names: Array.from(value.studentNames).sort()
+      student_names: Array.from(value.studentNames.values()).sort()
     }));
 }
 
@@ -123,8 +124,11 @@ export function simulateImport(
   const detailedLogs: ImportEngineLog[] = [];
   const simulatedRows: SimulatedImportRow[] = [];
   const missingRequiredFields: ImportSimulationSummary["missing_required_fields"] = [];
+  let emptyRowCount = 0;
   let skippedRows = 0;
   let emptyPhoneCount = 0;
+  let phone1EmptyWithAlternativeCount = 0;
+  let bothPhonesEmptyCount = 0;
   let defaultCampaignAssignedCount = 0;
   let defaultTimeAssignedCount = 0;
   const hasCampaignColumn = fieldIndex.has("campaign_name");
@@ -138,15 +142,31 @@ export function simulateImport(
       column_number: match.source_column_number,
       severity: "warning",
       message: `${formatColumnRef(match.source_index, match.source_header)} eşleştirilemedi; kullanıcı eşleştirmesi gerekli.`,
+      suggested_action: "Kolon Eşleştirme bölümünden bu Excel kolonunu uygun CRM alanına bağlayın.",
       auto_fixed: false
     });
+  }
+
+  for (const requiredField of REQUIRED_IMPORT_FIELDS) {
+    if (!fieldIndex.has(requiredField)) {
+      const fieldLabel = getImportFieldLabel(requiredField);
+      simulationLogs.push({
+        field_name: fieldLabel,
+        severity: "error",
+        message: `${fieldLabel} zorunlu alanı için eşleşen Excel kolonu bulunamadı.`,
+        suggested_action: "Kolon Eşleştirme bölümünden zorunlu alanı seçip simülasyonu yeniden çalıştırın.",
+        auto_fixed: false
+      });
+    }
   }
 
   if (!hasCampaignColumn) {
     simulationLogs.push({
       column_name: "Kampanya Tanımı",
+      field_name: "Kampanya Tanımı",
       severity: "info",
-      message: "Kampanya Tanımı kolonu bulunamadı; okunacak tüm kayıtlara Diğer atanacak.",
+      message: "Kampanya Tanımı kolonu bulunamadı. Okunacak kayıtların kampanyası Diğer yapılacak.",
+      suggested_action: "Farklı bir kampanya gerekiyorsa Excel'e Kampanya Tanımı kolonu ekleyin veya eşleştirme yapın.",
       auto_fixed: true
     });
   }
@@ -155,7 +175,15 @@ export function simulateImport(
     const rowNumber = worksheet.detected_header_row_number + rowIndex + 1;
 
     if (isEmptyRow(row)) {
+      emptyRowCount += 1;
       skippedRows += 1;
+      detailedLogs.push({
+        row_number: rowNumber,
+        severity: "warning",
+        message: `Satır ${rowNumber} içe aktarılmayacak: satır tamamen boş.`,
+        suggested_action: "Bu satırda aday bilgisi varsa Excel dosyasında ilgili alanları doldurun.",
+        auto_fixed: false
+      });
       return;
     }
 
@@ -165,12 +193,15 @@ export function simulateImport(
       skippedRows += 1;
 
       for (const field of missingFields) {
-        const message = "Zorunlu alan boş olduğu için satır simülasyonda atlandı.";
+        const fieldLabel = getImportFieldLabel(field);
+        const message = `Satır ${rowNumber} içe aktarılmayacak: ${fieldLabel} alanı boş.`;
         missingRequiredFields.push({ row_number: rowNumber, field, message });
         detailedLogs.push({
           row_number: rowNumber,
+          field_name: fieldLabel,
           severity: "error",
           message,
+          suggested_action: `${fieldLabel} alanını Excel'de doldurun veya doğru kolonu eşleştirin.`,
           auto_fixed: false
         });
       }
@@ -185,13 +216,29 @@ export function simulateImport(
 
     if (!primaryPhone.normalized_phone_number) {
       emptyPhoneCount += 1;
-      detailedLogs.push({
-        row_number: rowNumber,
-        column_name: "Telefon",
-        severity: "warning",
-        message: "Telefon alanı boş.",
-        auto_fixed: false
-      });
+      if (secondaryPhone?.normalized_phone_number) {
+        phone1EmptyWithAlternativeCount += 1;
+        detailedLogs.push({
+          row_number: rowNumber,
+          column_name: "Telefon",
+          field_name: "Telefon",
+          severity: "info",
+          message: `Satır ${rowNumber}: Telefon 1 boş, ancak 2. Telefon dolu olduğu için kayıt içe aktarılabilir.`,
+          suggested_action: "Telefon 1 zorunlu değilse işlem yapmanız gerekmez; isterseniz numarayı Telefon 1'e taşıyın.",
+          auto_fixed: false
+        });
+      } else {
+        bothPhonesEmptyCount += 1;
+        detailedLogs.push({
+          row_number: rowNumber,
+          column_name: "Telefon",
+          field_name: "Telefon",
+          severity: "warning",
+          message: `Satır ${rowNumber}: Telefon 1 ve Telefon 2 boş. Bu kayıt kontrol edilmeli.`,
+          suggested_action: "Adaya ulaşılabilmesi için en az bir telefon bilgisi ekleyin.",
+          auto_fixed: false
+        });
+      }
     }
 
     let campaignName = getTextCell(row, fieldIndex, "campaign_name");
@@ -217,8 +264,10 @@ export function simulateImport(
       simulationLogs.push({
         row_number: rowNumber,
         column_name: "Tekrar Aranacak Tarih",
+        field_name: "Tekrar Aranacak Tarih",
         severity: "info",
-        message: `Tekrar aranacak tarihi var ancak saat yok. Varsayılan saat ${effectiveOptions.defaultReminderTime} olarak atandı.`,
+        message: `Satır ${rowNumber}: tekrar arama tarihi var ama saat boş. Sistem bu kaydı ${effectiveOptions.defaultReminderTime} olarak planlayacak.`,
+        suggested_action: "Farklı bir saat gerekiyorsa Excel'de tekrar arama saatini belirtin.",
         auto_fixed: true
       });
     }
@@ -227,8 +276,10 @@ export function simulateImport(
       simulationLogs.push({
         row_number: rowNumber,
         column_name: "Tekrar Aranacak Tarih",
+        field_name: "Tekrar Aranacak Tarih",
         severity: "warning",
-        message: `Tekrar arama saati ${effectiveOptions.callStartTime}-${effectiveOptions.callEndTime} aralığı dışında.`,
+        message: `Satır ${rowNumber}: tekrar arama saati ${effectiveOptions.callStartTime}-${effectiveOptions.callEndTime} aralığı dışında.`,
+        suggested_action: "Gerekirse tekrar arama saatini ayarlardaki çalışma saatleri içine alın.",
         auto_fixed: false
       });
     }
@@ -254,15 +305,35 @@ export function simulateImport(
   if (missingRequiredFields.length > 0) {
     simulationLogs.push({
       severity: "error",
-      message: `${missingRequiredFields.length} satır zorunlu alan eksik olduğu için atlandı.`,
+      message: `${missingRequiredFields.length} satır içe aktarılmayacak: zorunlu alan bilgisi eksik.`,
+      suggested_action: "Detayları göster bölümünden satırları kontrol edin ve eksik zorunlu alanları tamamlayın.",
       auto_fixed: false
     });
   }
 
-  if (emptyPhoneCount > 0) {
+  if (phone1EmptyWithAlternativeCount > 0) {
+    simulationLogs.push({
+      severity: "info",
+      message: `${phone1EmptyWithAlternativeCount} kayıtta Telefon 1 boş, ancak alternatif telefon bulunduğu için kayıtlar içe aktarılabilir.`,
+      suggested_action: "Bu kayıtlar içe aktarılabilir; isterseniz Telefon 1 alanlarını Excel'de tamamlayın.",
+      auto_fixed: false
+    });
+  }
+
+  if (bothPhonesEmptyCount > 0) {
     simulationLogs.push({
       severity: "warning",
-      message: `${emptyPhoneCount} okunacak satırda Telefon alanı boş.`,
+      message: `${bothPhonesEmptyCount} kayıtta Telefon 1 ve Telefon 2 boş. Bu kayıtlar kontrol edilmeli.`,
+      suggested_action: "Bu adaylara ulaşmak için en az bir telefon bilgisi ekleyin.",
+      auto_fixed: false
+    });
+  }
+
+  if (emptyRowCount > 0) {
+    simulationLogs.push({
+      severity: "warning",
+      message: `${emptyRowCount} boş satır içe aktarılmayacak.`,
+      suggested_action: "Excel dosyasında gereksiz boş satırları temizleyebilirsiniz.",
       auto_fixed: false
     });
   }
@@ -270,7 +341,8 @@ export function simulateImport(
   for (const warning of duplicatePhoneWarnings) {
     simulationLogs.push({
       severity: "warning",
-      message: `${warning.phone_number} telefonu farklı öğrenci kayıtlarında bulundu: ${warning.row_numbers.join(", ")}.`,
+      message: `Mükerrer telefon uyarısı: ${warning.phone_number} numarası ${warning.student_names.length} farklı öğrencide geçiyor. Satırlar: ${warning.row_numbers.join(", ")}. Öğrenciler: ${warning.student_names.join(", ")}.`,
+      suggested_action: "Aynı telefonun birden fazla adaya ait olup olmadığını kontrol edin.",
       auto_fixed: false
     });
   }
@@ -282,7 +354,10 @@ export function simulateImport(
     auto_matched_columns: matches.filter((match) => match.status === "auto_fixed"),
     mapping_required_columns: mappingRequiredColumns,
     missing_required_fields: missingRequiredFields,
+    empty_row_count: emptyRowCount,
     empty_phone_count: emptyPhoneCount,
+    phone1_empty_with_alternative_count: phone1EmptyWithAlternativeCount,
+    both_phones_empty_count: bothPhonesEmptyCount,
     duplicate_phone_warnings: duplicatePhoneWarnings,
     default_campaign_assigned_count: defaultCampaignAssignedCount,
     default_time_assigned_count: defaultTimeAssignedCount,
