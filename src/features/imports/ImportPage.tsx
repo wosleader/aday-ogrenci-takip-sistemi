@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { Clipboard, Download, Upload } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/EmptyState";
 import { PageHeader } from "../../components/PageHeader";
 import { COLUMN_DEFINITIONS } from "./services/columnDefinitions";
 import { matchColumns } from "./services/columnMatching";
 import { parseFirstWorksheet, reparseWorksheetWithHeaderRow } from "./services/excelReader";
+import { checkPossibleDuplicateImport } from "./services/importDuplicateGuard";
 import { simulateImport } from "./services/importSimulation";
+import { writeImportToDatabase, type ImportWriteResult } from "./services/importWriter";
 import {
   createImportLogText,
   createTechnicalSupportLog,
@@ -26,6 +29,7 @@ type StoredSimulationState = {
 };
 
 export function ImportPage() {
+  const navigate = useNavigate();
   const [worksheet, setWorksheet] = useState<ParsedWorksheet | null>(null);
   const [summary, setSummary] = useState<ImportSimulationSummary | null>(null);
   const [manualMappings, setManualMappings] = useState<Record<number, ImportFieldKey | "ignore" | "">>(
@@ -34,6 +38,8 @@ export function ImportPage() {
   const [error, setError] = useState<string | null>(null);
   const [headerRowNumber, setHeaderRowNumber] = useState(1);
   const [privacyMode, setPrivacyMode] = useState<PrivacyMode>("private");
+  const [isImporting, setIsImporting] = useState(false);
+  const [importResult, setImportResult] = useState<ImportWriteResult | null>(null);
 
   const columnMatches = useMemo(
     () => (worksheet ? matchColumns(worksheet.headers, manualMappings).matches : []),
@@ -53,8 +59,11 @@ export function ImportPage() {
 
     try {
       const storedState = JSON.parse(storedValue) as StoredSimulationState;
+      const restoredSummary = simulateImport(storedState.worksheet, {
+        manualMappings: storedState.manualMappings
+      });
       setWorksheet(storedState.worksheet);
-      setSummary(storedState.summary);
+      setSummary(restoredSummary);
       setManualMappings(storedState.manualMappings);
       setHeaderRowNumber(storedState.worksheet.detected_header_row_number);
     } catch {
@@ -76,6 +85,7 @@ export function ImportPage() {
     setSummary(simulation);
     setManualMappings(nextManualMappings);
     setHeaderRowNumber(nextWorksheet.detected_header_row_number);
+    setImportResult(null);
     persistSimulation({
       worksheet: nextWorksheet,
       summary: simulation,
@@ -94,6 +104,8 @@ export function ImportPage() {
       setError(null);
       const buffer = await file.arrayBuffer();
       const parsedWorksheet = await parseFirstWorksheet(buffer, file.name);
+      parsedWorksheet.file_size = file.size;
+      parsedWorksheet.file_last_modified = file.lastModified;
       applySimulation(parsedWorksheet, {});
     } catch (caughtError) {
       setWorksheet(null);
@@ -133,6 +145,7 @@ export function ImportPage() {
     setManualMappings({});
     setHeaderRowNumber(1);
     setError(null);
+    setImportResult(null);
   }
 
   function createFileSuffix() {
@@ -180,6 +193,51 @@ export function ImportPage() {
     }
 
     downloadTextFile(`teknik-destek-logu-${createFileSuffix()}.txt`, content);
+  }
+
+  async function handleImport() {
+    if (!worksheet || !summary || summary.readable_rows === 0) {
+      return;
+    }
+
+    const userConfirmed = window.confirm(
+      "Simülasyondaki okunabilir aday kayıtları IndexedDB'ye yazılacak. Devam edilsin mi?"
+    );
+
+    if (!userConfirmed) {
+      return;
+    }
+
+    setIsImporting(true);
+    setError(null);
+    setImportResult(null);
+
+    try {
+      const duplicateWarning = await checkPossibleDuplicateImport(worksheet, summary);
+
+      if (duplicateWarning.isPossibleDuplicate) {
+        const continueDuplicate = window.confirm(
+          `${duplicateWarning.message} Devam ederseniz yeni kayıtlar ayrıca oluşturulur. Devam edilsin mi?`
+        );
+
+        if (!continueDuplicate) {
+          setIsImporting(false);
+          return;
+        }
+      }
+
+      const result = await writeImportToDatabase(worksheet, summary);
+      downloadTextFile(result.backup.file_name, result.backup.json);
+      setImportResult(result);
+    } catch (caughtError) {
+      const message =
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Import sırasında bilinmeyen bir hata oluştu.";
+      setError(`Import tamamlanamadı. Transaction geri alındı; kısmi veri kalmadı. ${message}`);
+    } finally {
+      setIsImporting(false);
+    }
   }
 
   return (
@@ -410,10 +468,31 @@ export function ImportPage() {
 
           <section className="panel">
             <h2>İçe Aktarma</h2>
-            <p>Simülasyon hazır. Gerçek kayıt yazma Sprint 3'te aktif olacak.</p>
-            <Button type="button" disabled>
-              İçe Aktar - Sprint 3'te aktif olacak
+            <p>Simülasyon hazırsa kayıtlar kullanıcı onayıyla yerel IndexedDB veritabanına yazılır.</p>
+            <Button
+              type="button"
+              disabled={isImporting || !summary || summary.readable_rows === 0}
+              onClick={() => void handleImport()}
+            >
+              {isImporting ? "İçe Aktarılıyor..." : "İçe Aktar"}
             </Button>
+            {importResult ? (
+              <section className="import-result">
+                <h3>Import Tamamlandı</h3>
+                <div className="summary-grid">
+                  <SummaryMetric label="Oluşturulan öğrenci" value={importResult.created_students} />
+                  <SummaryMetric label="Oluşturulan veli" value={importResult.created_guardians} />
+                  <SummaryMetric label="Oluşturulan telefon" value={importResult.created_phones} />
+                  <SummaryMetric label="Oluşturulan hatırlatma" value={importResult.created_reminders} />
+                  <SummaryMetric label="Kaydedilen import log" value={importResult.saved_import_logs} />
+                  <SummaryMetric label="Atlanan satır" value={importResult.skipped_rows} />
+                </div>
+                <p>Import öncesi JSON yedek oluşturuldu ve indirilebilir hale getirildi.</p>
+                <Button type="button" variant="secondary" onClick={() => navigate("/students")}>
+                  Aday Listesine Git
+                </Button>
+              </section>
+            ) : null}
           </section>
         </>
       )}

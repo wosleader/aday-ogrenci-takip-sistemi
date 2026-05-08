@@ -52,7 +52,13 @@ export const AUDIT_ACTION_TYPES = {
   update: "Güncelleme",
   delete: "Silme",
   import: "Import",
-  backup: "Yedek"
+  backup: "Yedek",
+  import_started: "Import Başladı",
+  import_completed: "Import Tamamlandı",
+  student_created: "Öğrenci Oluşturuldu",
+  guardian_created: "Veli Oluşturuldu",
+  phone_created: "Telefon Oluşturuldu",
+  reminder_created: "Hatırlatma Oluşturuldu"
 } as const;
 
 export type AuditActionType = keyof typeof AUDIT_ACTION_TYPES;

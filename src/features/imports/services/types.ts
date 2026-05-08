@@ -41,6 +41,8 @@ export type ColumnMatch = {
 
 export type ParsedWorksheet = {
   file_name: string;
+  file_size?: number;
+  file_last_modified?: number;
   sheet_name: string;
   ignored_sheet_names: string[];
   raw_rows: unknown[][];
@@ -97,6 +99,7 @@ export type ImportSimulationSummary = {
   default_time_assigned_count: number;
   logs: ImportEngineLog[];
   detailed_logs: ImportEngineLog[];
+  simulated_rows: SimulatedImportRow[];
   preview_rows: SimulatedImportRow[];
 };
 

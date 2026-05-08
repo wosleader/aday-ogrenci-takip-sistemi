@@ -363,6 +363,7 @@ export function simulateImport(
     default_time_assigned_count: defaultTimeAssignedCount,
     logs: simulationLogs,
     detailed_logs: detailedLogs,
+    simulated_rows: simulatedRows,
     preview_rows: simulatedRows.slice(0, 20)
   };
 }

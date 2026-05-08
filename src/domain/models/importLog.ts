@@ -10,6 +10,10 @@ export type ImportRecord = BaseEntity & {
   error_count: number;
   started_at: string;
   finished_at?: string | null;
+  header_row_number?: number | null;
+  file_size?: number | null;
+  file_last_modified?: number | null;
+  import_fingerprint?: string | null;
 };
 
 export type ImportLogRecord = {

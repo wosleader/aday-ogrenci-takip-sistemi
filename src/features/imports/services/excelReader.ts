@@ -37,7 +37,8 @@ export function createParsedWorksheet(
   sheetName: string,
   ignoredSheetNames: string[],
   rawRows: unknown[][],
-  headerRowIndex: number
+  headerRowIndex: number,
+  fileMetadata: { file_size?: number; file_last_modified?: number } = {}
 ): ParsedWorksheet {
   const headerRow = rawRows[headerRowIndex] ?? [];
   const rows = rawRows.slice(headerRowIndex + 1);
@@ -45,6 +46,8 @@ export function createParsedWorksheet(
 
   return {
     file_name: fileName,
+    file_size: fileMetadata.file_size,
+    file_last_modified: fileMetadata.file_last_modified,
     sheet_name: sheetName,
     ignored_sheet_names: ignoredSheetNames,
     raw_rows: rawRows,
@@ -66,7 +69,11 @@ export function reparseWorksheetWithHeaderRow(
     worksheet.sheet_name,
     worksheet.ignored_sheet_names,
     worksheet.raw_rows,
-    headerRowIndex
+    headerRowIndex,
+    {
+      file_size: worksheet.file_size,
+      file_last_modified: worksheet.file_last_modified
+    }
   );
 }
 
