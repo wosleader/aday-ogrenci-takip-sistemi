@@ -1,6 +1,7 @@
 import type { AppDatabase } from "../../../db/db";
 import { db } from "../../../db/db";
 import type { CampaignRecord } from "../../../domain/models/campaign";
+import type { CallLogRecord } from "../../../domain/models/callLog";
 import type { GuardianRecord } from "../../../domain/models/guardian";
 import type { PhoneRecord } from "../../../domain/models/phone";
 import type { ReminderRecord } from "../../../domain/models/reminder";
@@ -24,6 +25,7 @@ export type StudentListRow = {
   category: string;
   campaign_id?: number | null;
   campaign_name?: string | null;
+  guardian_id?: number | null;
   guardian_full_name?: string | null;
   phone_1_id?: number | null;
   phone_1?: string | null;
@@ -159,12 +161,15 @@ function mapStudentToRow(
   guardiansByStudent: Map<number, GuardianRecord[]>,
   phonesByStudent: Map<number, PhoneRecord[]>,
   remindersByStudent: Map<number, ReminderRecord[]>,
+  callLogsByStudent: Map<number, CallLogRecord[]>,
   campaignMap: Map<number, CampaignRecord>,
   duplicatedPhonesByStudent: Map<number, string[]>
 ): StudentListRow {
   const guardians = guardiansByStudent.get(student.id) ?? [];
   const phones = phonesByStudent.get(student.id) ?? [];
   const pendingReminder = pickNextPendingReminder(remindersByStudent.get(student.id) ?? []);
+  const callLogs = callLogsByStudent.get(student.id) ?? [];
+  const callLogNotes = callLogs.flatMap((log) => (log.note?.trim() ? [log.note] : []));
   const guardian = pickGuardian(guardians);
   const { phone_1: phone1, phone_2: phone2 } = pickPhoneSlots(phones);
   const campaign = student.campaign_id ? campaignMap.get(student.campaign_id) : undefined;
@@ -181,6 +186,7 @@ function mapStudentToRow(
     category: student.category,
     campaign_id: student.campaign_id ?? null,
     campaign_name: campaign?.name ?? null,
+    guardian_id: guardian?.id ?? null,
     guardian_full_name: guardian?.guardian_full_name ?? null,
     phone_1_id: phone1?.id ?? null,
     phone_1: phone1?.phone_number ?? null,
@@ -202,7 +208,7 @@ function mapStudentToRow(
     lifecycle_status: student.lifecycle_status,
     last_call_result: student.last_call_result,
     general_note: student.general_note ?? null,
-    note_count: student.general_note?.trim() ? 1 : 0,
+    note_count: (student.general_note?.trim() ? 1 : 0) + callLogNotes.length,
     next_action_label: pendingReminder ? `Tekrar ara: ${pendingReminder.reminder_at}` : "-",
     source_row_number: student.source_row_number ?? null,
     created_at: student.created_at,
@@ -213,18 +219,20 @@ function mapStudentToRow(
       guardian?.guardian_full_name,
       phone1?.phone_number,
       phone2?.phone_number,
-      student.general_note
+      student.general_note,
+      ...callLogNotes
     ])
   };
 }
 
 export async function readStudentListRows(database: AppDatabase = db): Promise<StudentListRow[]> {
-  const [students, guardians, phones, reminders, campaigns] = await Promise.all([
+  const [students, guardians, phones, reminders, campaigns, callLogs] = await Promise.all([
     database.students.toArray(),
     database.guardians.toArray(),
     database.phones.toArray(),
     database.reminders.toArray(),
-    database.campaigns.toArray()
+    database.campaigns.toArray(),
+    database.call_logs.toArray()
   ]);
   const activeStudents = students.filter(isActive).flatMap((student) => (student.id ? [student as StudentRecord & { id: number }] : []));
   const activeGuardians = guardians.filter(isActive);
@@ -234,6 +242,7 @@ export async function readStudentListRows(database: AppDatabase = db): Promise<S
   const guardiansByStudent = groupByStudentId(activeGuardians);
   const phonesByStudent = groupByStudentId(activePhones);
   const remindersByStudent = groupByStudentId(activeReminders);
+  const callLogsByStudent = groupByStudentId(callLogs.filter(isActive));
   const campaignMap = buildCampaignMap(campaigns.filter(isActive));
   const duplicatedPhonesByStudent = createPhoneDuplicateInfo(activePhones);
 
@@ -245,6 +254,7 @@ export async function readStudentListRows(database: AppDatabase = db): Promise<S
         guardiansByStudent,
         phonesByStudent,
         remindersByStudent,
+        callLogsByStudent,
         campaignMap,
         duplicatedPhonesByStudent
       )

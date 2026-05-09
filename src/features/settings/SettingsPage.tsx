@@ -6,6 +6,10 @@ import { DEFAULT_SHORTCUTS } from "../../domain/constants/shortcuts";
 import { db } from "../../db/db";
 import { downloadTextFile } from "../imports/services/logExport";
 import {
+  readReminderNotificationSettings,
+  updateReminderNotificationSettings
+} from "../reminders/services/reminderSettings";
+import {
   clearCandidateData,
   createDataCleanupBackup,
   DELETE_ALL_STUDENTS_CONFIRMATION,
@@ -14,10 +18,12 @@ import {
 
 export function SettingsPage() {
   const shortcuts = useLiveQuery(() => db.keyboard_shortcuts.toArray(), []);
+  const reminderSettings = useLiveQuery(() => readReminderNotificationSettings(), []);
   const [confirmationText, setConfirmationText] = useState("");
   const [isCleaning, setIsCleaning] = useState(false);
   const [cleanupResult, setCleanupResult] = useState<CandidateDataCleanupResult | null>(null);
   const [dataManagementMessage, setDataManagementMessage] = useState<string | null>(null);
+  const [reminderSettingsMessage, setReminderSettingsMessage] = useState<string | null>(null);
 
   async function downloadManualBackup() {
     const backup = await createDataCleanupBackup();
@@ -41,6 +47,15 @@ export function SettingsPage() {
     } finally {
       setIsCleaning(false);
     }
+  }
+
+  async function updateReminderSetting(key: "popup_enabled" | "sound_enabled", value: boolean) {
+    await updateReminderNotificationSettings({
+      popup_enabled: reminderSettings?.popup_enabled ?? true,
+      sound_enabled: reminderSettings?.sound_enabled ?? true,
+      [key]: value
+    });
+    setReminderSettingsMessage("Hatırlatma ayarları kaydedildi.");
   }
 
   return (
@@ -128,6 +143,34 @@ export function SettingsPage() {
             </div>
           </div>
         ) : null}
+      </section>
+
+      <section className="panel">
+        <h2>Bildirimler / Hatırlatmalar</h2>
+        <p>Uygulama açıkken zamanı gelen tekrar arama hatırlatmaları için ekran içi uyarıları yönetir.</p>
+        <label className="toggle-row">
+          <span>
+            <strong>Reminder popup uyarıları</strong>
+            <small>Zamanı gelen hatırlatmaları ekran içinde göster.</small>
+          </span>
+          <input
+            checked={reminderSettings?.popup_enabled ?? true}
+            onChange={(event) => void updateReminderSetting("popup_enabled", event.target.checked)}
+            type="checkbox"
+          />
+        </label>
+        <label className="toggle-row">
+          <span>
+            <strong>Reminder sesli uyarı</strong>
+            <small>Popup çıktığında kısa ve yumuşak bir ses çal.</small>
+          </span>
+          <input
+            checked={reminderSettings?.sound_enabled ?? true}
+            onChange={(event) => void updateReminderSetting("sound_enabled", event.target.checked)}
+            type="checkbox"
+          />
+        </label>
+        {reminderSettingsMessage ? <p className="muted-text">{reminderSettingsMessage}</p> : null}
       </section>
     </div>
   );

@@ -11,6 +11,8 @@ export type StudentRecord = BaseEntity & {
   campaign_id?: number | null;
   lifecycle_status: LifecycleStatus;
   last_call_result: CallResult;
+  last_contacted_at?: string | null;
+  last_contacted_phone_id?: number | null;
   source_file_name?: string | null;
   source_sheet_name?: string | null;
   source_row_number?: number | null;

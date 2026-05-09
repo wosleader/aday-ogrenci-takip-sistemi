@@ -1,11 +1,21 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Check, ChevronsRight, Phone, Trash2, X } from "lucide-react";
+import { Bell, Check, ChevronsRight, Phone, Trash2, X } from "lucide-react";
 import type { AppOutletContext } from "../../app/AppLayout";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/EmptyState";
-import { CALL_RESULTS, LIFE_CYCLE_STATUSES } from "../../domain/constants/statuses";
+import { CALL_RESULTS, LIFE_CYCLE_STATUSES, type CallResult } from "../../domain/constants/statuses";
+import { readCallHistoryForStudent } from "../calls/services/callHistoryReader";
+import { writeCallLog } from "../calls/services/callLogWriter";
+import {
+  createReminderPopupModel,
+  dismissAllReminderAlerts,
+  dismissReminderAlert,
+  readDueReminderAlerts,
+  type DueReminderAlert
+} from "../reminders/services/reminderAlarmReader";
+import { readReminderNotificationSettings } from "../reminders/services/reminderSettings";
 import { deleteStudentWithRelations } from "./services/studentDelete";
 import {
   filterStudentListRows,
@@ -111,6 +121,71 @@ function drawerNotePreview(note?: string | null): string {
   }
 
   return note;
+}
+
+function toDateInputValue(value?: string | null): string {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toISOString().slice(0, 10);
+}
+
+function toTimeInputValue(value?: string | null): string {
+  if (!value) {
+    return "11:00";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "11:00";
+  }
+
+  return date.toTimeString().slice(0, 5);
+}
+
+function mergeReminderDateTime(dateValue: string, timeValue: string): string | null {
+  if (!dateValue) {
+    return null;
+  }
+
+  return new Date(`${dateValue}T${timeValue || "11:00"}:00`).toISOString();
+}
+
+function playReminderChime() {
+  try {
+    const audioWindow = window as Window &
+      typeof globalThis & { webkitAudioContext?: typeof AudioContext };
+    const AudioContextClass = audioWindow.AudioContext || audioWindow.webkitAudioContext;
+
+    if (!AudioContextClass) {
+      return;
+    }
+
+    const context = new AudioContextClass();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(660, context.currentTime);
+    oscillator.frequency.setValueAtTime(880, context.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.001, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.08, context.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.35);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.38);
+  } catch (error) {
+    console.debug("Reminder chime could not play.", error);
+  }
 }
 
 function maskPhoneForGroup(value: string): string {
@@ -219,6 +294,14 @@ export function StudentsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [callResult, setCallResult] = useState<CallResult>("not_called");
+  const [newNote, setNewNote] = useState("");
+  const [reminderDate, setReminderDate] = useState("");
+  const [reminderTime, setReminderTime] = useState("11:00");
+  const [isSavingCall, setIsSavingCall] = useState(false);
+  const [dismissedReminderIds, setDismissedReminderIds] = useState<number[]>([]);
+  const [chimedReminderIds, setChimedReminderIds] = useState<number[]>([]);
+  const [reminderTick, setReminderTick] = useState(() => Date.now());
   const rows = useLiveQuery(
     async () => {
       try {
@@ -231,6 +314,12 @@ export function StudentsPage() {
     },
     [],
     undefined
+  );
+  const reminderSettings = useLiveQuery(() => readReminderNotificationSettings(), [], undefined);
+  const dueReminderAlerts = useLiveQuery(
+    () => readDueReminderAlerts(new Date(reminderTick).toISOString()),
+    [reminderTick],
+    []
   );
   const campaignOptions = useMemo(() => {
     const names = new Set((rows ?? []).map((row) => row.campaign_name || "Diğer"));
@@ -269,6 +358,21 @@ export function StudentsPage() {
 
     return (rows ?? []).find((row) => row.student_id === selectedStudentId) ?? visibleRows[0] ?? null;
   }, [isDrawerOpen, rows, selectedStudentId, visibleRows]);
+  const callHistory = useLiveQuery(
+    () => (selectedRow ? readCallHistoryForStudent(selectedRow.student_id) : Promise.resolve([])),
+    [selectedRow?.student_id],
+    []
+  );
+  const reminderPopup = useMemo(
+    () =>
+      createReminderPopupModel(
+        dueReminderAlerts ?? [],
+        dismissedReminderIds,
+        reminderSettings?.popup_enabled ?? true
+      ),
+    [dismissedReminderIds, dueReminderAlerts, reminderSettings?.popup_enabled]
+  );
+  const activeReminderAlert = reminderPopup?.primaryAlert ?? null;
 
   useEffect(() => {
     setCurrentPage(1);
@@ -279,6 +383,37 @@ export function StudentsPage() {
       setSelectedStudentId(visibleRows[0].student_id);
     }
   }, [selectedStudentId, visibleRows]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setReminderTick(Date.now()), 30_000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedRow) {
+      return;
+    }
+
+    setCallResult((selectedRow.last_call_result as CallResult) || "not_called");
+    setNewNote("");
+    setReminderDate(toDateInputValue(selectedRow.next_reminder_at));
+    setReminderTime(toTimeInputValue(selectedRow.next_reminder_at));
+  }, [selectedRow?.student_id]);
+
+  useEffect(() => {
+    if (!reminderPopup || !reminderSettings?.sound_enabled) {
+      return;
+    }
+
+    const visibleReminderIds = reminderPopup.alerts.map((alert) => alert.reminder_id);
+    const hasNewReminder = visibleReminderIds.some((reminderId) => !chimedReminderIds.includes(reminderId));
+
+    if (hasNewReminder) {
+      playReminderChime();
+      setChimedReminderIds((current) => [...new Set([...current, ...visibleReminderIds])]);
+    }
+  }, [chimedReminderIds, reminderPopup, reminderSettings?.sound_enabled]);
 
   async function updatePhoneStatus(action: "contacted" | "invalid", phoneId: number) {
     try {
@@ -334,6 +469,73 @@ export function StudentsPage() {
     setIsDrawerOpen(true);
   }
 
+  function openReminderStudent(alert: DueReminderAlert) {
+    setDismissedReminderIds((current) => dismissReminderAlert(current, alert.reminder_id));
+    openStudentDrawer(alert.student_id);
+  }
+
+  function dismissActiveReminder() {
+    if (!activeReminderAlert) {
+      return;
+    }
+
+    setDismissedReminderIds((current) => dismissReminderAlert(current, activeReminderAlert.reminder_id));
+  }
+
+  function dismissAllVisibleReminders() {
+    if (!reminderPopup) {
+      return;
+    }
+
+    setDismissedReminderIds((current) => dismissAllReminderAlerts(current, reminderPopup.alerts));
+  }
+
+  async function saveCallAndGoNext() {
+    if (!selectedRow) {
+      return;
+    }
+
+    setIsSavingCall(true);
+    setActionMessage(null);
+
+    try {
+      const contactedPhoneId = selectedRow.phone_1_is_contacted
+        ? selectedRow.phone_1_id
+        : selectedRow.phone_2_is_contacted
+          ? selectedRow.phone_2_id
+          : null;
+      const reminderAt = mergeReminderDateTime(reminderDate, reminderTime);
+
+      await writeCallLog({
+        student_id: selectedRow.student_id,
+        guardian_id: selectedRow.guardian_id ?? null,
+        contacted_phone_id: contactedPhoneId ?? null,
+        call_result: callResult,
+        note: newNote,
+        reminder_at: reminderAt,
+        campaign_id: selectedRow.campaign_id ?? null,
+        created_by: "agent"
+      });
+
+      setNewNote("");
+      setActionMessage("Görüşme kaydedildi.");
+
+      const currentIndex = visibleRows.findIndex((row) => row.student_id === selectedRow.student_id);
+      const nextRow = currentIndex >= 0 ? visibleRows[currentIndex + 1] : null;
+
+      if (nextRow) {
+        setSelectedStudentId(nextRow.student_id);
+        setIsDrawerOpen(true);
+      } else {
+        setActionMessage("Görüşme kaydedildi. Liste sonuna geldiniz.");
+      }
+    } catch (error) {
+      setActionMessage(error instanceof Error ? error.message : "Görüşme kaydı oluşturulamadı.");
+    } finally {
+      setIsSavingCall(false);
+    }
+  }
+
   if (rows === undefined) {
     return (
       <div className="students-workbench">
@@ -363,6 +565,39 @@ export function StudentsPage() {
 
   return (
     <div className={`students-workbench ${isDrawerOpen ? "" : "drawer-collapsed"}`}>
+      {activeReminderAlert ? (
+        <section className="reminder-toast" role="status">
+          <div className="reminder-toast-icon">
+            <Bell aria-hidden="true" size={17} />
+          </div>
+          <div className="reminder-toast-body">
+            <strong>
+              {reminderPopup?.isBulk
+                ? `${reminderPopup.dueCount} hatırlatma zamanı geldi`
+                : "Tekrar arama zamanı geldi"}
+            </strong>
+            <span>{activeReminderAlert.student_full_name}</span>
+            <small>
+              {activeReminderAlert.guardian_full_name ? `${activeReminderAlert.guardian_full_name} · ` : ""}
+              {activeReminderAlert.phone_1 ?? "-"}
+              {activeReminderAlert.phone_2 ? ` / ${activeReminderAlert.phone_2}` : ""} ·{" "}
+              {formatShortDateTime(activeReminderAlert.reminder_at)}
+            </small>
+            {activeReminderAlert.note ? <small>{activeReminderAlert.note}</small> : null}
+          </div>
+          <div className="reminder-toast-actions">
+            <button onClick={() => openReminderStudent(activeReminderAlert)} type="button">
+              Adayı Aç
+            </button>
+            <button onClick={dismissActiveReminder} type="button">
+              Bu Bildirimi Kapat
+            </button>
+            <button onClick={dismissAllVisibleReminders} type="button">
+              Tüm Bildirimleri Kapat
+            </button>
+          </div>
+        </section>
+      ) : null}
       <section className="student-main">
         <div className="student-toolbar">
           <div className="toolbar-left">
@@ -567,7 +802,7 @@ export function StudentsPage() {
 
               <div>
                 <label className="form-label">Görüşme durumu</label>
-                <select defaultValue={selectedRow.last_call_result}>
+                <select value={callResult} onChange={(event) => setCallResult(event.target.value as CallResult)}>
                   {Object.entries(CALL_RESULTS).map(([key, label]) => (
                     <option key={key} value={key}>
                       {label}
@@ -578,21 +813,25 @@ export function StudentsPage() {
 
               <div>
                 <label className="form-label">Açıklama / not</label>
-                <textarea key={`note-${selectedRow.student_id}`} placeholder="Yeni görüşme notu yazın..." />
+                <textarea
+                  key={`note-${selectedRow.student_id}`}
+                  onChange={(event) => setNewNote(event.target.value)}
+                  placeholder="Yeni görüşme notu yazın..."
+                  value={newNote}
+                />
               </div>
 
               <div>
                 <label className="form-label">Tekrar arama</label>
                 <div className="row2">
-                  <input type="date" />
-                  <input type="time" defaultValue="11:00" />
+                  <input type="date" value={reminderDate} onChange={(event) => setReminderDate(event.target.value)} />
+                  <input type="time" value={reminderTime} onChange={(event) => setReminderTime(event.target.value)} />
                 </div>
               </div>
 
-              <button className="save-btn" disabled type="button">
+              <button className="save-btn" disabled={isSavingCall} onClick={() => void saveCallAndGoNext()} type="button">
                 <ChevronsRight aria-hidden="true" size={16} />
-                Kaydet ve sonrakine geç
-                <span className="kbd-hint">Sprint 5</span>
+                {isSavingCall ? "Kaydediliyor..." : "Kaydet ve sonrakine geç"}
               </button>
 
               <div className="drawer-actions">
@@ -620,9 +859,30 @@ export function StudentsPage() {
                       </div>
                     </div>
                   </div>
-                ) : (
+                ) : null}
+                {(callHistory ?? []).map((historyItem) => (
+                  <div className="tl-item" key={historyItem.call_log_id}>
+                    <div className="tl-dot" />
+                    <div>
+                      <div className="tl-date">
+                        {formatShortDateTime(historyItem.call_time)} · {historyItem.call_result_label}
+                      </div>
+                      <div className="tl-text">
+                        {historyItem.contacted_phone_number
+                          ? `${historyItem.contacted_phone_label ?? "Telefon"}: ${historyItem.contacted_phone_number}`
+                          : "Telefon seçilmedi"}
+                      </div>
+                      {historyItem.note ? <div className="tl-text">{historyItem.note}</div> : null}
+                      {historyItem.reminder_at ? (
+                        <div className="tl-author">Tekrar arama: {formatShortDateTime(historyItem.reminder_at)}</div>
+                      ) : null}
+                      <div className="tl-author">{historyItem.created_by ?? "system"}</div>
+                    </div>
+                  </div>
+                ))}
+                {!selectedRow.general_note?.trim() && !(callHistory ?? []).length ? (
                   <p className="drawer-empty-state">Henüz açıklama/geçmiş yok.</p>
-                )}
+                ) : null}
               </div>
             </div>
           </>

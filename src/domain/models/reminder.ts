@@ -3,6 +3,7 @@ import type { BaseEntity } from "./base";
 
 export type ReminderRecord = BaseEntity & {
   student_id: number;
+  call_log_id?: number | null;
   reminder_type: ReminderType;
   reminder_at: string;
   status: ReminderStatus;

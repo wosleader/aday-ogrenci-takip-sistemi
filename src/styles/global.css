@@ -962,6 +962,33 @@ body {
   width: min(360px, 100%) !important;
 }
 
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--aots-border);
+}
+
+.toggle-row:last-of-type {
+  border-bottom: none;
+}
+
+.toggle-row span {
+  display: grid;
+  gap: 3px;
+}
+
+.toggle-row small {
+  color: var(--aots-muted);
+}
+
+.toggle-row input {
+  width: 18px;
+  height: 18px;
+}
+
 /* Student list workbench */
 .students-workbench {
   display: flex;
@@ -971,6 +998,74 @@ body {
   overflow: hidden;
   background: var(--aots-bg);
   color: var(--aots-text);
+}
+
+.reminder-toast {
+  position: fixed;
+  z-index: 90;
+  top: 48px;
+  left: 50%;
+  display: grid;
+  grid-template-columns: auto minmax(220px, 1fr) auto;
+  align-items: center;
+  width: min(720px, calc(100% - 48px));
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--aots-border-md);
+  border-radius: var(--aots-radius-lg);
+  background: var(--aots-surface);
+  box-shadow: 0 12px 30px rgba(26, 25, 22, 0.14);
+  transform: translateX(-50%);
+}
+
+.reminder-toast-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--aots-amber-bg);
+  color: var(--aots-amber);
+}
+
+.reminder-toast-body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.reminder-toast-body span,
+.reminder-toast-body small {
+  overflow: hidden;
+  color: var(--aots-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reminder-toast-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.reminder-toast-actions button {
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid var(--aots-border);
+  border-radius: var(--aots-radius);
+  background: var(--aots-surface);
+  color: var(--aots-text);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.reminder-toast-actions button:first-child {
+  border-color: var(--aots-accent);
+  background: var(--aots-accent-bg);
+  color: var(--aots-accent);
+  font-weight: 800;
 }
 
 .student-main {
@@ -1780,5 +1875,14 @@ body {
     width: 100%;
     border-top: 1px solid var(--aots-border);
     border-left: none;
+  }
+
+  .reminder-toast {
+    top: 56px;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .reminder-toast-actions {
+    grid-column: 1 / -1;
   }
 }
