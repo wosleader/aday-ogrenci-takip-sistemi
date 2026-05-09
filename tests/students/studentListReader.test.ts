@@ -1,0 +1,299 @@
+import { describe, expect, it } from "vitest";
+import { AppDatabase } from "../../src/db/db";
+import type { GuardianRecord } from "../../src/domain/models/guardian";
+import type { PhoneRecord } from "../../src/domain/models/phone";
+import type { ReminderRecord } from "../../src/domain/models/reminder";
+import type { StudentRecord } from "../../src/domain/models/student";
+import {
+  filterStudentListRows,
+  readStudentListRows
+} from "../../src/features/students/services/studentListReader";
+import { createSearchText, normalizeText } from "../../src/utils/normalizeText";
+
+const baseTime = "2026-05-08T09:00:00.000Z";
+
+async function createDatabase() {
+  const database = new AppDatabase(`test-student-list-${crypto.randomUUID()}`);
+  await database.open();
+  return database;
+}
+
+function student(overrides: Partial<StudentRecord> = {}): StudentRecord {
+  const fullName = overrides.student_full_name ?? "Ayse Yilmaz";
+
+  return {
+    uuid: crypto.randomUUID(),
+    student_full_name: fullName,
+    normalized_student_name: normalizeText(fullName),
+    search_text: createSearchText([fullName, overrides.general_note]),
+    current_class: "11",
+    student_group: "11. Sinif YKS",
+    category: "YKS",
+    campaign_id: null,
+    lifecycle_status: "candidate",
+    last_call_result: "not_called",
+    source_file_name: "test.xlsx",
+    source_sheet_name: "Worksheet",
+    source_row_number: 2,
+    general_note: null,
+    sync_status: "local",
+    created_at: baseTime,
+    updated_at: baseTime,
+    deleted_at: null,
+    ...overrides
+  };
+}
+
+function guardian(studentId: number, overrides: Partial<GuardianRecord> = {}): GuardianRecord {
+  const fullName = overrides.guardian_full_name ?? "Veli Yilmaz";
+
+  return {
+    uuid: crypto.randomUUID(),
+    student_id: studentId,
+    guardian_full_name: fullName,
+    normalized_guardian_name: normalizeText(fullName),
+    relation_type: null,
+    note: null,
+    sync_status: "local",
+    created_at: baseTime,
+    updated_at: baseTime,
+    deleted_at: null,
+    ...overrides
+  };
+}
+
+function phone(studentId: number, overrides: Partial<PhoneRecord> = {}): PhoneRecord {
+  const phoneNumber = overrides.phone_number ?? "05321234567";
+
+  return {
+    uuid: crypto.randomUUID(),
+    student_id: studentId,
+    guardian_id: null,
+    phone_number: phoneNumber,
+    normalized_phone_number: overrides.normalized_phone_number ?? phoneNumber,
+    original_phone_value: phoneNumber,
+    phone_label: "Telefon 1",
+    is_valid: true,
+    is_wrong: false,
+    is_primary: true,
+    note: null,
+    sync_status: "local",
+    created_at: baseTime,
+    updated_at: baseTime,
+    deleted_at: null,
+    ...overrides
+  };
+}
+
+function reminder(studentId: number, overrides: Partial<ReminderRecord> = {}): ReminderRecord {
+  return {
+    uuid: crypto.randomUUID(),
+    student_id: studentId,
+    reminder_type: "call",
+    reminder_at: "2026-05-12T11:00:00",
+    status: "pending",
+    note: null,
+    is_default_time_assigned: true,
+    sync_status: "local",
+    created_at: baseTime,
+    updated_at: baseTime,
+    deleted_at: null,
+    ...overrides
+  };
+}
+
+describe("studentListReader", () => {
+  it("combines students, guardians and phones into list rows", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      await database.guardians.add(guardian(studentId));
+      await database.phones.bulkAdd([
+        phone(studentId, { phone_number: "05321234567", normalized_phone_number: "05321234567", phone_label: "Telefon 1" }),
+        phone(studentId, {
+          phone_number: "05327654321",
+          normalized_phone_number: "05327654321",
+          phone_label: "Telefon 2",
+          is_primary: false
+        })
+      ]);
+
+      const rows = await readStudentListRows(database);
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        student_id: studentId,
+        student_full_name: "Ayse Yilmaz",
+        guardian_full_name: "Veli Yilmaz",
+        phone_1: "05321234567",
+        phone_2: "05327654321",
+        phone_1_status: "active",
+        phone_2_status: "active",
+        phone_count: 2,
+        has_missing_phone: false
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("keeps phone 2 as phone 2 when phone 1 is empty", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      await database.phones.add(
+        phone(studentId, {
+          phone_number: "05327654321",
+          normalized_phone_number: "05327654321",
+          phone_label: "Telefon 2",
+          is_primary: true
+        })
+      );
+
+      const rows = await readStudentListRows(database);
+
+      expect(rows[0].phone_1).toBeNull();
+      expect(rows[0].phone_2).toBe("05327654321");
+      expect(rows[0].has_missing_phone).toBe(false);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("marks rows without any phone as missing phone", async () => {
+    const database = await createDatabase();
+
+    try {
+      await database.students.add(student());
+
+      const rows = await readStudentListRows(database);
+
+      expect(rows[0].phone_count).toBe(0);
+      expect(rows[0].has_missing_phone).toBe(true);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("uses only pending reminders for repeat call indicators", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      await database.reminders.bulkAdd([
+        reminder(studentId, { reminder_at: "2026-05-15T11:00:00", status: "completed" }),
+        reminder(studentId, { reminder_at: "2026-05-11T11:00:00", status: "pending" })
+      ]);
+
+      const rows = await readStudentListRows(database);
+
+      expect(rows[0].has_reminder).toBe(true);
+      expect(rows[0].next_reminder_at).toBe("2026-05-11T11:00:00");
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("filters by student, guardian, phone and note text", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(
+        student({
+          student_full_name: "Mehmet Kaya",
+          general_note: "Burs bilgisi soruldu",
+          search_text: createSearchText(["Mehmet Kaya", "Burs bilgisi soruldu"])
+        })
+      );
+      await database.guardians.add(guardian(studentId, { guardian_full_name: "Fatma Kaya" }));
+      await database.phones.add(phone(studentId, { phone_number: "05329998877", normalized_phone_number: "05329998877" }));
+
+      const rows = await readStudentListRows(database);
+
+      expect(filterStudentListRows(rows, "mehmet")).toHaveLength(1);
+      expect(filterStudentListRows(rows, "fatma")).toHaveLength(1);
+      expect(filterStudentListRows(rows, "998877")).toHaveLength(1);
+      expect(filterStudentListRows(rows, "burs")).toHaveLength(1);
+      expect(filterStudentListRows(rows, "olmayan")).toHaveLength(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("marks the same phone on different students as duplicate", async () => {
+    const database = await createDatabase();
+
+    try {
+      const firstStudentId = await database.students.add(student({ student_full_name: "Ayse Yilmaz" }));
+      const secondStudentId = await database.students.add(
+        student({
+          student_full_name: "Mehmet Kaya",
+          created_at: "2026-05-08T09:01:00.000Z",
+          updated_at: "2026-05-08T09:01:00.000Z"
+        })
+      );
+      await database.phones.bulkAdd([
+        phone(firstStudentId, { normalized_phone_number: "05321234567" }),
+        phone(firstStudentId, {
+          phone_number: "05321234567",
+          normalized_phone_number: "05321234567",
+          phone_label: "Telefon 2",
+          is_primary: false
+        }),
+        phone(secondStudentId, { normalized_phone_number: "05321234567" })
+      ]);
+
+      const rows = await readStudentListRows(database);
+
+      expect(rows.find((row) => row.student_id === firstStudentId)?.has_duplicate_phone).toBe(true);
+      expect(rows.find((row) => row.student_id === secondStudentId)?.has_duplicate_phone).toBe(true);
+      expect(rows.find((row) => row.student_id === firstStudentId)?.duplicate_group_key).toBe("05321234567");
+      expect(rows.find((row) => row.student_id === secondStudentId)?.duplicate_group_key).toBe("05321234567");
+      expect(filterStudentListRows(rows, "", "duplicate_phone")).toHaveLength(2);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("carries contacted and invalid phone indicators to list rows", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      await database.phones.bulkAdd([
+        phone(studentId, {
+          phone_number: "05321234567",
+          normalized_phone_number: "05321234567",
+          phone_label: "Telefon 1",
+          phone_status: "contacted"
+        }),
+        phone(studentId, {
+          phone_number: "05327654321",
+          normalized_phone_number: "05327654321",
+          phone_label: "Telefon 2",
+          phone_status: "invalid",
+          is_primary: false,
+          is_wrong: true
+        })
+      ]);
+
+      const rows = await readStudentListRows(database);
+
+      expect(rows[0].phone_1_is_contacted).toBe(true);
+      expect(rows[0].phone_1_is_wrong).toBe(false);
+      expect(rows[0].phone_2_is_contacted).toBe(false);
+      expect(rows[0].phone_2_is_wrong).toBe(true);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+});

@@ -56,6 +56,12 @@ describe("checkPossibleDuplicateImport", () => {
 
       expect(result.isPossibleDuplicate).toBe(true);
       expect(result.message).toContain("daha önce içe aktarılmış olabilir");
+      expect(result.matched_imports[0]).toMatchObject({
+        file_name: "test.xlsx",
+        sheet_name: "Worksheet",
+        imported_rows: 1,
+        total_rows: 1
+      });
     } finally {
       database.close();
       await database.delete();

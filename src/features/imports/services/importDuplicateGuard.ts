@@ -2,10 +2,21 @@ import type { AppDatabase } from "../../../db/db";
 import { db } from "../../../db/db";
 import type { ImportSimulationSummary, ParsedWorksheet } from "./types";
 
+export type DuplicateImportMatch = {
+  import_id: number;
+  file_name: string;
+  sheet_name: string;
+  imported_rows: number;
+  total_rows: number;
+  started_at: string;
+  finished_at?: string | null;
+};
+
 export type DuplicateImportWarning = {
   isPossibleDuplicate: boolean;
   message?: string;
   matched_import_ids: number[];
+  matched_imports: DuplicateImportMatch[];
   import_fingerprint: string;
 };
 
@@ -54,6 +65,21 @@ export async function checkPossibleDuplicateImport(
         : undefined,
     matched_import_ids: matches.flatMap((importRecord) =>
       importRecord.id == null ? [] : [importRecord.id]
+    ),
+    matched_imports: matches.flatMap((importRecord) =>
+      importRecord.id == null
+        ? []
+        : [
+            {
+              import_id: importRecord.id,
+              file_name: importRecord.file_name,
+              sheet_name: importRecord.sheet_name,
+              imported_rows: importRecord.imported_rows,
+              total_rows: importRecord.total_rows,
+              started_at: importRecord.started_at,
+              finished_at: importRecord.finished_at ?? null
+            }
+          ]
     ),
     import_fingerprint: importFingerprint
   };

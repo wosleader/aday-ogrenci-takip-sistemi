@@ -7,7 +7,10 @@ import { PageHeader } from "../../components/PageHeader";
 import { COLUMN_DEFINITIONS } from "./services/columnDefinitions";
 import { matchColumns } from "./services/columnMatching";
 import { parseFirstWorksheet, reparseWorksheetWithHeaderRow } from "./services/excelReader";
-import { checkPossibleDuplicateImport } from "./services/importDuplicateGuard";
+import {
+  checkPossibleDuplicateImport,
+  type DuplicateImportWarning
+} from "./services/importDuplicateGuard";
 import { simulateImport } from "./services/importSimulation";
 import { writeImportToDatabase, type ImportWriteResult } from "./services/importWriter";
 import {
@@ -40,6 +43,9 @@ export function ImportPage() {
   const [privacyMode, setPrivacyMode] = useState<PrivacyMode>("private");
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportWriteResult | null>(null);
+  const [duplicateWarning, setDuplicateWarning] = useState<DuplicateImportWarning | null>(null);
+  const [duplicateOverrideAccepted, setDuplicateOverrideAccepted] = useState(false);
+  const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
 
   const columnMatches = useMemo(
     () => (worksheet ? matchColumns(worksheet.headers, manualMappings).matches : []),
@@ -71,6 +77,33 @@ export function ImportPage() {
     }
   }, []);
 
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function checkDuplicate() {
+      if (!worksheet || !summary) {
+        setDuplicateWarning(null);
+        setDuplicateOverrideAccepted(false);
+        setIsDuplicateModalOpen(false);
+        return;
+      }
+
+      const warning = await checkPossibleDuplicateImport(worksheet, summary);
+
+      if (!isCancelled) {
+        setDuplicateWarning(warning.isPossibleDuplicate ? warning : null);
+        setDuplicateOverrideAccepted(false);
+        setIsDuplicateModalOpen(false);
+      }
+    }
+
+    void checkDuplicate();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [summary, worksheet]);
+
   function persistSimulation(nextState: StoredSimulationState) {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
   }
@@ -86,6 +119,8 @@ export function ImportPage() {
     setManualMappings(nextManualMappings);
     setHeaderRowNumber(nextWorksheet.detected_header_row_number);
     setImportResult(null);
+    setDuplicateOverrideAccepted(false);
+    setIsDuplicateModalOpen(false);
     persistSimulation({
       worksheet: nextWorksheet,
       summary: simulation,
@@ -146,10 +181,30 @@ export function ImportPage() {
     setHeaderRowNumber(1);
     setError(null);
     setImportResult(null);
+    setDuplicateWarning(null);
+    setDuplicateOverrideAccepted(false);
+    setIsDuplicateModalOpen(false);
   }
 
   function createFileSuffix() {
     return new Date().toISOString().replace(/[:.]/g, "-");
+  }
+
+  function formatImportDate(value?: string | null) {
+    if (!value) {
+      return "-";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return new Intl.DateTimeFormat("tr-TR", {
+      dateStyle: "short",
+      timeStyle: "short"
+    }).format(date);
   }
 
   function downloadImportLog() {
@@ -195,16 +250,8 @@ export function ImportPage() {
     downloadTextFile(`teknik-destek-logu-${createFileSuffix()}.txt`, content);
   }
 
-  async function handleImport() {
+  async function performImport({ skipDuplicateCheck = false } = {}) {
     if (!worksheet || !summary || summary.readable_rows === 0) {
-      return;
-    }
-
-    const userConfirmed = window.confirm(
-      "Simülasyondaki okunabilir aday kayıtları IndexedDB'ye yazılacak. Devam edilsin mi?"
-    );
-
-    if (!userConfirmed) {
       return;
     }
 
@@ -213,14 +260,12 @@ export function ImportPage() {
     setImportResult(null);
 
     try {
-      const duplicateWarning = await checkPossibleDuplicateImport(worksheet, summary);
+      if (!skipDuplicateCheck) {
+        const duplicateWarning = await checkPossibleDuplicateImport(worksheet, summary);
 
-      if (duplicateWarning.isPossibleDuplicate) {
-        const continueDuplicate = window.confirm(
-          `${duplicateWarning.message} Devam ederseniz yeni kayıtlar ayrıca oluşturulur. Devam edilsin mi?`
-        );
-
-        if (!continueDuplicate) {
+        if (duplicateWarning.isPossibleDuplicate && !duplicateOverrideAccepted) {
+          setDuplicateWarning(duplicateWarning);
+          setIsDuplicateModalOpen(true);
           setIsImporting(false);
           return;
         }
@@ -240,12 +285,89 @@ export function ImportPage() {
     }
   }
 
+  async function handleImport() {
+    if (!worksheet || !summary || summary.readable_rows === 0) {
+      return;
+    }
+
+    const userConfirmed = window.confirm(
+      "Simülasyondaki okunabilir aday kayıtları IndexedDB'ye yazılacak. Devam edilsin mi?"
+    );
+
+    if (!userConfirmed) {
+      return;
+    }
+
+    await performImport();
+  }
+
+  function cancelDuplicateImport() {
+    setIsDuplicateModalOpen(false);
+    setDuplicateOverrideAccepted(false);
+    setError("İçe aktarma iptal edildi. Aynı dosyayı tekrar içe aktarmak isterseniz önce uyarıyı onaylamalısınız.");
+  }
+
+  function continueDuplicateImport() {
+    setDuplicateOverrideAccepted(true);
+    setIsDuplicateModalOpen(false);
+    setError(null);
+    void performImport({ skipDuplicateCheck: true });
+  }
+
   return (
     <div className="page">
       <PageHeader
         title="Excel İçe Aktar"
         description="Dosya kaydedilmeden okunur, ilk worksheet üzerinden ön izleme ve simülasyon üretilir."
       />
+
+      {duplicateWarning && isDuplicateModalOpen ? (
+        <div className="import-modal-backdrop" role="presentation">
+          <section
+            aria-describedby="duplicate-import-modal-description"
+            aria-labelledby="duplicate-import-modal-title"
+            aria-modal="true"
+            className="import-duplicate-modal"
+            role="dialog"
+          >
+            <div className="import-modal-warning-mark">!</div>
+            <h2 id="duplicate-import-modal-title">Bu dosya daha önce içe aktarılmış olabilir</h2>
+            <p id="duplicate-import-modal-description">
+              Bu dosyayı tekrar içe aktarırsanız aynı adaylar yeniden eklenebilir ve mükerrer kayıtlar oluşabilir.
+            </p>
+            <div className="duplicate-modal-details">
+              {duplicateWarning.matched_imports.map((match) => (
+                <dl key={match.import_id}>
+                  <div>
+                    <dt>Dosya adı</dt>
+                    <dd>{match.file_name}</dd>
+                  </div>
+                  <div>
+                    <dt>Worksheet</dt>
+                    <dd>{match.sheet_name}</dd>
+                  </div>
+                  <div>
+                    <dt>Önceki import tarihi</dt>
+                    <dd>{formatImportDate(match.finished_at ?? match.started_at)}</dd>
+                  </div>
+                  <div>
+                    <dt>Önceki import kayıt sayısı</dt>
+                    <dd>{match.imported_rows}</dd>
+                  </div>
+                </dl>
+              ))}
+            </div>
+            <div className="import-modal-actions">
+              <Button type="button" onClick={cancelDuplicateImport}>
+                İptal Et
+              </Button>
+              <Button type="button" variant="secondary" onClick={continueDuplicateImport}>
+                Yine de İçe Aktar
+              </Button>
+            </div>
+          </section>
+        </div>
+      ) : null}
 
       <section className="panel">
         <label className="file-picker">
@@ -293,6 +415,52 @@ export function ImportPage() {
               description="Tekrar arama tarihi var ama saat boş. Sistem bu kayıtları 11:00 olarak planlayacak."
             />
           </section>
+
+          {duplicateWarning ? (
+            <section className="panel duplicate-warning-panel">
+              <h2>Bu dosya daha önce içe aktarılmış olabilir</h2>
+              <p>Otomatik birleştirme yapılmayacak. Devam ederseniz kayıtlar yeniden oluşabilir.</p>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Dosya</th>
+                      <th>Worksheet</th>
+                      <th>Import tarihi</th>
+                      <th>Kayıt</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {duplicateWarning.matched_imports.map((match) => (
+                      <tr key={match.import_id}>
+                        <td>{match.file_name}</td>
+                        <td>{match.sheet_name}</td>
+                        <td>{formatImportDate(match.finished_at ?? match.started_at)}</td>
+                        <td>{match.imported_rows}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="toolbar">
+                <Button type="button" variant="secondary" onClick={clearSimulation}>
+                  İptal
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setIsDuplicateModalOpen(true);
+                    setError(null);
+                  }}
+                >
+                  Yine de içe aktar
+                </Button>
+                <Button type="button" variant="secondary" disabled>
+                  Eski import verisini temizleyip yeniden içe aktar
+                </Button>
+              </div>
+            </section>
+          ) : null}
 
           <section className="panel">
             <h2>Worksheet</h2>
