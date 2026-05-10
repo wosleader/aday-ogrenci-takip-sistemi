@@ -1006,9 +1006,9 @@ body {
   top: 48px;
   left: 50%;
   display: grid;
-  grid-template-columns: auto minmax(220px, 1fr) auto;
+  grid-template-columns: auto minmax(260px, 1fr) 170px;
   align-items: center;
-  width: min(720px, calc(100% - 48px));
+  width: min(600px, calc(100vw - 24px));
   gap: 12px;
   padding: 12px;
   border: 1px solid var(--aots-border-md);
@@ -1035,6 +1035,12 @@ body {
   min-width: 0;
 }
 
+.reminder-toast-body strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .reminder-toast-body span,
 .reminder-toast-body small {
   overflow: hidden;
@@ -1044,13 +1050,14 @@ body {
 }
 
 .reminder-toast-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: stretch;
   gap: 6px;
 }
 
 .reminder-toast-actions button {
+  width: 100%;
   min-height: 28px;
   padding: 4px 8px;
   border: 1px solid var(--aots-border);
@@ -1399,10 +1406,7 @@ body {
 }
 
 .status::before {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+  display: none;
   content: "";
 }
 

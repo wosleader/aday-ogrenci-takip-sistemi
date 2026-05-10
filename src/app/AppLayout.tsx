@@ -13,7 +13,7 @@ import {
   Users
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 
 type NavItem = {
@@ -26,6 +26,7 @@ type NavItem = {
 
 export type AppOutletContext = {
   globalSearch: string;
+  focusGlobalSearch: () => void;
 };
 
 const navSections: Array<{ title: string; items: NavItem[] }> = [
@@ -56,6 +57,12 @@ const navSections: Array<{ title: string; items: NavItem[] }> = [
 export function AppLayout() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
+  const globalSearchRef = useRef<HTMLInputElement | null>(null);
+
+  function focusGlobalSearch() {
+    globalSearchRef.current?.focus();
+    globalSearchRef.current?.select();
+  }
 
   return (
     <div className="app-shell">
@@ -90,6 +97,7 @@ export function AppLayout() {
             aria-label="Genel arama"
             onChange={(event) => setGlobalSearch(event.target.value)}
             placeholder="İsim, telefon veya not ara... (F)"
+            ref={globalSearchRef}
             type="search"
             value={globalSearch}
           />
@@ -158,7 +166,7 @@ export function AppLayout() {
         </aside>
 
         <main className="content">
-          <Outlet context={{ globalSearch } satisfies AppOutletContext} />
+          <Outlet context={{ globalSearch, focusGlobalSearch } satisfies AppOutletContext} />
         </main>
       </div>
     </div>

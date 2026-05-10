@@ -16,6 +16,15 @@ import {
   type DueReminderAlert
 } from "../reminders/services/reminderAlarmReader";
 import { readReminderNotificationSettings } from "../reminders/services/reminderSettings";
+import {
+  createReminderPopupViewModel,
+  DISMISS_FOLLOWING_REMINDERS_LABEL
+} from "../reminders/services/reminderPopupViewModel";
+import {
+  getDefaultOperationShortcuts,
+  resolveShortcutAction,
+  type ShortcutActionKey
+} from "../shortcuts/services/shortcutRegistry";
 import { deleteStudentWithRelations } from "./services/studentDelete";
 import {
   filterStudentListRows,
@@ -285,7 +294,7 @@ function PhoneCard({ label, phoneId, value, isContacted, isWrong, onContacted, o
 
 export function StudentsPage() {
   const navigate = useNavigate();
-  const { globalSearch } = useOutletContext<AppOutletContext>();
+  const { globalSearch, focusGlobalSearch } = useOutletContext<AppOutletContext>();
   const debouncedQuery = useDebouncedValue(globalSearch);
   const [activeFilter, setActiveFilter] = useState<StudentListFilter>("all");
   const [campaignFilter, setCampaignFilter] = useState("all");
@@ -373,6 +382,8 @@ export function StudentsPage() {
     [dismissedReminderIds, dueReminderAlerts, reminderSettings?.popup_enabled]
   );
   const activeReminderAlert = reminderPopup?.primaryAlert ?? null;
+  const reminderPopupView = reminderPopup ? createReminderPopupViewModel(reminderPopup) : null;
+  const operationShortcuts = useMemo(() => getDefaultOperationShortcuts(), []);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -414,6 +425,93 @@ export function StudentsPage() {
       setChimedReminderIds((current) => [...new Set([...current, ...visibleReminderIds])]);
     }
   }, [chimedReminderIds, reminderPopup, reminderSettings?.sound_enabled]);
+
+  useEffect(() => {
+    if (!selectedStudentId) {
+      return;
+    }
+
+    document.querySelector(`[data-student-row-id="${selectedStudentId}"]`)?.scrollIntoView({
+      block: "nearest",
+      inline: "nearest"
+    });
+  }, [currentPage, selectedStudentId]);
+
+  function selectCandidateByIndex(nextIndex: number) {
+    const nextRow = filteredRows[nextIndex];
+
+    if (!nextRow) {
+      return;
+    }
+
+    setSelectedStudentId(nextRow.student_id);
+    setIsDrawerOpen(true);
+    setCurrentPage(Math.floor(nextIndex / PAGE_SIZE) + 1);
+  }
+
+  function moveSelectedCandidate(step: number) {
+    if (!filteredRows.length) {
+      return;
+    }
+
+    if (newNote.trim()) {
+      setActionMessage("Kaydedilmemiş not var. Kaydetmek için Ctrl+S kullanın veya notu temizleyin.");
+      return;
+    }
+
+    const currentIndex = Math.max(
+      0,
+      filteredRows.findIndex((row) => row.student_id === selectedStudentId)
+    );
+    const nextIndex = Math.min(Math.max(currentIndex + step, 0), filteredRows.length - 1);
+
+    selectCandidateByIndex(nextIndex);
+  }
+
+  function setCallResultByShortcut(result: CallResult) {
+    setCallResult(result);
+    setActionMessage(`${CALL_RESULTS[result]} seçildi. Kaydetmek için Ctrl+S kullanın.`);
+  }
+
+  function markPhoneByShortcut(slot: "phone_1" | "phone_2") {
+    if (!selectedRow) {
+      return;
+    }
+
+    const phoneId = slot === "phone_1" ? selectedRow.phone_1_id : selectedRow.phone_2_id;
+    const isWrong = slot === "phone_1" ? selectedRow.phone_1_is_wrong : selectedRow.phone_2_is_wrong;
+
+    if (!phoneId) {
+      setActionMessage(slot === "phone_1" ? "Telefon 1 kaydı yok." : "Telefon 2 kaydı yok.");
+      return;
+    }
+
+    if (isWrong) {
+      setActionMessage("Yanlış numara / kullanılmıyor işaretli telefon görüşülen numara olarak seçilemez.");
+      return;
+    }
+
+    void updatePhoneStatus("contacted", phoneId);
+  }
+
+  function toggleActivePhoneInvalidByShortcut() {
+    if (!selectedRow) {
+      return;
+    }
+
+    const activePhoneId = selectedRow.phone_1_is_contacted
+      ? selectedRow.phone_1_id
+      : selectedRow.phone_2_is_contacted
+        ? selectedRow.phone_2_id
+        : null;
+
+    if (!activePhoneId) {
+      setActionMessage("Önce Telefon 1 veya Telefon 2 seçin.");
+      return;
+    }
+
+    void updatePhoneStatus("invalid", activePhoneId);
+  }
 
   async function updatePhoneStatus(action: "contacted" | "invalid", phoneId: number) {
     try {
@@ -536,6 +634,111 @@ export function StudentsPage() {
     }
   }
 
+  useEffect(() => {
+    function runShortcutAction(action: ShortcutActionKey) {
+      if (action === "escape") {
+        if (activeReminderAlert) {
+          dismissActiveReminder();
+          return;
+        }
+
+        if (isDrawerOpen) {
+          setIsDrawerOpen(false);
+        }
+
+        return;
+      }
+
+      if (action === "focus_search") {
+        focusGlobalSearch();
+        return;
+      }
+
+      if (action === "previous_candidate") {
+        moveSelectedCandidate(-1);
+        return;
+      }
+
+      if (action === "next_candidate") {
+        moveSelectedCandidate(1);
+        return;
+      }
+
+      if (action === "mark_phone_1_contacted") {
+        markPhoneByShortcut("phone_1");
+        return;
+      }
+
+      if (action === "mark_phone_2_contacted") {
+        markPhoneByShortcut("phone_2");
+        return;
+      }
+
+      if (action === "toggle_active_phone_invalid") {
+        toggleActivePhoneInvalidByShortcut();
+        return;
+      }
+
+      if (action === "call_reached") {
+        setCallResultByShortcut("reached");
+        return;
+      }
+
+      if (action === "call_not_reached") {
+        setCallResultByShortcut("not_reached");
+        return;
+      }
+
+      if (action === "call_wrong_number") {
+        setCallResultByShortcut("wrong_number");
+        return;
+      }
+
+      if (action === "call_appointment") {
+        setCallResultByShortcut("appointment");
+        return;
+      }
+
+      if (action === "call_do_not_call") {
+        setCallResultByShortcut("do_not_call");
+        return;
+      }
+
+      if (action === "save_call") {
+        void saveCallAndGoNext();
+      }
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      const action = resolveShortcutAction(event, operationShortcuts);
+
+      if (!action) {
+        return;
+      }
+
+      event.preventDefault();
+      runShortcutAction(action);
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [
+    activeReminderAlert,
+    filteredRows,
+    focusGlobalSearch,
+    isDrawerOpen,
+    newNote,
+    operationShortcuts,
+    selectedRow,
+    selectedStudentId,
+    visibleRows,
+    callResult,
+    reminderDate,
+    reminderTime,
+    isSavingCall
+  ]);
+
   if (rows === undefined) {
     return (
       <div className="students-workbench">
@@ -571,19 +774,10 @@ export function StudentsPage() {
             <Bell aria-hidden="true" size={17} />
           </div>
           <div className="reminder-toast-body">
-            <strong>
-              {reminderPopup?.isBulk
-                ? `${reminderPopup.dueCount} hatırlatma zamanı geldi`
-                : "Tekrar arama zamanı geldi"}
-            </strong>
-            <span>{activeReminderAlert.student_full_name}</span>
-            <small>
-              {activeReminderAlert.guardian_full_name ? `${activeReminderAlert.guardian_full_name} · ` : ""}
-              {activeReminderAlert.phone_1 ?? "-"}
-              {activeReminderAlert.phone_2 ? ` / ${activeReminderAlert.phone_2}` : ""} ·{" "}
-              {formatShortDateTime(activeReminderAlert.reminder_at)}
-            </small>
-            {activeReminderAlert.note ? <small>{activeReminderAlert.note}</small> : null}
+            <strong>{reminderPopupView?.title}</strong>
+            <span>{reminderPopupView?.student_name}</span>
+            {reminderPopupView?.guardian_line ? <small>{reminderPopupView.guardian_line}</small> : null}
+            <small>{reminderPopupView?.reminder_line}</small>
           </div>
           <div className="reminder-toast-actions">
             <button onClick={() => openReminderStudent(activeReminderAlert)} type="button">
@@ -593,7 +787,7 @@ export function StudentsPage() {
               Bu Bildirimi Kapat
             </button>
             <button onClick={dismissAllVisibleReminders} type="button">
-              Tüm Bildirimleri Kapat
+              {DISMISS_FOLLOWING_REMINDERS_LABEL}
             </button>
           </div>
         </section>
@@ -666,6 +860,7 @@ export function StudentsPage() {
                     ) : null}
                     <tr
                       className={rowClassName(row, selectedStudentId)}
+                      data-student-row-id={row.student_id}
                       key={row.student_id}
                       onClick={() => openStudentDrawer(row.student_id)}
                     >
@@ -712,22 +907,34 @@ export function StudentsPage() {
 
         <div className="student-kbdbar">
           <span>
-            <kbd>N</kbd> Sıradaki
-          </span>
-          <span>
-            <kbd>1</kbd> Ulaşılamadı
-          </span>
-          <span>
-            <kbd>2</kbd> Görüşüldü
-          </span>
-          <span>
-            <kbd>4</kbd> Sonra aranacak
-          </span>
-          <span>
-            <kbd>7</kbd> Yanlış numara
+            <kbd>↑↓</kbd> Gezin
           </span>
           <span>
             <kbd>F</kbd> Ara
+          </span>
+          <span>
+            <kbd>T</kbd> Tel 1
+          </span>
+          <span>
+            <kbd>Y</kbd> Tel 2
+          </span>
+          <span>
+            <kbd>1</kbd> Görüşüldü
+          </span>
+          <span>
+            <kbd>2</kbd> Ulaşılamadı
+          </span>
+          <span>
+            <kbd>4</kbd> Yanlış Numara
+          </span>
+          <span>
+            <kbd>5</kbd> Randevu
+          </span>
+          <span>
+            <kbd>6</kbd> Aranmayacak
+          </span>
+          <span>
+            <kbd>Ctrl+S</kbd> Kaydet
           </span>
         </div>
 

@@ -2,13 +2,16 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { useState } from "react";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/PageHeader";
-import { DEFAULT_SHORTCUTS } from "../../domain/constants/shortcuts";
-import { db } from "../../db/db";
 import { downloadTextFile } from "../imports/services/logExport";
 import {
   readReminderNotificationSettings,
   updateReminderNotificationSettings
 } from "../reminders/services/reminderSettings";
+import {
+  getDefaultOperationShortcuts,
+  getShortcutDisplayText,
+  validateShortcutConfig
+} from "../shortcuts/services/shortcutRegistry";
 import {
   clearCandidateData,
   createDataCleanupBackup,
@@ -17,8 +20,9 @@ import {
 } from "./services/dataManagement";
 
 export function SettingsPage() {
-  const shortcuts = useLiveQuery(() => db.keyboard_shortcuts.toArray(), []);
   const reminderSettings = useLiveQuery(() => readReminderNotificationSettings(), []);
+  const shortcuts = getDefaultOperationShortcuts();
+  const shortcutIssues = validateShortcutConfig(shortcuts);
   const [confirmationText, setConfirmationText] = useState("");
   const [isCleaning, setIsCleaning] = useState(false);
   const [cleanupResult, setCleanupResult] = useState<CandidateDataCleanupResult | null>(null);
@@ -66,15 +70,21 @@ export function SettingsPage() {
       />
 
       <section className="panel">
-        <h2>Varsayılan Kritik Kısayollar</h2>
+        <h2>Klavye Kısayolları</h2>
+        <p>Arama operasyonunda kullanılan varsayılan kısayollar. Kısayol düzenleme sonraki sürümde aktif olacak.</p>
         <div className="shortcut-grid">
-          {(shortcuts ?? DEFAULT_SHORTCUTS).map((shortcut) => (
+          {shortcuts.map((shortcut) => (
             <div className="shortcut-row" key={shortcut.action_key}>
               <span>{shortcut.label}</span>
-              <kbd>{shortcut.shortcut}</kbd>
+              <kbd>{getShortcutDisplayText(shortcut)}</kbd>
             </div>
           ))}
         </div>
+        {shortcutIssues.length === 0 ? (
+          <p className="muted-text">3 tuşu kritik varsayılan kısayollarda kullanılmıyor.</p>
+        ) : (
+          <p className="error-text">Kısayol çakışması kontrol edilmeli.</p>
+        )}
       </section>
 
       <section className="panel data-management-panel">
