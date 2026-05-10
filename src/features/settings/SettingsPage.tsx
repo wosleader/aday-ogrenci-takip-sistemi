@@ -32,7 +32,7 @@ export function SettingsPage() {
   async function downloadManualBackup() {
     const backup = await createDataCleanupBackup();
     downloadTextFile(backup.file_name, backup.json);
-    setDataManagementMessage("JSON yedek indirildi.");
+    setDataManagementMessage("Tam Sistem Yedeği indirildi.");
   }
 
   async function clearAllCandidateData() {
@@ -45,7 +45,7 @@ export function SettingsPage() {
       downloadTextFile(result.backup.file_name, result.backup.json);
       setCleanupResult(result);
       setConfirmationText("");
-      setDataManagementMessage("Tüm aday verileri temizlendi. İşlem öncesi yedek indirildi.");
+      setDataManagementMessage("Tüm aday verileri temizlendi. İşlem öncesi Tam Sistem Yedeği indirildi.");
     } catch (error) {
       setDataManagementMessage(error instanceof Error ? error.message : "Veri temizleme tamamlanamadı.");
     } finally {
@@ -89,14 +89,17 @@ export function SettingsPage() {
 
       <section className="panel data-management-panel">
         <h2>Veri Yönetimi</h2>
-        <p>Aday verilerini temizlemeden önce otomatik JSON yedek alınır. Ayarlar, kampanyalar ve kısayollar korunur.</p>
+        <p>
+          Aday verilerini temizlemeden önce otomatik Tam Sistem Yedeği alınır. Ayarlar, kampanyalar ve kısayollar korunur.
+        </p>
+        <p className="muted-text">Yedek dosyası teknik olarak JSON formatında saklanır.</p>
 
         <div className="toolbar">
           <Button type="button" variant="secondary" onClick={() => void downloadManualBackup()}>
-            Yedek al
+            Tam Sistem Yedeği Al
           </Button>
           <Button type="button" variant="secondary" disabled>
-            Yedekten geri yükle
+            Sistem Yedeğinden Geri Yükle
           </Button>
           <Button type="button" variant="secondary" disabled>
             İçe aktarma geçmişi

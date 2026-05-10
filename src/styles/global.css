@@ -989,6 +989,63 @@ body {
   height: 18px;
 }
 
+.export-scope-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.export-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--aots-border);
+  border-radius: var(--aots-radius);
+  background: var(--aots-surface);
+  cursor: pointer;
+}
+
+.export-option.active {
+  border-color: var(--aots-accent);
+  background: var(--aots-accent-bg);
+}
+
+.export-option.disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.export-option span {
+  display: grid;
+  gap: 3px;
+}
+
+.export-option small {
+  color: var(--aots-muted);
+  line-height: 1.4;
+}
+
+.export-info-box {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--aots-border);
+  border-radius: var(--aots-radius-lg);
+  background: var(--aots-accent-bg);
+  color: var(--aots-text);
+}
+
+.export-info-box strong {
+  color: var(--aots-accent);
+}
+
+.export-info-box p {
+  margin: 0;
+  color: var(--aots-muted);
+  line-height: 1.55;
+}
+
 /* Student list workbench */
 .students-workbench {
   display: flex;
@@ -1073,6 +1130,41 @@ body {
   background: var(--aots-accent-bg);
   color: var(--aots-accent);
   font-weight: 800;
+}
+
+.operation-toast {
+  position: fixed;
+  z-index: 95;
+  right: 18px;
+  bottom: 18px;
+  max-width: min(360px, calc(100vw - 36px));
+  padding: 12px 14px;
+  border: 1px solid var(--aots-border-md);
+  border-radius: var(--aots-radius-lg);
+  background: var(--aots-surface);
+  color: var(--aots-text);
+  box-shadow: 0 12px 30px rgba(26, 25, 22, 0.14);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.operation-toast.success {
+  border-color: #b5dcca;
+  background: var(--aots-green-bg);
+  color: var(--aots-green);
+}
+
+.operation-toast.warning {
+  border-color: #efd491;
+  background: var(--aots-amber-bg);
+  color: var(--aots-amber);
+}
+
+.operation-toast.error {
+  border-color: #efb8b1;
+  background: var(--aots-red-bg);
+  color: var(--aots-red);
 }
 
 .student-main {

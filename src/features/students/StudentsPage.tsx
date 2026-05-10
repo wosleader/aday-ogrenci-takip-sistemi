@@ -8,6 +8,8 @@ import { EmptyState } from "../../components/EmptyState";
 import { CALL_RESULTS, LIFE_CYCLE_STATUSES, type CallResult } from "../../domain/constants/statuses";
 import { readCallHistoryForStudent } from "../calls/services/callHistoryReader";
 import { writeCallLog } from "../calls/services/callLogWriter";
+import { validateCallSave } from "../calls/services/callSaveValidation";
+import { saveFilteredExportSnapshot } from "../exports/services/exportSelection";
 import {
   createReminderPopupModel,
   dismissAllReminderAlerts,
@@ -254,6 +256,12 @@ type PhoneCardProps = {
   onInvalid: (phoneId: number) => void;
 };
 
+type OperationToast = {
+  id: number;
+  message: string;
+  type: "success" | "warning" | "error";
+};
+
 function PhoneCard({ label, phoneId, value, isContacted, isWrong, onContacted, onInvalid }: PhoneCardProps) {
   return (
     <div className={`drawer-phone-card ${isContacted ? "contacted" : ""} ${isWrong ? "invalid" : ""}`}>
@@ -308,6 +316,9 @@ export function StudentsPage() {
   const [reminderDate, setReminderDate] = useState("");
   const [reminderTime, setReminderTime] = useState("11:00");
   const [isSavingCall, setIsSavingCall] = useState(false);
+  const [operationToast, setOperationToast] = useState<OperationToast | null>(null);
+  const [allowAppointmentWithoutNote, setAllowAppointmentWithoutNote] = useState(false);
+  const [pastAppointmentConfirmCount, setPastAppointmentConfirmCount] = useState(0);
   const [dismissedReminderIds, setDismissedReminderIds] = useState<number[]>([]);
   const [chimedReminderIds, setChimedReminderIds] = useState<number[]>([]);
   const [reminderTick, setReminderTick] = useState(() => Date.now());
@@ -390,6 +401,15 @@ export function StudentsPage() {
   }, [activeFilter, campaignFilter, debouncedQuery]);
 
   useEffect(() => {
+    saveFilteredExportSnapshot({
+      student_ids: filteredRows.map((row) => row.student_id),
+      filter_label: `${FILTER_OPTIONS.find((filter) => filter.key === activeFilter)?.label ?? "Tümü"} · ${
+        campaignFilter === "all" ? "Tüm kampanyalar" : campaignFilter
+      }`
+    });
+  }, [activeFilter, campaignFilter, filteredRows]);
+
+  useEffect(() => {
     if (!selectedStudentId && visibleRows[0]) {
       setSelectedStudentId(visibleRows[0].student_id);
     }
@@ -427,6 +447,32 @@ export function StudentsPage() {
   }, [chimedReminderIds, reminderPopup, reminderSettings?.sound_enabled]);
 
   useEffect(() => {
+    if (!operationToast) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => setOperationToast(null), 4200);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [operationToast]);
+
+  useEffect(() => {
+    setAllowAppointmentWithoutNote(false);
+  }, [selectedRow?.student_id, callResult, newNote, reminderDate, reminderTime]);
+
+  useEffect(() => {
+    setPastAppointmentConfirmCount(0);
+  }, [selectedRow?.student_id, callResult, reminderDate, reminderTime]);
+
+  function showOperationToast(message: string, type: OperationToast["type"] = "warning") {
+    setOperationToast({
+      id: Date.now(),
+      message,
+      type
+    });
+  }
+
+  useEffect(() => {
     if (!selectedStudentId) {
       return;
     }
@@ -455,7 +501,9 @@ export function StudentsPage() {
     }
 
     if (newNote.trim()) {
-      setActionMessage("Kaydedilmemiş not var. Kaydetmek için Ctrl+S kullanın veya notu temizleyin.");
+      const message = "Kaydedilmemiş not var. Kaydetmek için Ctrl+S kullanın veya notu temizleyin.";
+      setActionMessage(message);
+      showOperationToast(message, "warning");
       return;
     }
 
@@ -482,12 +530,16 @@ export function StudentsPage() {
     const isWrong = slot === "phone_1" ? selectedRow.phone_1_is_wrong : selectedRow.phone_2_is_wrong;
 
     if (!phoneId) {
-      setActionMessage(slot === "phone_1" ? "Telefon 1 kaydı yok." : "Telefon 2 kaydı yok.");
+      const message = slot === "phone_1" ? "Telefon 1 kaydı yok." : "Telefon 2 kaydı yok.";
+      setActionMessage(message);
+      showOperationToast(message, "warning");
       return;
     }
 
     if (isWrong) {
-      setActionMessage("Yanlış numara / kullanılmıyor işaretli telefon görüşülen numara olarak seçilemez.");
+      const message = "Yanlış numara / kullanılmıyor işaretli telefon görüşülen numara olarak seçilemez.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
       return;
     }
 
@@ -506,7 +558,9 @@ export function StudentsPage() {
         : null;
 
     if (!activePhoneId) {
-      setActionMessage("Önce Telefon 1 veya Telefon 2 seçin.");
+      const message = "Önce Telefon 1 veya Telefon 2 seçin.";
+      setActionMessage(message);
+      showOperationToast(message, "warning");
       return;
     }
 
@@ -519,21 +573,25 @@ export function StudentsPage() {
 
       if (action === "contacted") {
         const result = await markPhoneAsContacted(phoneId);
-        setActionMessage(
+        const message =
           result.phone_status === "contacted"
             ? "Telefon görüşülen numara olarak işaretlendi."
-            : "Görüşülen numara işareti kaldırıldı."
-        );
+            : "Görüşülen numara işareti kaldırıldı.";
+        setActionMessage(message);
+        showOperationToast(message, "success");
       } else {
         const result = await markPhoneAsInvalid(phoneId);
-        setActionMessage(
+        const message =
           result.phone_status === "invalid"
             ? "Telefon yanlış numara / kullanılmıyor olarak işaretlendi."
-            : "Yanlış numara / kullanılmıyor işareti kaldırıldı."
-        );
+            : "Yanlış numara / kullanılmıyor işareti kaldırıldı.";
+        setActionMessage(message);
+        showOperationToast(message, "success");
       }
     } catch (error) {
-      setActionMessage(error instanceof Error ? error.message : "Telefon durumu güncellenemedi.");
+      const message = error instanceof Error ? error.message : "Telefon durumu güncellenemedi.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
     }
   }
 
@@ -593,15 +651,58 @@ export function StudentsPage() {
       return;
     }
 
+    if (isSavingCall) {
+      return;
+    }
+
+    const contactedPhoneId = selectedRow.phone_1_is_contacted
+      ? selectedRow.phone_1_id
+      : selectedRow.phone_2_is_contacted
+        ? selectedRow.phone_2_id
+        : null;
+    const validation = validateCallSave({
+      call_result: callResult,
+      note: newNote,
+      reminder_date: reminderDate,
+      reminder_time: reminderTime,
+      contacted_phone_id: contactedPhoneId ?? null,
+      allow_appointment_without_note: allowAppointmentWithoutNote,
+      past_appointment_confirm_count: pastAppointmentConfirmCount,
+      phones: [
+        {
+          id: selectedRow.phone_1_id,
+          phone_status: selectedRow.phone_1_status,
+          is_wrong: selectedRow.phone_1_is_wrong
+        },
+        {
+          id: selectedRow.phone_2_id,
+          phone_status: selectedRow.phone_2_status,
+          is_wrong: selectedRow.phone_2_is_wrong
+        }
+      ]
+    });
+
+    if (!validation.ok) {
+      setActionMessage(validation.message);
+      showOperationToast(validation.message, validation.severity);
+
+      if (validation.confirmation_required) {
+        if (validation.confirmation_type === "past_appointment") {
+          setPastAppointmentConfirmCount((current) => current + 1);
+        }
+
+        if (validation.confirmation_type === "appointment_note") {
+          setAllowAppointmentWithoutNote(true);
+        }
+      }
+
+      return;
+    }
+
     setIsSavingCall(true);
     setActionMessage(null);
 
     try {
-      const contactedPhoneId = selectedRow.phone_1_is_contacted
-        ? selectedRow.phone_1_id
-        : selectedRow.phone_2_is_contacted
-          ? selectedRow.phone_2_id
-          : null;
       const reminderAt = mergeReminderDateTime(reminderDate, reminderTime);
 
       await writeCallLog({
@@ -609,14 +710,15 @@ export function StudentsPage() {
         guardian_id: selectedRow.guardian_id ?? null,
         contacted_phone_id: contactedPhoneId ?? null,
         call_result: callResult,
-        note: newNote,
+        note: validation.note,
         reminder_at: reminderAt,
         campaign_id: selectedRow.campaign_id ?? null,
         created_by: "agent"
       });
 
       setNewNote("");
-      setActionMessage("Görüşme kaydedildi.");
+      setAllowAppointmentWithoutNote(false);
+      setPastAppointmentConfirmCount(0);
 
       const currentIndex = visibleRows.findIndex((row) => row.student_id === selectedRow.student_id);
       const nextRow = currentIndex >= 0 ? visibleRows[currentIndex + 1] : null;
@@ -624,11 +726,16 @@ export function StudentsPage() {
       if (nextRow) {
         setSelectedStudentId(nextRow.student_id);
         setIsDrawerOpen(true);
+        setActionMessage("Görüşme kaydedildi, sıradaki adaya geçildi.");
+        showOperationToast("Görüşme kaydedildi, sıradaki adaya geçildi.", "success");
       } else {
         setActionMessage("Görüşme kaydedildi. Liste sonuna geldiniz.");
+        showOperationToast("Görüşme kaydedildi. Liste sonuna geldiniz.", "success");
       }
     } catch (error) {
-      setActionMessage(error instanceof Error ? error.message : "Görüşme kaydı oluşturulamadı.");
+      const message = error instanceof Error ? error.message : "Görüşme kaydı oluşturulamadı.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
     } finally {
       setIsSavingCall(false);
     }
@@ -791,6 +898,11 @@ export function StudentsPage() {
             </button>
           </div>
         </section>
+      ) : null}
+      {operationToast ? (
+        <div className={`operation-toast ${operationToast.type}`} role="status">
+          {operationToast.message}
+        </div>
       ) : null}
       <section className="student-main">
         <div className="student-toolbar">
