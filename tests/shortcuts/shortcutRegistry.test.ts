@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   getDefaultOperationShortcuts,
+  getNavigationShortcutDisplayText,
+  getShortcutBarItems,
+  getShortcutDisplayTextForAction,
+  getShortcutKeyDisplayText,
   getShortcutDisplayText,
   resolveShortcutAction,
   shouldSuppressShortcutEvent,
@@ -26,8 +30,27 @@ describe("shortcutRegistry", () => {
     );
     expect(shortcuts.some((shortcut) => shortcut.shortcut === "3")).toBe(false);
     expect(validateShortcutConfig(shortcuts)).toEqual([]);
-    expect(getShortcutDisplayText(shortcuts.find((shortcut) => shortcut.action_key === "next_candidate")!)).toBe(
-      "N / ArrowDown"
+    expect(getShortcutDisplayText(shortcuts.find((shortcut) => shortcut.action_key === "next_candidate")!)).toBe("N / Aşağı Tuşu");
+  });
+
+  it("produces Turkish shortcut labels for special keys", () => {
+    expect(getShortcutKeyDisplayText("ArrowUp")).toBe("Yukarı Tuşu");
+    expect(getShortcutKeyDisplayText("ArrowDown")).toBe("Aşağı Tuşu");
+    expect(getShortcutKeyDisplayText("Escape")).toBe("Kapat / vazgeç");
+    expect(getShortcutDisplayText({ action_key: "save_call", label: "Kaydet", shortcut: "Ctrl+S", is_active: true })).toBe(
+      "Ctrl+S Kaydet"
+    );
+    expect(getNavigationShortcutDisplayText()).toBe("Yukarı/Aşağı Tuşları ile gezin");
+  });
+
+  it("uses active shortcut values for visible shortcut labels", () => {
+    const shortcuts = getDefaultOperationShortcuts().map((shortcut) =>
+      shortcut.action_key === "focus_search" ? { ...shortcut, shortcut: "S" } : shortcut
+    );
+
+    expect(getShortcutDisplayTextForAction(shortcuts, "focus_search")).toBe("S");
+    expect(getShortcutBarItems(shortcuts)).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "focus_search", shortcut: "S", label: "Ara" })])
     );
   });
 
@@ -38,6 +61,16 @@ describe("shortcutRegistry", () => {
 
     expect(validateShortcutConfig(shortcuts)).toEqual([
       expect.objectContaining({ type: "reserved_critical_key", shortcut: "3", action_keys: ["call_reached"] })
+    ]);
+  });
+
+  it("rejects risky single-key shortcuts", () => {
+    const shortcuts: ShortcutDefinition[] = [
+      { action_key: "focus_search", label: "Arama kutusuna git", shortcut: "Tab", is_active: true }
+    ];
+
+    expect(validateShortcutConfig(shortcuts)).toEqual([
+      expect.objectContaining({ type: "invalid_key", shortcut: "Tab", action_keys: ["focus_search"] })
     ]);
   });
 

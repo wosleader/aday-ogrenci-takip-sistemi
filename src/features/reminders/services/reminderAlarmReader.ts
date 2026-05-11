@@ -21,26 +21,30 @@ export type ReminderPopupModel = {
   isBulk: boolean;
 };
 
+export function getReminderDismissalKey(alert: Pick<DueReminderAlert, "reminder_id" | "reminder_at">): string {
+  return `${alert.reminder_id}|${alert.reminder_at}`;
+}
+
 export function filterDismissedReminderAlerts(
   alerts: DueReminderAlert[],
-  dismissedReminderIds: number[],
+  dismissedReminderKeys: string[],
   popupEnabled = true
 ): DueReminderAlert[] {
   if (!popupEnabled) {
     return [];
   }
 
-  const dismissed = new Set(dismissedReminderIds);
+  const dismissed = new Set(dismissedReminderKeys);
 
-  return alerts.filter((alert) => !dismissed.has(alert.reminder_id));
+  return alerts.filter((alert) => !dismissed.has(getReminderDismissalKey(alert)));
 }
 
 export function createReminderPopupModel(
   alerts: DueReminderAlert[],
-  dismissedReminderIds: number[],
+  dismissedReminderKeys: string[],
   popupEnabled = true
 ): ReminderPopupModel | null {
-  const visibleAlerts = filterDismissedReminderAlerts(alerts, dismissedReminderIds, popupEnabled);
+  const visibleAlerts = filterDismissedReminderAlerts(alerts, dismissedReminderKeys, popupEnabled);
   const primaryAlert = visibleAlerts[0];
 
   if (!primaryAlert) {
@@ -55,15 +59,18 @@ export function createReminderPopupModel(
   };
 }
 
-export function dismissReminderAlert(dismissedReminderIds: number[], reminderId: number): number[] {
-  return [...new Set([...dismissedReminderIds, reminderId])];
+export function dismissReminderAlert(
+  dismissedReminderKeys: string[],
+  alert: Pick<DueReminderAlert, "reminder_id" | "reminder_at">
+): string[] {
+  return [...new Set([...dismissedReminderKeys, getReminderDismissalKey(alert)])];
 }
 
 export function dismissAllReminderAlerts(
-  dismissedReminderIds: number[],
-  alerts: Array<Pick<DueReminderAlert, "reminder_id">>
-): number[] {
-  return [...new Set([...dismissedReminderIds, ...alerts.map((alert) => alert.reminder_id)])];
+  dismissedReminderKeys: string[],
+  alerts: Array<Pick<DueReminderAlert, "reminder_id" | "reminder_at">>
+): string[] {
+  return [...new Set([...dismissedReminderKeys, ...alerts.map((alert) => getReminderDismissalKey(alert))])];
 }
 
 function isSecondPhoneLabel(label?: string | null): boolean {

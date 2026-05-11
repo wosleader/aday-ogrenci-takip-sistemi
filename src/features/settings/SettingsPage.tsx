@@ -1,5 +1,5 @@
 import { useLiveQuery } from "dexie-react-hooks";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/PageHeader";
 import { downloadTextFile } from "../imports/services/logExport";
@@ -10,8 +10,14 @@ import {
 import {
   getDefaultOperationShortcuts,
   getShortcutDisplayText,
-  validateShortcutConfig
+  shortcutFromKeyboardEvent,
+  type ShortcutActionKey
 } from "../shortcuts/services/shortcutRegistry";
+import {
+  readActiveOperationShortcuts,
+  resetShortcutToDefault,
+  updateShortcutForAction
+} from "../shortcuts/services/shortcutSettings";
 import {
   clearCandidateData,
   createDataCleanupBackup,
@@ -19,10 +25,22 @@ import {
   type CandidateDataCleanupResult
 } from "./services/dataManagement";
 
+type SettingsTab = "general" | "shortcuts" | "reminders" | "data";
+
+const SETTINGS_TABS: Array<{ key: SettingsTab; label: string }> = [
+  { key: "general", label: "Genel" },
+  { key: "shortcuts", label: "Klavye Kısayolları" },
+  { key: "reminders", label: "Hatırlatmalar" },
+  { key: "data", label: "Veri Yönetimi" }
+];
+
 export function SettingsPage() {
   const reminderSettings = useLiveQuery(() => readReminderNotificationSettings(), []);
-  const shortcuts = getDefaultOperationShortcuts();
-  const shortcutIssues = validateShortcutConfig(shortcuts);
+  const shortcuts = useLiveQuery(() => readActiveOperationShortcuts(), [], getDefaultOperationShortcuts());
+  const [activeTab, setActiveTab] = useState<SettingsTab>("general");
+  const [editingShortcut, setEditingShortcut] = useState<ShortcutActionKey | null>(null);
+  const [shortcutMessage, setShortcutMessage] = useState<string | null>(null);
+  const [shortcutMessageType, setShortcutMessageType] = useState<"info" | "success" | "error">("info");
   const [confirmationText, setConfirmationText] = useState("");
   const [isCleaning, setIsCleaning] = useState(false);
   const [cleanupResult, setCleanupResult] = useState<CandidateDataCleanupResult | null>(null);
@@ -62,6 +80,47 @@ export function SettingsPage() {
     setReminderSettingsMessage("Hatırlatma ayarları kaydedildi.");
   }
 
+  useEffect(() => {
+    if (!editingShortcut) {
+      return;
+    }
+
+    const actionKey = editingShortcut;
+
+    function onKeyDown(event: KeyboardEvent) {
+      event.preventDefault();
+
+      const nextShortcut = shortcutFromKeyboardEvent(event);
+
+      void updateShortcutForAction(actionKey, nextShortcut)
+        .then((result) => {
+          setShortcutMessage(`${result.shortcut.label} kısayolu güncellendi: ${getShortcutDisplayText(result.shortcut)}`);
+          setShortcutMessageType("success");
+          setEditingShortcut(null);
+        })
+        .catch((error) => {
+          setShortcutMessage(error instanceof Error ? error.message : "Kısayol güncellenemedi.");
+          setShortcutMessageType("error");
+        });
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [editingShortcut]);
+
+  async function resetShortcut(actionKey: ShortcutActionKey) {
+    try {
+      const result = await resetShortcutToDefault(actionKey);
+      setShortcutMessage(`${result.shortcut.label} varsayılan kısayola döndü: ${getShortcutDisplayText(result.shortcut)}`);
+      setShortcutMessageType("success");
+      setEditingShortcut(null);
+    } catch (error) {
+      setShortcutMessage(error instanceof Error ? error.message : "Varsayılan kısayol geri yüklenemedi.");
+      setShortcutMessageType("error");
+    }
+  }
+
   return (
     <div className="page">
       <PageHeader
@@ -69,24 +128,77 @@ export function SettingsPage() {
         description="Varsayılan ayarlar ve klavye kısayolları yerel veritabanından okunacak şekilde hazırlanıyor."
       />
 
+      <div className="settings-tabs" role="tablist" aria-label="Ayar bölümleri">
+        {SETTINGS_TABS.map((tab) => (
+          <button
+            aria-selected={activeTab === tab.key}
+            className={`settings-tab ${activeTab === tab.key ? "active" : ""}`}
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            role="tab"
+            type="button"
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "general" ? (
+        <section className="panel">
+          <h2>Genel</h2>
+          <p>
+            Bu bölüm uygulamanın genel çalışma tercihleri için ayrıldı. Arama operasyonu kısayolları, hatırlatma
+            bildirimleri ve veri yönetimi ayarları üstteki sekmelerden yönetilir.
+          </p>
+          <p className="muted-text">
+            Sistem yerel-first çalışır; aday, görüşme ve export verileri cihazdaki IndexedDB veritabanından okunur.
+          </p>
+        </section>
+      ) : null}
+
+      {activeTab === "shortcuts" ? (
       <section className="panel">
         <h2>Klavye Kısayolları</h2>
-        <p>Arama operasyonunda kullanılan varsayılan kısayollar. Kısayol düzenleme sonraki sürümde aktif olacak.</p>
+        <div className="shortcut-help">
+          <span>Arama operasyonunda kullanılan kısayolları buradan değiştirebilirsiniz.</span>
+          <span>3 tuşu kritik işlemlerde kullanılamaz.</span>
+          <span>Aynı kısayol birden fazla işleme atanamaz.</span>
+        </div>
+        {shortcutMessage ? <p className={`shortcut-message ${shortcutMessageType}`}>{shortcutMessage}</p> : null}
         <div className="shortcut-grid">
           {shortcuts.map((shortcut) => (
-            <div className="shortcut-row" key={shortcut.action_key}>
-              <span>{shortcut.label}</span>
+            <div className={`shortcut-row ${editingShortcut === shortcut.action_key ? "editing" : ""}`} key={shortcut.action_key}>
+              <span className="shortcut-name">{shortcut.label}</span>
               <kbd>{getShortcutDisplayText(shortcut)}</kbd>
+              <div className="shortcut-actions">
+                {editingShortcut === shortcut.action_key ? (
+                  <button type="button" onClick={() => setEditingShortcut(null)}>
+                    Vazgeç
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingShortcut(shortcut.action_key);
+                      setShortcutMessage(`${shortcut.label} için yeni kısayola basın. İptal etmek için Vazgeç düğmesini kullanın.`);
+                      setShortcutMessageType("info");
+                    }}
+                  >
+                    Değiştir
+                  </button>
+                )}
+                <button type="button" onClick={() => void resetShortcut(shortcut.action_key)}>
+                  Varsayılana döndür
+                </button>
+              </div>
             </div>
           ))}
         </div>
-        {shortcutIssues.length === 0 ? (
-          <p className="muted-text">3 tuşu kritik varsayılan kısayollarda kullanılmıyor.</p>
-        ) : (
-          <p className="error-text">Kısayol çakışması kontrol edilmeli.</p>
-        )}
+        <p className="muted-text">3 tuşu kritik varsayılan kısayollarda kullanılmıyor. Yön tuşları kullanıcıya Türkçe ve anlaşılır şekilde gösterilir.</p>
       </section>
+      ) : null}
 
+      {activeTab === "data" ? (
       <section className="panel data-management-panel">
         <h2>Veri Yönetimi</h2>
         <p>
@@ -157,7 +269,9 @@ export function SettingsPage() {
           </div>
         ) : null}
       </section>
+      ) : null}
 
+      {activeTab === "reminders" ? (
       <section className="panel">
         <h2>Bildirimler / Hatırlatmalar</h2>
         <p>Uygulama açıkken zamanı gelen tekrar arama hatırlatmaları için ekran içi uyarıları yönetir.</p>
@@ -185,6 +299,7 @@ export function SettingsPage() {
         </label>
         {reminderSettingsMessage ? <p className="muted-text">{reminderSettingsMessage}</p> : null}
       </section>
+      ) : null}
     </div>
   );
 }

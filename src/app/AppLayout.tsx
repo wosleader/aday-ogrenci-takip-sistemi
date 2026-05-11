@@ -12,9 +12,24 @@ import {
   Upload,
   Users
 } from "lucide-react";
+import { useLiveQuery } from "dexie-react-hooks";
 import type { LucideIcon } from "lucide-react";
-import { useRef, useState } from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import {
+  clearDismissedReminderBadge,
+  clearDismissedReminderSummaries,
+  getVisibleDismissedReminderSummaries,
+  readDismissedReminderSummaries,
+  readDismissedReminderBadge,
+  removeDismissedReminderSummary,
+  REMINDER_DISMISSAL_BADGE_EVENT
+} from "../features/reminders/services/reminderDismissalStore";
+import {
+  getDefaultOperationShortcuts,
+  getShortcutDisplayTextForAction
+} from "../features/shortcuts/services/shortcutRegistry";
+import { readActiveOperationShortcuts } from "../features/shortcuts/services/shortcutSettings";
 
 type NavItem = {
   to: string;
@@ -27,6 +42,8 @@ type NavItem = {
 export type AppOutletContext = {
   globalSearch: string;
   focusGlobalSearch: () => void;
+  pendingOpenStudentId: number | null;
+  consumePendingOpenStudentId: () => void;
 };
 
 const navSections: Array<{ title: string; items: NavItem[] }> = [
@@ -55,13 +72,119 @@ const navSections: Array<{ title: string; items: NavItem[] }> = [
 ];
 
 export function AppLayout() {
+  const navigate = useNavigate();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
+  const [hasDismissedReminderBadge, setHasDismissedReminderBadge] = useState(() => readDismissedReminderBadge());
+  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
+  const [dismissedReminderSummaries, setDismissedReminderSummaries] = useState(() => readDismissedReminderSummaries());
+  const [pendingOpenStudentId, setPendingOpenStudentId] = useState<number | null>(null);
   const globalSearchRef = useRef<HTMLInputElement | null>(null);
+  const notificationRef = useRef<HTMLDivElement | null>(null);
+  const operationShortcuts = useLiveQuery(
+    () => readActiveOperationShortcuts(),
+    [],
+    getDefaultOperationShortcuts()
+  );
+  const searchShortcutLabel = getShortcutDisplayTextForAction(operationShortcuts, "focus_search") || "F";
+  const notificationSummaries = useMemo(
+    () => getVisibleDismissedReminderSummaries(dismissedReminderSummaries),
+    [dismissedReminderSummaries]
+  );
 
   function focusGlobalSearch() {
     globalSearchRef.current?.focus();
     globalSearchRef.current?.select();
+  }
+
+  useEffect(() => {
+    function refreshNotifications() {
+      setHasDismissedReminderBadge(readDismissedReminderBadge());
+      setDismissedReminderSummaries(readDismissedReminderSummaries());
+    }
+
+    window.addEventListener(REMINDER_DISMISSAL_BADGE_EVENT, refreshNotifications);
+    window.addEventListener("storage", refreshNotifications);
+
+    return () => {
+      window.removeEventListener(REMINDER_DISMISSAL_BADGE_EVENT, refreshNotifications);
+      window.removeEventListener("storage", refreshNotifications);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isNotificationPanelOpen) {
+      return;
+    }
+
+    function closeNotificationPanelOnOutsideClick(event: PointerEvent) {
+      const target = event.target;
+
+      if (target instanceof Node && notificationRef.current?.contains(target)) {
+        return;
+      }
+
+      setIsNotificationPanelOpen(false);
+    }
+
+    function closeNotificationPanelOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsNotificationPanelOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", closeNotificationPanelOnOutsideClick);
+    document.addEventListener("keydown", closeNotificationPanelOnEscape);
+
+    return () => {
+      document.removeEventListener("pointerdown", closeNotificationPanelOnOutsideClick);
+      document.removeEventListener("keydown", closeNotificationPanelOnEscape);
+    };
+  }, [isNotificationPanelOpen]);
+
+  function formatReminderDateTime(value: string): string {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return new Intl.DateTimeFormat("tr-TR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    }).format(date);
+  }
+
+  function openNotifications() {
+    setIsNotificationPanelOpen((current) => !current);
+    clearDismissedReminderBadge();
+    setHasDismissedReminderBadge(false);
+    setDismissedReminderSummaries(readDismissedReminderSummaries());
+  }
+
+  const consumePendingOpenStudentId = useCallback(() => {
+    setPendingOpenStudentId(null);
+  }, []);
+
+  function removeNotificationSummary(dismissalKey: string) {
+    const nextSummaries = removeDismissedReminderSummary(dismissalKey);
+    setDismissedReminderSummaries(nextSummaries);
+    setHasDismissedReminderBadge(readDismissedReminderBadge());
+  }
+
+  function clearNotificationHistory() {
+    clearDismissedReminderSummaries();
+    setDismissedReminderSummaries([]);
+    setHasDismissedReminderBadge(false);
+  }
+
+  function openStudentFromNotification(studentId: number) {
+    setPendingOpenStudentId(studentId);
+    setIsNotificationPanelOpen(false);
+    navigate("/students");
   }
 
   return (
@@ -96,7 +219,7 @@ export function AppLayout() {
           <input
             aria-label="Genel arama"
             onChange={(event) => setGlobalSearch(event.target.value)}
-            placeholder="İsim, telefon veya not ara... (F)"
+            placeholder={`İsim, telefon veya not ara... (${searchShortcutLabel})`}
             ref={globalSearchRef}
             type="search"
             value={globalSearch}
@@ -113,9 +236,60 @@ export function AppLayout() {
             <FileDown aria-hidden="true" size={15} />
             Dışa aktar
           </Link>
-          <button className="topbar-icon-btn" type="button" aria-label="Bildirimler">
+          <div className="topbar-notifications" ref={notificationRef}>
+          <button
+            className={`topbar-icon-btn ${hasDismissedReminderBadge ? "has-alert" : ""}`}
+            onClick={openNotifications}
+            type="button"
+            aria-expanded={isNotificationPanelOpen}
+            aria-label="Bildirimler"
+            title={hasDismissedReminderBadge ? "Kapatılmış hatırlatma bildirimi var" : "Bildirimler"}
+          >
             <Bell aria-hidden="true" size={17} />
           </button>
+          {isNotificationPanelOpen ? (
+            <div className="notification-popover" role="dialog" aria-label="Kapatılmış hatırlatmalar">
+              <strong>Kapatılmış hatırlatmalar</strong>
+              {dismissedReminderSummaries.length ? (
+                <>
+                <div className="notification-list">
+                  {notificationSummaries.visibleSummaries.map((summary) => (
+                    <div className="notification-item" key={summary.dismissal_key}>
+                      <div className="notification-item-header">
+                        <button
+                          className="notification-student-link"
+                          onClick={() => openStudentFromNotification(summary.student_id)}
+                          type="button"
+                        >
+                          {summary.student_full_name}
+                        </button>
+                        <button
+                          aria-label="Bildirimi panelden kaldÄ±r"
+                          className="notification-remove-btn"
+                          onClick={() => removeNotificationSummary(summary.dismissal_key)}
+                          title="Bildirimi panelden kaldÄ±r"
+                          type="button"
+                        >
+                          x
+                        </button>
+                      </div>
+                      {summary.guardian_full_name ? <small>Veli: {summary.guardian_full_name}</small> : null}
+                      <small>Hatırlatma: {formatReminderDateTime(summary.reminder_at)}</small>
+                      <em>Bildirim kapatıldı</em>
+                    </div>
+                  ))}
+                </div>
+                {notificationSummaries.hiddenCount > 0 ? <p>Son 10 bildirim gÃ¶steriliyor.</p> : null}
+                <button className="notification-clear-btn" onClick={clearNotificationHistory} type="button">
+                  Hepsini temizle
+                </button>
+                </>
+              ) : (
+                <p>Şu anda kapatılmış hatırlatma bildirimi yok.</p>
+              )}
+            </div>
+          ) : null}
+          </div>
           <span className="avatar" title="Ajan 1">
             A1
           </span>
@@ -166,7 +340,14 @@ export function AppLayout() {
         </aside>
 
         <main className="content">
-          <Outlet context={{ globalSearch, focusGlobalSearch } satisfies AppOutletContext} />
+          <Outlet
+            context={{
+              globalSearch,
+              focusGlobalSearch,
+              pendingOpenStudentId,
+              consumePendingOpenStudentId
+            } satisfies AppOutletContext}
+          />
         </main>
       </div>
     </div>

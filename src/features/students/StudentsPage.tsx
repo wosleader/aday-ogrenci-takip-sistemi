@@ -12,21 +12,28 @@ import { validateCallSave } from "../calls/services/callSaveValidation";
 import { saveFilteredExportSnapshot } from "../exports/services/exportSelection";
 import {
   createReminderPopupModel,
-  dismissAllReminderAlerts,
   dismissReminderAlert,
   readDueReminderAlerts,
   type DueReminderAlert
 } from "../reminders/services/reminderAlarmReader";
+import {
+  persistDismissedReminderAlert,
+  persistDismissedReminderAlerts,
+  readPersistedDismissedReminderKeys,
+  writePersistedDismissedReminderKeys
+} from "../reminders/services/reminderDismissalStore";
 import { readReminderNotificationSettings } from "../reminders/services/reminderSettings";
 import {
   createReminderPopupViewModel,
   DISMISS_FOLLOWING_REMINDERS_LABEL
 } from "../reminders/services/reminderPopupViewModel";
 import {
+  getShortcutBarItems,
   getDefaultOperationShortcuts,
   resolveShortcutAction,
   type ShortcutActionKey
 } from "../shortcuts/services/shortcutRegistry";
+import { readActiveOperationShortcuts } from "../shortcuts/services/shortcutSettings";
 import { deleteStudentWithRelations } from "./services/studentDelete";
 import {
   filterStudentListRows,
@@ -302,7 +309,8 @@ function PhoneCard({ label, phoneId, value, isContacted, isWrong, onContacted, o
 
 export function StudentsPage() {
   const navigate = useNavigate();
-  const { globalSearch, focusGlobalSearch } = useOutletContext<AppOutletContext>();
+  const { globalSearch, focusGlobalSearch, pendingOpenStudentId, consumePendingOpenStudentId } =
+    useOutletContext<AppOutletContext>();
   const debouncedQuery = useDebouncedValue(globalSearch);
   const [activeFilter, setActiveFilter] = useState<StudentListFilter>("all");
   const [campaignFilter, setCampaignFilter] = useState("all");
@@ -319,7 +327,7 @@ export function StudentsPage() {
   const [operationToast, setOperationToast] = useState<OperationToast | null>(null);
   const [allowAppointmentWithoutNote, setAllowAppointmentWithoutNote] = useState(false);
   const [pastAppointmentConfirmCount, setPastAppointmentConfirmCount] = useState(0);
-  const [dismissedReminderIds, setDismissedReminderIds] = useState<number[]>([]);
+  const [dismissedReminderKeys, setDismissedReminderKeys] = useState(() => readPersistedDismissedReminderKeys());
   const [chimedReminderIds, setChimedReminderIds] = useState<number[]>([]);
   const [reminderTick, setReminderTick] = useState(() => Date.now());
   const rows = useLiveQuery(
@@ -387,14 +395,19 @@ export function StudentsPage() {
     () =>
       createReminderPopupModel(
         dueReminderAlerts ?? [],
-        dismissedReminderIds,
+        dismissedReminderKeys,
         reminderSettings?.popup_enabled ?? true
       ),
-    [dismissedReminderIds, dueReminderAlerts, reminderSettings?.popup_enabled]
+    [dismissedReminderKeys, dueReminderAlerts, reminderSettings?.popup_enabled]
   );
   const activeReminderAlert = reminderPopup?.primaryAlert ?? null;
   const reminderPopupView = reminderPopup ? createReminderPopupViewModel(reminderPopup) : null;
-  const operationShortcuts = useMemo(() => getDefaultOperationShortcuts(), []);
+  const operationShortcuts = useLiveQuery(
+    () => readActiveOperationShortcuts(),
+    [],
+    getDefaultOperationShortcuts()
+  );
+  const shortcutBarItems = useMemo(() => getShortcutBarItems(operationShortcuts), [operationShortcuts]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -451,10 +464,23 @@ export function StudentsPage() {
       return;
     }
 
-    const timeoutId = window.setTimeout(() => setOperationToast(null), 4200);
+    const timeoutId = window.setTimeout(
+      () => setOperationToast(null),
+      operationToast.type === "success" ? 2600 : 6500
+    );
 
     return () => window.clearTimeout(timeoutId);
   }, [operationToast]);
+
+  useEffect(() => {
+    if (pendingOpenStudentId === null) {
+      return;
+    }
+
+    setSelectedStudentId(pendingOpenStudentId);
+    setIsDrawerOpen(true);
+    consumePendingOpenStudentId();
+  }, [consumePendingOpenStudentId, pendingOpenStudentId]);
 
   useEffect(() => {
     setAllowAppointmentWithoutNote(false);
@@ -626,7 +652,12 @@ export function StudentsPage() {
   }
 
   function openReminderStudent(alert: DueReminderAlert) {
-    setDismissedReminderIds((current) => dismissReminderAlert(current, alert.reminder_id));
+    setDismissedReminderKeys((current) => {
+      const nextKeys = dismissReminderAlert(current, alert);
+      writePersistedDismissedReminderKeys(nextKeys);
+
+      return nextKeys;
+    });
     openStudentDrawer(alert.student_id);
   }
 
@@ -635,7 +666,7 @@ export function StudentsPage() {
       return;
     }
 
-    setDismissedReminderIds((current) => dismissReminderAlert(current, activeReminderAlert.reminder_id));
+    setDismissedReminderKeys((current) => persistDismissedReminderAlert(current, activeReminderAlert));
   }
 
   function dismissAllVisibleReminders() {
@@ -643,7 +674,7 @@ export function StudentsPage() {
       return;
     }
 
-    setDismissedReminderIds((current) => dismissAllReminderAlerts(current, reminderPopup.alerts));
+    setDismissedReminderKeys((current) => persistDismissedReminderAlerts(current, reminderPopup.alerts));
   }
 
   async function saveCallAndGoNext() {
@@ -900,9 +931,15 @@ export function StudentsPage() {
         </section>
       ) : null}
       {operationToast ? (
-        <div className={`operation-toast ${operationToast.type}`} role="status">
+        <button
+          className={`operation-toast ${operationToast.type}`}
+          onClick={() => setOperationToast(null)}
+          title="Bildirimi kapat"
+          type="button"
+          aria-live="polite"
+        >
           {operationToast.message}
-        </div>
+        </button>
       ) : null}
       <section className="student-main">
         <div className="student-toolbar">
@@ -935,8 +972,6 @@ export function StudentsPage() {
         </div>
 
         {loadError ? <p className="error-text">{loadError}</p> : null}
-        {actionMessage ? <p className="student-action-message">{actionMessage}</p> : null}
-
         <div className="student-table-wrap">
           <table className="student-table">
             <thead>
@@ -1018,36 +1053,11 @@ export function StudentsPage() {
         </div>
 
         <div className="student-kbdbar">
-          <span>
-            <kbd>↑↓</kbd> Gezin
-          </span>
-          <span>
-            <kbd>F</kbd> Ara
-          </span>
-          <span>
-            <kbd>T</kbd> Tel 1
-          </span>
-          <span>
-            <kbd>Y</kbd> Tel 2
-          </span>
-          <span>
-            <kbd>1</kbd> Görüşüldü
-          </span>
-          <span>
-            <kbd>2</kbd> Ulaşılamadı
-          </span>
-          <span>
-            <kbd>4</kbd> Yanlış Numara
-          </span>
-          <span>
-            <kbd>5</kbd> Randevu
-          </span>
-          <span>
-            <kbd>6</kbd> Aranmayacak
-          </span>
-          <span>
-            <kbd>Ctrl+S</kbd> Kaydet
-          </span>
+          {shortcutBarItems.map((item) => (
+            <span key={item.id}>
+              <kbd>{item.shortcut}</kbd> {item.label}
+            </span>
+          ))}
         </div>
 
         <div className="student-statusbar">

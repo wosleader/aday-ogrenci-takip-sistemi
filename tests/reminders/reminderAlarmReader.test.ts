@@ -7,6 +7,7 @@ import {
   createReminderPopupModel,
   dismissAllReminderAlerts,
   dismissReminderAlert,
+  getReminderDismissalKey,
   readDueReminderAlerts
 } from "../../src/features/reminders/services/reminderAlarmReader";
 import { createSearchText, normalizeText } from "../../src/utils/normalizeText";
@@ -122,11 +123,29 @@ describe("reminderAlarmReader", () => {
       }
     ];
 
-    const dismissed = dismissReminderAlert([], 1);
+    const dismissed = dismissReminderAlert([], alerts[0]);
     const model = createReminderPopupModel(alerts, dismissed, true);
 
     expect(model?.dueCount).toBe(1);
     expect(model?.primaryAlert.reminder_id).toBe(2);
+  });
+
+  it("allows a dismissed reminder to show again when its date changes", () => {
+    const dismissedAlert = {
+      reminder_id: 1,
+      student_id: 1,
+      student_full_name: "Ayse",
+      reminder_at: "2026-05-09T10:00:00.000Z"
+    };
+    const updatedAlert = {
+      ...dismissedAlert,
+      reminder_at: "2026-05-09T11:00:00.000Z"
+    };
+
+    const dismissed = dismissReminderAlert([], dismissedAlert);
+
+    expect(dismissed).toEqual([getReminderDismissalKey(dismissedAlert)]);
+    expect(createReminderPopupModel([updatedAlert], dismissed, true)?.primaryAlert.reminder_id).toBe(1);
   });
 
   it("dismisses all current due reminders for the session", () => {
