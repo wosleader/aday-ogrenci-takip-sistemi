@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Bell, Check, ChevronsRight, Phone, Trash2, X } from "lucide-react";
+import { Bell, Check, ChevronsRight, MoreVertical, Trash2, X } from "lucide-react";
 import type { AppOutletContext } from "../../app/AppLayout";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/EmptyState";
@@ -309,13 +309,22 @@ function PhoneCard({ label, phoneId, value, isContacted, isWrong, onContacted, o
 
 export function StudentsPage() {
   const navigate = useNavigate();
-  const { globalSearch, focusGlobalSearch, pendingOpenStudentId, consumePendingOpenStudentId } =
+  const {
+    globalSearch,
+    focusGlobalSearch,
+    pendingOpenStudentId,
+    consumePendingOpenStudentId,
+    pendingSearchListRequestId,
+    consumePendingSearchListRequest
+  } =
     useOutletContext<AppOutletContext>();
   const debouncedQuery = useDebouncedValue(globalSearch);
   const [activeFilter, setActiveFilter] = useState<StudentListFilter>("all");
   const [campaignFilter, setCampaignFilter] = useState("all");
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
+  const [isStudentActionsOpen, setIsStudentActionsOpen] = useState(false);
+  const [studentDeleteCandidate, setStudentDeleteCandidate] = useState<StudentListRow | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
@@ -483,6 +492,21 @@ export function StudentsPage() {
   }, [consumePendingOpenStudentId, pendingOpenStudentId]);
 
   useEffect(() => {
+    if (pendingSearchListRequestId === null) {
+      return;
+    }
+
+    setSelectedStudentId(null);
+    setIsDrawerOpen(false);
+    setCurrentPage(1);
+    consumePendingSearchListRequest();
+  }, [consumePendingSearchListRequest, pendingSearchListRequestId]);
+
+  useEffect(() => {
+    setIsStudentActionsOpen(false);
+  }, [selectedRow?.student_id]);
+
+  useEffect(() => {
     setAllowAppointmentWithoutNote(false);
   }, [selectedRow?.student_id, callResult, newNote, reminderDate, reminderTime]);
 
@@ -621,23 +645,18 @@ export function StudentsPage() {
     }
   }
 
-  async function deleteSelectedStudent(row: StudentListRow) {
-    const confirmation = window.prompt(
-      `${row.student_full_name} adayını ve ilişkili kayıtlarını silmek için ADAYI SİL yazın.`
-    );
-
-    if (confirmation !== "ADAYI SİL") {
-      return;
-    }
-
+  async function confirmDeleteSelectedStudent(row: StudentListRow) {
     try {
       const result = await deleteStudentWithRelations(row.student_id);
       setSelectedStudentId(null);
-      setActionMessage(
-        `${result.deleted_students} aday, ${result.deleted_guardians} veli, ${result.deleted_phones} telefon ve ${result.deleted_reminders} hatırlatma silindi.`
-      );
+      setStudentDeleteCandidate(null);
+      const message = `${result.deleted_students} aday, ${result.deleted_guardians} veli, ${result.deleted_phones} telefon ve ${result.deleted_reminders} hatırlatma silindi.`;
+      setActionMessage(message);
+      showOperationToast(message, "success");
     } catch (error) {
-      setActionMessage(error instanceof Error ? error.message : "Aday silinemedi.");
+      const message = error instanceof Error ? error.message : "Aday silinemedi.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
     }
   }
 
@@ -941,6 +960,31 @@ export function StudentsPage() {
           {operationToast.message}
         </button>
       ) : null}
+      {studentDeleteCandidate ? (
+        <section
+          aria-labelledby="student-delete-title"
+          aria-modal="true"
+          className="delete-confirm-backdrop"
+          role="dialog"
+        >
+          <div className="delete-confirm-modal">
+            <h2 id="student-delete-title">Aday silinsin mi?</h2>
+            <p>Bu aday ve ilişkili telefon, görüşme geçmişi, hatırlatma/randevu kayıtları silinecek.</p>
+            <div className="delete-confirm-actions">
+              <button onClick={() => setStudentDeleteCandidate(null)} type="button">
+                İptal
+              </button>
+              <button
+                className="danger"
+                onClick={() => void confirmDeleteSelectedStudent(studentDeleteCandidate)}
+                type="button"
+              >
+                Sil
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : null}
       <section className="student-main">
         <div className="student-toolbar">
           <div className="toolbar-left">
@@ -1095,9 +1139,38 @@ export function StudentsPage() {
                     Sınıf: {selectedRow.current_class || "-"} · {selectedRow.student_group}
                   </div>
                 </div>
-                <button className="close-btn" onClick={() => setIsDrawerOpen(false)} title="Kişi kartını kapat" type="button">
-                  <X aria-hidden="true" size={15} />
-                </button>
+                <div className="drawer-header-actions">
+                  <div className="drawer-more-menu">
+                    <button
+                      aria-expanded={isStudentActionsOpen}
+                      aria-label="Aday işlemleri"
+                      className="icon-only-btn"
+                      onClick={() => setIsStudentActionsOpen((current) => !current)}
+                      title="Aday işlemleri"
+                      type="button"
+                    >
+                      <MoreVertical aria-hidden="true" size={15} />
+                    </button>
+                    {isStudentActionsOpen ? (
+                      <div className="drawer-more-popover">
+                        <button
+                          className="danger"
+                          onClick={() => {
+                            setIsStudentActionsOpen(false);
+                            setStudentDeleteCandidate(selectedRow);
+                          }}
+                          type="button"
+                        >
+                          <Trash2 aria-hidden="true" size={14} />
+                          Adayı sil
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                  <button className="close-btn" onClick={() => setIsDrawerOpen(false)} title="Kişi kartını kapat" type="button">
+                    <X aria-hidden="true" size={15} />
+                  </button>
+                </div>
               </div>
               <div className="contact-card">
                 <div className="veli-label">Veli</div>
@@ -1162,17 +1235,6 @@ export function StudentsPage() {
                 <ChevronsRight aria-hidden="true" size={16} />
                 {isSavingCall ? "Kaydediliyor..." : "Kaydet ve sonrakine geç"}
               </button>
-
-              <div className="drawer-actions">
-                <Button disabled title="Arama ekranı Sprint 5'te aktif olacak" type="button" variant="secondary">
-                  <Phone aria-hidden="true" size={16} />
-                  Arama ekranı Sprint 5'te aktif olacak
-                </Button>
-                <Button type="button" variant="secondary" onClick={() => void deleteSelectedStudent(selectedRow)}>
-                  <Trash2 aria-hidden="true" size={16} />
-                  Adayı sil
-                </Button>
-              </div>
 
               <div className="timeline-section">
                 <div className="timeline-title">İletişim geçmişi</div>

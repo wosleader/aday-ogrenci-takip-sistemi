@@ -1,8 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useOutletContext } from "react-router-dom";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppLayout, type AppOutletContext } from "../../src/app/AppLayout";
+import { db } from "../../src/db/db";
 import {
   markDismissedReminderBadge,
   persistDismissedReminderAlert,
@@ -19,10 +20,108 @@ const alert: DueReminderAlert = {
   reminder_at: "2026-05-09T11:00:00"
 };
 
-function StudentsProbe() {
-  const { pendingOpenStudentId } = useOutletContext<AppOutletContext>();
+async function seedSearchStudent() {
+  const now = "2026-05-10T10:00:00.000Z";
+  const studentId = await db.students.add({
+    uuid: "student-1",
+    student_full_name: "ECEM ÇAKIR",
+    normalized_student_name: "ecem cakir",
+    search_text: "ecem cakir yildiz cakir 05352329429",
+    current_class: "12",
+    student_group: "YKS",
+    category: "YKS",
+    campaign_id: null,
+    lifecycle_status: "candidate",
+    last_call_result: "not_called",
+    general_note: "Bu not dropdown sonucunda görünmemeli",
+    created_at: now,
+    updated_at: now,
+    sync_status: "local"
+  });
+  const guardianId = await db.guardians.add({
+    uuid: "guardian-1",
+    student_id: studentId,
+    guardian_full_name: "Yıldız Çakır",
+    normalized_guardian_name: "yildiz cakir",
+    created_at: now,
+    updated_at: now,
+    sync_status: "local"
+  });
+  await db.phones.bulkAdd([
+    {
+      uuid: "phone-1",
+      student_id: studentId,
+      guardian_id: guardianId,
+      phone_number: "0535 232 9429",
+      normalized_phone_number: "05352329429",
+      phone_label: "Telefon 1",
+      phone_status: "active",
+      is_valid: true,
+      is_wrong: false,
+      is_primary: true,
+      created_at: now,
+      updated_at: now,
+      sync_status: "local"
+    }
+  ]);
 
-  return <div>Aday: {pendingOpenStudentId ?? "yok"}</div>;
+  return studentId;
+}
+
+async function seedManySearchStudents(count: number) {
+  const now = "2026-05-10T10:00:00.000Z";
+
+  for (let index = 1; index <= count; index += 1) {
+    const studentId = await db.students.add({
+      uuid: `student-many-${index}`,
+      student_full_name: `ELIF CAKAL ${index}`,
+      normalized_student_name: `elif cakal ${index}`,
+      search_text: `elif cakal ${index} fadime cakal 05374122906`,
+      current_class: "12",
+      student_group: "YKS",
+      category: "YKS",
+      campaign_id: null,
+      lifecycle_status: "candidate",
+      last_call_result: "not_called",
+      created_at: now,
+      updated_at: now,
+      sync_status: "local"
+    });
+    await db.guardians.add({
+      uuid: `guardian-many-${index}`,
+      student_id: studentId,
+      guardian_full_name: "Fadime Çakal",
+      normalized_guardian_name: "fadime cakal",
+      created_at: now,
+      updated_at: now,
+      sync_status: "local"
+    });
+    await db.phones.add({
+      uuid: `phone-many-${index}`,
+      student_id: studentId,
+      phone_number: "0537 412 2906",
+      normalized_phone_number: "05374122906",
+      phone_label: "Telefon 1",
+      phone_status: "active",
+      is_valid: true,
+      is_wrong: false,
+      is_primary: true,
+      created_at: now,
+      updated_at: now,
+      sync_status: "local"
+    });
+  }
+}
+
+function StudentsProbe() {
+  const { pendingOpenStudentId, pendingSearchListRequestId } = useOutletContext<AppOutletContext>();
+
+  return (
+    <div>
+      <div>Aday: {pendingOpenStudentId ?? "yok"}</div>
+      <div>Liste arama: {pendingSearchListRequestId ? "evet" : "hayır"}</div>
+    </div>
+  );
 }
 
 function renderLayout() {
@@ -39,8 +138,82 @@ function renderLayout() {
 }
 
 describe("AppLayout notifications", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear();
+    await db.delete();
+    await db.open();
+  });
+
+  afterEach(async () => {
+    vi.restoreAllMocks();
+    await db.delete();
+  });
+
+  it("hides the call screen and duplicate topbar import/export actions", () => {
+    renderLayout();
+
+    expect(screen.queryByText("Arama ekranı")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Excel içe aktar/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /^Dışa aktar$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /İçe aktarma/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Excel dışa aktar/i })).toBeInTheDocument();
+  });
+
+  it("shows the active shortcut in the global student search placeholder", () => {
+    renderLayout();
+
+    expect(screen.getByLabelText("Genel arama")).toHaveAttribute(
+      "placeholder",
+      "Aday, veli veya telefon ara... (F)"
+    );
+  });
+
+  it("shows compact global search results and opens a student", async () => {
+    const studentId = await seedSearchStudent();
+    renderLayout();
+
+    await userEvent.type(screen.getByLabelText("Genel arama"), "Ec");
+
+    expect(await screen.findByRole("option", { name: /ECEM ÇAKIR/i })).toBeInTheDocument();
+    expect(screen.getByText(/Yıldız Çakır/i)).toBeInTheDocument();
+    expect(screen.getByText(/0535 232 9429/i)).toBeInTheDocument();
+    const result = screen.getByRole("option", { name: /0535 232 9429/i });
+    expect(result).toHaveTextContent(" - 0535 232 9429 / -");
+    expect(result).not.toHaveTextContent("Â");
+    expect(screen.queryByText(/dropdown sonucunda/i)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("option", { name: /ECEM ÇAKIR/i }));
+
+    expect(screen.getByText(`Aday: ${studentId}`)).toBeInTheDocument();
+  });
+
+  it("limits global search results and sends more results to the student list", async () => {
+    await seedManySearchStudents(9);
+    renderLayout();
+
+    await userEvent.type(screen.getByLabelText("Genel arama"), "El");
+
+    await waitFor(() => expect(screen.getAllByRole("option")).toHaveLength(8));
+    await userEvent.click(screen.getByRole("button", { name: /Daha fazla/ }));
+
+    expect(screen.getByText("Liste arama: evet")).toBeInTheDocument();
+    expect(screen.getByText("Aday: yok")).toBeInTheDocument();
+  });
+
+  it("uses a friendly connection status instead of the old offline text", () => {
+    renderLayout();
+
+    expect(screen.queryByText("Çevrimdışı")).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/Bağlantı durumu: İnternet var/i)).toBeInTheDocument();
+  });
+
+  it("shows amber friendly connection status when internet is unavailable", () => {
+    vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+    renderLayout();
+
+    const indicator = screen.getByLabelText(/İnternet yok/i);
+    expect(indicator).toHaveClass("offline");
+    expect(indicator).not.toHaveClass("online");
   });
 
   it("shows dismissed reminder details from the bell and clears only the badge", async () => {
