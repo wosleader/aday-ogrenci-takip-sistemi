@@ -10,6 +10,7 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - FILE_MAP: ✅ Sprint 8.2
 - DECISIONS: ✅ Sprint 8.2
 - Son sprint-close çalıştırıldı: ✅ Sprint 8.2
+- Hafıza dosyaları başlangıç ve yön bulma içindir. Kod değişikliği yapılmadan önce ilgili gerçek kaynak dosyalar mutlaka okunmalıdır.
 
 ## 1. Proje Amacı
 
@@ -148,6 +149,7 @@ Güncel önerilen sıra:
 - Yol haritası değiştiğinde
 - Yeni ana modül eklendiğinde
 - Kullanım kitapçığına etki eden karar alındığında
+- Codex’in bir sprintte ihtiyaç duyduğu ama hafıza dosyalarında bulamadığı edge-case veya ürün kararı ortaya çıktığında
 
 ## Checkpoint Okuma Rehberi
 

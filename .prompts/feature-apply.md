@@ -2,6 +2,9 @@
 
 Onaylanan planı uygula.
 
+Uygulamaya başlamadan önce onaylanan planla ilgili gerçek kaynak dosyaların okunduğunu doğrula.
+FILE_MAP sadece yön gösterir; kodun gerçek durumu kaynak dosyadan doğrulanmalıdır.
+
 Kurallar:
 - Sadece onaylanan kapsamı uygula.
 - Yeni paket kurma.

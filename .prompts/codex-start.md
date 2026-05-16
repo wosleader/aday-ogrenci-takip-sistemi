@@ -10,9 +10,13 @@
 - docs/FILE_MAP.md
 - docs/DECISIONS.md
 
+PROJECT_MEMORY, FILE_MAP ve DECISIONS başlangıç ve yön bulma içindir.
+Kod yazmadan veya planı kesinleştirmeden önce ilgili gerçek kaynak dosyaları mutlaka oku.
+Yalnızca hafıza dosyalarına dayanarak uygulama yapma.
+
 Sadece bu işle ilgili checkpoint gerekiyorsa oku.
 Tüm checkpoint dosyalarını gereksiz yere okuma.
-Checkpoint Okuma Rehberi’ne göre sadece ilgili checkpoint’i oku.
+Gerekirse PROJECT_MEMORY içindeki Checkpoint Okuma Rehberi’ne göre ilgili checkpoint’i oku.
 
 PROJECT_MEMORY kısa özet, DECISIONS detaylı karar günlüğü olarak kullanılmalı; aynı kararı iki dosyada tekrar tekrar okumaya çalışma.
 

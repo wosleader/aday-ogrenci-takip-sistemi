@@ -3,6 +3,7 @@
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
 Bu dosya “hangi dosya ne işe yarar?” haritasıdır.
+Bu dosya yön bulma haritasıdır. Nihai doğruluk için ilgili kaynak dosya okunmalıdır. Refactor sonrası bu dosya güncellenmelidir.
 
 ## 1. App / Layout
 

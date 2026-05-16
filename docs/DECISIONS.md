@@ -5,6 +5,7 @@
 ## Amaç
 
 Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntılı sprint geçmişi için checkpoint dosyaları, güncel kısa bağlam için `docs/PROJECT_MEMORY.md` kullanılır.
+Kararlar kısa ürün kararlarını tutar; teknik uygulama ayrıntısı için ilgili kaynak dosyalar ve testler esas alınır.
 
 ## Aktif Kararlar
 

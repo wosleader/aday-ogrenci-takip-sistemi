@@ -14,6 +14,11 @@ Gerekiyorsa ilgili checkpoint’i oku.
 Plan çıkarırken docs/DECISIONS.md ile çelişen öneri yapma.
 Gerekirse ilgili karar maddesini referans al.
 
+Plan çıkarırken sadece PROJECT_MEMORY / FILE_MAP özetlerine güvenme.
+İşin ilgili olduğu gerçek kaynak dosyaları incele.
+Dosya bazlı planı gerçek dosya içeriğine göre çıkar.
+Varsayım yapma.
+
 Kod yazma.
 Dosya değiştirme.
 Paket kurma.
