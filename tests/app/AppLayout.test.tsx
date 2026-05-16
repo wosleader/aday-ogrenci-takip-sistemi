@@ -114,22 +114,24 @@ async function seedManySearchStudents(count: number) {
 }
 
 function StudentsProbe() {
-  const { pendingOpenStudentId, pendingSearchListRequestId } = useOutletContext<AppOutletContext>();
+  const { globalSearch, pendingOpenStudentId, pendingSearchListRequestId } = useOutletContext<AppOutletContext>();
 
   return (
     <div>
       <div>Aday: {pendingOpenStudentId ?? "yok"}</div>
       <div>Liste arama: {pendingSearchListRequestId ? "evet" : "hayır"}</div>
+      <div>Liste sorgusu: {globalSearch || "boş"}</div>
     </div>
   );
 }
 
-function renderLayout() {
+function renderLayout(initialEntry = "/") {
   render(
-    <MemoryRouter initialEntries={["/"]}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<div>İçerik</div>} />
+          <Route path="/settings" element={<div>Ayarlar içerik</div>} />
           <Route path="/students" element={<StudentsProbe />} />
         </Route>
       </Routes>
@@ -170,7 +172,7 @@ describe("AppLayout notifications", () => {
 
   it("shows compact global search results and opens a student", async () => {
     const studentId = await seedSearchStudent();
-    renderLayout();
+    renderLayout("/settings");
 
     await userEvent.type(screen.getByLabelText("Genel arama"), "Ec");
 
@@ -187,9 +189,20 @@ describe("AppLayout notifications", () => {
     expect(screen.getByText(`Aday: ${studentId}`)).toBeInTheDocument();
   });
 
+  it("keeps the global search dropdown closed on the student list route", async () => {
+    await seedSearchStudent();
+    renderLayout("/students");
+
+    await userEvent.type(screen.getByLabelText("Genel arama"), "Ec");
+
+    expect(screen.queryByRole("option")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Daha fazla/ })).not.toBeInTheDocument();
+    expect(screen.getByText("Liste sorgusu: Ec")).toBeInTheDocument();
+  });
+
   it("limits global search results and sends more results to the student list", async () => {
     await seedManySearchStudents(9);
-    renderLayout();
+    renderLayout("/settings");
 
     await userEvent.type(screen.getByLabelText("Genel arama"), "El");
 

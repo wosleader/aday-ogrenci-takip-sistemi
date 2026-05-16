@@ -16,7 +16,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import type { LucideIcon } from "lucide-react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   clearDismissedReminderBadge,
   clearDismissedReminderSummaries,
@@ -114,6 +114,7 @@ function createGlobalSearchBlob(row: StudentListRow): string {
 
 export function AppLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
   const [hasDismissedReminderBadge, setHasDismissedReminderBadge] = useState(() => readDismissedReminderBadge());
@@ -145,6 +146,8 @@ export function AppLayout() {
   );
   const visibleGlobalSearchResults = globalSearchResults.slice(0, 8);
   const hasMoreGlobalSearchResults = globalSearchResults.length > 8;
+  const isStudentsRoute = location.pathname === "/students" || location.pathname.startsWith("/students/");
+  const canShowGlobalSearchDropdown = !isStudentsRoute;
 
   function focusGlobalSearch() {
     globalSearchRef.current?.focus();
@@ -212,8 +215,8 @@ export function AppLayout() {
 
   useEffect(() => {
     setActiveGlobalSearchIndex(0);
-    setIsGlobalSearchOpen(normalizeText(globalSearch).length >= 2);
-  }, [globalSearch]);
+    setIsGlobalSearchOpen(canShowGlobalSearchDropdown && normalizeText(globalSearch).length >= 2);
+  }, [canShowGlobalSearchDropdown, globalSearch]);
 
   useEffect(() => {
     if (!isGlobalSearchOpen) {
@@ -380,16 +383,16 @@ export function AppLayout() {
             aria-label="Genel arama"
             onChange={(event) => {
               setGlobalSearch(event.target.value);
-              setIsGlobalSearchOpen(normalizeText(event.target.value).length >= 2);
+              setIsGlobalSearchOpen(canShowGlobalSearchDropdown && normalizeText(event.target.value).length >= 2);
             }}
-            onFocus={() => setIsGlobalSearchOpen(normalizeText(globalSearch).length >= 2)}
+            onFocus={() => setIsGlobalSearchOpen(canShowGlobalSearchDropdown && normalizeText(globalSearch).length >= 2)}
             onKeyDown={handleGlobalSearchKeyDown}
             placeholder={`Aday, veli veya telefon ara... (${searchShortcutLabel})`}
             ref={globalSearchRef}
             type="search"
             value={globalSearch}
           />
-          {isGlobalSearchOpen ? (
+          {canShowGlobalSearchDropdown && isGlobalSearchOpen ? (
             <div className="global-search-popover" role="listbox" aria-label="Global aday arama sonuÃ§larÄ±">
               {visibleGlobalSearchResults.length ? (
                 <>
