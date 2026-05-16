@@ -215,16 +215,19 @@ function maskPhoneForGroup(value: string): string {
 function PhoneCell({
   value,
   isContacted,
-  isWrong
+  isWrong,
+  centerEmpty = false
 }: {
   value?: string | null;
   isContacted: boolean;
   isWrong: boolean;
+  centerEmpty?: boolean;
 }) {
   const mark = phoneMark(isContacted, isWrong);
+  const isEmpty = centerEmpty && !value?.trim();
 
   return (
-    <span className="phone-cell" title={value || undefined}>
+    <span className={`phone-cell ${isEmpty ? "empty-value" : ""}`} title={value || undefined}>
       <span className="phone-cell-number">{compactPhone(value)}</span>
       {mark ? (
         <span className={`phone-cell-mark ${isWrong ? "invalid" : "contacted"}`} title={isWrong ? "Yanlış numara / kullanılmıyor" : "Son görüşülen / iletişim kurulan numara"}>
@@ -1140,16 +1143,23 @@ export function StudentsPage() {
                           value={row.phone_2}
                           isContacted={row.phone_2_is_contacted}
                           isWrong={row.phone_2_is_wrong}
+                          centerEmpty
                         />
                       </td>
                       <td>
-                        <span className={`status ${statusClass(row)}`}>{statusLabel(row)}</span>
+                        <span className={`status ${statusClass(row)}`}>
+                          <span className="status-text">{statusLabel(row)}</span>
+                        </span>
                       </td>
                       <td className="td-note" title={noteSummary.title}>
-                        <span className="td-note-summary">{noteSummary.text}</span>
-                        {noteSummary.suffix ? <em className="td-note-count">· {noteSummary.suffix}</em> : null}
+                        <div className={`td-note-inner ${noteSummary.is_empty ? "td-note-empty" : ""}`}>
+                          <span className="td-note-summary">{noteSummary.text}</span>
+                          {noteSummary.suffix ? <em className="td-note-count">· {noteSummary.suffix}</em> : null}
+                        </div>
                       </td>
-                      <td className="td-next">{row.has_reminder ? `↻ ${formatShortDateTime(row.next_reminder_at)}` : "-"}</td>
+                      <td className="td-next">
+                        {row.has_reminder ? `↻ ${formatShortDateTime(row.next_reminder_at)}` : <span className="td-empty-value">-</span>}
+                      </td>
                     </tr>
                   </Fragment>
                 );

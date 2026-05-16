@@ -74,6 +74,7 @@ export type StudentListNoteSummary = {
   text: string;
   suffix?: string;
   title?: string;
+  is_empty?: boolean;
 };
 
 type ParsedClassSection = {
@@ -479,7 +480,7 @@ export function createStudentListNoteSummary(row: StudentListRow, filter: Studen
     const detailText = row.latest_call_note?.trim() || row.general_note?.trim();
 
     if (!detailText) {
-      return { text: "—" };
+      return { text: "Not yok", is_empty: true };
     }
 
     return {
@@ -490,7 +491,7 @@ export function createStudentListNoteSummary(row: StudentListRow, filter: Studen
   }
 
   if (!hasGeneralNote && callNoteCount === 0) {
-    return { text: "—" };
+    return { text: "Not yok", is_empty: true };
   }
 
   if (hasGeneralNote && callNoteCount === 0) {

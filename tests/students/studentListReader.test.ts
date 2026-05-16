@@ -334,7 +334,8 @@ describe("studentListReader", () => {
       const rows = await readStudentListRows(database);
       const byId = new Map(rows.map((row) => [row.student_id, row]));
 
-      expect(createStudentListNoteSummary(byId.get(noNoteId)!).text).toBe("—");
+      expect(createStudentListNoteSummary(byId.get(noNoteId)!).text).toBe("Not yok");
+      expect(createStudentListNoteSummary(byId.get(noNoteId)!).is_empty).toBe(true);
       expect(createStudentListNoteSummary(byId.get(generalOnlyId)!).text).toBe("Genel not var");
       expect(createStudentListNoteSummary(byId.get(oneCallNoteId)!).text).toBe("1 not");
       expect(createStudentListNoteSummary(byId.get(threeCallNotesId)!).text).toBe("3 not");
