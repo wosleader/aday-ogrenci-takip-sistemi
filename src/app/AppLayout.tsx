@@ -46,6 +46,7 @@ type NavItem = {
 export type AppOutletContext = {
   globalSearch: string;
   focusGlobalSearch: () => void;
+  openStudentById: (studentId: number) => void;
   pendingOpenStudentId: number | null;
   consumePendingOpenStudentId: () => void;
   pendingSearchListRequestId: number | null;
@@ -62,7 +63,7 @@ const navSections: Array<{ title: string; items: NavItem[] }> = [
   {
     title: "Planlama",
     items: [
-      { to: "/reminders", label: "Hatırlatmalar", icon: CalendarClock, shortcut: "H", disabled: true }
+      { to: "/reminders", label: "Hatırlatmalar", icon: CalendarClock, shortcut: "H" }
     ]
   },
   {
@@ -284,6 +285,11 @@ export function AppLayout() {
     setPendingSearchListRequestId(null);
   }, []);
 
+  const openStudentById = useCallback((studentId: number) => {
+    setPendingOpenStudentId(studentId);
+    navigate("/students");
+  }, [navigate]);
+
   function removeNotificationSummary(dismissalKey: string) {
     const nextSummaries = removeDismissedReminderSummary(dismissalKey);
     setDismissedReminderSummaries(nextSummaries);
@@ -297,15 +303,13 @@ export function AppLayout() {
   }
 
   function openStudentFromNotification(studentId: number) {
-    setPendingOpenStudentId(studentId);
+    openStudentById(studentId);
     setIsNotificationPanelOpen(false);
-    navigate("/students");
   }
 
   function openStudentFromGlobalSearch(row: StudentListRow) {
-    setPendingOpenStudentId(row.student_id);
+    openStudentById(row.student_id);
     setIsGlobalSearchOpen(false);
-    navigate("/students");
   }
 
   function showMoreGlobalSearchResults() {
@@ -414,7 +418,7 @@ export function AppLayout() {
                   ))}
                   {hasMoreGlobalSearchResults ? (
                     <button className="global-search-more" onClick={showMoreGlobalSearchResults} type="button">
-                      Daha fazla gÃ¶r
+                      Daha fazla gör
                     </button>
                   ) : null}
                 </>
@@ -550,6 +554,7 @@ export function AppLayout() {
             context={{
               globalSearch,
               focusGlobalSearch,
+              openStudentById,
               pendingOpenStudentId,
               consumePendingOpenStudentId,
               pendingSearchListRequestId,

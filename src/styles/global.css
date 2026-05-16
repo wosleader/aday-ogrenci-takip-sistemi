@@ -1717,8 +1717,8 @@ body {
 }
 
 .student-table {
-  width: max(100%, 1120px);
-  min-width: 1120px;
+  width: max(100%, 1280px);
+  min-width: 1280px;
   border-collapse: collapse;
   table-layout: fixed;
   font-size: 15px;
@@ -1765,24 +1765,24 @@ body {
 .student-table th:nth-child(1),
 .student-table td:nth-child(1) {
   text-align: center;
-  width: 5%;
+  width: 7%;
 }
 
 .student-table th:nth-child(2),
 .student-table td:nth-child(2) {
-  width: 18%;
+  width: 15%;
 }
 
 .student-table th:nth-child(3),
 .student-table td:nth-child(3) {
-  width: 14%;
+  width: 12%;
 }
 
 .student-table th:nth-child(4),
 .student-table td:nth-child(4),
 .student-table th:nth-child(5),
 .student-table td:nth-child(5) {
-  width: 10%;
+  width: 13%;
 }
 
 .student-table th:nth-child(6),
@@ -1790,7 +1790,7 @@ body {
   padding-right: 8px;
   padding-left: 8px;
   text-align: center;
-  width: 12%;
+  width: 13%;
 }
 
 .student-table th:nth-child(7),
@@ -1798,7 +1798,7 @@ body {
   padding-right: 12px;
   padding-left: 12px;
   text-align: left;
-  width: 20%;
+  width: 17%;
 }
 
 .student-table th:nth-child(8),
@@ -1806,7 +1806,7 @@ body {
   padding-right: 10px;
   padding-left: 10px;
   text-align: center;
-  width: 11%;
+  width: 10%;
 }
 
 .td-class,
@@ -1840,7 +1840,7 @@ body {
 .phone-cell {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 7px;
   min-width: 0;
   max-width: 100%;
 }
@@ -1851,8 +1851,8 @@ body {
 }
 
 .phone-cell-number {
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 0 1 auto;
+  min-width: 11ch;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1860,6 +1860,7 @@ body {
 
 .phone-cell.empty-value .phone-cell-number {
   flex: 0 0 auto;
+  min-width: auto;
 }
 
 .phone-cell-mark {
@@ -2479,6 +2480,253 @@ body {
 .drawer-empty {
   padding: 20px;
   color: var(--aots-muted);
+}
+
+.reminders-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 4px 2px 28px;
+}
+
+.reminder-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.reminder-summary-card {
+  min-height: 108px;
+  padding: 15px 16px;
+  border: 1px solid var(--aots-border);
+  border-radius: var(--aots-radius);
+  background: var(--aots-panel);
+  box-shadow: var(--aots-shadow-soft);
+}
+
+.reminder-summary-card span {
+  display: block;
+  margin-bottom: 9px;
+  color: var(--aots-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.reminder-summary-card strong {
+  color: var(--aots-text);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.reminder-summary-card p {
+  margin: 9px 0 0;
+  color: var(--aots-hint);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.reminder-summary-card.overdue {
+  border-color: rgba(190, 18, 60, 0.24);
+  background: linear-gradient(180deg, rgba(255, 241, 242, 0.72), #ffffff 62%);
+}
+
+.reminder-summary-card.today {
+  border-color: rgba(217, 119, 6, 0.24);
+  background: linear-gradient(180deg, rgba(254, 243, 199, 0.58), #ffffff 62%);
+}
+
+.reminder-summary-card.upcoming {
+  border-color: rgba(37, 99, 235, 0.2);
+  background: linear-gradient(180deg, rgba(219, 234, 254, 0.6), #ffffff 62%);
+}
+
+.reminder-summary-card.total {
+  border-color: rgba(71, 85, 105, 0.18);
+  background: linear-gradient(180deg, rgba(241, 245, 249, 0.74), #ffffff 62%);
+}
+
+.reminder-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--aots-border);
+  border-radius: var(--aots-radius);
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.reminder-filter-button {
+  min-height: 34px;
+  padding: 7px 13px;
+  border: 1px solid var(--aots-border);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--aots-muted);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.reminder-filter-button.active {
+  border-color: rgba(22, 78, 99, 0.25);
+  background: #e0f2fe;
+  color: var(--aots-accent);
+  box-shadow: inset 0 0 0 1px rgba(22, 78, 99, 0.08);
+}
+
+.reminder-table-panel {
+  overflow: hidden;
+  border: 1px solid var(--aots-border);
+  border-radius: var(--aots-radius);
+  background: var(--aots-panel);
+  box-shadow: var(--aots-shadow-soft);
+}
+
+.reminder-table-wrap {
+  overflow-x: auto;
+}
+
+.reminder-table {
+  width: 100%;
+  min-width: 1120px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.reminder-table th,
+.reminder-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--aots-border);
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reminder-table th {
+  color: var(--aots-muted);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.reminder-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.reminder-table th:nth-child(1),
+.reminder-table td:nth-child(1) {
+  width: 19%;
+}
+
+.reminder-table th:nth-child(2),
+.reminder-table td:nth-child(2) {
+  width: 17%;
+}
+
+.reminder-table th:nth-child(3),
+.reminder-table td:nth-child(3),
+.reminder-table th:nth-child(4),
+.reminder-table td:nth-child(4) {
+  width: 12%;
+}
+
+.reminder-table th:nth-child(5),
+.reminder-table td:nth-child(5) {
+  width: 8%;
+  padding-right: 6px;
+  padding-left: 6px;
+}
+
+.reminder-table th:nth-child(6),
+.reminder-table td:nth-child(6) {
+  width: 6%;
+  padding-right: 6px;
+  padding-left: 6px;
+}
+
+.reminder-table th:nth-child(7),
+.reminder-table td:nth-child(7) {
+  width: 10%;
+  padding-right: 8px;
+  padding-left: 8px;
+}
+
+.reminder-table th:nth-child(8),
+.reminder-table td:nth-child(8) {
+  width: 8%;
+}
+
+.reminder-table th:nth-child(9),
+.reminder-table td:nth-child(9) {
+  width: 8%;
+  padding-right: 8px;
+  padding-left: 8px;
+}
+
+.reminder-table th:nth-child(5),
+.reminder-table th:nth-child(6),
+.reminder-table th:nth-child(7),
+.reminder-table th:nth-child(9),
+.reminder-table td:nth-child(5),
+.reminder-table td:nth-child(6),
+.reminder-table td:nth-child(7),
+.reminder-table td:nth-child(9) {
+  text-align: center;
+}
+
+.reminder-bucket-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 76px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.reminder-bucket-badge.overdue {
+  background: #ffe4e6;
+  color: #be123c;
+}
+
+.reminder-bucket-badge.today {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.reminder-bucket-badge.upcoming {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.reminder-note-preview {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reminder-open-button {
+  min-height: 30px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.reminder-empty-state {
+  padding: 32px 18px;
+  color: var(--aots-muted);
+  text-align: center;
+  font-size: 13px;
 }
 
 @media (max-width: 1100px) {

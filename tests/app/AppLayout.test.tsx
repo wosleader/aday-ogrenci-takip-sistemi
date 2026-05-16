@@ -133,6 +133,7 @@ function renderLayout(initialEntry = "/") {
           <Route path="/" element={<div>İçerik</div>} />
           <Route path="/settings" element={<div>Ayarlar içerik</div>} />
           <Route path="/students" element={<StudentsProbe />} />
+          <Route path="/reminders" element={<div>Hatırlatmalar içerik</div>} />
         </Route>
       </Routes>
     </MemoryRouter>
@@ -159,6 +160,7 @@ describe("AppLayout notifications", () => {
     expect(screen.queryByRole("link", { name: /^Dışa aktar$/i })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /İçe aktarma/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Excel dışa aktar/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Hatırlatmalar/i })).toHaveAttribute("href", "/reminders");
   });
 
   it("shows the active shortcut in the global student search placeholder", () => {
@@ -207,7 +209,7 @@ describe("AppLayout notifications", () => {
     await userEvent.type(screen.getByLabelText("Genel arama"), "El");
 
     await waitFor(() => expect(screen.getAllByRole("option")).toHaveLength(8));
-    await userEvent.click(screen.getByRole("button", { name: /Daha fazla/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Daha fazla gör" }));
 
     expect(screen.getByText("Liste arama: evet")).toBeInTheDocument();
     expect(screen.getByText("Aday: yok")).toBeInTheDocument();
