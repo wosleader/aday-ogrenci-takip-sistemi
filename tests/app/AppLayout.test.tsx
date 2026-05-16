@@ -134,6 +134,7 @@ function renderLayout(initialEntry = "/") {
           <Route path="/settings" element={<div>Ayarlar içerik</div>} />
           <Route path="/students" element={<StudentsProbe />} />
           <Route path="/reminders" element={<div>Hatırlatmalar içerik</div>} />
+          <Route path="/reports" element={<div>Raporlar içerik</div>} />
         </Route>
       </Routes>
     </MemoryRouter>
@@ -161,6 +162,7 @@ describe("AppLayout notifications", () => {
     expect(screen.getByRole("link", { name: /İçe aktarma/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Excel dışa aktar/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Hatırlatmalar/i })).toHaveAttribute("href", "/reminders");
+    expect(screen.getByRole("link", { name: /Raporlar/i })).toHaveAttribute("href", "/reports");
   });
 
   it("shows the active shortcut in the global student search placeholder", () => {

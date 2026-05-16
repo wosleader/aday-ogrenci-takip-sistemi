@@ -3,6 +3,7 @@ import { AppLayout } from "./AppLayout";
 import { CallPage } from "../features/calls/CallPage";
 import { ExportPage } from "../features/exports/ExportPage";
 import { ImportPage } from "../features/imports/ImportPage";
+import { ReportsPage } from "../features/reports/ReportsPage";
 import { RemindersPage } from "../features/reminders/RemindersPage";
 import { SettingsPage } from "../features/settings/SettingsPage";
 import { StudentsPage } from "../features/students/StudentsPage";
@@ -17,6 +18,7 @@ export const router = createBrowserRouter([
       { path: "students", element: <StudentsPage /> },
       { path: "call", element: <CallPage /> },
       { path: "reminders", element: <RemindersPage /> },
+      { path: "reports", element: <ReportsPage /> },
       { path: "export", element: <ExportPage /> },
       { path: "settings", element: <SettingsPage /> }
     ]

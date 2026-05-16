@@ -72,7 +72,7 @@ const navSections: Array<{ title: string; items: NavItem[] }> = [
       { to: "/import", label: "İçe aktarma", icon: FileSpreadsheet },
       { to: "/export", label: "Excel dışa aktar", icon: FileDown },
       { to: "/settings", label: "Ayarlar", icon: Settings },
-      { to: "/reports", label: "Raporlar", icon: LayoutDashboard, disabled: true }
+      { to: "/reports", label: "Raporlar", icon: LayoutDashboard }
     ]
   }
 ];
