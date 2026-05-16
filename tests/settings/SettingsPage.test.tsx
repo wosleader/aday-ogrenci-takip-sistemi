@@ -25,6 +25,8 @@ describe("SettingsPage", () => {
 
     expect(screen.getByRole("tab", { name: "Veri Yönetimi" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText("Tam Sistem Yedeği Al")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sistem Yedeğinden Geri Yükle" })).toBeEnabled();
+    expect(screen.queryByText(/JSON yedek/i)).not.toBeInTheDocument();
   });
 
   it("shows visible shortcut validation messages", async () => {

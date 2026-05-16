@@ -1,5 +1,5 @@
 import { useLiveQuery } from "dexie-react-hooks";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/PageHeader";
 import { downloadTextFile } from "../imports/services/logExport";
@@ -22,7 +22,12 @@ import {
   clearCandidateData,
   createDataCleanupBackup,
   DELETE_ALL_STUDENTS_CONFIRMATION,
-  type CandidateDataCleanupResult
+  RESTORE_SYSTEM_BACKUP_CONFIRMATION,
+  analyzeSystemBackupFileText,
+  restoreSystemBackup,
+  type CandidateDataCleanupResult,
+  type SystemBackupAnalysis,
+  type SystemRestoreResult
 } from "./services/dataManagement";
 
 type SettingsTab = "general" | "shortcuts" | "reminders" | "data";
@@ -43,7 +48,12 @@ export function SettingsPage() {
   const [shortcutMessageType, setShortcutMessageType] = useState<"info" | "success" | "error">("info");
   const [confirmationText, setConfirmationText] = useState("");
   const [isCleaning, setIsCleaning] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const [cleanupResult, setCleanupResult] = useState<CandidateDataCleanupResult | null>(null);
+  const [restoreAnalysis, setRestoreAnalysis] = useState<SystemBackupAnalysis | null>(null);
+  const [restoreConfirmationText, setRestoreConfirmationText] = useState("");
+  const [restoreResult, setRestoreResult] = useState<SystemRestoreResult | null>(null);
+  const restoreFileInputRef = useRef<HTMLInputElement | null>(null);
   const [dataManagementMessage, setDataManagementMessage] = useState<string | null>(null);
   const [reminderSettingsMessage, setReminderSettingsMessage] = useState<string | null>(null);
 
@@ -68,6 +78,51 @@ export function SettingsPage() {
       setDataManagementMessage(error instanceof Error ? error.message : "Veri temizleme tamamlanamadı.");
     } finally {
       setIsCleaning(false);
+    }
+  }
+
+  async function analyzeRestoreFile(file?: File | null) {
+    if (!file) {
+      return;
+    }
+
+    setDataManagementMessage(null);
+    setRestoreAnalysis(null);
+    setRestoreResult(null);
+    setRestoreConfirmationText("");
+
+    try {
+      const analysis = analyzeSystemBackupFileText(await file.text());
+      setRestoreAnalysis(analysis);
+      setDataManagementMessage("Sistem yedeği analiz edildi. Geri yüklemeden önce özeti kontrol edin.");
+    } catch (error) {
+      setDataManagementMessage(error instanceof Error ? error.message : "Yedek dosyası okunamadı.");
+    } finally {
+      if (restoreFileInputRef.current) {
+        restoreFileInputRef.current.value = "";
+      }
+    }
+  }
+
+  async function restoreAnalyzedBackup() {
+    if (!restoreAnalysis) {
+      setDataManagementMessage("Önce bir Tam Sistem Yedeği dosyası seçin.");
+      return;
+    }
+
+    setIsRestoring(true);
+    setDataManagementMessage(null);
+    setRestoreResult(null);
+
+    try {
+      const result = await restoreSystemBackup(restoreAnalysis.snapshot, restoreConfirmationText);
+      setRestoreResult(result);
+      setRestoreConfirmationText("");
+      setDataManagementMessage("Sistem yedeği geri yüklendi.");
+    } catch (error) {
+      setDataManagementMessage(error instanceof Error ? error.message : "Geri yükleme tamamlanamadı.");
+    } finally {
+      setIsRestoring(false);
     }
   }
 
@@ -204,19 +259,94 @@ export function SettingsPage() {
         <p>
           Aday verilerini temizlemeden önce otomatik Tam Sistem Yedeği alınır. Ayarlar, kampanyalar ve kısayollar korunur.
         </p>
-        <p className="muted-text">Yedek dosyası teknik olarak JSON formatında saklanır.</p>
+        <p className="muted-text">Tam Sistem Yedeği, programdaki verileri eksiksiz geri yüklemek için kullanılır.</p>
 
         <div className="toolbar">
           <Button type="button" variant="secondary" onClick={() => void downloadManualBackup()}>
             Tam Sistem Yedeği Al
           </Button>
-          <Button type="button" variant="secondary" disabled>
+          <Button type="button" variant="secondary" onClick={() => restoreFileInputRef.current?.click()}>
             Sistem Yedeğinden Geri Yükle
           </Button>
+          <input
+            ref={restoreFileInputRef}
+            type="file"
+            accept=".json,application/json"
+            hidden
+            onChange={(event) => void analyzeRestoreFile(event.target.files?.[0])}
+          />
           <Button type="button" variant="secondary" disabled>
             İçe aktarma geçmişi
           </Button>
         </div>
+
+        {restoreAnalysis ? (
+          <div className="danger-zone">
+            <h3>Sistem yedeğinden geri yükle</h3>
+            <p>
+              Bu işlem mevcut sistem verilerinin yerine yedekteki verileri yükler. İşlem başlamadan önce özeti kontrol edin.
+            </p>
+            <div className="summary-grid">
+              <div className="summary-metric">
+                <span>Aday</span>
+                <strong>{restoreAnalysis.preview.counts.students}</strong>
+              </div>
+              <div className="summary-metric">
+                <span>Veli</span>
+                <strong>{restoreAnalysis.preview.counts.guardians}</strong>
+              </div>
+              <div className="summary-metric">
+                <span>Telefon</span>
+                <strong>{restoreAnalysis.preview.counts.phones}</strong>
+              </div>
+              <div className="summary-metric">
+                <span>Görüşme kaydı</span>
+                <strong>{restoreAnalysis.preview.counts.call_logs}</strong>
+              </div>
+              <div className="summary-metric">
+                <span>Hatırlatma</span>
+                <strong>{restoreAnalysis.preview.counts.reminders}</strong>
+              </div>
+              <div className="summary-metric">
+                <span>Randevu</span>
+                <strong>{restoreAnalysis.preview.counts.appointments}</strong>
+              </div>
+              <div className="summary-metric">
+                <span>Ayar</span>
+                <strong>{restoreAnalysis.preview.counts.settings}</strong>
+              </div>
+              <div className="summary-metric">
+                <span>Klavye kısayolu</span>
+                <strong>{restoreAnalysis.preview.counts.keyboard_shortcuts}</strong>
+              </div>
+              <div className="summary-metric">
+                <span>Yedek tarihi</span>
+                <strong>{new Date(restoreAnalysis.preview.metadata.created_at).toLocaleString("tr-TR")}</strong>
+              </div>
+              <div className="summary-metric">
+                <span>Yedek sürümü</span>
+                <strong>{restoreAnalysis.preview.metadata.backup_version}</strong>
+              </div>
+            </div>
+            <label className="inline-field">
+              Geri yükleme onayı
+              <input
+                className="danger-confirm-input"
+                value={restoreConfirmationText}
+                onChange={(event) => setRestoreConfirmationText(event.target.value)}
+                placeholder={RESTORE_SYSTEM_BACKUP_CONFIRMATION}
+                type="text"
+              />
+            </label>
+            <Button
+              type="button"
+              disabled={isRestoring || restoreConfirmationText !== RESTORE_SYSTEM_BACKUP_CONFIRMATION}
+              onClick={() => void restoreAnalyzedBackup()}
+            >
+              {isRestoring ? "Geri yükleniyor..." : "Sistem yedeğini geri yükle"}
+            </Button>
+          </div>
+        ) : null}
 
         <div className="danger-zone">
           <h3>Tüm aday verilerini temizle</h3>
@@ -244,6 +374,26 @@ export function SettingsPage() {
         </div>
 
         {dataManagementMessage ? <p className="muted-text">{dataManagementMessage}</p> : null}
+        {restoreResult ? (
+          <div className="summary-grid">
+            <div className="summary-metric">
+              <span>Geri yüklenen aday</span>
+              <strong>{restoreResult.restored_counts.students}</strong>
+            </div>
+            <div className="summary-metric">
+              <span>Geri yüklenen veli</span>
+              <strong>{restoreResult.restored_counts.guardians}</strong>
+            </div>
+            <div className="summary-metric">
+              <span>Geri yüklenen telefon</span>
+              <strong>{restoreResult.restored_counts.phones}</strong>
+            </div>
+            <div className="summary-metric">
+              <span>Geri yüklenen görüşme</span>
+              <strong>{restoreResult.restored_counts.call_logs}</strong>
+            </div>
+          </div>
+        ) : null}
         {cleanupResult ? (
           <div className="summary-grid">
             <div className="summary-metric">

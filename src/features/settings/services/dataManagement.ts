@@ -1,9 +1,16 @@
-import type { BackupSnapshot } from "../../../db/backup";
-import { createBackupSnapshot } from "../../../db/backup";
+import type { BackupSnapshot, RestorePreview, RestoreResult } from "../../../db/backup";
+import {
+  BackupValidationError,
+  createBackupSnapshot,
+  createRestorePreview,
+  parseBackupSnapshotJson,
+  restoreBackupSnapshot
+} from "../../../db/backup";
 import type { AppDatabase } from "../../../db/db";
 import { db } from "../../../db/db";
 
 export const DELETE_ALL_STUDENTS_CONFIRMATION = "TÜM ADAYLARI SİL";
+export const RESTORE_SYSTEM_BACKUP_CONFIRMATION = "GERİ YÜKLE";
 
 export type DataCleanupBackup = {
   snapshot: BackupSnapshot;
@@ -24,20 +31,78 @@ export type CandidateDataCleanupResult = {
   deleted_audit_logs: number;
 };
 
+export type SystemBackupAnalysis = {
+  snapshot: BackupSnapshot;
+  preview: RestorePreview;
+};
+
+export type SystemRestoreResult = RestoreResult;
+
 type CleanupOptions = {
   database?: AppDatabase;
   backupProvider?: (database: AppDatabase) => Promise<DataCleanupBackup>;
 };
 
+type RestoreOptions = {
+  database?: AppDatabase;
+};
+
+function pad(value: number): string {
+  return value.toString().padStart(2, "0");
+}
+
+export function createSystemBackupFileName(date = new Date()): string {
+  const datePart = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  const timePart = `${pad(date.getHours())}-${pad(date.getMinutes())}`;
+
+  return `AOTS_Tam_Sistem_Yedegi_${datePart}_${timePart}.json`;
+}
+
+function toUserFriendlyBackupError(error: unknown): Error {
+  if (error instanceof BackupValidationError) {
+    return error;
+  }
+
+  return new Error("Geri yükleme tamamlanamadı. Mevcut veriler korunmaya çalışıldı.");
+}
+
 export async function createDataCleanupBackup(database: AppDatabase = db): Promise<DataCleanupBackup> {
   const snapshot = await createBackupSnapshot(database);
-  const stamp = snapshot.metadata.created_at.replace(/[:.]/g, "-");
 
   return {
     snapshot,
-    file_name: `aday-ogrenci-takip-yedek-veri-temizleme-oncesi-${stamp}.json`,
+    file_name: createSystemBackupFileName(new Date(snapshot.metadata.created_at)),
     json: JSON.stringify(snapshot, null, 2)
   };
+}
+
+export function analyzeSystemBackupFileText(raw: string): SystemBackupAnalysis {
+  try {
+    const snapshot = parseBackupSnapshotJson(raw);
+
+    return {
+      snapshot,
+      preview: createRestorePreview(snapshot)
+    };
+  } catch (error) {
+    throw toUserFriendlyBackupError(error);
+  }
+}
+
+export async function restoreSystemBackup(
+  snapshot: BackupSnapshot,
+  confirmationText: string,
+  options: RestoreOptions = {}
+): Promise<SystemRestoreResult> {
+  if (confirmationText !== RESTORE_SYSTEM_BACKUP_CONFIRMATION) {
+    throw new Error(`İşlem için onay metni tam olarak "${RESTORE_SYSTEM_BACKUP_CONFIRMATION}" olmalı.`);
+  }
+
+  try {
+    return await restoreBackupSnapshot(snapshot, options.database ?? db);
+  } catch (error) {
+    throw toUserFriendlyBackupError(error);
+  }
 }
 
 function isCandidateOrImportAuditLog(log: { entity_type: string; action_type: string }): boolean {

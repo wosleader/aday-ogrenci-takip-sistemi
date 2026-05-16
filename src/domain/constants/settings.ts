@@ -1,4 +1,7 @@
 export const APP_VERSION = "0.1.0";
+export const APP_NAME = "Aday Öğrenci Takip Sistemi";
+export const APP_SCHEMA_VERSION = 1;
+export const BACKUP_TYPE = "full_system_backup";
 export const BACKUP_VERSION = 1;
 
 export const DEFAULT_SETTINGS = [

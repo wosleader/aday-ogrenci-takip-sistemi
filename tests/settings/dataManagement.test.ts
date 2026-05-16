@@ -3,6 +3,7 @@ import { AppDatabase } from "../../src/db/db";
 import type { BackupSnapshot } from "../../src/db/backup";
 import {
   clearCandidateData,
+  createSystemBackupFileName,
   DELETE_ALL_STUDENTS_CONFIRMATION,
   type DataCleanupBackup
 } from "../../src/features/settings/services/dataManagement";
@@ -19,9 +20,27 @@ async function createDatabase() {
 function backup(): DataCleanupBackup {
   const snapshot: BackupSnapshot = {
     metadata: {
+      app_name: "Aday Öğrenci Takip Sistemi",
+      backup_type: "full_system_backup",
       backup_version: 1,
       app_version: "0.1.0",
-      created_at: timestamp
+      app_schema_version: 1,
+      created_at: timestamp,
+      counts: {
+        students: 0,
+        guardians: 0,
+        phones: 0,
+        call_logs: 0,
+        reminders: 0,
+        appointments: 0,
+        campaigns: 0,
+        imports: 0,
+        import_logs: 0,
+        duplicate_checks: 0,
+        audit_logs: 0,
+        settings: 0,
+        keyboard_shortcuts: 0
+      }
     },
     tables: {
       students: [],
@@ -48,6 +67,12 @@ function backup(): DataCleanupBackup {
 }
 
 describe("clearCandidateData", () => {
+  it("creates a user friendly full system backup file name", () => {
+    expect(createSystemBackupFileName(new Date(2026, 4, 10, 14, 30))).toBe(
+      "AOTS_Tam_Sistem_Yedegi_2026-05-10_14-30.json"
+    );
+  });
+
   it("clears candidate data and keeps settings, shortcuts and campaigns", async () => {
     const database = await createDatabase();
     let backupCalled = false;
