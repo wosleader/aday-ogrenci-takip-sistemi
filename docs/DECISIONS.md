@@ -1,0 +1,28 @@
+<!-- Son güncelleme: Sprint 8.2 | Branch: sprint-8-2-project-memory-docs -->
+
+# DECISIONS — Aday Öğrenci Takip Sistemi
+
+## Amaç
+
+Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntılı sprint geçmişi için checkpoint dosyaları, güncel kısa bağlam için `docs/PROJECT_MEMORY.md` kullanılır.
+
+## Aktif Kararlar
+
+- [Sprint 6] Excel export raporlama/paylaşım içindir; eksiksiz geri yükleme için Tam Sistem Yedeği kullanılır.
+- [Sprint 6] Ana UI’da “JSON yedek” gibi teknik ifade gösterilmez; kullanıcı dili “Tam Sistem Yedeği” olur.
+- [Sprint 6.1] Arama operasyonu Aday Listesi + sağ kişi kartı üzerinden yürür; eski Arama Ekranı menüsü gizlidir.
+- [Sprint 6.1] `/students` ekranında global arama dropdown’ı açılmaz; üst arama sadece listeyi filtreler.
+- [Sprint 6.1] Üst bardaki Excel içe/dışa aktar butonları kaldırılmıştır; işlemler sol menüdedir.
+- [Sprint 6.1] Tek aday silme sağ kişi kartındaki üç nokta menüsündedir.
+- [Sprint 6.2] Detaylı Excel Export korunur; Özet Görüşme Raporu sade paylaşım raporudur.
+- [Sprint 7] Restore replace mode’dur; merge mode henüz yoktur.
+- [Sprint 7] Restore için `GERİ YÜKLE` yazı doğrulaması gerekir.
+- [Sprint 8.1] Filtre adı Sınıf / Şube’dir; `current_class` + `student_group` birlikte yorumlanır.
+- [Sprint 8.1] Durum chipleri Durum Filtresi dropdown’ına taşınmıştır.
+- [Roadmap] Hatırlatmalar ve Raporlar sol menüde basit sayfalarla aktif edilecek.
+- [Roadmap] Akıllı Yardımcılar offline/kural tabanlı olacak; dış AI API kullanılmayacak.
+- [Roadmap] Figma/Stitch UI fikirleri kontrollü uygulanacak; büyük dönüşüm kullanıcı onayı olmadan yapılmayacak.
+
+## Değişen Kararlar Nasıl Yazılır?
+
+Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden değişti” şeklinde kısa not eklenir.
