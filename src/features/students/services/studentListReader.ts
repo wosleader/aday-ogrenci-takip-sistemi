@@ -55,6 +55,27 @@ export type StudentListRow = {
   search_blob: string;
 };
 
+export const ALL_STUDENT_GROUPS_FILTER = "all";
+export const UNSPECIFIED_STUDENT_GROUP_FILTER = "__unspecified__";
+
+export type StudentGroupFilterValue = typeof ALL_STUDENT_GROUPS_FILTER | typeof UNSPECIFIED_STUDENT_GROUP_FILTER | string;
+
+export type StudentGroupFilterOption = {
+  value: StudentGroupFilterValue;
+  label: string;
+  group: "all" | "class_level" | "section" | "unspecified";
+};
+
+type ParsedClassSection = {
+  grade?: number;
+  suffix?: string;
+  label?: string;
+};
+
+const VALID_CLASS_LEVELS = new Set(Array.from({ length: 12 }, (_, index) => index + 1));
+const CLASS_LEVEL_FILTER_PREFIX = "class:";
+const SECTION_FILTER_PREFIX = "section:";
+
 function isActive<T extends { deleted_at?: string | null }>(record: T): boolean {
   return !record.deleted_at;
 }
@@ -144,6 +165,257 @@ function groupByStudentId<T extends { student_id: number }>(records: T[]): Map<n
 
 function buildCampaignMap(campaigns: CampaignRecord[]): Map<number, CampaignRecord> {
   return new Map(campaigns.flatMap((campaign) => (campaign.id ? [[campaign.id, campaign]] : [])));
+}
+
+function cleanClassSectionValue(value?: string | null): string {
+  const trimmedValue = value?.trim();
+
+  if (!trimmedValue) {
+    return "";
+  }
+
+  return trimmedValue.replace(/\s+/g, " ");
+}
+
+function isSingleLetterSection(value: string): boolean {
+  return /^[A-Za-zÇĞİÖŞÜçğıöşü]$/u.test(value.trim());
+}
+
+function isMeaninglessNumericValue(value: string): boolean {
+  if (!/^\d+$/.test(value)) {
+    return false;
+  }
+
+  return !VALID_CLASS_LEVELS.has(Number(value));
+}
+
+function normalizeClassSectionSuffix(value: string): string {
+  const cleanValue = cleanClassSectionValue(value);
+
+  return isSingleLetterSection(cleanValue) ? cleanValue.toLocaleUpperCase("tr-TR") : cleanValue;
+}
+
+function parseClassAndSection(value?: string | null): ParsedClassSection | null {
+  const cleanValue = cleanClassSectionValue(value);
+
+  if (!cleanValue || isMeaninglessNumericValue(cleanValue)) {
+    return null;
+  }
+
+  if (/^mezun$/i.test(normalizeText(cleanValue))) {
+    return { label: "Mezun" };
+  }
+
+  const match = cleanValue.match(/^(\d{1,2})(?:\s*\.?\s*(?:sınıf|sinif))?(?:\s*[-/ ]\s*|\s*)(.*)$/i);
+
+  if (!match) {
+    return { label: cleanValue };
+  }
+
+  const grade = Number(match[1]);
+
+  if (!VALID_CLASS_LEVELS.has(grade)) {
+    return null;
+  }
+
+  const suffix = normalizeClassSectionSuffix(match[2] ?? "");
+
+  if (!suffix) {
+    return {
+      grade,
+      label: `${grade}. Sınıf`
+    };
+  }
+
+  if (isSingleLetterSection(suffix)) {
+    return {
+      grade,
+      suffix,
+      label: `${grade}-${suffix}`
+    };
+  }
+
+  return {
+    grade,
+    suffix,
+    label: `${grade}. Sınıf ${suffix}`
+  };
+}
+
+export function normalizeClassSectionLabel(currentClass?: string | null, studentGroup?: string | null): string | null {
+  const parsedClass = parseClassAndSection(currentClass);
+  const parsedGroup = parseClassAndSection(studentGroup);
+  const cleanGroup = cleanClassSectionValue(studentGroup);
+  const hasMeaningfulGroup = Boolean(cleanGroup) && !isMeaninglessNumericValue(cleanGroup);
+
+  if (parsedClass?.grade && hasMeaningfulGroup) {
+    const groupSuffix = normalizeClassSectionSuffix(cleanGroup);
+
+    if (parsedGroup?.grade && parsedGroup.grade === parsedClass.grade) {
+      return parsedGroup.label ?? null;
+    }
+
+    if (parsedGroup?.grade && parsedGroup.grade !== parsedClass.grade && parsedClass.suffix) {
+      return parsedClass.label ?? null;
+    }
+
+    if (isSingleLetterSection(groupSuffix)) {
+      return `${parsedClass.grade}-${groupSuffix}`;
+    }
+
+    return `${parsedClass.grade}. Sınıf ${groupSuffix}`;
+  }
+
+  if (parsedClass?.label) {
+    return parsedClass.label;
+  }
+
+  if (parsedGroup?.label) {
+    return parsedGroup.label;
+  }
+
+  return null;
+}
+
+function getClassLevelFromLabel(label?: string | null): { value: string; label: string } | null {
+  const cleanLabel = cleanClassSectionValue(label);
+
+  if (!cleanLabel) {
+    return null;
+  }
+
+  if (/^mezun\b/i.test(normalizeText(cleanLabel))) {
+    return {
+      value: `${CLASS_LEVEL_FILTER_PREFIX}mezun`,
+      label: "Mezun"
+    };
+  }
+
+  const gradeMatch = cleanLabel.match(/^(\d{1,2})(?:\s*[-/. ]|\s*\.?\s*sınıf|\s*\.?\s*sinif)?/i);
+
+  if (!gradeMatch) {
+    return null;
+  }
+
+  const grade = Number(gradeMatch[1]);
+
+  if (!VALID_CLASS_LEVELS.has(grade)) {
+    return null;
+  }
+
+  return {
+    value: `${CLASS_LEVEL_FILTER_PREFIX}${grade}`,
+    label: `${grade}. Sınıf`
+  };
+}
+
+function getSectionFilterValue(label: string): string {
+  return `${SECTION_FILTER_PREFIX}${normalizeText(label).replace(/\s+/g, " ")}`;
+}
+
+export function getClassLevelFilterKey(currentClass?: string | null, studentGroup?: string | null): StudentGroupFilterValue {
+  const label = normalizeClassSectionLabel(currentClass, studentGroup);
+  const classLevel = getClassLevelFromLabel(label);
+
+  return classLevel?.value ?? UNSPECIFIED_STUDENT_GROUP_FILTER;
+}
+
+export function getStudentGroupFilterKey(
+  currentClass?: string | null,
+  studentGroup?: string | null
+): StudentGroupFilterValue {
+  const label = normalizeClassSectionLabel(currentClass, studentGroup);
+
+  if (!label) {
+    return UNSPECIFIED_STUDENT_GROUP_FILTER;
+  }
+
+  return getSectionFilterValue(label);
+}
+
+export function getStudentGroupFilterLabel(value: StudentGroupFilterValue, fallbackLabel?: string | null): string {
+  if (value === ALL_STUDENT_GROUPS_FILTER) {
+    return "Tüm Sınıf / Şubeler";
+  }
+
+  if (value === UNSPECIFIED_STUDENT_GROUP_FILTER) {
+    return "Belirtilmemiş";
+  }
+
+  return fallbackLabel?.trim() || value;
+}
+
+export function createStudentGroupFilterOptions(rows: StudentListRow[]): StudentGroupFilterOption[] {
+  const classLevelOptions = new Map<StudentGroupFilterValue, StudentGroupFilterOption>();
+  const sectionOptions = new Map<StudentGroupFilterValue, StudentGroupFilterOption>();
+  let hasUnspecified = false;
+
+  for (const row of rows) {
+    const label = normalizeClassSectionLabel(row.current_class, row.student_group);
+    const value = getStudentGroupFilterKey(row.current_class, row.student_group);
+
+    if (value === UNSPECIFIED_STUDENT_GROUP_FILTER || !label) {
+      hasUnspecified = true;
+      continue;
+    }
+
+    const classLevel = getClassLevelFromLabel(label);
+
+    if (classLevel && !classLevelOptions.has(classLevel.value)) {
+      classLevelOptions.set(classLevel.value, {
+        value: classLevel.value,
+        label: classLevel.label,
+        group: "class_level"
+      });
+    }
+
+    if (!sectionOptions.has(value)) {
+      sectionOptions.set(value, {
+        value,
+        label: getStudentGroupFilterLabel(value, label),
+        group: "section"
+      });
+    }
+  }
+
+  const sortedClassLevelOptions = [...classLevelOptions.values()].sort((left, right) => {
+    const leftIsMezun = left.value === `${CLASS_LEVEL_FILTER_PREFIX}mezun`;
+    const rightIsMezun = right.value === `${CLASS_LEVEL_FILTER_PREFIX}mezun`;
+
+    if (leftIsMezun || rightIsMezun) {
+      return leftIsMezun === rightIsMezun ? 0 : 1;
+    }
+
+    return Number(left.value.replace(CLASS_LEVEL_FILTER_PREFIX, "")) - Number(right.value.replace(CLASS_LEVEL_FILTER_PREFIX, ""));
+  });
+  const sortedSectionOptions = [...sectionOptions.values()].sort((left, right) =>
+    left.label.localeCompare(right.label, "tr")
+  );
+  const unspecifiedOptions: StudentGroupFilterOption[] = hasUnspecified
+    ? [{ value: UNSPECIFIED_STUDENT_GROUP_FILTER, label: "Belirtilmemiş", group: "unspecified" }]
+    : [];
+
+  return [
+    { value: ALL_STUDENT_GROUPS_FILTER, label: "Tüm Sınıf / Şubeler", group: "all" },
+    ...sortedClassLevelOptions,
+    ...sortedSectionOptions,
+    ...unspecifiedOptions
+  ];
+}
+
+export function filterRowsByStudentGroup(
+  rows: StudentListRow[],
+  studentGroupFilter: StudentGroupFilterValue = ALL_STUDENT_GROUPS_FILTER
+): StudentListRow[] {
+  if (studentGroupFilter === ALL_STUDENT_GROUPS_FILTER) {
+    return rows;
+  }
+
+  if (studentGroupFilter.startsWith(CLASS_LEVEL_FILTER_PREFIX)) {
+    return rows.filter((row) => getClassLevelFilterKey(row.current_class, row.student_group) === studentGroupFilter);
+  }
+
+  return rows.filter((row) => getStudentGroupFilterKey(row.current_class, row.student_group) === studentGroupFilter);
 }
 
 function pickGuardian(guardians: GuardianRecord[]): GuardianRecord | undefined {

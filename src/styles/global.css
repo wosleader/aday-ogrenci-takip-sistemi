@@ -1634,10 +1634,17 @@ body {
 .student-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 7px;
   justify-content: flex-start;
   min-width: 0;
-  row-gap: 5px;
+  row-gap: 6px;
+}
+
+.student-filter-selects {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
 }
 
 .campaign-filter {
@@ -1659,6 +1666,14 @@ body {
   color: var(--aots-text);
   font-family: var(--sans);
   font-size: 11px;
+}
+
+.student-group-filter select {
+  width: 156px;
+}
+
+.status-filter select {
+  width: 132px;
 }
 
 .filter-btn {
@@ -2423,6 +2438,7 @@ body {
   .student-search {
     max-width: none;
   }
+
 }
 
 @media (max-width: 860px) {

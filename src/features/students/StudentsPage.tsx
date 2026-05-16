@@ -36,8 +36,13 @@ import {
 import { readActiveOperationShortcuts } from "../shortcuts/services/shortcutSettings";
 import { deleteStudentWithRelations } from "./services/studentDelete";
 import {
+  ALL_STUDENT_GROUPS_FILTER,
+  createStudentGroupFilterOptions,
+  filterRowsByStudentGroup,
   filterStudentListRows,
+  getStudentGroupFilterLabel,
   readStudentListRows,
+  type StudentGroupFilterValue,
   type StudentListFilter,
   type StudentListRow
 } from "./services/studentListReader";
@@ -321,6 +326,7 @@ export function StudentsPage() {
   const debouncedQuery = useDebouncedValue(globalSearch);
   const [activeFilter, setActiveFilter] = useState<StudentListFilter>("all");
   const [campaignFilter, setCampaignFilter] = useState("all");
+  const [studentGroupFilter, setStudentGroupFilter] = useState<StudentGroupFilterValue>(ALL_STUDENT_GROUPS_FILTER);
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [isStudentActionsOpen, setIsStudentActionsOpen] = useState(false);
@@ -362,15 +368,29 @@ export function StudentsPage() {
     const names = new Set((rows ?? []).map((row) => row.campaign_name || "Diğer"));
     return ["all", ...Array.from(names).sort((left, right) => left.localeCompare(right, "tr"))];
   }, [rows]);
+  const studentGroupOptions = useMemo(() => createStudentGroupFilterOptions(rows ?? []), [rows]);
+  const classLevelOptions = useMemo(
+    () => studentGroupOptions.filter((option) => option.group === "class_level"),
+    [studentGroupOptions]
+  );
+  const classSectionOptions = useMemo(
+    () => studentGroupOptions.filter((option) => option.group === "section"),
+    [studentGroupOptions]
+  );
+  const unspecifiedClassSectionOptions = useMemo(
+    () => studentGroupOptions.filter((option) => option.group === "unspecified"),
+    [studentGroupOptions]
+  );
   const filteredRows = useMemo(() => {
     const bySearchAndStatus = filterStudentListRows(rows ?? [], debouncedQuery, activeFilter);
     const byCampaign =
       campaignFilter === "all"
         ? bySearchAndStatus
         : bySearchAndStatus.filter((row) => (row.campaign_name || "Diğer") === campaignFilter);
+    const byStudentGroup = filterRowsByStudentGroup(byCampaign, studentGroupFilter);
 
-    return activeFilter === "duplicate_phone" ? sortDuplicateRows(byCampaign) : byCampaign;
-  }, [activeFilter, campaignFilter, debouncedQuery, rows]);
+    return activeFilter === "duplicate_phone" ? sortDuplicateRows(byStudentGroup) : byStudentGroup;
+  }, [activeFilter, campaignFilter, debouncedQuery, rows, studentGroupFilter]);
   const duplicateGroupCounts = useMemo(() => {
     const counts = new Map<string, number>();
 
@@ -420,16 +440,23 @@ export function StudentsPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeFilter, campaignFilter, debouncedQuery]);
+  }, [activeFilter, campaignFilter, debouncedQuery, studentGroupFilter]);
 
   useEffect(() => {
     saveFilteredExportSnapshot({
       student_ids: filteredRows.map((row) => row.student_id),
       filter_label: `${FILTER_OPTIONS.find((filter) => filter.key === activeFilter)?.label ?? "Tümü"} · ${
         campaignFilter === "all" ? "Tüm kampanyalar" : campaignFilter
+      } · Sınıf / Şube: ${
+        studentGroupFilter === ALL_STUDENT_GROUPS_FILTER
+          ? "Tümü"
+          : getStudentGroupFilterLabel(
+              studentGroupFilter,
+              studentGroupOptions.find((option) => option.value === studentGroupFilter)?.label
+            )
       }`
     });
-  }, [activeFilter, campaignFilter, filteredRows]);
+  }, [activeFilter, campaignFilter, filteredRows, studentGroupFilter, studentGroupOptions]);
 
   useEffect(() => {
     if (!selectedStudentId && visibleRows[0]) {
@@ -992,26 +1019,67 @@ export function StudentsPage() {
             <span className="count-badge">{filteredRows.length} aday</span>
           </div>
           <div className="student-filters">
-            <label className="campaign-filter">
-              <span>Kampanya</span>
-              <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)}>
-                {campaignOptions.map((campaignName) => (
-                  <option key={campaignName} value={campaignName}>
-                    {campaignName === "all" ? "Tüm kampanyalar" : campaignName}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {FILTER_OPTIONS.map((filter) => (
-              <button
-                className={`filter-btn ${activeFilter === filter.key ? "active" : ""}`}
-                key={filter.key}
-                onClick={() => setActiveFilter(filter.key)}
-                type="button"
-              >
-                {filter.label}
-              </button>
-            ))}
+            <div className="student-filter-selects" aria-label="Liste filtreleri">
+              <label className="campaign-filter">
+                <span>Kampanya</span>
+                <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)}>
+                  {campaignOptions.map((campaignName) => (
+                    <option key={campaignName} value={campaignName}>
+                      {campaignName === "all" ? "Tüm kampanyalar" : campaignName}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="campaign-filter student-group-filter">
+                <span>Sınıf / Şube</span>
+                <select
+                  value={studentGroupFilter}
+                  onChange={(event) => setStudentGroupFilter(event.target.value as StudentGroupFilterValue)}
+                >
+                  <option value={ALL_STUDENT_GROUPS_FILTER}>Tüm Sınıf / Şubeler</option>
+                  {classLevelOptions.length ? (
+                    <optgroup label="Sınıf Seviyeleri">
+                      {classLevelOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ) : null}
+                  {classSectionOptions.length ? (
+                    <optgroup label="Şubeler / Gruplar">
+                      {classSectionOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ) : null}
+                  {unspecifiedClassSectionOptions.length ? (
+                    <optgroup label="Belirtilmemiş">
+                      {unspecifiedClassSectionOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ) : null}
+                </select>
+              </label>
+              <label className="campaign-filter status-filter">
+                <span>Durum Filtresi</span>
+                <select
+                  value={activeFilter}
+                  onChange={(event) => setActiveFilter(event.target.value as StudentListFilter)}
+                >
+                  {FILTER_OPTIONS.map((filter) => (
+                    <option key={filter.key} value={filter.key}>
+                      {filter.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
           </div>
         </div>
 

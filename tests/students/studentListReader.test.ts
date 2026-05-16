@@ -5,7 +5,13 @@ import type { PhoneRecord } from "../../src/domain/models/phone";
 import type { ReminderRecord } from "../../src/domain/models/reminder";
 import type { StudentRecord } from "../../src/domain/models/student";
 import {
+  ALL_STUDENT_GROUPS_FILTER,
+  UNSPECIFIED_STUDENT_GROUP_FILTER,
+  createStudentGroupFilterOptions,
+  filterRowsByStudentGroup,
   filterStudentListRows,
+  getStudentGroupFilterKey,
+  normalizeClassSectionLabel,
   readStudentListRows
 } from "../../src/features/students/services/studentListReader";
 import { createSearchText, normalizeText } from "../../src/utils/normalizeText";
@@ -103,6 +109,31 @@ function reminder(studentId: number, overrides: Partial<ReminderRecord> = {}): R
 }
 
 describe("studentListReader", () => {
+  it("normalizes common combined class and section labels", () => {
+    expect(normalizeClassSectionLabel("9A")).toBe("9-A");
+    expect(normalizeClassSectionLabel("9-A")).toBe("9-A");
+    expect(normalizeClassSectionLabel("9/A")).toBe("9-A");
+    expect(normalizeClassSectionLabel("9 A")).toBe("9-A");
+    expect(normalizeClassSectionLabel("9. Sinif A")).toBe("9-A");
+    expect(normalizeClassSectionLabel("9 sinif A")).toBe("9-A");
+    expect(normalizeClassSectionLabel("11. Sinif YKS Hazirlik")).toBe("11. Sınıf YKS Hazirlik");
+    expect(normalizeClassSectionLabel("8. Sinif LGS")).toBe("8. Sınıf LGS");
+    expect(normalizeClassSectionLabel("9")).toBe("9. Sınıf");
+    expect(normalizeClassSectionLabel("11")).toBe("11. Sınıf");
+  });
+
+  it("uses separate section/group value over a combined class value", () => {
+    expect(normalizeClassSectionLabel("9", "A")).toBe("9-A");
+    expect(normalizeClassSectionLabel("11", "YKS Hazirlik")).toBe("11. Sınıf YKS Hazirlik");
+    expect(normalizeClassSectionLabel("9-A", "B")).toBe("9-B");
+  });
+
+  it("treats invalid numeric-only class/section values as unspecified", () => {
+    expect(normalizeClassSectionLabel("0")).toBeNull();
+    expect(normalizeClassSectionLabel("22")).toBeNull();
+    expect(normalizeClassSectionLabel(null, "44")).toBeNull();
+  });
+
   it("combines students, guardians and phones into list rows", async () => {
     const database = await createDatabase();
 
@@ -291,6 +322,271 @@ describe("studentListReader", () => {
       expect(rows[0].phone_1_is_wrong).toBe(false);
       expect(rows[0].phone_2_is_contacted).toBe(false);
       expect(rows[0].phone_2_is_wrong).toBe(true);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("creates class/section filter options from current rows without duplicates", async () => {
+    const database = await createDatabase();
+
+    try {
+      await database.students.bulkAdd([
+        student({ student_full_name: "Ayse Yilmaz", current_class: "11", student_group: "YKS Hazirlik" }),
+        student({
+          student_full_name: "Mehmet Kaya",
+          current_class: "11",
+          student_group: "  YKS Hazirlik  ",
+          created_at: "2026-05-08T09:01:00.000Z"
+        }),
+        student({
+          student_full_name: "Zeynep Demir",
+          current_class: "12",
+          student_group: "YKS Hazirlik",
+          created_at: "2026-05-08T09:02:00.000Z"
+        }),
+        student({
+          student_full_name: "Bos Grup",
+          current_class: null,
+          student_group: "   ",
+          created_at: "2026-05-08T09:03:00.000Z"
+        }),
+        student({
+          student_full_name: "Kod Grup",
+          current_class: null,
+          student_group: "44",
+          created_at: "2026-05-08T09:04:00.000Z"
+        }),
+        student({
+          student_full_name: "LGS Aday",
+          current_class: "8. Sinif LGS",
+          student_group: "",
+          created_at: "2026-05-08T09:05:00.000Z"
+        })
+      ]);
+
+      const rows = await readStudentListRows(database);
+      const options = createStudentGroupFilterOptions(rows);
+
+      expect(options[0]).toEqual({ value: ALL_STUDENT_GROUPS_FILTER, label: "Tüm Sınıf / Şubeler", group: "all" });
+      expect(options).toContainEqual({ value: "class:8", label: "8. Sınıf", group: "class_level" });
+      expect(options).toContainEqual({ value: "class:11", label: "11. Sınıf", group: "class_level" });
+      expect(options).toContainEqual({ value: "class:12", label: "12. Sınıf", group: "class_level" });
+      expect(options).toContainEqual({
+        value: getStudentGroupFilterKey("11", "YKS Hazirlik"),
+        label: "11. Sınıf YKS Hazirlik",
+        group: "section"
+      });
+      expect(options).toContainEqual({
+        value: getStudentGroupFilterKey("12", "YKS Hazirlik"),
+        label: "12. Sınıf YKS Hazirlik",
+        group: "section"
+      });
+      expect(options).toContainEqual({ value: getStudentGroupFilterKey("8. Sinif LGS"), label: "8. Sınıf LGS", group: "section" });
+      expect(options).toContainEqual({ value: UNSPECIFIED_STUDENT_GROUP_FILTER, label: "Belirtilmemiş", group: "unspecified" });
+      expect(options).not.toContainEqual({ value: "44", label: "44" });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("keeps all rows when all student groups are selected", async () => {
+    const database = await createDatabase();
+
+    try {
+      await database.students.bulkAdd([
+        student({ student_full_name: "Ayse Yilmaz", student_group: "11. Sinif YKS" }),
+        student({
+          student_full_name: "Mehmet Kaya",
+          student_group: "12. Sinif YKS",
+          created_at: "2026-05-08T09:01:00.000Z"
+        })
+      ]);
+
+      const rows = await readStudentListRows(database);
+
+      expect(filterRowsByStudentGroup(rows, ALL_STUDENT_GROUPS_FILTER)).toHaveLength(2);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("filters all sections under a selected class level", async () => {
+    const database = await createDatabase();
+
+    try {
+      await database.students.bulkAdd([
+        student({ student_full_name: "On A", current_class: "10", student_group: "A" }),
+        student({
+          student_full_name: "On B",
+          current_class: "10-B",
+          student_group: "",
+          created_at: "2026-05-08T09:01:00.000Z"
+        }),
+        student({
+          student_full_name: "On C",
+          current_class: "10/C",
+          student_group: "",
+          created_at: "2026-05-08T09:02:00.000Z"
+        }),
+        student({
+          student_full_name: "On Bir YKS",
+          current_class: "11. Sinif YKS Hazirlik",
+          student_group: "",
+          created_at: "2026-05-08T09:03:00.000Z"
+        })
+      ]);
+
+      const rows = await readStudentListRows(database);
+      const tenthGradeRows = filterRowsByStudentGroup(rows, "class:10");
+
+      expect(tenthGradeRows.map((row) => row.student_full_name).sort()).toEqual(["On A", "On B", "On C"]);
+      expect(filterRowsByStudentGroup(rows, getStudentGroupFilterKey("10", "A")).map((row) => row.student_full_name)).toEqual([
+        "On A"
+      ]);
+      expect(filterRowsByStudentGroup(rows, "class:11").map((row) => row.student_full_name)).toEqual(["On Bir YKS"]);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("filters rows by selected class/section", async () => {
+    const database = await createDatabase();
+
+    try {
+      await database.students.bulkAdd([
+        student({ student_full_name: "Ayse Yilmaz", current_class: "11", student_group: "YKS Hazirlik" }),
+        student({
+          student_full_name: "Mehmet Kaya",
+          current_class: "12",
+          student_group: "YKS Hazirlik",
+          created_at: "2026-05-08T09:01:00.000Z"
+        })
+      ]);
+
+      const rows = await readStudentListRows(database);
+      const filteredRows = filterRowsByStudentGroup(rows, getStudentGroupFilterKey("11", "YKS Hazirlik"));
+
+      expect(filteredRows).toHaveLength(1);
+      expect(filteredRows[0].student_full_name).toBe("Ayse Yilmaz");
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("filters blank student groups as unspecified", async () => {
+    const database = await createDatabase();
+
+    try {
+      await database.students.bulkAdd([
+        student({ student_full_name: "Ayse Yilmaz", current_class: "11", student_group: "YKS Hazirlik" }),
+        student({
+          student_full_name: "Bos Grup",
+          current_class: null,
+          student_group: "   ",
+          created_at: "2026-05-08T09:01:00.000Z"
+        }),
+        student({
+          student_full_name: "Numeric Grup",
+          current_class: null,
+          student_group: "44",
+          created_at: "2026-05-08T09:02:00.000Z"
+        }),
+        student({
+          student_full_name: "LGS Aday",
+          current_class: "8. Sinif LGS",
+          student_group: "",
+          created_at: "2026-05-08T09:03:00.000Z"
+        })
+      ]);
+
+      const rows = await readStudentListRows(database);
+      const filteredRows = filterRowsByStudentGroup(rows, UNSPECIFIED_STUDENT_GROUP_FILTER);
+
+      expect(filteredRows.map((row) => row.student_full_name).sort()).toEqual(["Bos Grup", "Numeric Grup"]);
+      expect(filterRowsByStudentGroup(rows, getStudentGroupFilterKey("8. Sinif LGS"))).toHaveLength(1);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("combines student group filtering with search and status filters", async () => {
+    const database = await createDatabase();
+
+    try {
+      await database.students.bulkAdd([
+        student({
+          student_full_name: "Ahmet Yilmaz",
+          search_text: createSearchText(["Ahmet Yilmaz"]),
+          current_class: "11",
+          student_group: "YKS Hazirlik",
+          last_call_result: "not_called"
+        }),
+        student({
+          student_full_name: "Ahmet Demir",
+          search_text: createSearchText(["Ahmet Demir"]),
+          current_class: "12",
+          student_group: "YKS Hazirlik",
+          last_call_result: "not_called",
+          created_at: "2026-05-08T09:01:00.000Z"
+        }),
+        student({
+          student_full_name: "Zeynep Yilmaz",
+          search_text: createSearchText(["Zeynep Yilmaz"]),
+          current_class: "11",
+          student_group: "YKS Hazirlik",
+          last_call_result: "reached",
+          created_at: "2026-05-08T09:02:00.000Z"
+        })
+      ]);
+
+      const rows = await readStudentListRows(database);
+      const bySearchAndStatus = filterStudentListRows(rows, "ahmet", "not_called");
+      const byGroup = filterRowsByStudentGroup(bySearchAndStatus, getStudentGroupFilterKey("11", "YKS Hazirlik"));
+
+      expect(byGroup).toHaveLength(1);
+      expect(byGroup[0].student_full_name).toBe("Ahmet Yilmaz");
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("keeps existing list filters working before student group filtering", async () => {
+    const database = await createDatabase();
+
+    try {
+      const firstStudentId = await database.students.add(
+        student({
+          student_full_name: "Notlu Aday",
+          current_class: "11",
+          student_group: "YKS Hazirlik",
+          general_note: "Gorusme notu"
+        })
+      );
+      const secondStudentId = await database.students.add(
+        student({
+          student_full_name: "Telefonsuz Aday",
+          current_class: "11",
+          student_group: "YKS Hazirlik",
+          created_at: "2026-05-08T09:01:00.000Z"
+        })
+      );
+      await database.phones.add(phone(firstStudentId));
+      await database.reminders.add(reminder(secondStudentId));
+
+      const rows = await readStudentListRows(database);
+      const groupFilter = getStudentGroupFilterKey("11", "YKS Hazirlik");
+
+      expect(filterRowsByStudentGroup(filterStudentListRows(rows, "", "has_note"), groupFilter)).toHaveLength(1);
+      expect(filterRowsByStudentGroup(filterStudentListRows(rows, "", "missing_phone"), groupFilter)).toHaveLength(1);
+      expect(filterRowsByStudentGroup(filterStudentListRows(rows, "", "has_reminder"), groupFilter)).toHaveLength(1);
     } finally {
       database.close();
       await database.delete();
