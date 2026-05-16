@@ -48,6 +48,10 @@ export type StudentListRow = {
   last_call_result: string;
   general_note?: string | null;
   note_count: number;
+  call_note_count: number;
+  latest_call_note?: string | null;
+  latest_call_note_at?: string | null;
+  has_any_note: boolean;
   next_action_label: string;
   source_row_number?: number | null;
   created_at: string;
@@ -64,6 +68,12 @@ export type StudentGroupFilterOption = {
   value: StudentGroupFilterValue;
   label: string;
   group: "all" | "class_level" | "section" | "unspecified";
+};
+
+export type StudentListNoteSummary = {
+  text: string;
+  suffix?: string;
+  title?: string;
 };
 
 type ParsedClassSection = {
@@ -428,6 +438,81 @@ function pickNextPendingReminder(reminders: ReminderRecord[]): ReminderRecord | 
     .sort((left, right) => left.reminder_at.localeCompare(right.reminder_at) || byCreatedAt(left, right))[0];
 }
 
+function callLogSortTime(callLog: CallLogRecord): string {
+  return callLog.call_time || callLog.created_at;
+}
+
+function pickLatestCallNote(callLogs: CallLogRecord[]): { note?: string | null; at?: string | null; count: number; notes: string[] } {
+  const notes = callLogs
+    .flatMap((log) => {
+      const note = log.note?.trim();
+
+      return note
+        ? [
+            {
+              note,
+              at: callLogSortTime(log),
+              id: log.id ?? 0
+            }
+          ]
+        : [];
+    })
+    .sort((left, right) => right.at.localeCompare(left.at) || right.id - left.id);
+
+  return {
+    note: notes[0]?.note ?? null,
+    at: notes[0]?.at ?? null,
+    count: notes.length,
+    notes: notes.map((item) => item.note)
+  };
+}
+
+function truncateListNote(value: string, maxLength = 72): string {
+  return value.length > maxLength ? `${value.slice(0, maxLength).trimEnd()}...` : value;
+}
+
+export function createStudentListNoteSummary(row: StudentListRow, filter: StudentListFilter = "all"): StudentListNoteSummary {
+  const hasGeneralNote = Boolean(row.general_note?.trim());
+  const callNoteCount = row.call_note_count;
+
+  if (filter === "has_note") {
+    const detailText = row.latest_call_note?.trim() || row.general_note?.trim();
+
+    if (!detailText) {
+      return { text: "—" };
+    }
+
+    return {
+      text: truncateListNote(detailText),
+      suffix: callNoteCount > 1 ? `${callNoteCount} not` : undefined,
+      title: detailText
+    };
+  }
+
+  if (!hasGeneralNote && callNoteCount === 0) {
+    return { text: "—" };
+  }
+
+  if (hasGeneralNote && callNoteCount === 0) {
+    return {
+      text: "Genel not var",
+      title: row.general_note?.trim()
+    };
+  }
+
+  if (!hasGeneralNote) {
+    return {
+      text: `${callNoteCount} not`,
+      title: row.latest_call_note?.trim() || undefined
+    };
+  }
+
+  return {
+    text: `Genel + ${callNoteCount} not`,
+    title: [row.general_note?.trim(), row.latest_call_note?.trim()].filter(Boolean).join(" | ")
+  };
+}
+
 function mapStudentToRow(
   student: StudentRecord & { id: number },
   guardiansByStudent: Map<number, GuardianRecord[]>,
@@ -441,13 +526,14 @@ function mapStudentToRow(
   const phones = phonesByStudent.get(student.id) ?? [];
   const pendingReminder = pickNextPendingReminder(remindersByStudent.get(student.id) ?? []);
   const callLogs = callLogsByStudent.get(student.id) ?? [];
-  const callLogNotes = callLogs.flatMap((log) => (log.note?.trim() ? [log.note] : []));
+  const callLogNoteInfo = pickLatestCallNote(callLogs);
   const guardian = pickGuardian(guardians);
   const { phone_1: phone1, phone_2: phone2 } = pickPhoneSlots(phones);
   const campaign = student.campaign_id ? campaignMap.get(student.campaign_id) : undefined;
   const phone1Status = phone1?.phone_status ?? (phone1?.is_wrong ? "invalid" : "active");
   const phone2Status = phone2?.phone_status ?? (phone2?.is_wrong ? "invalid" : "active");
   const duplicatePhoneKeys = duplicatedPhonesByStudent.get(student.id) ?? [];
+  const hasGeneralNote = Boolean(student.general_note?.trim());
 
   return {
     student_id: student.id,
@@ -480,7 +566,11 @@ function mapStudentToRow(
     lifecycle_status: student.lifecycle_status,
     last_call_result: student.last_call_result,
     general_note: student.general_note ?? null,
-    note_count: (student.general_note?.trim() ? 1 : 0) + callLogNotes.length,
+    note_count: (hasGeneralNote ? 1 : 0) + callLogNoteInfo.count,
+    call_note_count: callLogNoteInfo.count,
+    latest_call_note: callLogNoteInfo.note ?? null,
+    latest_call_note_at: callLogNoteInfo.at ?? null,
+    has_any_note: hasGeneralNote || callLogNoteInfo.count > 0,
     next_action_label: pendingReminder ? `Tekrar ara: ${pendingReminder.reminder_at}` : "-",
     source_row_number: student.source_row_number ?? null,
     created_at: student.created_at,
@@ -492,7 +582,7 @@ function mapStudentToRow(
       phone1?.phone_number,
       phone2?.phone_number,
       student.general_note,
-      ...callLogNotes
+      ...callLogNoteInfo.notes
     ])
   };
 }
@@ -564,7 +654,7 @@ export function filterStudentListRows(
     }
 
     if (filter === "has_note") {
-      return Boolean(row.general_note?.trim());
+      return row.has_any_note;
     }
 
     return true;

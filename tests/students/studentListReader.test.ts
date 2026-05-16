@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AppDatabase } from "../../src/db/db";
+import type { CallLogRecord } from "../../src/domain/models/callLog";
 import type { GuardianRecord } from "../../src/domain/models/guardian";
 import type { PhoneRecord } from "../../src/domain/models/phone";
 import type { ReminderRecord } from "../../src/domain/models/reminder";
@@ -7,6 +8,7 @@ import type { StudentRecord } from "../../src/domain/models/student";
 import {
   ALL_STUDENT_GROUPS_FILTER,
   UNSPECIFIED_STUDENT_GROUP_FILTER,
+  createStudentListNoteSummary,
   createStudentGroupFilterOptions,
   filterRowsByStudentGroup,
   filterStudentListRows,
@@ -100,6 +102,31 @@ function reminder(studentId: number, overrides: Partial<ReminderRecord> = {}): R
     status: "pending",
     note: null,
     is_default_time_assigned: true,
+    sync_status: "local",
+    created_at: baseTime,
+    updated_at: baseTime,
+    deleted_at: null,
+    ...overrides
+  };
+}
+
+function callLog(studentId: number, overrides: Partial<CallLogRecord> = {}): CallLogRecord {
+  return {
+    uuid: crypto.randomUUID(),
+    student_id: studentId,
+    guardian_id: null,
+    phone_id: null,
+    contacted_phone_id: null,
+    contacted_phone_number: null,
+    contacted_phone_label: null,
+    call_time: baseTime,
+    call_result: "reached",
+    note: null,
+    reminder_at: null,
+    next_action: null,
+    created_by: null,
+    created_reminder_id: null,
+    created_appointment_id: null,
     sync_status: "local",
     created_at: baseTime,
     updated_at: baseTime,
@@ -252,6 +279,139 @@ describe("studentListReader", () => {
       expect(filterStudentListRows(rows, "998877")).toHaveLength(1);
       expect(filterStudentListRows(rows, "burs")).toHaveLength(1);
       expect(filterStudentListRows(rows, "olmayan")).toHaveLength(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("creates readable list note summaries without raw counters", async () => {
+    const database = await createDatabase();
+
+    try {
+      const noNoteId = await database.students.add(student({ student_full_name: "Not Yok" }));
+      const generalOnlyId = await database.students.add(
+        student({
+          student_full_name: "Genel Notlu",
+          general_note: "Excel genel açıklaması",
+          created_at: "2026-05-08T09:01:00.000Z",
+          updated_at: "2026-05-08T09:01:00.000Z"
+        })
+      );
+      const oneCallNoteId = await database.students.add(
+        student({
+          student_full_name: "Tek Görüşme Notu",
+          created_at: "2026-05-08T09:02:00.000Z",
+          updated_at: "2026-05-08T09:02:00.000Z"
+        })
+      );
+      const threeCallNotesId = await database.students.add(
+        student({
+          student_full_name: "Üç Görüşme Notu",
+          created_at: "2026-05-08T09:03:00.000Z",
+          updated_at: "2026-05-08T09:03:00.000Z"
+        })
+      );
+      const generalPlusId = await database.students.add(
+        student({
+          student_full_name: "Genel ve Görüşme",
+          general_note: "Excel notu",
+          created_at: "2026-05-08T09:04:00.000Z",
+          updated_at: "2026-05-08T09:04:00.000Z"
+        })
+      );
+
+      await database.call_logs.bulkAdd([
+        callLog(oneCallNoteId, { note: "Tek not", call_time: "2026-05-08T10:00:00.000Z" }),
+        callLog(threeCallNotesId, { note: "Birinci not", call_time: "2026-05-08T10:00:00.000Z" }),
+        callLog(threeCallNotesId, { note: "İkinci not", call_time: "2026-05-08T11:00:00.000Z" }),
+        callLog(threeCallNotesId, { note: "Üçüncü not", call_time: "2026-05-08T12:00:00.000Z" }),
+        callLog(threeCallNotesId, { note: "   ", call_time: "2026-05-08T13:00:00.000Z" }),
+        callLog(generalPlusId, { note: "İlk görüşme", call_time: "2026-05-08T10:00:00.000Z" }),
+        callLog(generalPlusId, { note: "İkinci görüşme", call_time: "2026-05-08T11:00:00.000Z" })
+      ]);
+
+      const rows = await readStudentListRows(database);
+      const byId = new Map(rows.map((row) => [row.student_id, row]));
+
+      expect(createStudentListNoteSummary(byId.get(noNoteId)!).text).toBe("—");
+      expect(createStudentListNoteSummary(byId.get(generalOnlyId)!).text).toBe("Genel not var");
+      expect(createStudentListNoteSummary(byId.get(oneCallNoteId)!).text).toBe("1 not");
+      expect(createStudentListNoteSummary(byId.get(threeCallNotesId)!).text).toBe("3 not");
+      expect(createStudentListNoteSummary(byId.get(generalPlusId)!).text).toBe("Genel + 2 not");
+      expect(byId.get(threeCallNotesId)?.call_note_count).toBe(3);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("uses the latest non-empty call note in note-focused list summaries", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student({ student_full_name: "Son Notlu" }));
+      await database.call_logs.bulkAdd([
+        callLog(studentId, { note: "Eski dolu not", call_time: "2026-05-08T10:00:00.000Z" }),
+        callLog(studentId, { note: "Veli bilgi istedi, tekrar aranacak", call_time: "2026-05-08T11:00:00.000Z" }),
+        callLog(studentId, { note: "  ", call_time: "2026-05-08T12:00:00.000Z" })
+      ]);
+
+      const rows = await readStudentListRows(database);
+      const row = rows.find((item) => item.student_id === studentId)!;
+      const noteSummary = createStudentListNoteSummary(row, "has_note");
+
+      expect(row.call_note_count).toBe(2);
+      expect(row.latest_call_note).toBe("Veli bilgi istedi, tekrar aranacak");
+      expect(row.latest_call_note_at).toBe("2026-05-08T11:00:00.000Z");
+      expect(noteSummary.text).toBe("Veli bilgi istedi, tekrar aranacak");
+      expect(noteSummary.suffix).toBe("2 not");
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("falls back to general note in note-focused summaries when there is no call note", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(
+        student({
+          student_full_name: "Genel Özeti",
+          general_note: "Excel'den gelen genel not"
+        })
+      );
+
+      const rows = await readStudentListRows(database);
+      const row = rows.find((item) => item.student_id === studentId)!;
+
+      expect(createStudentListNoteSummary(row, "has_note").text).toBe("Excel'den gelen genel not");
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("includes call log notes in the has_note filter", async () => {
+    const database = await createDatabase();
+
+    try {
+      const callNoteStudentId = await database.students.add(student({ student_full_name: "Görüşme Notlu" }));
+      await database.students.add(
+        student({
+          student_full_name: "Notsuz",
+          created_at: "2026-05-08T09:01:00.000Z",
+          updated_at: "2026-05-08T09:01:00.000Z"
+        })
+      );
+      await database.call_logs.add(callLog(callNoteStudentId, { note: "Sadece görüşme notu var" }));
+
+      const rows = await readStudentListRows(database);
+      const filteredRows = filterStudentListRows(rows, "", "has_note");
+
+      expect(filteredRows).toHaveLength(1);
+      expect(filteredRows[0].student_full_name).toBe("Görüşme Notlu");
     } finally {
       database.close();
       await database.delete();

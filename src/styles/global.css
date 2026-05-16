@@ -1857,16 +1857,21 @@ body {
 }
 
 .td-note {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
   white-space: nowrap;
 }
 
-.td-note span {
+.td-note-summary {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.td-note em {
-  margin-left: 5px;
+.td-note-count {
+  flex: 0 0 auto;
   color: var(--aots-hint);
   font-family: var(--aots-mono);
   font-style: normal;

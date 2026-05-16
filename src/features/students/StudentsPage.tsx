@@ -37,6 +37,7 @@ import { readActiveOperationShortcuts } from "../shortcuts/services/shortcutSett
 import { deleteStudentWithRelations } from "./services/studentDelete";
 import {
   ALL_STUDENT_GROUPS_FILTER,
+  createStudentListNoteSummary,
   createStudentGroupFilterOptions,
   filterRowsByStudentGroup,
   filterStudentListRows,
@@ -128,14 +129,6 @@ function compactPhone(value?: string | null): string {
   }
 
   return value;
-}
-
-function notePreview(note?: string | null, emptyText = "-"): string {
-  if (!note?.trim()) {
-    return emptyText;
-  }
-
-  return note.length > 72 ? `${note.slice(0, 72)}...` : note;
 }
 
 function drawerNotePreview(note?: string | null): string {
@@ -1102,6 +1095,7 @@ export function StudentsPage() {
               {visibleRows.map((row, index) => {
                 const previousRow = visibleRows[index - 1];
                 const duplicateGroupKey = row.duplicate_group_key ?? "";
+                const noteSummary = createStudentListNoteSummary(row, activeFilter);
                 const shouldShowDuplicateHeader =
                   activeFilter === "duplicate_phone" &&
                   duplicateGroupKey &&
@@ -1151,9 +1145,9 @@ export function StudentsPage() {
                       <td>
                         <span className={`status ${statusClass(row)}`}>{statusLabel(row)}</span>
                       </td>
-                      <td className="td-note" title={row.general_note || undefined}>
-                        <span>{notePreview(row.general_note)}</span>
-                        {row.note_count > 0 ? <em>[{row.note_count}]</em> : null}
+                      <td className="td-note" title={noteSummary.title}>
+                        <span className="td-note-summary">{noteSummary.text}</span>
+                        {noteSummary.suffix ? <em className="td-note-count">· {noteSummary.suffix}</em> : null}
                       </td>
                       <td className="td-next">{row.has_reminder ? `↻ ${formatShortDateTime(row.next_reminder_at)}` : "-"}</td>
                     </tr>
