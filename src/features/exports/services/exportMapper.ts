@@ -3,7 +3,14 @@ import type { AppointmentRecord } from "../../../domain/models/appointment";
 import type { CallLogRecord } from "../../../domain/models/callLog";
 import type { PhoneRecord } from "../../../domain/models/phone";
 import type { ReminderRecord } from "../../../domain/models/reminder";
-import type { ExportDataset, ExportPreviewSummary, ExportScope, ExportStudentBundle, DetailedExportSheet } from "./exportTypes";
+import type {
+  DetailedExportSheet,
+  ExportDataset,
+  ExportPreviewSummary,
+  ExportScope,
+  ExportStudentBundle,
+  SummaryConversationReportSheet
+} from "./exportTypes";
 
 export const BASE_EXPORT_HEADERS = [
   "Sıra No",
@@ -31,6 +38,24 @@ export const BASE_EXPORT_HEADERS = [
   "Kaynak Excel Satırı",
   "Oluşturulma Tarihi",
   "Güncellenme Tarihi"
+] as const;
+
+export const SUMMARY_EXPORT_BASE_HEADERS = [
+  "Sıra No",
+  "Öğrenci Ad Soyad",
+  "Veli Ad Soyad",
+  "Telefon 1",
+  "Telefon 1 Durumu",
+  "Telefon 2",
+  "Telefon 2 Durumu",
+  "Sınıf",
+  "Genel Açıklama"
+] as const;
+
+export const SUMMARY_EXPORT_TRAILING_HEADERS = [
+  "Son Arama Sonucu",
+  "Son Görüşme Tarihi",
+  "Son Güncellenme Tarihi"
 ] as const;
 
 const CALL_RESULT_LABELS: Record<string, string> = {
@@ -136,6 +161,34 @@ export function getPhoneStatusLabel(phone?: PhoneRecord | null): string {
   return "Belirtilmedi";
 }
 
+export function getSummaryPhoneStatusLabel(phone?: PhoneRecord | null): string {
+  if (!phone) {
+    return "Belirtilmedi";
+  }
+
+  if (phone.is_wrong || phone.phone_status === "invalid") {
+    return "Yanlış numara / kullanılmıyor";
+  }
+
+  if (phone.phone_status === "contacted") {
+    return "Son görüşülen numara";
+  }
+
+  if (phone.phone_status === "active") {
+    return "Aktif";
+  }
+
+  return "Belirtilmedi";
+}
+
+export function getSummaryCallResultLabel(value?: CallResult | string | null): string {
+  if (value === "do_not_call" || value === "not_interested") {
+    return "Aranmayacak / ilgilenmiyor";
+  }
+
+  return getCallResultLabel(value);
+}
+
 function getAppointmentStatusLabel(appointment?: AppointmentRecord | null): string {
   return appointment?.status ? APPOINTMENT_LABELS[appointment.status] ?? appointment.status : "";
 }
@@ -150,6 +203,16 @@ function getReminderTime(reminder?: ReminderRecord | null): string {
 
 function getLastCallLog(bundle: ExportStudentBundle): (CallLogRecord & { id: number }) | null {
   return bundle.call_logs[bundle.call_logs.length - 1] ?? null;
+}
+
+function getChronologicalCallLogs(bundle: ExportStudentBundle): Array<CallLogRecord & { id: number }> {
+  return [...bundle.call_logs].sort(
+    (left, right) => left.call_time.localeCompare(right.call_time) || (left.id ?? 0) - (right.id ?? 0)
+  );
+}
+
+function getFilledNoteCallLogs(bundle: ExportStudentBundle): Array<CallLogRecord & { id: number }> {
+  return getChronologicalCallLogs(bundle).filter((callLog) => callLog.note?.trim());
 }
 
 function createDynamicCallHeaders(maxCallLogCount: number): string[] {
@@ -217,6 +280,54 @@ function createDynamicCallCells(bundle: ExportStudentBundle, maxCallLogCount: nu
   });
 }
 
+function createSummaryNoteHeaders(maxNoteCount: number): string[] {
+  return Array.from({ length: maxNoteCount }).flatMap((_, index) => {
+    const noteNumber = index + 1;
+
+    return [`Açıklama ${noteNumber}`, `Açıklama ${noteNumber} Tarihi`];
+  });
+}
+
+function createSummaryBaseRow(bundle: ExportStudentBundle, index: number): Array<string | number> {
+  return [
+    index + 1,
+    bundle.student.student_full_name,
+    bundle.guardian?.guardian_full_name ?? "",
+    bundle.phone_1?.phone_number ?? "",
+    getSummaryPhoneStatusLabel(bundle.phone_1),
+    bundle.phone_2?.phone_number ?? "",
+    getSummaryPhoneStatusLabel(bundle.phone_2),
+    bundle.student.current_class ?? "",
+    bundle.student.general_note ?? ""
+  ];
+}
+
+function createSummaryNoteCells(bundle: ExportStudentBundle, maxNoteCount: number): Array<string | number> {
+  const noteCallLogs = getFilledNoteCallLogs(bundle);
+
+  return Array.from({ length: maxNoteCount }).flatMap((_, index) => {
+    const callLog = noteCallLogs[index];
+
+    if (!callLog) {
+      return ["", ""];
+    }
+
+    return [callLog.note?.trim() ?? "", formatExportDateTime(callLog.call_time)];
+  });
+}
+
+function createSummaryTrailingCells(bundle: ExportStudentBundle): Array<string | number> {
+  const chronologicalCallLogs = getChronologicalCallLogs(bundle);
+  const lastCallLog = chronologicalCallLogs[chronologicalCallLogs.length - 1] ?? null;
+  const lastUpdatedAt = bundle.student.updated_at || lastCallLog?.call_time || bundle.student.created_at;
+
+  return [
+    getSummaryCallResultLabel(lastCallLog?.call_result ?? bundle.student.last_call_result),
+    formatExportDateTime(lastCallLog?.call_time),
+    formatExportDateTime(lastUpdatedAt)
+  ];
+}
+
 export function createDetailedExportSheet(dataset: ExportDataset): DetailedExportSheet {
   const maxCallLogCount = Math.max(0, ...dataset.bundles.map((bundle) => bundle.call_logs.length));
   const headers = [...BASE_EXPORT_HEADERS, ...createDynamicCallHeaders(maxCallLogCount)];
@@ -235,6 +346,29 @@ export function createDetailedExportSheet(dataset: ExportDataset): DetailedExpor
   };
 }
 
+export function createSummaryConversationReportSheet(dataset: ExportDataset): SummaryConversationReportSheet {
+  const maxNoteCount = Math.max(0, ...dataset.bundles.map((bundle) => getFilledNoteCallLogs(bundle).length));
+  const headers = [
+    ...SUMMARY_EXPORT_BASE_HEADERS,
+    ...createSummaryNoteHeaders(maxNoteCount),
+    ...SUMMARY_EXPORT_TRAILING_HEADERS
+  ];
+  const rows = dataset.bundles.map((bundle, index) => [
+    ...createSummaryBaseRow(bundle, index),
+    ...createSummaryNoteCells(bundle, maxNoteCount),
+    ...createSummaryTrailingCells(bundle)
+  ]);
+  const totalCallLogCount = dataset.bundles.reduce((total, bundle) => total + bundle.call_logs.length, 0);
+
+  return {
+    headers,
+    rows,
+    max_note_count: maxNoteCount,
+    total_call_log_count: totalCallLogCount,
+    estimated_column_count: headers.length
+  };
+}
+
 export function createExportPreviewSummary(dataset: ExportDataset, scope: ExportScope): ExportPreviewSummary {
   const sheet = createDetailedExportSheet(dataset);
 
@@ -244,6 +378,19 @@ export function createExportPreviewSummary(dataset: ExportDataset, scope: Export
     total_call_log_count: sheet.total_call_log_count,
     max_call_log_count: sheet.max_call_log_count,
     dynamic_call_group_count: sheet.max_call_log_count,
+    estimated_column_count: sheet.estimated_column_count
+  };
+}
+
+export function createSummaryExportPreviewSummary(dataset: ExportDataset, scope: ExportScope): ExportPreviewSummary {
+  const sheet = createSummaryConversationReportSheet(dataset);
+
+  return {
+    scope,
+    student_count: dataset.bundles.length,
+    total_call_log_count: sheet.total_call_log_count,
+    max_call_log_count: sheet.max_note_count,
+    dynamic_call_group_count: sheet.max_note_count,
     estimated_column_count: sheet.estimated_column_count
   };
 }

@@ -7,6 +7,7 @@ import type { ReminderRecord } from "../../../domain/models/reminder";
 import type { StudentRecord } from "../../../domain/models/student";
 
 export type ExportScope = "all" | "filtered";
+export type ExportReportType = "detailed" | "summary";
 
 export type FilteredExportSnapshot = {
   created_at: string;
@@ -38,6 +39,14 @@ export type DetailedExportSheet = {
   headers: string[];
   rows: Array<Array<string | number>>;
   max_call_log_count: number;
+  total_call_log_count: number;
+  estimated_column_count: number;
+};
+
+export type SummaryConversationReportSheet = {
+  headers: string[];
+  rows: Array<Array<string | number>>;
+  max_note_count: number;
   total_call_log_count: number;
   estimated_column_count: number;
 };

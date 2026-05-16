@@ -5,11 +5,18 @@ import { PageHeader } from "../../components/PageHeader";
 import { readDetailedExportData } from "./services/exportDataReader";
 import {
   createExportPreviewSummary,
-  createDetailedExportSheet
+  createDetailedExportSheet,
+  createSummaryConversationReportSheet,
+  createSummaryExportPreviewSummary
 } from "./services/exportMapper";
 import { readFilteredExportSnapshot } from "./services/exportSelection";
-import type { ExportScope } from "./services/exportTypes";
-import { createDetailedExportFileName, downloadDetailedExportWorkbook } from "./services/excelExporter";
+import type { ExportReportType, ExportScope } from "./services/exportTypes";
+import {
+  createDetailedExportFileName,
+  createSummaryConversationReportFileName,
+  downloadDetailedExportWorkbook,
+  downloadSummaryConversationReportWorkbook
+} from "./services/excelExporter";
 
 function scopeLabel(scope: ExportScope): string {
   return scope === "filtered" ? "Mevcut filtrelenmiş liste" : "Tüm adaylar";
@@ -37,6 +44,7 @@ function formatSnapshotDate(value?: string | null): string {
 
 export function ExportPage() {
   const [scope, setScope] = useState<ExportScope>("all");
+  const [reportType, setReportType] = useState<ExportReportType>("detailed");
   const [isExporting, setIsExporting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [snapshot] = useState(() => readFilteredExportSnapshot());
@@ -47,8 +55,13 @@ export function ExportPage() {
     undefined
   );
   const summary = useMemo(
-    () => (dataset ? createExportPreviewSummary(dataset, scope) : null),
-    [dataset, scope]
+    () =>
+      dataset
+        ? reportType === "summary"
+          ? createSummaryExportPreviewSummary(dataset, scope)
+          : createExportPreviewSummary(dataset, scope)
+        : null,
+    [dataset, reportType, scope]
   );
   const canExportFiltered = Boolean(snapshot?.student_ids.length);
   const canExport = Boolean(dataset && summary && summary.student_count > 0 && (scope === "all" || canExportFiltered));
@@ -62,9 +75,15 @@ export function ExportPage() {
     setMessage("Excel dosyası hazırlanıyor...");
 
     try {
-      const sheet = createDetailedExportSheet(dataset);
-      const fileName = createDetailedExportFileName();
-      await downloadDetailedExportWorkbook(sheet, fileName);
+      const fileName =
+        reportType === "summary" ? createSummaryConversationReportFileName() : createDetailedExportFileName();
+
+      if (reportType === "summary") {
+        await downloadSummaryConversationReportWorkbook(createSummaryConversationReportSheet(dataset), fileName);
+      } else {
+        await downloadDetailedExportWorkbook(createDetailedExportSheet(dataset), fileName);
+      }
+
       setMessage(`${fileName} indirildi.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Excel dışa aktarma tamamlanamadı.");
@@ -79,6 +98,35 @@ export function ExportPage() {
         title="Excel Dışa Aktar"
         description="Adayları, telefonları, tekrar aramaları ve görüşme geçmişini detaylı Excel formatında dışa aktarın."
       />
+
+      <section className="panel">
+        <h2>Export Türü</h2>
+        <div className="export-scope-grid">
+          <label className={`export-option ${reportType === "detailed" ? "active" : ""}`}>
+            <input
+              checked={reportType === "detailed"}
+              onChange={() => setReportType("detailed")}
+              type="radio"
+            />
+            <span>
+              <strong>Detaylı Excel Export</strong>
+              <small>Tüm alanları, tekrar arama bilgilerini ve dinamik arama kolonlarını içerir.</small>
+            </span>
+          </label>
+
+          <label className={`export-option ${reportType === "summary" ? "active" : ""}`}>
+            <input
+              checked={reportType === "summary"}
+              onChange={() => setReportType("summary")}
+              type="radio"
+            />
+            <span>
+              <strong>Özet Görüşme Raporu (Fazla Detay İçermez)</strong>
+              <small>Daha az sütunla, görüşme notlarını okunabilir şekilde dışa aktarır. CRM’i bilmeyen kişiler için uygundur.</small>
+            </span>
+          </label>
+        </div>
+      </section>
 
       <section className="export-info-box">
         <strong>Excel dışa aktarımı raporlama ve paylaşım içindir.</strong>
@@ -147,11 +195,11 @@ export function ExportPage() {
               <strong>{summary.total_call_log_count}</strong>
             </div>
             <div className="summary-metric">
-              <span>Maksimum Arama N</span>
+              <span>{reportType === "summary" ? "Açıklama kolonu" : "Maksimum Arama N"}</span>
               <strong>{summary.max_call_log_count}</strong>
             </div>
             <div className="summary-metric">
-              <span>Dinamik arama grubu</span>
+              <span>{reportType === "summary" ? "Dinamik açıklama grubu" : "Dinamik arama grubu"}</span>
               <strong>{summary.dynamic_call_group_count}</strong>
             </div>
             <div className="summary-metric">
@@ -168,7 +216,11 @@ export function ExportPage() {
 
         <div className="toolbar">
           <Button disabled={!canExport || isExporting} onClick={() => void exportToExcel()} type="button">
-            {isExporting ? "Hazırlanıyor..." : "Detaylı Excel Dışa Aktar"}
+            {isExporting
+              ? "Hazırlanıyor..."
+              : reportType === "summary"
+                ? "Özet Görüşme Raporu Dışa Aktar"
+                : "Detaylı Excel Dışa Aktar"}
           </Button>
         </div>
       </section>
