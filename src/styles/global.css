@@ -1514,6 +1514,54 @@ body {
   color: var(--aots-red);
 }
 
+.data-management-notice-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(26, 25, 22, 0.18);
+}
+
+.data-management-notice {
+  display: grid;
+  width: min(430px, calc(100vw - 32px));
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--aots-border-md);
+  border-radius: var(--aots-radius-lg);
+  background: var(--aots-surface);
+  color: var(--aots-text);
+  box-shadow: 0 18px 40px rgba(26, 25, 22, 0.16);
+}
+
+.data-management-notice.error {
+  border-color: #efb8b1;
+  background: var(--aots-red-bg);
+}
+
+.data-management-notice.success {
+  border-color: #b5dcca;
+  background: var(--aots-green-bg);
+}
+
+.data-management-notice h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.data-management-notice p {
+  margin: 0;
+  color: var(--aots-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.data-management-notice button {
+  justify-self: end;
+}
+
 .delete-confirm-backdrop {
   position: fixed;
   inset: 0;
@@ -2210,7 +2258,7 @@ body {
   display: flex;
   flex-shrink: 0;
   flex-direction: column;
-  width: 360px;
+  width: clamp(320px, 26vw, 360px);
   border-left: 1px solid var(--aots-border);
   background: var(--aots-surface);
 }
@@ -3104,7 +3152,7 @@ body {
 
 @media (max-width: 1100px) {
   .student-drawer {
-    width: 340px;
+    width: 320px;
   }
 
   .student-toolbar {

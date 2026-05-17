@@ -216,7 +216,9 @@ export function AppLayout() {
 
   useEffect(() => {
     setActiveGlobalSearchIndex(0);
-    setIsGlobalSearchOpen(canShowGlobalSearchDropdown && normalizeText(globalSearch).length >= 2);
+    if (!canShowGlobalSearchDropdown || normalizeText(globalSearch).length < 2) {
+      setIsGlobalSearchOpen(false);
+    }
   }, [canShowGlobalSearchDropdown, globalSearch]);
 
   useEffect(() => {

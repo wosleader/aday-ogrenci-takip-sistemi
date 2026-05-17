@@ -204,6 +204,19 @@ describe("AppLayout notifications", () => {
     expect(screen.getByText("Liste sorgusu: Ec")).toBeInTheDocument();
   });
 
+  it("closes global search results on route changes without clearing the query", async () => {
+    await seedSearchStudent();
+    renderLayout("/settings");
+
+    await userEvent.type(screen.getByLabelText("Genel arama"), "Ec");
+    expect(await screen.findByRole("option", { name: /ECEM/i })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("link", { name: /Raporlar/i }));
+
+    expect(screen.getByLabelText("Genel arama")).toHaveValue("Ec");
+    expect(screen.queryByRole("option")).not.toBeInTheDocument();
+  });
+
   it("limits global search results and sends more results to the student list", async () => {
     await seedManySearchStudents(9);
     renderLayout("/settings");

@@ -31,6 +31,11 @@ import {
 } from "./services/dataManagement";
 
 type SettingsTab = "general" | "shortcuts" | "reminders" | "data";
+type DataManagementNotice = {
+  type: "success" | "error";
+  title: string;
+  message: string;
+};
 
 const SETTINGS_TABS: Array<{ key: SettingsTab; label: string }> = [
   { key: "general", label: "Genel" },
@@ -55,6 +60,7 @@ export function SettingsPage() {
   const [restoreResult, setRestoreResult] = useState<SystemRestoreResult | null>(null);
   const restoreFileInputRef = useRef<HTMLInputElement | null>(null);
   const [dataManagementMessage, setDataManagementMessage] = useState<string | null>(null);
+  const [dataManagementNotice, setDataManagementNotice] = useState<DataManagementNotice | null>(null);
   const [reminderSettingsMessage, setReminderSettingsMessage] = useState<string | null>(null);
 
   async function downloadManualBackup() {
@@ -66,6 +72,7 @@ export function SettingsPage() {
   async function clearAllCandidateData() {
     setIsCleaning(true);
     setDataManagementMessage(null);
+    setDataManagementNotice(null);
     setCleanupResult(null);
 
     try {
@@ -87,6 +94,7 @@ export function SettingsPage() {
     }
 
     setDataManagementMessage(null);
+    setDataManagementNotice(null);
     setRestoreAnalysis(null);
     setRestoreResult(null);
     setRestoreConfirmationText("");
@@ -96,7 +104,13 @@ export function SettingsPage() {
       setRestoreAnalysis(analysis);
       setDataManagementMessage("Sistem yedeği analiz edildi. Geri yüklemeden önce özeti kontrol edin.");
     } catch (error) {
-      setDataManagementMessage(error instanceof Error ? error.message : "Yedek dosyası okunamadı.");
+      const message = error instanceof Error ? error.message : "Yedek dosyası okunamadı.";
+      setDataManagementMessage(message);
+      setDataManagementNotice({
+        type: "error",
+        title: "Tam Sistem Yedeği okunamadı",
+        message: `${message} Lütfen Ayarlar > Veri Yönetimi bölümünden alınmış doğru yedek dosyasını seçin.`
+      });
     } finally {
       if (restoreFileInputRef.current) {
         restoreFileInputRef.current.value = "";
@@ -119,6 +133,11 @@ export function SettingsPage() {
       setRestoreResult(result);
       setRestoreConfirmationText("");
       setDataManagementMessage("Sistem yedeği geri yüklendi.");
+      setDataManagementNotice({
+        type: "success",
+        title: "Geri yükleme tamamlandı",
+        message: "Tam Sistem Yedeği başarıyla geri yüklendi. Adaylar, hatırlatmalar ve kayıtlar sisteme geri alındı."
+      });
     } catch (error) {
       setDataManagementMessage(error instanceof Error ? error.message : "Geri yükleme tamamlanamadı.");
     } finally {
@@ -182,6 +201,23 @@ export function SettingsPage() {
         title="Ayarlar"
         description="Varsayılan ayarlar ve klavye kısayolları yerel veritabanından okunacak şekilde hazırlanıyor."
       />
+
+      {dataManagementNotice ? (
+        <div className="data-management-notice-backdrop" role="presentation">
+          <section
+            aria-labelledby="data-management-notice-title"
+            aria-modal="true"
+            className={`data-management-notice ${dataManagementNotice.type}`}
+            role="alertdialog"
+          >
+            <h2 id="data-management-notice-title">{dataManagementNotice.title}</h2>
+            <p>{dataManagementNotice.message}</p>
+            <Button type="button" onClick={() => setDataManagementNotice(null)}>
+              Tamam
+            </Button>
+          </section>
+        </div>
+      ) : null}
 
       <div className="settings-tabs" role="tablist" aria-label="Ayar bölümleri">
         {SETTINGS_TABS.map((tab) => (
