@@ -21,12 +21,12 @@ export function ReportsPage() {
   const reminderSummary = report?.reminder_summary;
   const cards: ReportCard[] = [
     {
-      label: "Bugün işlem yapılan aday",
+      label: "Seçilen gün işlem yapılan aday",
       value: summary?.unique_student_count ?? 0,
-      hint: "Gün içinde kaydı olan farklı adaylar"
+      hint: "Seçilen gün içinde kaydı olan farklı adaylar"
     },
     {
-      label: "Bugünkü görüşme kaydı",
+      label: "Seçilen gün görüşme kaydı",
       value: summary?.call_log_count ?? 0,
       hint: "Seçilen gün girilen toplam kayıt"
     },
@@ -46,7 +46,7 @@ export function ReportsPage() {
       <div className="daily-report-header">
         <PageHeader
           title="Raporlar"
-          description="Bugünkü arama çalışmasını ve açık hatırlatmaları buradan hızlıca takip edin."
+          description="Seçilen günün arama çalışmasını ve açık hatırlatmaları buradan hızlıca takip edin."
         />
         <label className="daily-report-date">
           <span>Rapor tarihi</span>

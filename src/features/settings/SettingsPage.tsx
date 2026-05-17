@@ -413,7 +413,7 @@ export function SettingsPage() {
               <strong>{cleanupResult.deleted_reminders}</strong>
             </div>
             <div className="summary-metric">
-              <span>Import log</span>
+              <span>İçe aktarma logu</span>
               <strong>{cleanupResult.deleted_import_logs}</strong>
             </div>
           </div>
@@ -427,7 +427,7 @@ export function SettingsPage() {
         <p>Uygulama açıkken zamanı gelen tekrar arama hatırlatmaları için ekran içi uyarıları yönetir.</p>
         <label className="toggle-row">
           <span>
-            <strong>Reminder popup uyarıları</strong>
+            <strong>Ekran içi hatırlatma uyarıları</strong>
             <small>Zamanı gelen hatırlatmaları ekran içinde göster.</small>
           </span>
           <input
@@ -438,7 +438,7 @@ export function SettingsPage() {
         </label>
         <label className="toggle-row">
           <span>
-            <strong>Reminder sesli uyarı</strong>
+            <strong>Hatırlatma sesi</strong>
             <small>Popup çıktığında kısa ve yumuşak bir ses çal.</small>
           </span>
           <input

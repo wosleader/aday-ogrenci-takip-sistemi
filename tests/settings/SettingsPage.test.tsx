@@ -20,6 +20,9 @@ describe("SettingsPage", () => {
 
     expect(screen.getByRole("tab", { name: "Hatırlatmalar" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText("Bildirimler / Hatırlatmalar")).toBeInTheDocument();
+    expect(screen.getByText("Ekran içi hatırlatma uyarıları")).toBeInTheDocument();
+    expect(screen.getByText("Hatırlatma sesi")).toBeInTheDocument();
+    expect(screen.queryByText(/Reminder/i)).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("tab", { name: "Veri Yönetimi" }));
 

@@ -278,8 +278,8 @@ export function ImportPage() {
       const message =
         caughtError instanceof Error
           ? caughtError.message
-          : "Import sırasında bilinmeyen bir hata oluştu.";
-      setError(`Import tamamlanamadı. Transaction geri alındı; kısmi veri kalmadı. ${message}`);
+          : "İçe aktarma sırasında bilinmeyen bir hata oluştu.";
+      setError(`İçe aktarma tamamlanamadı. Transaction geri alındı; kısmi veri kalmadı. ${message}`);
     } finally {
       setIsImporting(false);
     }
@@ -400,7 +400,7 @@ export function ImportPage() {
         />
       ) : (
         <>
-          <section className="summary-grid" aria-label="Import simülasyon özeti">
+          <section className="summary-grid" aria-label="İçe aktarma ön kontrol özeti">
             <SummaryMetric label="Toplam satır" value={summary.total_rows} />
             <SummaryMetric label="Okunacak satır" value={summary.readable_rows} />
             <SummaryMetric label="İçe aktarılmayacak satır" value={summary.skipped_rows} />
@@ -426,7 +426,7 @@ export function ImportPage() {
                     <tr>
                       <th>Dosya</th>
                       <th>Worksheet</th>
-                      <th>Import tarihi</th>
+                      <th>İçe aktarma tarihi</th>
                       <th>Kayıt</th>
                     </tr>
                   </thead>
@@ -585,7 +585,7 @@ export function ImportPage() {
           </section>
 
           <section className="panel">
-            <h2>Import Log</h2>
+            <h2>İçe Aktarma Logu</h2>
             <p>Önce özet gösterilir; satır detayları Detayları göster içinde tutulur.</p>
             <div className="toolbar">
               <Button type="button" variant="secondary" onClick={downloadImportLog}>
@@ -646,16 +646,16 @@ export function ImportPage() {
             </Button>
             {importResult ? (
               <section className="import-result">
-                <h3>Import Tamamlandı</h3>
+                <h3>İçe Aktarma Tamamlandı</h3>
                 <div className="summary-grid">
                   <SummaryMetric label="Oluşturulan öğrenci" value={importResult.created_students} />
                   <SummaryMetric label="Oluşturulan veli" value={importResult.created_guardians} />
                   <SummaryMetric label="Oluşturulan telefon" value={importResult.created_phones} />
                   <SummaryMetric label="Oluşturulan hatırlatma" value={importResult.created_reminders} />
-                  <SummaryMetric label="Kaydedilen import log" value={importResult.saved_import_logs} />
+                  <SummaryMetric label="Kaydedilen içe aktarma logu" value={importResult.saved_import_logs} />
                   <SummaryMetric label="Atlanan satır" value={importResult.skipped_rows} />
                 </div>
-                <p>Import öncesi JSON yedek oluşturuldu ve indirilebilir hale getirildi.</p>
+                <p>İçe aktarma öncesi güvenlik yedeği oluşturuldu ve indirilebilir hale getirildi.</p>
                 <Button type="button" variant="secondary" onClick={() => navigate("/students")}>
                   Aday Listesine Git
                 </Button>

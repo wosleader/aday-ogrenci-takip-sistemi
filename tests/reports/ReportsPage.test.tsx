@@ -94,8 +94,8 @@ describe("ReportsPage", () => {
 
     expect(screen.getByRole("heading", { name: "Raporlar" })).toBeInTheDocument();
     expect(screen.getByLabelText("Rapor tarihi")).toBeInTheDocument();
-    expect(screen.getByText("Bugün işlem yapılan aday")).toBeInTheDocument();
-    expect(screen.getByText("Bugünkü görüşme kaydı")).toBeInTheDocument();
+    expect(screen.getByText("Seçilen gün işlem yapılan aday")).toBeInTheDocument();
+    expect(screen.getByText("Seçilen gün görüşme kaydı")).toBeInTheDocument();
     expect(screen.getByText("Süresi geçen hatırlatma")).toBeInTheDocument();
     expect(screen.getByText("Bugün aranacak hatırlatma")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Son görüşmeler" })).toBeInTheDocument();

@@ -96,7 +96,7 @@ export function ExportPage() {
     <div className="page">
       <PageHeader
         title="Excel Dışa Aktar"
-        description="Adayları, telefonları, tekrar aramaları ve görüşme geçmişini detaylı Excel formatında dışa aktarın."
+        description="Aday verilerini raporlama veya paylaşım için Excel formatında dışa aktarın."
       />
 
       <section className="panel">
@@ -131,8 +131,8 @@ export function ExportPage() {
       <section className="export-info-box">
         <strong>Excel dışa aktarımı raporlama ve paylaşım içindir.</strong>
         <p>
-          Bu Excel dosyası raporlama ve paylaşım amaçlıdır. Programdaki tüm verileri daha sonra eksiksiz geri yüklemek
-          istiyorsanız Ayarlar &gt; Veri Yönetimi bölümünden "Tam Sistem Yedeği Al" seçeneğini kullanın.
+          Excel dosyaları raporlama ve paylaşım içindir. Sistemi eksiksiz geri yüklemek için Ayarlar &gt; Veri Yönetimi
+          altındaki "Tam Sistem Yedeği Al" seçeneği kullanılmalıdır.
         </p>
         <p>
           Excel dışa aktarımı; listeyi incelemek, paylaşmak veya raporlamak içindir. Bu dosyayı tekrar içe aktarmak,
