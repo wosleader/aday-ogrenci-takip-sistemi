@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 8.6 | Branch: sprint-8-6-daily-report-page -->
+<!-- Son güncelleme: Sprint 8.7 | Branch: sprint-8-7-responsive-layout-polish -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -20,7 +20,10 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 - [Sprint 8.1] Filtre adı Sınıf / Şube’dir; `current_class` + `student_group` birlikte yorumlanır.
 - [Sprint 8.1] Durum chipleri Durum Filtresi dropdown’ına taşınmıştır.
 - [Sprint 8.6] Günlük rapor kırılımları `call_logs.call_result` üzerinden hesaplanır: `reached`, `not_reached`, `call_later`, `appointment`, `registered`, `do_not_call`/`not_interested`, `wrong_number`. Günlük tarih filtresinde `call_time` birincildir; yoksa `created_at` kullanılır. Raporlar sayfası Excel export’un yerine geçmez; detaylı paylaşım için Detaylı Excel Export ve Özet Görüşme Raporu korunur.
-- [Roadmap] Responsive Layout Polish ayrı sprint olarak yapılacak. Masaüstü, küçük laptop, tablet ve mobil genişliklerde Aday Listesi, Hatırlatmalar, Raporlar, Export, Import ve Ayarlar ekranları kontrol edilecek. Tablolar dar ekranda kolonları ezmeyecek; gerekirse yatay scroll veya mobil kart görünümü uygulanacak.
+- [Sprint 8.7] Responsive Layout Polish düşük riskli CSS ağırlıklı yaklaşımla yapıldı. Dar ekranlarda tablo/kart/filtre/dropdown taşmasını azaltmak için yatay scroll, min-width, breakpoint ve wrap düzenleri kullanıldı. Alt kısayol barı, mobil drawer ve mobil kart tablo dönüşümü ayrı sprintlere bırakıldı.
+- [Roadmap] Shortcut Help Bar Polish ayrı sprint olarak yapılacak.
+- [Roadmap] Mobile Drawer Polish ayrı sprint olarak yapılacak.
+- [Roadmap] Mobile Table/Card View Polish ayrı sprint olarak değerlendirilecek.
 - [Roadmap] Çoklu Telefon Mimarisi ayrı sprint olarak ele alınacak. Aday listesinde ilk 2 öncelikli numara + “+N” gösterilecek, tüm numaralar kişi kartında yönetilecek, arama kayıtları `phone_id` + snapshot bilgisiyle saklanacak.
 - [Roadmap] Akıllı Yardımcılar offline/kural tabanlı olacak; dış AI API kullanılmayacak.
 - [Roadmap] Figma/Stitch UI fikirleri kontrollü uygulanacak; büyük dönüşüm kullanıcı onayı olmadan yapılmayacak.

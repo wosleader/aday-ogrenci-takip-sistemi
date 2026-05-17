@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 8.6 | Branch: sprint-8-6-daily-report-page -->
+<!-- Son güncelleme: Sprint 8.7 | Branch: sprint-8-7-responsive-layout-polish -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -6,7 +6,7 @@ Bu dosya “hangi dosya ne işe yarar?” haritasıdır.
 
 ## 1. App / Layout
 
-Son doğrulandı: Sprint 8.2
+Son doğrulandı: Sprint 8.7
 
 - `src/app/App.tsx`
   Uygulama kök bileşeni.
@@ -15,7 +15,7 @@ Son doğrulandı: Sprint 8.2
 - `src/app/router.tsx`
   Route tanımları ve sayfa yerleşimi.
 - `src/styles/global.css`
-  Genel uygulama stilleri, filtre barları, popup/toast/drawer gibi UI sınıfları.
+  Genel uygulama stilleri, filtre barları, popup/toast/drawer gibi UI sınıfları ve Sprint 8.7 responsive güvenlik polish kuralları.
 
 ## 2. Database / Backup
 
@@ -173,7 +173,7 @@ Son doğrulandı: Sprint 8.6
 
 ## 12. Docs / Prompts
 
-Son doğrulandı: Sprint 8.6
+Son doğrulandı: Sprint 8.7
 
 - `docs/PROJECT_MEMORY.md`
   Codex için güncel kısa proje hafızası.
@@ -193,6 +193,8 @@ Son doğrulandı: Sprint 8.6
   Hatırlatmalar sayfası checkpoint’i.
 - `docs/CHECKPOINT_SPRINT_8_6.md`
   Raporlar / Günlük Özet Sayfası checkpoint’i.
+- `docs/CHECKPOINT_SPRINT_8_7.md`
+  Responsive Layout Polish checkpoint’i.
 - `docs/UI_BASELINE_BEFORE_FIGMA.md`
   Figma/Stitch öncesi çalışan UI baseline.
 - `docs/mockups/AOTS_Mockup_v2.html`
