@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 8.8 | Branch: sprint-8-8-shortcut-help-bar-polish -->
+<!-- Son güncelleme: Sprint 8.9 | Branch: sprint-8-9-pilot-release-polish -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -82,10 +82,10 @@ Son doğrulandı: Sprint 8.2
 
 ## 7. Import
 
-Son doğrulandı: Sprint 8.2
+Son doğrulandı: Sprint 8.9
 
 - `src/features/imports/ImportPage.tsx`
-  Excel import UI, kolon eşleştirme, duplicate modal, import onayı.
+  İçe aktarma ekranı; kolon eşleştirme, simülasyon, duplicate kontrolü, import log ve pilot öncesi kullanıcı dostu metinleri içerir.
 - `src/features/imports/services/excelReader.ts`
   Excel dosyası ve worksheet okuma.
 - `src/features/imports/services/columnDefinitions.ts`
@@ -111,10 +111,10 @@ Son doğrulandı: Sprint 8.2
 
 ## 8. Export
 
-Son doğrulandı: Sprint 8.2
+Son doğrulandı: Sprint 8.9
 
 - `src/features/exports/ExportPage.tsx`
-  Export UI, export tipi seçimi, tüm/filtrelenmiş liste kapsamı.
+  Detaylı Excel Export ve Özet Görüşme Raporu üretir; Excel’in Tam Sistem Yedeği yerine geçmediğini kullanıcıya açıklar.
 - `src/features/exports/services/exportDataReader.ts`
   Export dataset okuma.
 - `src/features/exports/services/exportMapper.ts`
@@ -128,19 +128,19 @@ Son doğrulandı: Sprint 8.2
 
 ## 9. Reports
 
-Son doğrulandı: Sprint 8.6
+Son doğrulandı: Sprint 8.9
 
 - `src/features/reports/ReportsPage.tsx`
-  Günlük Raporlar sayfası; tarih seçimi, özet kartları, son görüşmeler ve açık hatırlatma özeti.
+  Günlük raporlar sayfası; seçilen gün diliyle günlük özet, son görüşmeler ve açık hatırlatma özeti gösterir.
 - `src/features/reports/services/dailyReportReader.ts`
   Seçilen gün için `call_logs` üzerinden günlük operasyon özetini üretir; `call_time` birincil, `created_at` fallback kullanır.
 
 ## 10. Settings / Data Management
 
-Son doğrulandı: Sprint 8.2
+Son doğrulandı: Sprint 8.9
 
 - `src/features/settings/SettingsPage.tsx`
-  Ayarlar sekmeleri, Klavye Kısayolları, Hatırlatmalar, Veri Yönetimi.
+  Ayarlar ekranı; kısayollar, hatırlatma ayarları, veri yönetimi ve Tam Sistem Yedeği/Geri Yükleme akışlarını içerir.
 - `src/features/settings/services/dataManagement.ts`
   Tam sistem yedeği indirme, analiz ve restore servisleri.
 - `src/domain/constants/settings.ts`
@@ -148,7 +148,7 @@ Son doğrulandı: Sprint 8.2
 
 ## 11. Tests
 
-Son doğrulandı: Sprint 8.8
+Son doğrulandı: Sprint 8.9
 
 - `tests/exports/*`
   Detaylı export, özet export, export data reader ve Excel exporter davranışları.
@@ -175,7 +175,7 @@ Son doğrulandı: Sprint 8.8
 
 ## 12. Docs / Prompts
 
-Son doğrulandı: Sprint 8.8
+Son doğrulandı: Sprint 8.9
 
 - `docs/PROJECT_MEMORY.md`
   Codex için güncel kısa proje hafızası.
@@ -199,6 +199,8 @@ Son doğrulandı: Sprint 8.8
   Responsive Layout Polish checkpoint’i.
 - `docs/CHECKPOINT_SPRINT_8_8.md`
   Shortcut Help Bar Polish checkpoint’i.
+- `docs/CHECKPOINT_SPRINT_8_9.md`
+  Pilot Fix / Release Polish checkpoint’i.
 - `docs/UI_BASELINE_BEFORE_FIGMA.md`
   Figma/Stitch öncesi çalışan UI baseline.
 - `docs/mockups/AOTS_Mockup_v2.html`

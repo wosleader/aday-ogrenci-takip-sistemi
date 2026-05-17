@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 8.8 | Branch: sprint-8-8-shortcut-help-bar-polish -->
+<!-- Son güncelleme: Sprint 8.9 | Branch: sprint-8-9-pilot-release-polish -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -22,6 +22,9 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 - [Sprint 8.6] Günlük rapor kırılımları `call_logs.call_result` üzerinden hesaplanır: `reached`, `not_reached`, `call_later`, `appointment`, `registered`, `do_not_call`/`not_interested`, `wrong_number`. Günlük tarih filtresinde `call_time` birincildir; yoksa `created_at` kullanılır. Raporlar sayfası Excel export’un yerine geçmez; detaylı paylaşım için Detaylı Excel Export ve Özet Görüşme Raporu korunur.
 - [Sprint 8.7] Responsive Layout Polish düşük riskli CSS ağırlıklı yaklaşımla yapıldı. Dar ekranlarda tablo/kart/filtre/dropdown taşmasını azaltmak için yatay scroll, min-width, breakpoint ve wrap düzenleri kullanıldı. Alt kısayol barı, mobil drawer ve mobil kart tablo dönüşümü ayrı sprintlere bırakıldı.
 - [Sprint 8.8] Aday Listesi alt kısayol yardım barı varsayılan olarak kompakt/açılır-kapanır hale getirildi. Açık/kapalı tercih localStorage key’i `aots-shortcut-help-expanded` ile saklanır. Bu sadece UI tercihidir; kısayol registry, keyboard handler ve kısayol ayar mantığı değiştirilmedi.
+- [Sprint 8.9] Pilot öncesi kullanıcıya görünen teknik metinler sadeleştirildi. “Import” yerine “İçe Aktarma”, teknik “JSON yedek” dili yerine kullanıcı dostu güvenlik yedeği/Tam Sistem Yedeği dili, Raporlar’da tarih seçimine uygun “Seçilen gün...” dili ve Ayarlar’da Türkçe hatırlatma dili kullanılacak. İş mantığı değiştirilmedi.
+- [Roadmap] Kullanım kitapçığı pilot öncesi hazırlanacak.
+- [Roadmap] Manuel pilot kontrol checklist’i çalıştırılacak.
 - [Roadmap] Mobile Drawer Polish ayrı sprint olarak yapılacak.
 - [Roadmap] Mobile Table/Card View Polish ayrı sprint olarak değerlendirilecek.
 - [Roadmap] Çoklu Telefon Mimarisi ayrı sprint olarak ele alınacak. Aday listesinde ilk 2 öncelikli numara + “+N” gösterilecek, tüm numaralar kişi kartında yönetilecek, arama kayıtları `phone_id` + snapshot bilgisiyle saklanacak.

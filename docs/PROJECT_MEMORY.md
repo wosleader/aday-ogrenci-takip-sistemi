@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 8.8 | Branch: sprint-8-8-shortcut-help-bar-polish -->
+<!-- Son güncelleme: Sprint 8.9 | Branch: sprint-8-9-pilot-release-polish -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: ✅ Sprint 8.8
-- FILE_MAP: ✅ Sprint 8.8
-- DECISIONS: ✅ Sprint 8.8
-- Son sprint-close çalıştırıldı: ✅ Sprint 8.8
+- PROJECT_MEMORY: ✅ Sprint 8.9
+- FILE_MAP: ✅ Sprint 8.9
+- DECISIONS: ✅ Sprint 8.9
+- Son sprint-close çalıştırıldı: ✅ Sprint 8.9
 
 ## 1. Proje Amacı
 
@@ -135,16 +135,17 @@ Kısa özet:
 - Sprint 8.6: Raporlar / Günlük Özet Sayfası.
 - Sprint 8.7: Responsive Layout Polish.
 - Sprint 8.8: Shortcut Help Bar Polish.
+- Sprint 8.9: Pilot Fix / Release Polish.
 
 ## 13. Yol Haritası
 
 Güncel önerilen sıra:
 
-1. Sprint 8.9 — Pilot Fix / Release Polish
-2. Mobile Drawer Polish
-3. Mobile Table/Card View Polish
-4. Çoklu Telefon Mimarisi
-5. Kullanım kitapçığı
+1. Sprint 9.0 — Kullanım Kitapçığı ve Pilot Kontrol
+2. Manuel pilot kontrol checklist’i
+3. Mobile Drawer Polish
+4. Mobile Table/Card View Polish
+5. Çoklu Telefon Mimarisi
 6. Akıllı Yardımcılar
 7. Toplu silme / seçim modu
 8. Figma/Stitch operasyon listesi sadeleştirme
@@ -156,6 +157,9 @@ Roadmap kararları:
 
 - Responsive Layout Polish Sprint 8.7 kapsamında düşük riskli CSS ağırlıklı polish olarak tamamlandı.
 - Shortcut Help Bar Polish Sprint 8.8 kapsamında tamamlandı.
+- Pilot Fix / Release Polish Sprint 8.9 kapsamında tamamlandı.
+- Kullanım kitapçığı pilot öncesi hazırlanacak.
+- Manuel pilot kontrol checklist’i çalıştırılacak.
 - Mobile Drawer Polish ayrı sprint olarak yapılacak.
 - Mobile Table/Card View Polish ayrı sprint olarak değerlendirilecek.
 - Sistem uzun vadede Telefon 1 / Telefon 2 ile sınırlı kalmayacak; adayın birden fazla iletişim numarası telefon listesi olarak tutulacak. Bu iş ayrı mimari sprintte ele alınacak.
@@ -181,17 +185,18 @@ Roadmap kararları:
 - Raporlar / Günlük Özet sayfası değişecekse: `docs/CHECKPOINT_SPRINT_8_6.md`
 - Responsive layout davranışı değişecekse: `docs/CHECKPOINT_SPRINT_8_7.md`
 - Kısayol yardım barı değişecekse: `docs/CHECKPOINT_SPRINT_8_8.md`
+- Pilot/release polish metinleri değişecekse: `docs/CHECKPOINT_SPRINT_8_9.md`
 - Çok eski sprint bağlamı gerekiyorsa ilgili eski checkpoint okunur; tüm checkpoint’ler gereksiz yere okutulmaz.
 
 ## 14. Güncel Çalışma Bilgisi
 
 Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 
-- Güncel branch: `sprint-8-8-shortcut-help-bar-polish`
-- Bu branch’in amacı: Shortcut Help Bar Polish sprint kapanış dokümantasyonu.
-- Önceki çalışma branch’i: `sprint-8-7-responsive-layout-polish`
-- Son bilinen polish commit’i: `492ccdb fix: refine shortcut help bar layout`
-- Sonraki önerilen sprint: Sprint 8.9 — Pilot Fix / Release Polish.
+- Güncel branch: `sprint-8-9-pilot-release-polish`
+- Bu branch’in amacı: Pilot Fix / Release Polish sprint kapanış dokümantasyonu.
+- Önceki çalışma branch’i: `sprint-8-8-shortcut-help-bar-polish`
+- Son bilinen polish commit’i: `6a59f8a fix: polish pilot-facing copy and release messages`
+- Sonraki önerilen sprint: Sprint 9.0 — Kullanım Kitapçığı ve Pilot Kontrol.
 
 ## 15. Codex Standart Başlangıç Talimatı
 
