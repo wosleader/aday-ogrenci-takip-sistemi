@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 8.9 | Branch: sprint-8-9-pilot-release-polish -->
+<!-- Son güncelleme: Sprint 9.0 | Branch: sprint-9-0-user-guide-pilot-checklist -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -82,7 +82,7 @@ Son doğrulandı: Sprint 8.2
 
 ## 7. Import
 
-Son doğrulandı: Sprint 8.9
+Son doğrulandı: Sprint 9.0
 
 - `src/features/imports/ImportPage.tsx`
   İçe aktarma ekranı; kolon eşleştirme, simülasyon, duplicate kontrolü, import log ve pilot öncesi kullanıcı dostu metinleri içerir.
@@ -185,6 +185,10 @@ Son doğrulandı: Sprint 8.9
   Kritik ürün kararlarının kısa karar günlüğü.
 - `docs/PILOT_READINESS_CHECKLIST.md`
   Pilot öncesi manuel test checklist’i.
+- `docs/USER_GUIDE.md`
+  Son kullanıcıya yönelik sade kullanım kitapçığı.
+- `docs/PILOT_MANUAL_TEST_CHECKLIST.md`
+  Pilot öncesi manuel test ve karar checklist’i.
 - `docs/CHECKPOINT_SPRINT_7.md`
   Tam Sistem Yedeği / Geri Yükleme checkpoint’i.
 - `docs/CHECKPOINT_SPRINT_6_2.md`
