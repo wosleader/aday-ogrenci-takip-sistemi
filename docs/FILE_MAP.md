@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.0 | Branch: sprint-9-0-user-guide-pilot-checklist -->
+<!-- Son güncelleme: Sprint 9.1 | Branch: sprint-9-1-pilot-findings-final-fixes -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -6,16 +6,16 @@ Bu dosya “hangi dosya ne işe yarar?” haritasıdır.
 
 ## 1. App / Layout
 
-Son doğrulandı: Sprint 8.7
+Son doğrulandı: Sprint 9.1
 
 - `src/app/App.tsx`
   Uygulama kök bileşeni.
 - `src/app/AppLayout.tsx`
-  Üst bar, sol menü, global aday araması, bağlantı durumu, bildirim çanı, genel layout.
+  Üst bar, sol menü, global aday araması, bağlantı durumu, bildirim çanı, genel layout ve route değişiminde dropdown kapanma davranışı.
 - `src/app/router.tsx`
   Route tanımları ve sayfa yerleşimi.
 - `src/styles/global.css`
-  Genel uygulama stilleri, responsive polish kuralları ve kısayol yardım barı görünümünü içerir.
+  Genel uygulama stilleri, responsive polish kuralları, kısayol yardım barı görünümü ve sağ drawer düşük riskli genişlik hafifletmesini içerir.
 
 ## 2. Database / Backup
 
@@ -111,7 +111,7 @@ Son doğrulandı: Sprint 9.0
 
 ## 8. Export
 
-Son doğrulandı: Sprint 8.9
+Son doğrulandı: Sprint 9.1
 
 - `src/features/exports/ExportPage.tsx`
   Detaylı Excel Export ve Özet Görüşme Raporu üretir; Excel’in Tam Sistem Yedeği yerine geçmediğini kullanıcıya açıklar.
@@ -140,7 +140,7 @@ Son doğrulandı: Sprint 8.9
 Son doğrulandı: Sprint 8.9
 
 - `src/features/settings/SettingsPage.tsx`
-  Ayarlar ekranı; kısayollar, hatırlatma ayarları, veri yönetimi ve Tam Sistem Yedeği/Geri Yükleme akışlarını içerir.
+  Ayarlar ekranı; kısayollar, hatırlatma ayarları, veri yönetimi, Tam Sistem Yedeği/Geri Yükleme ve görünür restore uyarı/başarı bildirimlerini içerir.
 - `src/features/settings/services/dataManagement.ts`
   Tam sistem yedeği indirme, analiz ve restore servisleri.
 - `src/domain/constants/settings.ts`
@@ -148,12 +148,12 @@ Son doğrulandı: Sprint 8.9
 
 ## 11. Tests
 
-Son doğrulandı: Sprint 8.9
+Son doğrulandı: Sprint 9.1
 
 - `tests/exports/*`
   Detaylı export, özet export, export data reader ve Excel exporter davranışları.
 - `tests/settings/*`
-  Veri yönetimi, backup/restore ve SettingsPage UI davranışları.
+  Veri yönetimi, backup/restore, SettingsPage UI davranışları ve restore uyarı/başarı bildirimleri.
 - `tests/students/*`
   Aday listesi okuma/filtreleme, Sınıf/Şube helper’ları, telefon status, aday silme.
 - `tests/students/StudentsPageShortcutHelp.test.tsx`
@@ -165,7 +165,7 @@ Son doğrulandı: Sprint 8.9
 - `tests/shortcuts/*`
   Kısayol registry, Türkçe label, çakışma/3 tuşu/riskli tuş validasyonları.
 - `tests/app/*`
-  AppLayout, global arama, üst bar ve bildirim çanı davranışları.
+  AppLayout, global arama, route değişiminde dropdown kapanma, üst bar ve bildirim çanı davranışları.
 - `tests/imports/*`
   Excel okuma, kolon eşleştirme, import simülasyonu, duplicate guard, import writer, log export.
 - `tests/calls/*`
@@ -175,7 +175,7 @@ Son doğrulandı: Sprint 8.9
 
 ## 12. Docs / Prompts
 
-Son doğrulandı: Sprint 8.9
+Son doğrulandı: Sprint 9.1
 
 - `docs/PROJECT_MEMORY.md`
   Codex için güncel kısa proje hafızası.
@@ -205,6 +205,8 @@ Son doğrulandı: Sprint 8.9
   Shortcut Help Bar Polish checkpoint’i.
 - `docs/CHECKPOINT_SPRINT_8_9.md`
   Pilot Fix / Release Polish checkpoint’i.
+- `docs/CHECKPOINT_SPRINT_9_1.md`
+  Pilot Test Findings / Final Fixes checkpoint’i.
 - `docs/UI_BASELINE_BEFORE_FIGMA.md`
   Figma/Stitch öncesi çalışan UI baseline.
 - `docs/mockups/AOTS_Mockup_v2.html`

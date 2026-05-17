@@ -49,43 +49,49 @@ Aşağıdaki alanlar manuel kontrolde başarılı geçti:
 
 - Ekran: Global arama / Aday Listesi / Menü geçişleri
 - Öncelik: Orta
-- Durum: Açık
+- Durum: Çözüldü
 - Sorun:
   Kullanıcı bir menüde arama yaptıktan sonra arama metnini silmeden başka menüye geçip geri döndüğünde, önceki arama sonucu/dropdown tekrar görünüyor.
 - Beklenen:
   Menü değiştirildiğinde arama sonuç paneli kapanmalı. Arama metni kalacaksa bile dropdown otomatik açılmamalı.
 - Önerilen çözüm:
   Route/menu değişiminde global search dropdown state kapatılsın. Aday Listesi filtre davranışı bozulmasın.
+- Çözüm notu:
+  Sprint 9.1’de route/menu değişiminde global arama dropdown’ının kapanması sağlandı. Arama metni korunur, ancak sonuç paneli kullanıcı etkileşimi olmadan kendiliğinden açılmaz.
 
 ### PF-002 — Yanlış yedek dosyası uyarısı sayfanın altında kalıyor
 
 - Ekran: Ayarlar > Veri Yönetimi > Geri Yükleme
 - Öncelik: Yüksek
-- Durum: Açık
+- Durum: Çözüldü
 - Sorun:
   Yanlış dosya seçildiğinde “Bu dosya Tam Sistem Yedeği dosyası gibi görünmüyor.” mesajı sayfanın altında kalıyor ve yeterince dikkat çekmiyor.
 - Beklenen:
   Yanlış dosya seçildiğinde görünür, profesyonel bir uyarı modalı/toast/popup çıksın. Kullanıcı “Tamam” diyerek kapatabilsin.
 - Önerilen çözüm:
   Restore parse/validation hataları için görünür alert/modal/toast benzeri bildirim gösterilsin.
+- Çözüm notu:
+  Sprint 9.1’de yanlış Tam Sistem Yedeği dosyası seçildiğinde görünür alertdialog eklendi. Kullanıcı uyarıyı “Tamam” ile kapatabilir.
 
 ### PF-003 — Geri yükleme başarılı olunca belirgin başarı mesajı çıkmalı
 
 - Ekran: Ayarlar > Veri Yönetimi > Geri Yükleme
 - Öncelik: Yüksek
-- Durum: Açık
+- Durum: Çözüldü
 - Sorun:
   Restore başarılı oluyor ve veriler geri geliyor; ancak kullanıcıya yeterince güçlü “başarıyla geri yüklendi” bildirimi çıkmıyor.
 - Beklenen:
   “Tam Sistem Yedeği başarıyla geri yüklendi.” veya “Geri yükleme tamamlandı. Adaylar, hatırlatmalar ve kayıtlar sisteme geri alındı.” şeklinde belirgin popup/toast/alert gösterilsin.
 - Önerilen çözüm:
   Restore başarı sonucunda görünür başarı bildirimi gösterilsin.
+- Çözüm notu:
+  Sprint 9.1’de restore başarılı olunca görünür başarı bildirimi eklendi. Kullanıcı bildirimi “Tamam” ile kapatabilir.
 
 ### PF-004 — Sağ kişi kartı açıkken Aday Listesi çalışma alanı sıkışıyor
 
 - Ekran: Aday Listesi / Sağ kişi kartı
 - Öncelik: Orta-Yüksek
-- Durum: Açık
+- Durum: Çözüldü
 - Sorun:
   Aday seçildiğinde sağ kişi kartı sabit genişlikte açılıyor. Bu sırada Aday Listesi tablosu ve alt kısayol barı daralıyor. Tablo yatay scroll’a düşüyor ve bazı kolonlara erişim zorlaşıyor. Geniş ekranda bile sağ panel açıkken orta alan kalabalık görünüyor.
 - Beklenen:
@@ -96,13 +102,15 @@ Aşağıdaki alanlar manuel kontrolde başarılı geçti:
   - Sağ panel açıkken tablo kritik kolonları korunsun.
   - Büyük mobil drawer dönüşümü yapılmasın.
   - Mobile Drawer Polish ayrı sprint olarak kalsın.
+- Çözüm notu:
+  Sprint 9.1’de drawer genişliği düşük riskli CSS ile hafifletildi. Kapsamlı mobile drawer polish ve mobil tablo/kart dönüşümü sonraya bırakıldı.
 
 ## 4. Pilot Kararı
 
 - Ana akışlar pilot için çalışır durumda.
 - Bilinen engelleyici veri kaybı veya kritik import/export/restore hatası görülmedi.
-- Ancak pilot öncesi PF-002 ve PF-003 yüksek öncelikle kapatılmalıdır.
-- PF-001 ve PF-004 pilot konforu için Sprint 9.1’de ele alınmalıdır.
+- Sprint 9.1 ile PF-001, PF-002, PF-003 ve PF-004 kapatıldı.
+- Sistem pilot kullanım için daha güvenli ve anlaşılır hale geldi.
 
 ## 5. Sprint 9.1 Önerilen Kapsam
 

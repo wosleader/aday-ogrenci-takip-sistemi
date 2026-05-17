@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.0 | Branch: sprint-9-0-user-guide-pilot-checklist -->
+<!-- Son güncelleme: Sprint 9.1 | Branch: sprint-9-1-pilot-findings-final-fixes -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: ✅ Sprint 9.0 hazırlığı
-- FILE_MAP: ✅ Sprint 9.0 hazırlığı
-- DECISIONS: ✅ Sprint 9.0 hazırlığı
-- Son sprint-close çalıştırıldı: ✅ Sprint 8.9
+- PROJECT_MEMORY: ✅ Sprint 9.1
+- FILE_MAP: ✅ Sprint 9.1
+- DECISIONS: ✅ Sprint 9.1
+- Son sprint-close çalıştırıldı: ✅ Sprint 9.1
 
 ## 1. Proje Amacı
 
@@ -136,30 +136,34 @@ Kısa özet:
 - Sprint 8.7: Responsive Layout Polish.
 - Sprint 8.8: Shortcut Help Bar Polish.
 - Sprint 8.9: Pilot Fix / Release Polish.
-- Sprint 9.0: Kullanım Kitapçığı ve Pilot Manuel Test Checklist dokümantasyonu hazırlanıyor.
+- Sprint 9.0: Kullanım Kitapçığı ve Pilot Manuel Test Checklist dokümantasyonu.
+- Sprint 9.1: Pilot Test Findings / Final Fixes.
 
 ## 13. Yol Haritası
 
 Güncel önerilen sıra:
 
-1. Pilot Manuel Test Çalıştırma ve Kullanım Kitapçığı Gözden Geçirme
-2. Mobile Drawer Polish
-3. Mobile Table/Card View Polish
-4. Çoklu Telefon Mimarisi
-5. Akıllı Yardımcılar
-6. Toplu silme / seçim modu
-7. Figma/Stitch operasyon listesi sadeleştirme
-8. Haftalık/aylık rapor veya rapor genişletmeleri
-9. Günlük rapor / mükerrerler ekranı genişletmeleri
-10. VDS/merkez/senkronizasyon
+1. Pilot Release Candidate / Final Review
+2. Pilot gerçek kullanım geri bildirimleri
+3. Mobile Drawer Polish
+4. Mobile Table/Card View Polish
+5. Çoklu Telefon Mimarisi
+6. Akıllı Yardımcılar
+7. Toplu silme / seçim modu
+8. Figma/Stitch operasyon listesi sadeleştirme
+9. Haftalık/aylık rapor veya rapor genişletmeleri
+10. Günlük rapor / mükerrerler ekranı genişletmeleri
+11. VDS/merkez/senkronizasyon
 
 Roadmap kararları:
 
 - Responsive Layout Polish Sprint 8.7 kapsamında düşük riskli CSS ağırlıklı polish olarak tamamlandı.
 - Shortcut Help Bar Polish Sprint 8.8 kapsamında tamamlandı.
 - Pilot Fix / Release Polish Sprint 8.9 kapsamında tamamlandı.
-- Kullanım kitapçığı ve pilot manuel test checklist’i Sprint 9.0 kapsamında hazırlanıyor.
-- Manuel pilot kontrol checklist’i çalıştırılacak ve sonuçlar pilot kararına bağlanacak.
+- Kullanım kitapçığı ve pilot manuel test checklist’i Sprint 9.0 kapsamında hazırlandı.
+- Manuel pilot kontrol bulguları Sprint 9.1 kapsamında kapatıldı.
+- Pilot Release Candidate / Final Review sıradaki önerilen aşamadır.
+- Pilot gerçek kullanım geri bildirimleri izlenecek ve gerekirse ayrı fix sprintlerinde kapatılacak.
 - Mobile Drawer Polish ayrı sprint olarak yapılacak.
 - Mobile Table/Card View Polish ayrı sprint olarak değerlendirilecek.
 - Sistem uzun vadede Telefon 1 / Telefon 2 ile sınırlı kalmayacak; adayın birden fazla iletişim numarası telefon listesi olarak tutulacak. Bu iş ayrı mimari sprintte ele alınacak.
@@ -186,17 +190,18 @@ Roadmap kararları:
 - Responsive layout davranışı değişecekse: `docs/CHECKPOINT_SPRINT_8_7.md`
 - Kısayol yardım barı değişecekse: `docs/CHECKPOINT_SPRINT_8_8.md`
 - Pilot/release polish metinleri değişecekse: `docs/CHECKPOINT_SPRINT_8_9.md`
+- Pilot bulguları / final fixes değişecekse: `docs/CHECKPOINT_SPRINT_9_1.md`
 - Çok eski sprint bağlamı gerekiyorsa ilgili eski checkpoint okunur; tüm checkpoint’ler gereksiz yere okutulmaz.
 
 ## 14. Güncel Çalışma Bilgisi
 
 Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 
-- Güncel branch: `sprint-9-0-user-guide-pilot-checklist`
-- Bu branch’in amacı: Kullanım kitapçığı ve pilot manuel test checklist dokümantasyonu oluşturmak.
-- Önceki çalışma branch’i: `sprint-8-9-pilot-release-polish`
-- Son bilinen dokümantasyon commit’i: `0d5dd79 docs: add sprint 8.9 checkpoint and update project memory`
-- Sonraki önerilen aşama: Pilot Manuel Test Çalıştırma ve Kullanım Kitapçığı Gözden Geçirme.
+- Güncel branch: `sprint-9-1-pilot-findings-final-fixes`
+- Bu branch’in amacı: Manuel pilot test bulgularını kapatmak ve final fix checkpoint dokümantasyonunu güncellemek.
+- Önceki çalışma branch’i: `sprint-9-0-user-guide-pilot-checklist`
+- Son bilinen fix commit’i: `4c289b7 fix: close pilot findings for restore notices and layout polish`
+- Sonraki önerilen aşama: Pilot Release Candidate / Final Review.
 
 ## 15. Codex Standart Başlangıç Talimatı
 
