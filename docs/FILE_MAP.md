@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 8.7 | Branch: sprint-8-7-responsive-layout-polish -->
+<!-- Son güncelleme: Sprint 8.8 | Branch: sprint-8-8-shortcut-help-bar-polish -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -15,7 +15,7 @@ Son doğrulandı: Sprint 8.7
 - `src/app/router.tsx`
   Route tanımları ve sayfa yerleşimi.
 - `src/styles/global.css`
-  Genel uygulama stilleri, filtre barları, popup/toast/drawer gibi UI sınıfları ve Sprint 8.7 responsive güvenlik polish kuralları.
+  Genel uygulama stilleri, responsive polish kuralları ve kısayol yardım barı görünümünü içerir.
 
 ## 2. Database / Backup
 
@@ -32,10 +32,10 @@ Son doğrulandı: Sprint 8.2
 
 ## 3. Students / Candidate List
 
-Son doğrulandı: Sprint 8.2
+Son doğrulandı: Sprint 8.8
 
 - `src/features/students/StudentsPage.tsx`
-  Aday Listesi, filtreler, sağ drawer, arama operasyonu UI.
+  Aday Listesi, filtreler, sağ drawer, görüşme akışı ve Sprint 8.8 itibarıyla kompakt/açılır-kapanır kısayol yardım barını içerir.
 - `src/features/students/services/studentListReader.ts`
   Aday liste satırlarını okuma, filtreleme, Sınıf/Şube helper’ları.
 - `src/features/students/services/studentPhoneStatus.ts`
@@ -148,7 +148,7 @@ Son doğrulandı: Sprint 8.2
 
 ## 11. Tests
 
-Son doğrulandı: Sprint 8.6
+Son doğrulandı: Sprint 8.8
 
 - `tests/exports/*`
   Detaylı export, özet export, export data reader ve Excel exporter davranışları.
@@ -156,6 +156,8 @@ Son doğrulandı: Sprint 8.6
   Veri yönetimi, backup/restore ve SettingsPage UI davranışları.
 - `tests/students/*`
   Aday listesi okuma/filtreleme, Sınıf/Şube helper’ları, telefon status, aday silme.
+- `tests/students/StudentsPageShortcutHelp.test.tsx`
+  Aday Listesi alt kısayol yardım barının kompakt/açık görünümünü, Göster/Gizle davranışını ve localStorage toleransını test eder.
 - `tests/reminders/*`
   Reminder alarm, dismissed store, popup view model ve reminder settings.
 - `tests/reports/*`
@@ -173,7 +175,7 @@ Son doğrulandı: Sprint 8.6
 
 ## 12. Docs / Prompts
 
-Son doğrulandı: Sprint 8.7
+Son doğrulandı: Sprint 8.8
 
 - `docs/PROJECT_MEMORY.md`
   Codex için güncel kısa proje hafızası.
@@ -195,6 +197,8 @@ Son doğrulandı: Sprint 8.7
   Raporlar / Günlük Özet Sayfası checkpoint’i.
 - `docs/CHECKPOINT_SPRINT_8_7.md`
   Responsive Layout Polish checkpoint’i.
+- `docs/CHECKPOINT_SPRINT_8_8.md`
+  Shortcut Help Bar Polish checkpoint’i.
 - `docs/UI_BASELINE_BEFORE_FIGMA.md`
   Figma/Stitch öncesi çalışan UI baseline.
 - `docs/mockups/AOTS_Mockup_v2.html`
