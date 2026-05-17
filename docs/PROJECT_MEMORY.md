@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.1 | Branch: sprint-9-1-pilot-findings-final-fixes -->
+<!-- Son güncelleme: Pilot Release Candidate | Branch: sprint-9-1-pilot-findings-final-fixes -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,9 +6,9 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: ✅ Sprint 9.1
-- FILE_MAP: ✅ Sprint 9.1
-- DECISIONS: ✅ Sprint 9.1
+- PROJECT_MEMORY: ✅ Pilot Release Candidate
+- FILE_MAP: ✅ Pilot Release Candidate
+- DECISIONS: ✅ Pilot Release Candidate
 - Son sprint-close çalıştırıldı: ✅ Sprint 9.1
 
 ## 1. Proje Amacı
@@ -122,10 +122,17 @@ Kısa özet:
 
 - Pilot readiness checklist var:
   `docs/PILOT_READINESS_CHECKLIST.md`
+- Kullanım kitapçığı hazır:
+  `docs/USER_GUIDE.md`
+- Pilot manuel test checklist’i hazır:
+  `docs/PILOT_MANUAL_TEST_CHECKLIST.md`
+- Pilot release candidate review hazır:
+  `docs/PILOT_RELEASE_CANDIDATE_REVIEW.md`
 - Kritik manuel döngü:
   temiz veri → import → aday listesi → görüşme → reminder → export → backup → temizle → restore.
-- Bloklayıcı yoksa pilot başlayabilir.
-- Sorun çıkarsa Pilot Fix sprinti açılacak.
+- Sprint 9.1 pilot bulguları kapatıldı.
+- Sistem küçük ölçekli kontrollü pilot deneme için release candidate kabul edilebilir.
+- Pilot sırasında sorun çıkarsa Pilot Feedback Fixes sprinti açılacak.
 
 ## 12. Tamamlanan Sprintler
 
@@ -138,22 +145,22 @@ Kısa özet:
 - Sprint 8.9: Pilot Fix / Release Polish.
 - Sprint 9.0: Kullanım Kitapçığı ve Pilot Manuel Test Checklist dokümantasyonu.
 - Sprint 9.1: Pilot Test Findings / Final Fixes.
+- Pilot Release Candidate / Final Review: tamamlandı.
 
 ## 13. Yol Haritası
 
 Güncel önerilen sıra:
 
-1. Pilot Release Candidate / Final Review
-2. Pilot gerçek kullanım geri bildirimleri
-3. Mobile Drawer Polish
-4. Mobile Table/Card View Polish
-5. Çoklu Telefon Mimarisi
-6. Akıllı Yardımcılar
-7. Toplu silme / seçim modu
-8. Figma/Stitch operasyon listesi sadeleştirme
-9. Haftalık/aylık rapor veya rapor genişletmeleri
-10. Günlük rapor / mükerrerler ekranı genişletmeleri
-11. VDS/merkez/senkronizasyon
+1. Pilot gerçek kullanım denemesi / Sprint 9.2 Pilot Feedback Fixes
+2. Mobile Drawer Polish
+3. Mobile Table/Card View Polish
+4. Çoklu Telefon Mimarisi
+5. Akıllı Yardımcılar
+6. Toplu silme / seçim modu
+7. Figma/Stitch operasyon listesi sadeleştirme
+8. Haftalık/aylık rapor veya rapor genişletmeleri
+9. Günlük rapor / mükerrerler ekranı genişletmeleri
+10. VDS/merkez/senkronizasyon
 
 Roadmap kararları:
 
@@ -162,8 +169,10 @@ Roadmap kararları:
 - Pilot Fix / Release Polish Sprint 8.9 kapsamında tamamlandı.
 - Kullanım kitapçığı ve pilot manuel test checklist’i Sprint 9.0 kapsamında hazırlandı.
 - Manuel pilot kontrol bulguları Sprint 9.1 kapsamında kapatıldı.
-- Pilot Release Candidate / Final Review sıradaki önerilen aşamadır.
-- Pilot gerçek kullanım geri bildirimleri izlenecek ve gerekirse ayrı fix sprintlerinde kapatılacak.
+- Pilot Release Candidate / Final Review tamamlandı.
+- Kullanım kitapçığı ve pilot checklist hazırdır.
+- Pilot Findings kapatıldı.
+- Pilot gerçek kullanım geri bildirimleri Sprint 9.2 Pilot Feedback Fixes altında izlenecek ve gerekirse kapatılacak.
 - Mobile Drawer Polish ayrı sprint olarak yapılacak.
 - Mobile Table/Card View Polish ayrı sprint olarak değerlendirilecek.
 - Sistem uzun vadede Telefon 1 / Telefon 2 ile sınırlı kalmayacak; adayın birden fazla iletişim numarası telefon listesi olarak tutulacak. Bu iş ayrı mimari sprintte ele alınacak.
@@ -191,6 +200,7 @@ Roadmap kararları:
 - Kısayol yardım barı değişecekse: `docs/CHECKPOINT_SPRINT_8_8.md`
 - Pilot/release polish metinleri değişecekse: `docs/CHECKPOINT_SPRINT_8_9.md`
 - Pilot bulguları / final fixes değişecekse: `docs/CHECKPOINT_SPRINT_9_1.md`
+- Pilot release candidate kararı değişecekse: `docs/PILOT_RELEASE_CANDIDATE_REVIEW.md`
 - Çok eski sprint bağlamı gerekiyorsa ilgili eski checkpoint okunur; tüm checkpoint’ler gereksiz yere okutulmaz.
 
 ## 14. Güncel Çalışma Bilgisi
@@ -198,10 +208,11 @@ Roadmap kararları:
 Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 
 - Güncel branch: `sprint-9-1-pilot-findings-final-fixes`
-- Bu branch’in amacı: Manuel pilot test bulgularını kapatmak ve final fix checkpoint dokümantasyonunu güncellemek.
+- Bu branch’in amacı: Pilot release candidate final review dokümantasyonunu kayıt altına almak.
 - Önceki çalışma branch’i: `sprint-9-0-user-guide-pilot-checklist`
+- Güncel release candidate commit’i: `12062f0 docs: add sprint 9.1 checkpoint and update pilot findings`
 - Son bilinen fix commit’i: `4c289b7 fix: close pilot findings for restore notices and layout polish`
-- Sonraki önerilen aşama: Pilot Release Candidate / Final Review.
+- Sonraki önerilen aşama: Pilot gerçek kullanım denemesi / Sprint 9.2 Pilot Feedback Fixes.
 
 ## 15. Codex Standart Başlangıç Talimatı
 

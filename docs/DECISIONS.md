@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.1 | Branch: sprint-9-1-pilot-findings-final-fixes -->
+<!-- Son güncelleme: Pilot Release Candidate | Branch: sprint-9-1-pilot-findings-final-fixes -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -25,8 +25,10 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 - [Sprint 8.9] Pilot öncesi kullanıcıya görünen teknik metinler sadeleştirildi. “Import” yerine “İçe Aktarma”, teknik “JSON yedek” dili yerine kullanıcı dostu güvenlik yedeği/Tam Sistem Yedeği dili, Raporlar’da tarih seçimine uygun “Seçilen gün...” dili ve Ayarlar’da Türkçe hatırlatma dili kullanılacak. İş mantığı değiştirilmedi.
 - [Sprint 9.0] Pilot öncesi kullanıcı dokümantasyonu iki dosya halinde tutulacak: `USER_GUIDE.md` son kullanıcı kitapçığı, `PILOT_MANUAL_TEST_CHECKLIST.md` geliştirici/operasyon manuel test checklist’i. Kod mantığı değişmeyecek.
 - [Sprint 9.1] Manuel pilot testte bulunan PF-001, PF-002, PF-003 ve PF-004 kapatıldı. Route/menu değişiminde global arama dropdown’ı kapanır; restore yanlış dosya ve başarı durumları görünür alertdialog ile kullanıcıya bildirilir; sağ drawer sıkışması düşük riskli CSS ile hafifletildi. Backup/restore transaction mantığı, global arama temel davranışı ve Aday Listesi tablo mimarisi değiştirilmedi.
+- [Pilot RC] Sprint 9.1 sonrası sistem küçük ölçekli pilot kullanım için release candidate kabul edilir. Manuel pilot testte bulunan PF-001, PF-002, PF-003 ve PF-004 kapatıldı. Pilot; küçük veri seti, kullanım kitapçığı, manuel checklist ve düzenli Tam Sistem Yedeği alma şartıyla başlatılabilir.
 - [Roadmap] Kullanım kitapçığı pilot öncesi hazırlanacak.
 - [Roadmap] Manuel pilot kontrol checklist’i çalıştırılacak.
+- [Roadmap] Pilot sonrası bulgular Sprint 9.2 Pilot Feedback Fixes altında ele alınacak.
 - [Roadmap] Mobile Drawer Polish ayrı sprint olarak yapılacak.
 - [Roadmap] Mobile Table/Card View Polish ayrı sprint olarak değerlendirilecek.
 - [Roadmap] Çoklu Telefon Mimarisi ayrı sprint olarak ele alınacak. Aday listesinde ilk 2 öncelikli numara + “+N” gösterilecek, tüm numaralar kişi kartında yönetilecek, arama kayıtları `phone_id` + snapshot bilgisiyle saklanacak.
