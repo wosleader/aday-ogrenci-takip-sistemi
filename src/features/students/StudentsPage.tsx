@@ -31,6 +31,7 @@ import {
   getShortcutBarItems,
   getDefaultOperationShortcuts,
   resolveShortcutAction,
+  type ShortcutBarItem,
   type ShortcutActionKey
 } from "../shortcuts/services/shortcutRegistry";
 import { readActiveOperationShortcuts } from "../shortcuts/services/shortcutSettings";
@@ -50,6 +51,7 @@ import {
 import { markPhoneAsContacted, markPhoneAsInvalid } from "./services/studentPhoneStatus";
 
 const PAGE_SIZE = 100;
+const SHORTCUT_HELP_STORAGE_KEY = "aots-shortcut-help-expanded";
 
 const FILTER_OPTIONS: Array<{ key: StudentListFilter; label: string }> = [
   { key: "all", label: "Tümü" },
@@ -270,6 +272,61 @@ type OperationToast = {
   type: "success" | "warning" | "error";
 };
 
+type ShortcutHelpGroup = {
+  title: string;
+  itemIds: string[];
+};
+
+const SHORTCUT_HELP_GROUPS: ShortcutHelpGroup[] = [
+  { title: "Gezinme", itemIds: ["candidate_navigation"] },
+  { title: "Arama / Telefon", itemIds: ["focus_search", "mark_phone_1_contacted", "mark_phone_2_contacted"] },
+  {
+    title: "Sonuç",
+    itemIds: ["call_reached", "call_not_reached", "call_wrong_number", "call_appointment", "call_do_not_call"]
+  },
+  { title: "Kaydet", itemIds: ["save_call"] }
+];
+
+function readShortcutHelpExpandedPreference(): boolean {
+  try {
+    return window.localStorage.getItem(SHORTCUT_HELP_STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function writeShortcutHelpExpandedPreference(isExpanded: boolean): void {
+  try {
+    window.localStorage.setItem(SHORTCUT_HELP_STORAGE_KEY, String(isExpanded));
+  } catch {
+    // The help bar still works with component state when storage is unavailable.
+  }
+}
+
+function getCompactShortcutItems(items: ShortcutBarItem[]): ShortcutBarItem[] {
+  return ["focus_search", "save_call"]
+    .map((id) => items.find((item) => item.id === id))
+    .filter((item): item is ShortcutBarItem => Boolean(item));
+}
+
+function createShortcutHelpGroups(items: ShortcutBarItem[]): Array<{ title: string; items: ShortcutBarItem[] }> {
+  const usedIds = new Set<string>();
+  const groups = SHORTCUT_HELP_GROUPS.map((group) => {
+    const groupItems = group.itemIds
+      .map((id) => items.find((item) => item.id === id))
+      .filter((item): item is ShortcutBarItem => Boolean(item));
+
+    for (const item of groupItems) {
+      usedIds.add(item.id);
+    }
+
+    return { title: group.title, items: groupItems };
+  }).filter((group) => group.items.length > 0);
+  const otherItems = items.filter((item) => !usedIds.has(item.id));
+
+  return otherItems.length > 0 ? [...groups, { title: "Diğer", items: otherItems }] : groups;
+}
+
 function PhoneCard({ label, phoneId, value, isContacted, isWrong, onContacted, onInvalid }: PhoneCardProps) {
   return (
     <div className={`drawer-phone-card ${isContacted ? "contacted" : ""} ${isWrong ? "invalid" : ""}`}>
@@ -433,6 +490,9 @@ export function StudentsPage() {
     getDefaultOperationShortcuts()
   );
   const shortcutBarItems = useMemo(() => getShortcutBarItems(operationShortcuts), [operationShortcuts]);
+  const compactShortcutItems = useMemo(() => getCompactShortcutItems(shortcutBarItems), [shortcutBarItems]);
+  const shortcutHelpGroups = useMemo(() => createShortcutHelpGroups(shortcutBarItems), [shortcutBarItems]);
+  const [isShortcutHelpExpanded, setIsShortcutHelpExpanded] = useState(readShortcutHelpExpandedPreference);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -701,6 +761,15 @@ export function StudentsPage() {
       return nextKeys;
     });
     openStudentDrawer(alert.student_id);
+  }
+
+  function toggleShortcutHelp() {
+    setIsShortcutHelpExpanded((current) => {
+      const next = !current;
+      writeShortcutHelpExpandedPreference(next);
+
+      return next;
+    });
   }
 
   function dismissActiveReminder() {
@@ -1168,12 +1237,49 @@ export function StudentsPage() {
           </table>
         </div>
 
-        <div className="student-kbdbar">
-          {shortcutBarItems.map((item) => (
-            <span key={item.id}>
-              <kbd>{item.shortcut}</kbd> {item.label}
-            </span>
-          ))}
+        <div
+          aria-label="Kısayol yardım çubuğu"
+          className={`student-kbdbar ${isShortcutHelpExpanded ? "is-expanded" : "is-collapsed"}`}
+        >
+          <div className="student-kbdbar-header">
+            <div className="student-kbdbar-summary">
+              <strong>
+                <span aria-hidden="true">⌨</span> Kısayollar
+              </strong>
+              {!isShortcutHelpExpanded ? (
+                <div className="student-kbdbar-preview" aria-label="Öne çıkan kısayollar">
+                  {compactShortcutItems.map((item) => (
+                    <span className="student-kbdbar-chip compact" key={item.id}>
+                      <kbd>{item.shortcut}</kbd>
+                      <span>{item.label}</span>
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+
+            {isShortcutHelpExpanded ? (
+              <div className="student-kbdbar-groups">
+                {shortcutHelpGroups.map((group) => (
+                  <div className="student-kbdbar-group" key={group.title}>
+                    <span className="student-kbdbar-group-title">{group.title}</span>
+                    <div className="student-kbdbar-items">
+                      {group.items.map((item) => (
+                        <span className="student-kbdbar-chip" key={item.id}>
+                          <kbd>{item.shortcut}</kbd>
+                          <span>{item.label}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            <button className="student-kbdbar-toggle" onClick={toggleShortcutHelp} type="button">
+              {isShortcutHelpExpanded ? "Gizle" : "Göster"}
+            </button>
+          </div>
         </div>
 
         <div className="student-statusbar">

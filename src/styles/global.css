@@ -2016,7 +2016,6 @@ body {
   background: var(--aots-hint);
 }
 
-.student-kbdbar,
 .student-statusbar {
   display: flex;
   flex-shrink: 0;
@@ -2030,32 +2029,159 @@ body {
 }
 
 .student-kbdbar {
-  flex-wrap: wrap;
-  gap: 6px;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  min-height: 36px;
+  padding: 5px 12px;
+  border-top: 1px solid var(--aots-border);
+  background: var(--aots-bg);
+  color: var(--aots-muted);
+  font-size: 11px;
 }
 
-.student-kbdbar span {
+.student-kbdbar.is-collapsed {
+  justify-content: center;
+}
+
+.student-kbdbar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  width: 100%;
+  min-width: 0;
+}
+
+.student-kbdbar-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.student-kbdbar-summary strong {
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 5px;
-  min-height: 24px;
-  padding: 2px 7px;
-  border: 1px solid var(--aots-border);
-  border-radius: 999px;
-  background: var(--aots-surface);
+  color: var(--aots-text);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.student-kbdbar-preview,
+.student-kbdbar-items {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 8px;
+  min-width: 0;
+}
+
+.student-kbdbar-preview {
+  overflow: hidden;
+}
+
+.student-kbdbar-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 18px;
+  max-width: 100%;
+  padding: 0;
+  color: var(--aots-muted);
+  font-size: 12px;
   white-space: nowrap;
 }
 
+.student-kbdbar-chip.compact {
+  color: var(--aots-muted);
+}
+
+.student-kbdbar-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .student-kbdbar kbd {
+  flex: 0 0 auto;
   min-width: auto;
-  padding: 1px 6px;
+  padding: 1px 5px;
   border: 1px solid var(--aots-border-md);
-  border-bottom: 2px solid var(--aots-border-md);
+  border-bottom: 1px solid var(--aots-border-md);
   border-radius: 4px;
-  background: var(--aots-surface);
+  background: #ffffff;
   color: var(--aots-text);
   font-family: var(--aots-mono);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.student-kbdbar-toggle {
+  flex: 0 0 auto;
+  min-height: 24px;
+  margin-left: auto;
+  padding: 2px 9px;
+  border: 1px solid var(--aots-border-md);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--aots-accent);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(20, 28, 38, 0.04);
+}
+
+.student-kbdbar-toggle:hover {
+  border-color: var(--aots-accent);
+  background: var(--aots-accent-bg);
+}
+
+.student-kbdbar-toggle:focus-visible {
+  outline: 2px solid rgba(61, 78, 172, 0.22);
+  outline-offset: 2px;
+}
+
+.student-kbdbar-groups {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 5px 0;
+  min-width: 220px;
+}
+
+.student-kbdbar-group {
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding-right: 12px;
+  margin-right: 12px;
+}
+
+.student-kbdbar-group:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  right: 0;
+  width: 1px;
+  height: 16px;
+  background: var(--aots-border);
+}
+
+.student-kbdbar-group-title {
+  flex: 0 0 auto;
+  color: var(--aots-hint);
   font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .pagination-controls {
@@ -3244,6 +3370,14 @@ body {
   .delete-confirm-actions button {
     width: 100%;
   }
+
+  .student-kbdbar-groups {
+    min-width: 0;
+  }
+
+  .student-kbdbar-group::after {
+    display: none;
+  }
 }
 
 @media (max-width: 430px) {
@@ -3286,6 +3420,22 @@ body {
   .toolbar-left {
     flex-wrap: wrap;
     white-space: normal;
+  }
+
+  .student-kbdbar {
+    padding: 7px 10px;
+  }
+
+  .student-kbdbar-header {
+    gap: 8px;
+  }
+
+  .student-kbdbar-summary {
+    gap: 8px;
+  }
+
+  .student-kbdbar-preview {
+    display: none;
   }
 
   .reminder-summary-grid,
