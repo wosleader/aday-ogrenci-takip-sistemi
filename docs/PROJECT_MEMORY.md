@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 8.2 | Branch: sprint-8-2-project-memory-docs -->
+<!-- Son güncelleme: Sprint 8.6 | Branch: sprint-8-6-daily-report-page -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: ✅ Sprint 8.2
-- FILE_MAP: ✅ Sprint 8.2
-- DECISIONS: ✅ Sprint 8.2
-- Son sprint-close çalıştırıldı: ✅ Sprint 8.2
+- PROJECT_MEMORY: ✅ Sprint 8.6
+- FILE_MAP: ✅ Sprint 8.6
+- DECISIONS: ✅ Sprint 8.6
+- Son sprint-close çalıştırıldı: ✅ Sprint 8.6
 
 ## 1. Proje Amacı
 
@@ -47,6 +47,7 @@ Kısa özet:
 - `/students` ekranında global dropdown açılmaz.
 - Restore replace mode’dur.
 - Sınıf / Şube filtresi `current_class` + `student_group` üzerinden yorumlanır.
+- Raporlar sayfası günlük operasyon özeti içindir; Excel export’un yerine geçmez.
 - Akıllı Yardımcılar yol haritasındadır; offline/kural tabanlı olacak, dış AI API kullanılmayacak.
 
 ## 5. Veri Modeli ve Kavramlar
@@ -126,19 +127,32 @@ Kısa özet:
 - Bloklayıcı yoksa pilot başlayabilir.
 - Sorun çıkarsa Pilot Fix sprinti açılacak.
 
-## 12. Yol Haritası
+## 12. Tamamlanan Sprintler
+
+- Sprint 8.1: Sınıf / Şube filtresi ve Durum Filtresi polish.
+- Sprint 8.3: Aday listesi Açıklama / Not kolonu polish.
+- Sprint 8.5: Hatırlatmalar sayfası.
+- Sprint 8.6: Raporlar / Günlük Özet Sayfası.
+
+## 13. Yol Haritası
 
 Güncel önerilen sıra:
 
-1. Sprint 8.2 — Aday listesi açıklama kolonu polish
-2. Sprint 8.3 — Hatırlatmalar sayfası
-3. Sprint 8.4 — Raporlar / Günlük Özet sayfası
-4. Sprint 9 — Pilot Fix / Release Polish
-5. Akıllı Yardımcılar
-6. Toplu silme / seçim modu
-7. Figma/Stitch operasyon listesi sadeleştirme
+1. Sprint 8.7 — Responsive Layout Polish
+2. Sprint 9 — Pilot Fix / Release Polish
+3. Çoklu Telefon Mimarisi
+4. Akıllı Yardımcılar
+5. Toplu silme / seçim modu
+6. Figma/Stitch operasyon listesi sadeleştirme
+7. Haftalık/aylık rapor veya rapor genişletmeleri
 8. Günlük rapor / mükerrerler ekranı genişletmeleri
 9. VDS/merkez/senkronizasyon
+
+Roadmap kararları:
+
+- Responsive Layout Polish ayrı sprint olarak yapılacak. Masaüstü, küçük laptop, tablet ve mobil genişliklerde Aday Listesi, Hatırlatmalar, Raporlar, Export, Import ve Ayarlar ekranları kontrol edilecek.
+- Tablolar dar ekranda kolonları ezmeyecek; gerekirse yatay scroll veya mobil kart görünümü uygulanacak.
+- Sistem uzun vadede Telefon 1 / Telefon 2 ile sınırlı kalmayacak; adayın birden fazla iletişim numarası telefon listesi olarak tutulacak. Bu iş ayrı mimari sprintte ele alınacak.
 
 ## Bu Dosya Ne Zaman Güncellenmeli?
 
@@ -157,19 +171,21 @@ Güncel önerilen sıra:
 - Detaylı export / call workflow feedback değişecekse: `docs/CHECKPOINT_SPRINT_6.md`
 - Figma/Stitch UI kararları gerekiyorsa: `docs/UI_BASELINE_BEFORE_FIGMA.md`
 - Pilot test gerekiyorsa: `docs/PILOT_READINESS_CHECKLIST.md`
+- Hatırlatmalar sayfası değişecekse: `docs/CHECKPOINT_SPRINT_8_5.md`
+- Raporlar / Günlük Özet sayfası değişecekse: `docs/CHECKPOINT_SPRINT_8_6.md`
 - Çok eski sprint bağlamı gerekiyorsa ilgili eski checkpoint okunur; tüm checkpoint’ler gereksiz yere okutulmaz.
 
-## 13. Güncel Çalışma Bilgisi
+## 14. Güncel Çalışma Bilgisi
 
 Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 
-- Güncel branch: `sprint-8-2-project-memory-docs`
-- Bu branch’in amacı: proje hafızası ve prompt altyapısı oluşturmak.
-- Önceki çalışma branch’i: `sprint-8-1-student-group-filter`
-- Son bilinen özellik commit’i: `0b23e0c feat: refine candidate filters with class section grouping`
-- Sonraki önerilen iş: Aday listesi açıklama kolonu polish veya Hatırlatmalar sayfası planı.
+- Güncel branch: `sprint-8-6-daily-report-page`
+- Bu branch’in amacı: Raporlar / Günlük Özet Sayfası sprint kapanış dokümantasyonu.
+- Önceki çalışma branch’i: `sprint-8-5-reminders-page`
+- Son bilinen özellik commit’i: `5ccf799 feat: add daily reports operations page`
+- Sonraki önerilen sprint: Sprint 8.7 — Responsive Layout Polish.
 
-## 14. Codex Standart Başlangıç Talimatı
+## 15. Codex Standart Başlangıç Talimatı
 
 Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 

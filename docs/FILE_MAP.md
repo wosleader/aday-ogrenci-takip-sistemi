@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 8.2 | Branch: sprint-8-2-project-memory-docs -->
+<!-- Son güncelleme: Sprint 8.6 | Branch: sprint-8-6-daily-report-page -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -126,7 +126,16 @@ Son doğrulandı: Sprint 8.2
 - `src/features/exports/services/exportTypes.ts`
   Export veri tipleri ve snapshot key sabitleri.
 
-## 9. Settings / Data Management
+## 9. Reports
+
+Son doğrulandı: Sprint 8.6
+
+- `src/features/reports/ReportsPage.tsx`
+  Günlük Raporlar sayfası; tarih seçimi, özet kartları, son görüşmeler ve açık hatırlatma özeti.
+- `src/features/reports/services/dailyReportReader.ts`
+  Seçilen gün için `call_logs` üzerinden günlük operasyon özetini üretir; `call_time` birincil, `created_at` fallback kullanır.
+
+## 10. Settings / Data Management
 
 Son doğrulandı: Sprint 8.2
 
@@ -137,9 +146,9 @@ Son doğrulandı: Sprint 8.2
 - `src/domain/constants/settings.ts`
   Backup/app settings sabitleri.
 
-## 10. Tests
+## 11. Tests
 
-Son doğrulandı: Sprint 8.2
+Son doğrulandı: Sprint 8.6
 
 - `tests/exports/*`
   Detaylı export, özet export, export data reader ve Excel exporter davranışları.
@@ -149,6 +158,8 @@ Son doğrulandı: Sprint 8.2
   Aday listesi okuma/filtreleme, Sınıf/Şube helper’ları, telefon status, aday silme.
 - `tests/reminders/*`
   Reminder alarm, dismissed store, popup view model ve reminder settings.
+- `tests/reports/*`
+  Günlük rapor metrikleri, call result kırılımları, tarih filtresi, son görüşmeler ve Raporlar sayfası smoke davranışları.
 - `tests/shortcuts/*`
   Kısayol registry, Türkçe label, çakışma/3 tuşu/riskli tuş validasyonları.
 - `tests/app/*`
@@ -160,9 +171,9 @@ Son doğrulandı: Sprint 8.2
 - `tests/utils/*`
   Telefon ve metin normalizasyon yardımcıları.
 
-## 11. Docs / Prompts
+## 12. Docs / Prompts
 
-Son doğrulandı: Sprint 8.2
+Son doğrulandı: Sprint 8.6
 
 - `docs/PROJECT_MEMORY.md`
   Codex için güncel kısa proje hafızası.
@@ -178,6 +189,10 @@ Son doğrulandı: Sprint 8.2
   Özet Görüşme Raporu checkpoint’i.
 - `docs/CHECKPOINT_SPRINT_6_1.md`
   Kısayollar, global arama, bildirim paneli checkpoint’i.
+- `docs/CHECKPOINT_SPRINT_8_5.md`
+  Hatırlatmalar sayfası checkpoint’i.
+- `docs/CHECKPOINT_SPRINT_8_6.md`
+  Raporlar / Günlük Özet Sayfası checkpoint’i.
 - `docs/UI_BASELINE_BEFORE_FIGMA.md`
   Figma/Stitch öncesi çalışan UI baseline.
 - `docs/mockups/AOTS_Mockup_v2.html`
