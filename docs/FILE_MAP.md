@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Pilot v1.0 / Release Candidate | Branch: sprint-9-1-pilot-findings-final-fixes -->
+<!-- Son güncelleme: Pilot v1.0 gerçek kullanım izleme | Branch: sprint-9-1-pilot-findings-final-fixes -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -6,7 +6,7 @@ Bu dosya “hangi dosya ne işe yarar?” haritasıdır.
 
 ## 1. App / Layout
 
-Son doğrulandı: Pilot v1.0 / Release Candidate
+Son doğrulandı: Pilot v1.0 gerçek kullanım izleme
 
 - `src/app/App.tsx`
   Uygulama kök bileşeni.
@@ -211,6 +211,8 @@ Son doğrulandı: Sprint 9.1
   Pilot kullanıma aday sürüm değerlendirmesi, test/build özeti, kapatılan pilot bulguları ve pilot başlatma kararı.
 - `docs/PILOT_V1_RELEASE_NOTES.md`
   Pilot v1.0 release notları; hazır özellikler, test durumu, bilinen sınırlamalar ve pilot başlatma şartları.
+- `docs/PILOT_RUN_REPORT.md`
+  Pilot v1.0 gerçek kullanım deneme raporu; yapılan pilot akışını, başarılı kontrolleri ve sonraki aksiyonları içerir.
 - `docs/UI_BASELINE_BEFORE_FIGMA.md`
   Figma/Stitch öncesi çalışan UI baseline.
 - `docs/mockups/AOTS_Mockup_v2.html`
