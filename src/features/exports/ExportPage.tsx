@@ -19,7 +19,7 @@ import {
 } from "./services/excelExporter";
 
 function scopeLabel(scope: ExportScope): string {
-  return scope === "filtered" ? "Mevcut filtrelenmiş liste" : "Tüm adaylar";
+  return scope === "filtered" ? "Filtreli" : "Tümü";
 }
 
 function formatSnapshotDate(value?: string | null): string {
