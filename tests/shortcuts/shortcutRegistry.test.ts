@@ -94,6 +94,16 @@ describe("shortcutRegistry", () => {
     expect(resolveShortcutAction(event)).toBeNull();
   });
 
+  it("suppresses global letter shortcuts inside contenteditable fields", () => {
+    const editable = document.createElement("div");
+    editable.setAttribute("contenteditable", "true");
+    const event = keyboardEvent("f");
+    Object.defineProperty(event, "target", { value: editable });
+
+    expect(shouldSuppressShortcutEvent(event)).toBe(true);
+    expect(resolveShortcutAction(event)).toBeNull();
+  });
+
   it("allows Ctrl+S while typing so browser save can be intercepted", () => {
     const textarea = document.createElement("textarea");
     const event = keyboardEvent("s", { ctrlKey: true });

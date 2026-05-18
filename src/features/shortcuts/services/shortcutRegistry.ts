@@ -254,7 +254,7 @@ export function isEditableShortcutTarget(target: EventTarget | null): boolean {
     return false;
   }
 
-  if (target.isContentEditable) {
+  if (target.isContentEditable || target.closest("[contenteditable='true']")) {
     return true;
   }
 

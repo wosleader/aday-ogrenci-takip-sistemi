@@ -470,6 +470,47 @@ th {
   font-size: 12px;
 }
 
+.shortcut-navigation-help {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(22, 78, 99, 0.14);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.9), #ffffff);
+}
+
+.shortcut-navigation-help h3 {
+  margin: 0;
+  color: var(--aots-text);
+  font-size: 13px;
+}
+
+.shortcut-navigation-help p {
+  margin: 3px 0 0;
+  color: var(--aots-muted);
+  font-size: 12px;
+}
+
+.shortcut-navigation-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.shortcut-navigation-list span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--aots-muted);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .shortcut-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(280px, 1fr));
@@ -517,9 +558,28 @@ th {
   font-weight: 700;
 }
 
+.shortcut-actions .shortcut-change-button {
+  border-color: rgba(22, 78, 99, 0.28);
+  background: #e0f2fe;
+  color: var(--aots-accent);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.shortcut-actions .shortcut-reset-button {
+  border-color: rgba(71, 85, 105, 0.22);
+  background: #f8fafc;
+  color: #475569;
+}
+
 .shortcut-actions button:hover {
   border-color: var(--aots-accent);
+  background: #f0fdfa;
   color: var(--aots-accent);
+}
+
+.shortcut-actions button:focus-visible {
+  outline: 2px solid rgba(22, 78, 99, 0.32);
+  outline-offset: 2px;
 }
 
 .shortcut-message {
@@ -2760,7 +2820,8 @@ body {
 }
 
 .reminder-table-wrap {
-  overflow-x: auto;
+  max-height: min(52vh, 560px);
+  overflow: auto;
 }
 
 .reminder-table {
@@ -2906,11 +2967,11 @@ body {
 .reports-page {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
   width: 100%;
   max-width: 1180px;
   margin: 0 auto;
-  padding: 4px 2px 28px;
+  padding: 2px 2px 12px;
 }
 
 .daily-report-header {
@@ -2946,12 +3007,12 @@ body {
 .daily-report-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .daily-report-card {
-  min-height: 104px;
-  padding: 15px 16px;
+  min-height: 92px;
+  padding: 12px 14px;
   border: 1px solid rgba(71, 85, 105, 0.16);
   border-radius: var(--aots-radius);
   background: linear-gradient(180deg, rgba(248, 250, 252, 0.78), #ffffff 62%);
@@ -2961,7 +3022,7 @@ body {
 .daily-report-card span {
   display: block;
   min-height: 28px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   color: var(--aots-muted);
   font-size: 12px;
   font-weight: 800;
@@ -2975,7 +3036,7 @@ body {
 }
 
 .daily-report-card p {
-  margin: 9px 0 0;
+  margin: 6px 0 0;
   color: var(--aots-hint);
   font-size: 11px;
   line-height: 1.4;
@@ -3010,7 +3071,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  padding: 14px 16px;
+  padding: 12px 14px;
 }
 
 .daily-report-section h2 {
@@ -3307,6 +3368,12 @@ body {
   }
 }
 
+@media (max-width: 1024px) {
+  .reminder-table-wrap {
+    max-height: none;
+  }
+}
+
 @media (max-width: 768px) {
   .page {
     padding: 18px;
@@ -3359,6 +3426,15 @@ body {
   .daily-reminder-pills a {
     justify-content: center;
     width: 100%;
+  }
+
+  .shortcut-navigation-help {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .shortcut-navigation-list {
+    justify-content: flex-start;
   }
 
   .inline-field {

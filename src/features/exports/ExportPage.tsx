@@ -151,7 +151,7 @@ export function ExportPage() {
             />
             <span>
               <strong>Tüm adayları dışa aktar</strong>
-              <small>IndexedDB içindeki tüm aktif aday kayıtlarını okur.</small>
+              <small>Sistemdeki tüm aktif adayları dışa aktarır. Aday Listesi’ndeki arama ve filtreleri dikkate almaz.</small>
             </span>
           </label>
 
@@ -166,7 +166,7 @@ export function ExportPage() {
               <strong>Mevcut filtrelenmiş listeyi dışa aktar</strong>
               <small>
                 {snapshot
-                  ? `${snapshot.student_count} aday · ${snapshot.filter_label ?? "Filtre özeti yok"} · ${formatSnapshotDate(
+                  ? `Aday Listesi’nde şu an görünen adayları dışa aktarır. Arama, kampanya, sınıf/şube ve durum filtrelerini dikkate alır. ${snapshot.student_count} aday · ${snapshot.filter_label ?? "Filtre özeti yok"} · ${formatSnapshotDate(
                       snapshot.created_at
                     )}`
                   : "Mevcut filtrelenmiş liste bulunamadı. Önce Aday Listesi ekranında filtreleme yapın."}
@@ -195,7 +195,7 @@ export function ExportPage() {
               <strong>{summary.total_call_log_count}</strong>
             </div>
             <div className="summary-metric">
-              <span>{reportType === "summary" ? "Açıklama kolonu" : "Maksimum Arama N"}</span>
+              <span>{reportType === "summary" ? "Açıklama kolonu" : "En yüksek arama"}</span>
               <strong>{summary.max_call_log_count}</strong>
             </div>
             <div className="summary-metric">

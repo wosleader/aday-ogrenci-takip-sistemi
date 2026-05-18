@@ -29,6 +29,7 @@ import {
 import {
   getDefaultOperationShortcuts,
   getShortcutDisplayTextForAction,
+  isEditableShortcutTarget,
   resolveShortcutAction
 } from "../features/shortcuts/services/shortcutRegistry";
 import { readActiveOperationShortcuts } from "../features/shortcuts/services/shortcutSettings";
@@ -255,6 +256,32 @@ export function AppLayout() {
 
     return () => window.removeEventListener("keydown", onGlobalShortcut);
   }, [operationShortcuts]);
+
+  useEffect(() => {
+    function onSidebarShortcut(event: KeyboardEvent) {
+      if (event.defaultPrevented || event.ctrlKey || event.altKey || event.metaKey) {
+        return;
+      }
+
+      if (isEditableShortcutTarget(event.target) || resolveShortcutAction(event, operationShortcuts)) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+      const targetPath = key === "l" ? "/students" : key === "h" ? "/reminders" : null;
+
+      if (!targetPath || location.pathname === targetPath) {
+        return;
+      }
+
+      event.preventDefault();
+      navigate(targetPath);
+    }
+
+    window.addEventListener("keydown", onSidebarShortcut);
+
+    return () => window.removeEventListener("keydown", onSidebarShortcut);
+  }, [location.pathname, navigate, operationShortcuts]);
 
   function formatReminderDateTime(value: string): string {
     const date = new Date(value);

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useOutletContext } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -215,6 +215,47 @@ describe("AppLayout notifications", () => {
 
     expect(screen.getByLabelText("Genel arama")).toHaveValue("Ec");
     expect(screen.queryByRole("option")).not.toBeInTheDocument();
+  });
+
+  it("navigates with visible sidebar shortcut badges", () => {
+    renderLayout("/settings");
+
+    fireEvent.keyDown(window, { key: "l" });
+    expect(screen.getByText("Aday: yok")).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: "h" });
+    expect(screen.getByText("Hatırlatmalar içerik")).toBeInTheDocument();
+  });
+
+  it("does not trigger sidebar shortcuts while typing in editable targets", () => {
+    renderLayout("/settings");
+
+    const globalSearch = screen.getByLabelText("Genel arama");
+    globalSearch.focus();
+    fireEvent.keyDown(globalSearch, { key: "l" });
+    fireEvent.keyDown(globalSearch, { key: "h" });
+
+    expect(screen.getByText("Ayarlar içerik")).toBeInTheDocument();
+
+    const editable = document.createElement("div");
+    editable.setAttribute("contenteditable", "true");
+    document.body.appendChild(editable);
+    editable.focus();
+    fireEvent.keyDown(editable, { key: "l" });
+    fireEvent.keyDown(editable, { key: "h" });
+    editable.remove();
+
+    expect(screen.getByText("Ayarlar içerik")).toBeInTheDocument();
+  });
+
+  it("does not trigger sidebar shortcuts with modifier keys", () => {
+    renderLayout("/settings");
+
+    fireEvent.keyDown(window, { key: "l", ctrlKey: true });
+    fireEvent.keyDown(window, { key: "h", altKey: true });
+    fireEvent.keyDown(window, { key: "l", metaKey: true });
+
+    expect(screen.getByText("Ayarlar içerik")).toBeInTheDocument();
   });
 
   it("limits global search results and sends more results to the student list", async () => {

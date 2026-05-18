@@ -256,6 +256,22 @@ export function SettingsPage() {
           <span>Aynı kısayol birden fazla işleme atanamaz.</span>
         </div>
         {shortcutMessage ? <p className={`shortcut-message ${shortcutMessageType}`}>{shortcutMessage}</p> : null}
+        <section className="shortcut-navigation-help" aria-label="Sol menü kısayolları">
+          <div>
+            <h3>Sol menü kısayolları</h3>
+            <p>Sol menüdeki sayfalara hızlı geçiş için kullanılır.</p>
+          </div>
+          <div className="shortcut-navigation-list">
+            <span>
+              <kbd>L</kbd>
+              Aday Listesi
+            </span>
+            <span>
+              <kbd>H</kbd>
+              Hatırlatmalar
+            </span>
+          </div>
+        </section>
         <div className="shortcut-grid">
           {shortcuts.map((shortcut) => (
             <div className={`shortcut-row ${editingShortcut === shortcut.action_key ? "editing" : ""}`} key={shortcut.action_key}>
@@ -268,6 +284,7 @@ export function SettingsPage() {
                   </button>
                 ) : (
                   <button
+                    className="shortcut-change-button"
                     type="button"
                     onClick={() => {
                       setEditingShortcut(shortcut.action_key);
@@ -278,7 +295,7 @@ export function SettingsPage() {
                     Değiştir
                   </button>
                 )}
-                <button type="button" onClick={() => void resetShortcut(shortcut.action_key)}>
+                <button className="shortcut-reset-button" type="button" onClick={() => void resetShortcut(shortcut.action_key)}>
                   Varsayılana döndür
                 </button>
               </div>

@@ -48,6 +48,13 @@ describe("SettingsPage", () => {
     expect(screen.getByRole("tab", { name: "Klavye Kısayolları" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText("Arama operasyonunda kullanılan kısayolları buradan değiştirebilirsiniz.")).toBeInTheDocument();
     expect(screen.getByText("Aynı kısayol birden fazla işleme atanamaz.")).toBeInTheDocument();
+    const sidebarShortcutHelp = screen.getByLabelText("Sol menü kısayolları");
+    expect(within(sidebarShortcutHelp).getByText("Sol menü kısayolları")).toBeInTheDocument();
+    expect(within(sidebarShortcutHelp).getByText("Sol menüdeki sayfalara hızlı geçiş için kullanılır.")).toBeInTheDocument();
+    expect(within(sidebarShortcutHelp).getByText("L")).toBeInTheDocument();
+    expect(within(sidebarShortcutHelp).getByText("Aday Listesi")).toBeInTheDocument();
+    expect(within(sidebarShortcutHelp).getByText("H")).toBeInTheDocument();
+    expect(within(sidebarShortcutHelp).getByText("Hatırlatmalar")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("tab", { name: "Hatırlatmalar" }));
 
