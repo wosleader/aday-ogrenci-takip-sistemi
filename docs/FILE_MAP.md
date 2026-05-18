@@ -11,11 +11,11 @@ Son doğrulandı: Pilot v1.0 gerçek kullanım izleme
 - `src/app/App.tsx`
   Uygulama kök bileşeni.
 - `src/app/AppLayout.tsx`
-  Üst bar, sol menü, global aday araması, bağlantı durumu, bildirim çanı, genel layout ve route değişiminde dropdown kapanma davranışı.
+  Üst bar, sol menü, global aday araması, bağlantı durumu, bildirim çanı, genel layout, route değişiminde dropdown kapanma davranışı ve sol menü L/H navigasyon kısayolları.
 - `src/app/router.tsx`
   Route tanımları ve sayfa yerleşimi.
 - `src/styles/global.css`
-  Genel uygulama stilleri, responsive polish kuralları, kısayol yardım barı görünümü ve sağ drawer düşük riskli genişlik hafifletmesini içerir.
+  Genel uygulama stilleri, responsive polish kuralları, kısayol yardım barı görünümü, sağ drawer düşük riskli genişlik hafifletmesi ve Raporlar/Hatırlatmalar/Export/Settings polish stillerini içerir.
 
 ## 2. Database / Backup
 
@@ -114,7 +114,7 @@ Son doğrulandı: Sprint 9.0
 Son doğrulandı: Sprint 9.1
 
 - `src/features/exports/ExportPage.tsx`
-  Detaylı Excel Export ve Özet Görüşme Raporu üretir; Excel’in Tam Sistem Yedeği yerine geçmediğini kullanıcıya açıklar.
+  Detaylı Excel Export ve Özet Görüşme Raporu üretir; Excel’in Tam Sistem Yedeği yerine geçmediğini kullanıcıya açıklar, export kapsam açıklamaları ve özet kart metinleri kullanıcı dostu hale getirilmiştir.
 - `src/features/exports/services/exportDataReader.ts`
   Export dataset okuma.
 - `src/features/exports/services/exportMapper.ts`
@@ -140,7 +140,7 @@ Son doğrulandı: Sprint 8.9
 Son doğrulandı: Sprint 8.9
 
 - `src/features/settings/SettingsPage.tsx`
-  Ayarlar ekranı; kısayollar, hatırlatma ayarları, veri yönetimi, Tam Sistem Yedeği/Geri Yükleme ve görünür restore uyarı/başarı bildirimlerini içerir.
+  Ayarlar ekranı; kısayollar, sol menü kısayol bilgilendirmesi, kısayol aksiyon buton polish’i, hatırlatma ayarları, veri yönetimi, Tam Sistem Yedeği/Geri Yükleme ve görünür restore uyarı/başarı bildirimlerini içerir.
 - `src/features/settings/services/dataManagement.ts`
   Tam sistem yedeği indirme, analiz ve restore servisleri.
 - `src/domain/constants/settings.ts`
@@ -213,6 +213,8 @@ Son doğrulandı: Sprint 9.1
   Pilot v1.0 release notları; hazır özellikler, test durumu, bilinen sınırlamalar ve pilot başlatma şartları.
 - `docs/PILOT_RUN_REPORT.md`
   Pilot v1.0 gerçek kullanım deneme raporu; yapılan pilot akışını, başarılı kontrolleri ve sonraki aksiyonları içerir.
+- `docs/PILOT_FINDINGS.md`
+  Manuel ve gerçek kullanım pilot bulgularını, PF-001’den PF-012’ye kadar çözülen UI/UX polish notlarını ve sonraki aksiyonları içerir.
 - `docs/UI_BASELINE_BEFORE_FIGMA.md`
   Figma/Stitch öncesi çalışan UI baseline.
 - `docs/mockups/AOTS_Mockup_v2.html`

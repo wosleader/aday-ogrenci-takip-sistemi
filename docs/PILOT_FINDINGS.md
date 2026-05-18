@@ -105,11 +105,98 @@ Aşağıdaki alanlar manuel kontrolde başarılı geçti:
 - Çözüm notu:
   Sprint 9.1’de drawer genişliği düşük riskli CSS ile hafifletildi. Kapsamlı mobile drawer polish ve mobil tablo/kart dönüşümü sonraya bırakıldı.
 
+### PF-006 — Export kapsamı seçenekleri kullanıcı için daha açık anlatılmalı
+
+- Ekran: Excel Dışa Aktar / Export Kapsamı
+- Öncelik: Orta
+- Durum: Çözüldü
+- Sorun:
+  Export kapsamı seçenekleri arasındaki fark kullanıcı için yeterince açık değildi.
+- Beklenen:
+  “Tüm adayları dışa aktar” ve “Mevcut filtrelenmiş listeyi dışa aktar” seçenekleri sade ve net anlatılmalı.
+- Çözüm notu:
+  Export kapsamı açıklamaları kullanıcı dostu hale getirildi. “Tüm adayları dışa aktar” seçeneğinin Aday Listesi’ndeki arama/filtreleri dikkate almadığı net yazıldı. “Mevcut filtrelenmiş listeyi dışa aktar” seçeneğinin arama, kampanya, sınıf/şube ve durum filtrelerini dikkate aldığı net yazıldı.
+
+### PF-007 — Sol menü kısayol rozetleri görünüyor ama çalışmıyor
+
+- Ekran: Sol menü / Global navigasyon
+- Öncelik: Orta
+- Durum: Çözüldü
+- Sorun:
+  Sol menüde L ve H rozetleri görünmesine rağmen ilgili sayfalara geçiş yapmıyordu.
+- Beklenen:
+  L tuşu Aday Listesi’ne, H tuşu Hatırlatmalar’a götürmeli; yazı yazılan alanlarda ve modifier tuşlarıyla tetiklenmemeli.
+- Çözüm notu:
+  Sol menüdeki L ve H kısayolları çalışır hale getirildi. L → Aday Listesi, H → Hatırlatmalar. Input/textarea/select/contenteditable içindeyken ve Ctrl/Alt/Meta ile basıldığında tetiklenmez. Mevcut operasyon kısayolları korunur.
+
+### PF-008 — Raporlar sayfasında gereksiz dikey scroll / kompaktlık sorunu
+
+- Ekran: Raporlar
+- Öncelik: Düşük-Orta
+- Durum: Çözüldü / Hafifletildi
+- Sorun:
+  Raporlar sayfasında masaüstü görünümde içerik neredeyse sığmasına rağmen gereksiz dikey scroll ve fazla boşluk hissi oluşuyordu.
+- Beklenen:
+  Raporlar sayfası mevcut tasarım dilini koruyarak daha kompakt görünmeli.
+- Çözüm notu:
+  Raporlar sayfası scoped CSS ile daha kompakt hale getirildi. Kart yüksekliği, grid gap, section padding ve page bottom padding değerleri düşük riskli şekilde azaltıldı. Global body/html overflow davranışına dokunulmadı.
+- Not:
+  Gemini tarafından üretilen premium dashboard yaklaşımı birebir uygulanmadı. Reports Dashboard Polish ayrı roadmap maddesi olarak saklandı.
+
+### PF-009 — Export özet kartında “Maksimum Arama N” başlığı kırılıyor
+
+- Ekran: Excel Dışa Aktar / Export Öncesi Özet
+- Öncelik: Düşük
+- Durum: Çözüldü
+- Sorun:
+  “Maksimum Arama N” başlığı kart içinde kırılıyor ve teknik görünüyordu.
+- Beklenen:
+  Kart başlığı sade, kullanıcı dostu ve kırılmadan okunabilir olmalı.
+- Çözüm notu:
+  “Maksimum Arama N” metni “En yüksek arama” olarak değiştirildi. Export hesaplama/Excel üretim mantığı değiştirilmedi.
+
+### PF-010 — Klavye Kısayolları aksiyon butonları buton gibi görünmüyor
+
+- Ekran: Ayarlar > Klavye Kısayolları
+- Öncelik: Düşük-Orta
+- Durum: Çözüldü
+- Sorun:
+  “Değiştir” ve “Varsayılana döndür” aksiyonları metin gibi görünüyor, buton oldukları yeterince anlaşılmıyordu.
+- Beklenen:
+  Kısayol aksiyonları sade ama belirgin buton görünümünde olmalı.
+- Çözüm notu:
+  Ayarlar > Klavye Kısayolları bölümündeki “Değiştir” ve “Varsayılana döndür” butonları scoped CSS ile daha belirgin hale getirildi. Global button tasarımına dokunulmadı.
+
+### PF-011 — Sol menü kısayolları Klavye Kısayolları sayfasında görünmüyor
+
+- Ekran: Ayarlar > Klavye Kısayolları
+- Öncelik: Düşük-Orta
+- Durum: Çözüldü
+- Sorun:
+  Sol menüde çalışan L/H navigasyon kısayolları, Klavye Kısayolları sayfasında görünmüyordu.
+- Beklenen:
+  Kullanıcı, sol menü kısayollarını ayarlar ekranında bilgilendirme olarak görebilmeli.
+- Çözüm notu:
+  Ayarlar > Klavye Kısayolları bölümüne küçük bilgilendirme kartı eklendi: L → Aday Listesi, H → Hatırlatmalar. Bu kısayollar değiştirilebilir operasyon kısayolları listesine eklenmedi; sadece bilgilendirme olarak gösterildi.
+
+### PF-012 — Hatırlatmalar sayfasında gereksiz dış sayfa scroll’u devam ediyor
+
+- Ekran: Hatırlatmalar
+- Öncelik: Orta
+- Durum: Çözüldü
+- Sorun:
+  Hatırlatmalar sayfasında liste içi scroll doğru çalışmasına rağmen masaüstünde dış sayfada gereksiz dikey scroll devam ediyordu.
+- Beklenen:
+  Uzun kayıtlar için scroll öncelikle tablo/liste kutusunda olmalı; küçük ekranlarda doğal sayfa scroll’u korunmalı.
+- Çözüm notu:
+  Hatırlatmalar sayfasında masaüstü görünüm için layout yeniden dengelendi. Liste içi scroll `.reminder-table-wrap` içinde kaldı. Dış sayfadaki gereksiz dikey scroll azaltıldı/kaldırıldı. 1024px ve altında doğal sayfa scroll’u korunur. Global body/html veya genel `.page` selectorlarına dokunulmadı.
+
 ## 4. Pilot Kararı
 
 - Ana akışlar pilot için çalışır durumda.
 - Bilinen engelleyici veri kaybı veya kritik import/export/restore hatası görülmedi.
 - Sprint 9.1 ile PF-001, PF-002, PF-003 ve PF-004 kapatıldı.
+- Pilot izleme sırasında gelen PF-006, PF-007, PF-008, PF-009, PF-010, PF-011 ve PF-012 küçük UI/UX polish bulguları kapatıldı.
 - Sistem pilot kullanım için daha güvenli ve anlaşılır hale geldi.
 
 ## 5. Sprint 9.1 Önerilen Kapsam

@@ -137,6 +137,7 @@ Kısa özet:
 - Sprint 9.1 pilot bulguları kapatıldı.
 - Sistem küçük ölçekli kontrollü pilot deneme için release candidate kabul edilebilir.
 - Pilot v1.0 gerçek kullanım denemesi yapıldı.
+- Pilot izleme sırasında gelen PF-006–PF-012 küçük UI/UX polish bulguları kapatıldı.
 - Yeni engelleyici sorun bildirilmezse sistem küçük ölçekli kontrollü kullanımda izlenmeye devam eder.
 - Pilot sırasında sorun çıkarsa Sprint 9.2 Pilot Feedback Fixes açılacak.
 
@@ -160,15 +161,16 @@ Kısa özet:
 Güncel önerilen sıra:
 
 1. Birkaç günlük gerçek kullanım geri bildirimi toplama / gerekirse Sprint 9.2 — Pilot Feedback Fixes
-2. Mobile Drawer Polish
-3. Mobile Table/Card View Polish
-4. Çoklu Telefon Mimarisi
-5. Akıllı Yardımcılar
-6. Toplu silme / seçim modu
-7. Figma/Stitch operasyon listesi sadeleştirme
-8. Haftalık/aylık rapor veya rapor genişletmeleri
-9. Günlük rapor / mükerrerler ekranı genişletmeleri
-10. VDS/merkez/senkronizasyon
+2. Reports Dashboard Polish
+3. Mobile Drawer Polish
+4. Mobile Table/Card View Polish
+5. Çoklu Telefon Mimarisi
+6. Akıllı Yardımcılar
+7. Toplu silme / seçim modu
+8. Figma/Stitch operasyon listesi sadeleştirme
+9. Haftalık/aylık rapor veya rapor genişletmeleri
+10. Günlük rapor / mükerrerler ekranı genişletmeleri
+11. VDS/merkez/senkronizasyon
 
 Roadmap kararları:
 
@@ -182,7 +184,9 @@ Roadmap kararları:
 - Pilot v1.0 gerçek kullanım denemesi yapılmıştır.
 - Kullanım kitapçığı ve pilot checklist hazırdır.
 - Pilot Findings kapatıldı.
+- Pilot izleme sırasında gelen PF-006–PF-012 küçük UI/UX polish bulguları kapatıldı.
 - Pilot gerçek kullanım geri bildirimleri birkaç gün toplanacak; yeterli bulgu oluşursa Sprint 9.2 Pilot Feedback Fixes altında kapatılacak.
+- Reports Dashboard Polish pilot sonrası ayrı sprint olarak değerlendirilecek; Gemini tarafından üretilen premium dashboard yaklaşımı pilot feedback fix kapsamında uygulanmadı.
 - Mobile Drawer Polish ayrı sprint olarak yapılacak.
 - Mobile Table/Card View Polish ayrı sprint olarak değerlendirilecek.
 - Sistem uzun vadede Telefon 1 / Telefon 2 ile sınırlı kalmayacak; adayın birden fazla iletişim numarası telefon listesi olarak tutulacak. Bu iş ayrı mimari sprintte ele alınacak.
@@ -220,12 +224,12 @@ Roadmap kararları:
 Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 
 - Güncel branch: `sprint-9-1-pilot-findings-final-fixes`
-- Bu branch’in amacı: Pilot v1.0 gerçek kullanım denemesi sonucunu kayıt altına almak.
+- Bu branch’in amacı: Pilot v1.0 gerçek kullanım izleme ve küçük pilot feedback fix kayıtlarını sürdürmek.
 - Önceki çalışma branch’i: `sprint-9-0-user-guide-pilot-checklist`
 - Güncel release candidate commit’i: `12062f0 docs: add sprint 9.1 checkpoint and update pilot findings`
 - Güncel Pilot v1.0 release candidate commit’i: `113b44b docs: add pilot release candidate review`
 - Pilot v1.0 release commit’i: `b59e3af docs: add pilot v1 release notes`
-- Son bilinen fix commit’i: `4c289b7 fix: close pilot findings for restore notices and layout polish`
+- Son bilinen fix commit’i: `7cdea84 fix: reduce reminders page outer scroll`
 - Sonraki önerilen aşama: Birkaç günlük gerçek kullanım geri bildirimi toplama / gerekirse Sprint 9.2 — Pilot Feedback Fixes.
 
 ## 15. Codex Standart Başlangıç Talimatı
