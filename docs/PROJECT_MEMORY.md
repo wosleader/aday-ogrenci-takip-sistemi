@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.3A Çoklu Telefon Core Model | Branch: sprint-9-3a-multi-phone-core-model -->
+<!-- Son güncelleme: Sprint 9.3B-1 Phone Context Model Helpers | Branch: sprint-9-3b-1-phone-context-model-helpers -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,9 +6,9 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: ✅ Sprint 9.3A Çoklu Telefon Core Model
-- FILE_MAP: ✅ Sprint 9.3A Çoklu Telefon Core Model
-- DECISIONS: ✅ Sprint 9.3A Çoklu Telefon Core Model
+- PROJECT_MEMORY: ✅ Sprint 9.3B-1 Phone Context Model Helpers
+- FILE_MAP: ✅ Sprint 9.3B-1 Phone Context Model Helpers
+- DECISIONS: ✅ Sprint 9.3B-1 Phone Context Model Helpers
 - Son sprint-close çalıştırıldı: ✅ Sprint 9.3A
 
 ## 1. Proje Amacı
@@ -142,6 +142,7 @@ Kısa özet:
 - Sprint 9.3A Çoklu Telefon Core Model kapsamında domain type ve compatibility helper altyapısı tamamlandı; UI/import/export/call writer/reminder writer/backup davranışı değiştirilmedi.
 - Sprint 9.3A son feature commit’i: `76a3b3a feat: add multi-phone core compatibility helpers`.
 - Sprint 9.3A test/build sonucu: `npm.cmd test` ve `npm.cmd run build` geçti; Vite chunk size uyarısı build başarısızlığı değildir.
+- Sprint 9.3B-1 kapsamında call log ve reminder kayıtları için optional phone context model alanları ve UI’ya bağlanmamış display/fallback helper’ları hazırlanıyor.
 - Yeni engelleyici sorun bildirilmezse sistem küçük ölçekli kontrollü kullanımda izlenmeye devam eder.
 - Pilot sırasında yeni sorun çıkarsa ayrı Pilot Feedback Fixes kapsamında ele alınacak.
 
@@ -202,6 +203,7 @@ Roadmap kararları:
 - Sprint 9.2 Çoklu Telefon Mimarisi Planı başlatıldı; detaylı plan `docs/MULTI_PHONE_ARCHITECTURE_PLAN.md` içindedir.
 - Çoklu telefon kararı: sabit 10 boş telefon kutusu gösterilmeyecek; telefonlar dinamik liste olacak. Sağ kişi kartında ilk 2-3 telefon hızlı görünür, fazlası “+N numara daha göster” ile açılır. `Telefon N` referans etiketi ile ilişki etiketi ayrı tutulur. Call log ve reminder kayıtları seçili telefon bağlamını `phone_id` + snapshot ile koruyacak şekilde planlanır.
 - Sprint 9.3A kararı: Çoklu telefon için `PhoneRelationLabel`, `PhoneOperationalStatus`, `PhoneSnapshot` type’ları ve phone compatibility helper’ları eklendi; mevcut Telefon 1 / Telefon 2 ekran davranışı bu sprintte değiştirilmedi.
+- Sprint 9.3B-1 kararı: `CallLogRecord` ve `ReminderRecord` içine optional `phone_id` / `phone_snapshot` bağlamı hazırlanır; gerçek kayıt yazma, UI, import/export, backup/restore ve storage migration bu sprintte yapılmaz.
 
 ## Bu Dosya Ne Zaman Güncellenmeli?
 
@@ -236,9 +238,9 @@ Roadmap kararları:
 
 Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 
-- Güncel branch: `sprint-9-3a-multi-phone-core-model`
-- Bu branch’in amacı: Çoklu Telefon Mimarisi için core domain model ve backward compatibility helper altyapısını kapatmak.
-- Önceki çalışma branch’i: `sprint-9-2-multi-phone-architecture-plan`
+- Güncel branch: `sprint-9-3b-1-phone-context-model-helpers`
+- Bu branch’in amacı: Call log ve reminder kayıtları için telefon bağlamı model/type/helper/fallback altyapısını hazırlamak.
+- Önceki çalışma branch’i: `sprint-9-3a-multi-phone-core-model`
 - Güncel release candidate commit’i: `12062f0 docs: add sprint 9.1 checkpoint and update pilot findings`
 - Güncel Pilot v1.0 release candidate commit’i: `113b44b docs: add pilot release candidate review`
 - Pilot v1.0 release commit’i: `b59e3af docs: add pilot v1 release notes`
