@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Pilot v1.0 gerçek kullanım izleme | Branch: sprint-9-1-pilot-findings-final-fixes -->
+<!-- Son güncelleme: Sprint 9.2 Çoklu Telefon Mimarisi Planı | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,9 +6,9 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: ✅ Pilot v1.0 gerçek kullanım izleme
-- FILE_MAP: ✅ Pilot v1.0 gerçek kullanım izleme
-- DECISIONS: ✅ Pilot v1.0 gerçek kullanım izleme
+- PROJECT_MEMORY: ✅ Sprint 9.2 Çoklu Telefon Mimarisi Planı
+- FILE_MAP: ✅ Sprint 9.2 Çoklu Telefon Mimarisi Planı
+- DECISIONS: ✅ Sprint 9.2 Çoklu Telefon Mimarisi Planı
 - Son sprint-close çalıştırıldı: ✅ Sprint 9.1
 
 ## 1. Proje Amacı
@@ -138,8 +138,9 @@ Kısa özet:
 - Sistem küçük ölçekli kontrollü pilot deneme için release candidate kabul edilebilir.
 - Pilot v1.0 gerçek kullanım denemesi yapıldı.
 - Pilot izleme sırasında gelen PF-006–PF-012 küçük UI/UX polish bulguları kapatıldı.
+- Sprint 9.2 Çoklu Telefon Mimarisi Planı başlatıldı; uygulama yapılmadan ürün/UX/teknik kararlar dokümante ediliyor.
 - Yeni engelleyici sorun bildirilmezse sistem küçük ölçekli kontrollü kullanımda izlenmeye devam eder.
-- Pilot sırasında sorun çıkarsa Sprint 9.2 Pilot Feedback Fixes açılacak.
+- Pilot sırasında yeni sorun çıkarsa ayrı Pilot Feedback Fixes kapsamında ele alınacak.
 
 ## 12. Tamamlanan Sprintler
 
@@ -155,22 +156,26 @@ Kısa özet:
 - Pilot Release Candidate / Final Review: tamamlandı.
 - Pilot v1.0 Release Notes: hazırlandı.
 - Pilot v1.0 gerçek kullanım denemesi: yapıldı.
+- Sprint 9.2: Çoklu Telefon Mimarisi Planı hazırlanıyor.
 
 ## 13. Yol Haritası
 
 Güncel önerilen sıra:
 
-1. Birkaç günlük gerçek kullanım geri bildirimi toplama / gerekirse Sprint 9.2 — Pilot Feedback Fixes
-2. Reports Dashboard Polish
-3. Mobile Drawer Polish
-4. Mobile Table/Card View Polish
-5. Çoklu Telefon Mimarisi
-6. Akıllı Yardımcılar
-7. Toplu silme / seçim modu
-8. Figma/Stitch operasyon listesi sadeleştirme
-9. Haftalık/aylık rapor veya rapor genişletmeleri
-10. Günlük rapor / mükerrerler ekranı genişletmeleri
-11. VDS/merkez/senkronizasyon
+1. Sprint 9.3 — Çoklu Telefon Core
+2. Sprint 9.4 — Çoklu Telefon Import / Duplicate / Export
+3. Sprint 9.5 — Çoklu Telefon UI / Sağ Kişi Kartı
+4. Sprint 9.6 — Çoklu Telefon Responsive Polish
+5. Gerçek kullanım geri bildirimlerini toplamaya devam / gerekirse Pilot Feedback Fixes
+6. Reports Dashboard Polish
+7. Mobile Drawer Polish
+8. Mobile Table/Card View Polish
+9. Akıllı Yardımcılar
+10. Toplu silme / seçim modu
+11. Figma/Stitch operasyon listesi sadeleştirme
+12. Haftalık/aylık rapor veya rapor genişletmeleri
+13. Günlük rapor / mükerrerler ekranı genişletmeleri
+14. VDS/merkez/senkronizasyon
 
 Roadmap kararları:
 
@@ -185,11 +190,13 @@ Roadmap kararları:
 - Kullanım kitapçığı ve pilot checklist hazırdır.
 - Pilot Findings kapatıldı.
 - Pilot izleme sırasında gelen PF-006–PF-012 küçük UI/UX polish bulguları kapatıldı.
-- Pilot gerçek kullanım geri bildirimleri birkaç gün toplanacak; yeterli bulgu oluşursa Sprint 9.2 Pilot Feedback Fixes altında kapatılacak.
+- Pilot gerçek kullanım geri bildirimleri birkaç gün toplanacak; yeterli bulgu oluşursa ayrı Pilot Feedback Fixes kapsamında kapatılacak.
 - Reports Dashboard Polish pilot sonrası ayrı sprint olarak değerlendirilecek; Gemini tarafından üretilen premium dashboard yaklaşımı pilot feedback fix kapsamında uygulanmadı.
 - Mobile Drawer Polish ayrı sprint olarak yapılacak.
 - Mobile Table/Card View Polish ayrı sprint olarak değerlendirilecek.
 - Sistem uzun vadede Telefon 1 / Telefon 2 ile sınırlı kalmayacak; adayın birden fazla iletişim numarası telefon listesi olarak tutulacak. Bu iş ayrı mimari sprintte ele alınacak.
+- Sprint 9.2 Çoklu Telefon Mimarisi Planı başlatıldı; detaylı plan `docs/MULTI_PHONE_ARCHITECTURE_PLAN.md` içindedir.
+- Çoklu telefon kararı: sabit 10 boş telefon kutusu gösterilmeyecek; telefonlar dinamik liste olacak. Sağ kişi kartında ilk 2-3 telefon hızlı görünür, fazlası “+N numara daha göster” ile açılır. `Telefon N` referans etiketi ile ilişki etiketi ayrı tutulur. Call log ve reminder kayıtları seçili telefon bağlamını `phone_id` + snapshot ile koruyacak şekilde planlanır.
 
 ## Bu Dosya Ne Zaman Güncellenmeli?
 
@@ -217,20 +224,22 @@ Roadmap kararları:
 - Pilot release candidate kararı değişecekse: `docs/PILOT_RELEASE_CANDIDATE_REVIEW.md`
 - Pilot v1.0 release notları değişecekse: `docs/PILOT_V1_RELEASE_NOTES.md`
 - Pilot gerçek kullanım deneme sonucu değişecekse: `docs/PILOT_RUN_REPORT.md`
+- Çoklu Telefon Mimarisi değişecekse: `docs/MULTI_PHONE_ARCHITECTURE_PLAN.md`
 - Çok eski sprint bağlamı gerekiyorsa ilgili eski checkpoint okunur; tüm checkpoint’ler gereksiz yere okutulmaz.
 
 ## 14. Güncel Çalışma Bilgisi
 
 Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 
-- Güncel branch: `sprint-9-1-pilot-findings-final-fixes`
-- Bu branch’in amacı: Pilot v1.0 gerçek kullanım izleme ve küçük pilot feedback fix kayıtlarını sürdürmek.
-- Önceki çalışma branch’i: `sprint-9-0-user-guide-pilot-checklist`
+- Güncel branch: `sprint-9-2-multi-phone-architecture-plan`
+- Bu branch’in amacı: Çoklu Telefon Mimarisi için ürün, UX ve teknik mimari plan dokümantasyonunu hazırlamak.
+- Önceki çalışma branch’i: `sprint-9-1-pilot-findings-final-fixes`
 - Güncel release candidate commit’i: `12062f0 docs: add sprint 9.1 checkpoint and update pilot findings`
 - Güncel Pilot v1.0 release candidate commit’i: `113b44b docs: add pilot release candidate review`
 - Pilot v1.0 release commit’i: `b59e3af docs: add pilot v1 release notes`
 - Son bilinen fix commit’i: `7cdea84 fix: reduce reminders page outer scroll`
-- Sonraki önerilen aşama: Birkaç günlük gerçek kullanım geri bildirimi toplama / gerekirse Sprint 9.2 — Pilot Feedback Fixes.
+- Son bilinen dokümantasyon commit’i: `194cb07 docs: record pilot feedback UI polish findings`
+- Sonraki önerilen aşama: Sprint 9.3 — Çoklu Telefon Core.
 
 ## 15. Codex Standart Başlangıç Talimatı
 

@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Pilot v1.0 gerçek kullanım izleme | Branch: sprint-9-1-pilot-findings-final-fixes -->
+<!-- Son güncelleme: Sprint 9.2 Çoklu Telefon Mimarisi Planı | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -6,7 +6,7 @@ Bu dosya “hangi dosya ne işe yarar?” haritasıdır.
 
 ## 1. App / Layout
 
-Son doğrulandı: Pilot v1.0 gerçek kullanım izleme
+Son doğrulandı: Sprint 9.2 Çoklu Telefon Mimarisi Planı
 
 - `src/app/App.tsx`
   Uygulama kök bileşeni.
@@ -215,6 +215,8 @@ Son doğrulandı: Sprint 9.1
   Pilot v1.0 gerçek kullanım deneme raporu; yapılan pilot akışını, başarılı kontrolleri ve sonraki aksiyonları içerir.
 - `docs/PILOT_FINDINGS.md`
   Manuel ve gerçek kullanım pilot bulgularını, PF-001’den PF-012’ye kadar çözülen UI/UX polish notlarını ve sonraki aksiyonları içerir.
+- `docs/MULTI_PHONE_ARCHITECTURE_PLAN.md`
+  Çoklu Telefon Mimarisi için ürün, UX, veri modeli, import/export, reminder, call log, backup/restore ve responsive etkilerini açıklayan plan dokümanı.
 - `docs/UI_BASELINE_BEFORE_FIGMA.md`
   Figma/Stitch öncesi çalışan UI baseline.
 - `docs/mockups/AOTS_Mockup_v2.html`
