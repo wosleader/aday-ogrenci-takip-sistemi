@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.2 Çoklu Telefon Mimarisi Planı | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son güncelleme: Sprint 9.3A Çoklu Telefon Core Model | Branch: sprint-9-3a-multi-phone-core-model -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -6,7 +6,7 @@ Bu dosya “hangi dosya ne işe yarar?” haritasıdır.
 
 ## 1. App / Layout
 
-Son doğrulandı: Sprint 9.2 Çoklu Telefon Mimarisi Planı
+Son doğrulandı: Sprint 9.3A Çoklu Telefon Core Model
 
 - `src/app/App.tsx`
   Uygulama kök bileşeni.
@@ -40,6 +40,8 @@ Son doğrulandı: Sprint 8.8
   Aday liste satırlarını okuma, filtreleme, Sınıf/Şube helper’ları.
 - `src/features/students/services/studentPhoneStatus.ts`
   Telefon 1/2 son görüşülen ve yanlış numara durumları.
+- `src/features/students/services/phoneCompatibility.ts`
+  Çoklu telefon core helper’ları; legacy Telefon 1/2 alanlarından dinamik telefon listesi üretme, phones list’ten Telefon 1/2 compatibility slotları okuma, Telefon N / ilişki etiketi ve phone snapshot üretme.
 - `src/features/students/services/studentDelete.ts`
   Tek aday ve ilişkili kayıtları güvenli silme.
 
@@ -156,6 +158,8 @@ Son doğrulandı: Sprint 9.1
   Veri yönetimi, backup/restore, SettingsPage UI davranışları ve restore uyarı/başarı bildirimleri.
 - `tests/students/*`
   Aday listesi okuma/filtreleme, Sınıf/Şube helper’ları, telefon status, aday silme.
+- `tests/students/phoneCompatibility.test.ts`
+  Çoklu telefon core helper’larını, legacy Telefon 1/2 uyumluluğunu, Telefon N etiketlerini, relation label display metnini, phone snapshot üretimini ve helper düzeyi tekilleştirmeyi test eder.
 - `tests/students/StudentsPageShortcutHelp.test.tsx`
   Aday Listesi alt kısayol yardım barının kompakt/açık görünümünü, Göster/Gizle davranışını ve localStorage toleransını test eder.
 - `tests/reminders/*`
