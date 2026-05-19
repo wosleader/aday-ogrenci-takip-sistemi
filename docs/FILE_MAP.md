@@ -221,6 +221,8 @@ Son doğrulandı: Sprint 9.1
   Pilot Test Findings / Final Fixes checkpoint’i.
 - `docs/CHECKPOINT_SPRINT_9_3A.md`
   Sprint 9.3A Çoklu Telefon Core Model + Compatibility kapanış dokümanı; core model/helper kapsamını, test/build sonucunu ve sonraki sprint kararını içerir.
+- `docs/CHECKPOINT_SPRINT_9_3B_1.md`
+  Sprint 9.3B-1 Call Log / Reminder Phone Context Model + Helpers kapanış dokümanı; optional phone context model alanlarını, helper/test kapsamını ve sonraki persistence wiring sprintini içerir.
 - `docs/PILOT_RELEASE_CANDIDATE_REVIEW.md`
   Pilot kullanıma aday sürüm değerlendirmesi, test/build özeti, kapatılan pilot bulguları ve pilot başlatma kararı.
 - `docs/PILOT_V1_RELEASE_NOTES.md`
