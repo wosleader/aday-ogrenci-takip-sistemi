@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.3A Çoklu Telefon Core Model | Branch: sprint-9-3a-multi-phone-core-model -->
+<!-- Son güncelleme: Sprint 9.3B-1 Phone Context Model Helpers | Branch: sprint-9-3b-1-phone-context-model-helpers -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -55,6 +55,8 @@ Son doğrulandı: Sprint 8.2
   Görüşme kaydetme validasyonları, uyarı ve onay mantığı.
 - `src/features/calls/services/callLogWriter.ts`
   `call_logs`, student son durum, telefon ve reminder güncellemeleri.
+- `src/features/calls/services/callLogPhoneContext.ts`
+  Call log telefon bağlamı display/fallback helper’ları; `phone_snapshot` varsa Telefon N / ilişki etiketi label’ı üretir, eski kayıtlarda güvenli fallback döner.
 - `src/features/calls/services/callHistoryReader.ts`
   Sağ drawer iletişim geçmişi için call log okuma.
 
@@ -70,6 +72,8 @@ Son doğrulandı: Sprint 8.2
   Popup gösterim modeli ve kullanıcıya görünen reminder metinleri.
 - `src/features/reminders/services/reminderSettings.ts`
   Reminder popup/ses ayarları.
+- `src/features/reminders/services/reminderPhoneContext.ts`
+  Reminder telefon bağlamı display/fallback helper’ı; optional `phone_snapshot` alanını UI’ya bağlamadan okunabilir label’a dönüştürür.
 
 ## 6. Shortcuts
 
@@ -164,6 +168,8 @@ Son doğrulandı: Sprint 9.1
   Aday Listesi alt kısayol yardım barının kompakt/açık görünümünü, Göster/Gizle davranışını ve localStorage toleransını test eder.
 - `tests/reminders/*`
   Reminder alarm, dismissed store, popup view model ve reminder settings.
+- `tests/reminders/reminderPhoneContext.test.ts`
+  Reminder telefon bağlamı helper’ını, eski kayıt fallback davranışını ve Türkçe relation label çıktısını test eder.
 - `tests/reports/*`
   Günlük rapor metrikleri, call result kırılımları, tarih filtresi, son görüşmeler ve Raporlar sayfası smoke davranışları.
 - `tests/shortcuts/*`
@@ -174,6 +180,8 @@ Son doğrulandı: Sprint 9.1
   Excel okuma, kolon eşleştirme, import simülasyonu, duplicate guard, import writer, log export.
 - `tests/calls/*`
   Call writer, call history ve call save validation.
+- `tests/calls/callLogPhoneContext.test.ts`
+  Call log telefon bağlamı helper’ını, eski kayıt fallback davranışını, legacy contacted phone label fallback’ini ve Türkçe relation label çıktısını test eder.
 - `tests/utils/*`
   Telefon ve metin normalizasyon yardımcıları.
 
@@ -213,6 +221,8 @@ Son doğrulandı: Sprint 9.1
   Pilot Test Findings / Final Fixes checkpoint’i.
 - `docs/CHECKPOINT_SPRINT_9_3A.md`
   Sprint 9.3A Çoklu Telefon Core Model + Compatibility kapanış dokümanı; core model/helper kapsamını, test/build sonucunu ve sonraki sprint kararını içerir.
+- `docs/CHECKPOINT_SPRINT_9_3B_1.md`
+  Sprint 9.3B-1 Call Log / Reminder Phone Context Model + Helpers kapanış dokümanı; optional phone context model alanlarını, helper/test kapsamını ve sonraki persistence wiring sprintini içerir.
 - `docs/PILOT_RELEASE_CANDIDATE_REVIEW.md`
   Pilot kullanıma aday sürüm değerlendirmesi, test/build özeti, kapatılan pilot bulguları ve pilot başlatma kararı.
 - `docs/PILOT_V1_RELEASE_NOTES.md`
