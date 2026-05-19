@@ -9,7 +9,7 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - PROJECT_MEMORY: ✅ Sprint 9.3A Çoklu Telefon Core Model
 - FILE_MAP: ✅ Sprint 9.3A Çoklu Telefon Core Model
 - DECISIONS: ✅ Sprint 9.3A Çoklu Telefon Core Model
-- Son sprint-close çalıştırıldı: ✅ Sprint 9.1
+- Son sprint-close çalıştırıldı: ✅ Sprint 9.3A
 
 ## 1. Proje Amacı
 
@@ -139,7 +139,9 @@ Kısa özet:
 - Pilot v1.0 gerçek kullanım denemesi yapıldı.
 - Pilot izleme sırasında gelen PF-006–PF-012 küçük UI/UX polish bulguları kapatıldı.
 - Sprint 9.2 Çoklu Telefon Mimarisi Planı başlatıldı; uygulama yapılmadan ürün/UX/teknik kararlar dokümante ediliyor.
-- Sprint 9.3A Çoklu Telefon Core Model kapsamında domain type ve compatibility helper altyapısı hazırlanıyor; UI/import/export/call writer/reminder writer/backup davranışı değiştirilmez.
+- Sprint 9.3A Çoklu Telefon Core Model kapsamında domain type ve compatibility helper altyapısı tamamlandı; UI/import/export/call writer/reminder writer/backup davranışı değiştirilmedi.
+- Sprint 9.3A son feature commit’i: `76a3b3a feat: add multi-phone core compatibility helpers`.
+- Sprint 9.3A test/build sonucu: `npm.cmd test` ve `npm.cmd run build` geçti; Vite chunk size uyarısı build başarısızlığı değildir.
 - Yeni engelleyici sorun bildirilmezse sistem küçük ölçekli kontrollü kullanımda izlenmeye devam eder.
 - Pilot sırasında yeni sorun çıkarsa ayrı Pilot Feedback Fixes kapsamında ele alınacak.
 
@@ -158,13 +160,13 @@ Kısa özet:
 - Pilot v1.0 Release Notes: hazırlandı.
 - Pilot v1.0 gerçek kullanım denemesi: yapıldı.
 - Sprint 9.2: Çoklu Telefon Mimarisi Planı hazırlanıyor.
-- Sprint 9.3A: Çoklu Telefon Core Model + Compatibility hazırlanıyor.
+- Sprint 9.3A: Çoklu Telefon Core Model + Compatibility tamamlandı.
 
 ## 13. Yol Haritası
 
 Güncel önerilen sıra:
 
-1. Sprint 9.3B — Çoklu Telefon Persistence / Migration Planı
+1. Sprint 9.3B — Call Log / Reminder Phone Context
 2. Sprint 9.4 — Çoklu Telefon Import / Duplicate / Export
 3. Sprint 9.5 — Çoklu Telefon UI / Sağ Kişi Kartı
 4. Sprint 9.6 — Çoklu Telefon Responsive Polish
@@ -199,7 +201,7 @@ Roadmap kararları:
 - Sistem uzun vadede Telefon 1 / Telefon 2 ile sınırlı kalmayacak; adayın birden fazla iletişim numarası telefon listesi olarak tutulacak. Bu iş ayrı mimari sprintte ele alınacak.
 - Sprint 9.2 Çoklu Telefon Mimarisi Planı başlatıldı; detaylı plan `docs/MULTI_PHONE_ARCHITECTURE_PLAN.md` içindedir.
 - Çoklu telefon kararı: sabit 10 boş telefon kutusu gösterilmeyecek; telefonlar dinamik liste olacak. Sağ kişi kartında ilk 2-3 telefon hızlı görünür, fazlası “+N numara daha göster” ile açılır. `Telefon N` referans etiketi ile ilişki etiketi ayrı tutulur. Call log ve reminder kayıtları seçili telefon bağlamını `phone_id` + snapshot ile koruyacak şekilde planlanır.
-- Sprint 9.3A kararı: Çoklu telefon için `PhoneRelationLabel`, `PhoneOperationalStatus`, `PhoneSnapshot` type’ları ve phone compatibility helper’ları eklenecek; mevcut Telefon 1 / Telefon 2 ekran davranışı bu sprintte değiştirilmeyecek.
+- Sprint 9.3A kararı: Çoklu telefon için `PhoneRelationLabel`, `PhoneOperationalStatus`, `PhoneSnapshot` type’ları ve phone compatibility helper’ları eklendi; mevcut Telefon 1 / Telefon 2 ekran davranışı bu sprintte değiştirilmedi.
 
 ## Bu Dosya Ne Zaman Güncellenmeli?
 
@@ -235,14 +237,15 @@ Roadmap kararları:
 Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 
 - Güncel branch: `sprint-9-3a-multi-phone-core-model`
-- Bu branch’in amacı: Çoklu Telefon Mimarisi için core domain model ve backward compatibility helper altyapısını hazırlamak.
+- Bu branch’in amacı: Çoklu Telefon Mimarisi için core domain model ve backward compatibility helper altyapısını kapatmak.
 - Önceki çalışma branch’i: `sprint-9-2-multi-phone-architecture-plan`
 - Güncel release candidate commit’i: `12062f0 docs: add sprint 9.1 checkpoint and update pilot findings`
 - Güncel Pilot v1.0 release candidate commit’i: `113b44b docs: add pilot release candidate review`
 - Pilot v1.0 release commit’i: `b59e3af docs: add pilot v1 release notes`
 - Son bilinen fix commit’i: `7cdea84 fix: reduce reminders page outer scroll`
+- Son feature commit’i: `76a3b3a feat: add multi-phone core compatibility helpers`
 - Son bilinen dokümantasyon commit’i: `194cb07 docs: record pilot feedback UI polish findings`
-- Sonraki önerilen aşama: Sprint 9.3B — Çoklu Telefon Persistence / Migration Planı.
+- Sonraki önerilen aşama: Sprint 9.3B — Call Log / Reminder Phone Context.
 
 ## 15. Codex Standart Başlangıç Talimatı
 

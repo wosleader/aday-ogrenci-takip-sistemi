@@ -211,6 +211,8 @@ Son doğrulandı: Sprint 9.1
   Pilot Fix / Release Polish checkpoint’i.
 - `docs/CHECKPOINT_SPRINT_9_1.md`
   Pilot Test Findings / Final Fixes checkpoint’i.
+- `docs/CHECKPOINT_SPRINT_9_3A.md`
+  Sprint 9.3A Çoklu Telefon Core Model + Compatibility kapanış dokümanı; core model/helper kapsamını, test/build sonucunu ve sonraki sprint kararını içerir.
 - `docs/PILOT_RELEASE_CANDIDATE_REVIEW.md`
   Pilot kullanıma aday sürüm değerlendirmesi, test/build özeti, kapatılan pilot bulguları ve pilot başlatma kararı.
 - `docs/PILOT_V1_RELEASE_NOTES.md`
