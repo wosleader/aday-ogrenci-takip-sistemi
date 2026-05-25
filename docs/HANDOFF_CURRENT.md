@@ -4,9 +4,10 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son commit: 4ec3c61 docs: add sprint 9.3d-1 checkpoint
+- Son commit: dba4cc6 feat: show phone context in reminders list
+- Önceki governance commit: a9bc3c6 docs: add ai workflow governance
 - Önceki feature commit: 23342b3 feat: show phone context in call history
-- Önceki docs commit: 8e85ab7 docs: add sprint 9.3c checkpoint
+- Önceki docs commit: 4ec3c61 docs: add sprint 9.3d-1 checkpoint
 - Önceki önemli merge: cc008a7 Merge pull request #6 from wosleader/sprint-9-3b-2-phone-context-persistence-wiring
 - Bir önceki phone context persistence commit’i: 595979d feat: wire phone context persistence for calls and reminders
 - Working tree beklenen durumu: clean
@@ -41,17 +42,16 @@ Temel alanlar:
 
 ## 4. Güncel Sprint Durumu
 
-Sprint 9.3D-1 — Call History Phone Context UI Display tamamlandı.
+Sprint 9.3D-2 — Reminder List Phone Context UI Display tamamlandı.
 
 Özet:
 
-- Sprint 9.3C ile üretilen call history `phone_context_label` / `phone_context_number` alanları sağ kişi kartındaki “İletişim geçmişi” UI'ında gösterilir hale geldi.
-- Display formatı `Telefon 3 · Öğrenci: 0555 123 4567` şeklindedir.
-- Context yoksa mevcut `Telefon seçilmedi` fallback'i korunur.
-- Odaklı UI testi eklendi: `tests/students/StudentsPageCallHistory.test.tsx`.
-- Reminder list UI, reminder popup, import/export, backup/restore ve büyük çoklu telefon UI kapsam dışı bırakıldı.
-- Test/build daha önce geçti: 39 test files / 216 tests.
-- Sprint kapanış dokümantasyonu `docs/CHECKPOINT_SPRINT_9_3D_1.md` dosyasındadır.
+- Sprint 9.3C ile üretilen reminder list `phone_context_label` / `phone_context_number` alanları Hatırlatmalar listesinde gösterilir hale geldi.
+- `Telefon 1` kolonu operasyonel dil açısından `Aranacak telefon` olarak değiştirildi.
+- Context varsa `Telefon 5 · Yakın: 0555 123 4567` formatı kullanılır; context yoksa mevcut `phone_1` fallback'i korunur.
+- `Telefon 2` kolonu, CSS, reader/model, popup/alarm, import/export ve backup/restore kapsam dışı bırakıldı.
+- Test/build daha önce geçti: 39 test files / 217 tests.
+- Sprint kapanış dokümantasyonu `docs/CHECKPOINT_SPRINT_9_3D_2.md` dosyasındadır.
 
 ## 5. Çoklu Telefon Roadmap Durumu
 
@@ -62,11 +62,11 @@ Tamamlananlar:
 - Sprint 9.3B-2: Phone context persistence wiring
 - Sprint 9.3C: Phone context read/display model layer
 - Sprint 9.3D-1: Call history UI phone context display
+- Sprint 9.3D-2: Reminder list UI phone context display
 
 Sıradaki muhtemel aşamalar:
 
-- Sprint 9.3D-2 — Reminder List Phone Context UI Display Discovery / Implementation
-- Reminder list için tablo/CSS/mobil etki analizi
+- Çoklu telefon sağ kişi kartı UI discovery veya Excel çoklu telefon import discovery
 - Çoklu telefon import/export genişletmeleri
 - Backup/restore güvence turu
 - Mobile polish ve diğer pilot sonrası işler
@@ -136,7 +136,7 @@ Bu projeye yeni başlayan AI önce şunları yapmalı:
 ## 10. Şu Anki En Güvenli Sonraki Adım
 
 Şu anki en güvenli sıradaki iş:
-Sprint 9.3D-2 — Reminder List Phone Context UI Display Discovery / Implementation.
+Çoklu telefon sağ kişi kartı UI discovery veya Excel çoklu telefon import discovery.
 
 Bunun ardından:
 Çoklu telefon import/export genişletmeleri ve backup/restore güvence turu ayrı sprintlerde düşünülebilir.
@@ -151,6 +151,7 @@ Bunun ardından:
 - docs/CHECKPOINT_SPRINT_9_3B_1.md
 - docs/CHECKPOINT_SPRINT_9_3C.md
 - docs/CHECKPOINT_SPRINT_9_3D_1.md
+- docs/CHECKPOINT_SPRINT_9_3D_2.md
 - docs/MULTI_PHONE_ARCHITECTURE_PLAN.md
 - docs/PILOT_FINDINGS.md
 - .prompts/codex-start.md

@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.3D-1 Call History Phone Context UI Display | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son güncelleme: Sprint 9.3D-2 Reminder List Phone Context UI Display | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -62,8 +62,10 @@ Son doğrulandı: Sprint 9.3D-1 Call History Phone Context UI Display
 
 ## 5. Reminders
 
-Son doğrulandı: Sprint 8.2
+Son doğrulandı: Sprint 9.3D-2 Reminder List Phone Context UI Display
 
+- `src/features/reminders/RemindersPage.tsx`
+  Reminder list UI render eder; Sprint 9.3D-2 itibarıyla `Aranacak telefon` kolonunda `phone_context_label` / `phone_context_number` gösterir, context yoksa `phone_1` fallback'ini korur ve Telefon 2 kolonunu aynen tutar.
 - `src/features/reminders/services/reminderAlarmReader.ts`
   Due/overdue reminder okuma ve alarm davranışı.
 - `src/features/reminders/services/reminderListReader.ts`
@@ -156,7 +158,7 @@ Son doğrulandı: Sprint 8.9
 
 ## 11. Tests
 
-Son doğrulandı: Sprint 9.3C Phone Context Display / Read Layer
+Son doğrulandı: Sprint 9.3D-2 Reminder List Phone Context UI Display
 
 - `tests/exports/*`
   Detaylı export, özet export, export data reader ve Excel exporter davranışları.
@@ -176,6 +178,8 @@ Son doğrulandı: Sprint 9.3C Phone Context Display / Read Layer
   Reminder telefon bağlamı helper’ını, eski kayıt fallback davranışını ve Türkçe relation label çıktısını test eder.
 - `tests/reminders/reminderListReader.test.ts`
   Reminder list phone context snapshot/null fallback ve mevcut `phone_1` / `phone_2` regression davranışlarını test eder.
+- `tests/reminders/RemindersPage.test.tsx`
+  Reminder list UI'da phone context label/number görünürlüğünü, `phone_1` fallback'ini, `phone_2` davranışını ve `Aranacak telefon` başlığını test eder.
 - `tests/reports/*`
   Günlük rapor metrikleri, call result kırılımları, tarih filtresi, son görüşmeler ve Raporlar sayfası smoke davranışları.
 - `tests/shortcuts/*`
@@ -239,6 +243,8 @@ Son doğrulandı: Sprint 9.1
   Sprint 9.3C Phone Context Display / Read Layer kapanış dokümanı; call history ve reminder list reader/view-model phone context alanlarını, snapshot-first fallback kararını ve test/build sonucunu içerir.
 - `docs/CHECKPOINT_SPRINT_9_3D_1.md`
   Sprint 9.3D-1 Call History Phone Context UI Display kapanış dokümanı; sağ kişi kartındaki iletişim geçmişinde phone context gösterimini, odaklı UI testini ve sonraki reminder list UI kararını içerir.
+- `docs/CHECKPOINT_SPRINT_9_3D_2.md`
+  Sprint 9.3D-2 Reminder List Phone Context UI Display kapanış dokümanı; Hatırlatmalar listesinde `Aranacak telefon` context-aware gösterimini, odaklı UI testini ve sonraki çoklu telefon roadmap kararını içerir.
 - `docs/PILOT_RELEASE_CANDIDATE_REVIEW.md`
   Pilot kullanıma aday sürüm değerlendirmesi, test/build özeti, kapatılan pilot bulguları ve pilot başlatma kararı.
 - `docs/PILOT_V1_RELEASE_NOTES.md`
