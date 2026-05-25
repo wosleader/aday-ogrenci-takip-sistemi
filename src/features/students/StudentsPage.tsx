@@ -133,6 +133,17 @@ function compactPhone(value?: string | null): string {
   return value;
 }
 
+function formatCallHistoryPhoneContext(label?: string | null, number?: string | null): string | null {
+  const trimmedLabel = label?.trim();
+  const trimmedNumber = number?.trim();
+
+  if (trimmedLabel && trimmedNumber) {
+    return `${trimmedLabel}: ${trimmedNumber}`;
+  }
+
+  return trimmedLabel || trimmedNumber || null;
+}
+
 function drawerNotePreview(note?: string | null): string {
   if (!note?.trim()) {
     return "Henüz açıklama/geçmiş yok.";
@@ -1437,9 +1448,10 @@ export function StudentsPage() {
                         {formatShortDateTime(historyItem.call_time)} · {historyItem.call_result_label}
                       </div>
                       <div className="tl-text">
-                        {historyItem.contacted_phone_number
-                          ? `${historyItem.contacted_phone_label ?? "Telefon"}: ${historyItem.contacted_phone_number}`
-                          : "Telefon seçilmedi"}
+                        {formatCallHistoryPhoneContext(
+                          historyItem.phone_context_label,
+                          historyItem.phone_context_number
+                        ) ?? "Telefon seçilmedi"}
                       </div>
                       {historyItem.note ? <div className="tl-text">{historyItem.note}</div> : null}
                       {historyItem.reminder_at ? (
