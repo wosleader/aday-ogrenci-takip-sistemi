@@ -3,10 +3,11 @@ import { db } from "../../../db/db";
 import type { CampaignRecord } from "../../../domain/models/campaign";
 import type { CallLogRecord } from "../../../domain/models/callLog";
 import type { GuardianRecord } from "../../../domain/models/guardian";
-import type { PhoneRecord } from "../../../domain/models/phone";
+import type { PhoneRecord, PhoneRelationLabel, PhoneStatus } from "../../../domain/models/phone";
 import type { ReminderRecord } from "../../../domain/models/reminder";
 import type { StudentRecord } from "../../../domain/models/student";
 import { createSearchText, normalizeText } from "../../../utils/normalizeText";
+import { createCompatibilityPhoneList, createPhoneDisplayLabel } from "./phoneCompatibility";
 
 export type StudentListFilter =
   | "all"
@@ -15,6 +16,20 @@ export type StudentListFilter =
   | "duplicate_phone"
   | "not_called"
   | "has_note";
+
+export type StudentListPhoneRow = {
+  id?: number | null;
+  phone_number: string;
+  normalized_phone_number: string;
+  reference_label: string;
+  relation_label: PhoneRelationLabel;
+  display_label: string;
+  source_column?: string | null;
+  phone_status: PhoneStatus;
+  is_primary: boolean;
+  is_wrong: boolean;
+  is_valid: boolean;
+};
 
 export type StudentListRow = {
   student_id: number;
@@ -38,6 +53,9 @@ export type StudentListRow = {
   phone_2_is_wrong: boolean;
   phone_2_is_contacted: boolean;
   phone_count: number;
+  phones: StudentListPhoneRow[];
+  visible_phones: StudentListPhoneRow[];
+  hidden_phone_count: number;
   has_missing_phone: boolean;
   has_duplicate_phone: boolean;
   duplicate_group_key?: string | null;
@@ -130,6 +148,41 @@ function pickPhoneSlots(phones: PhoneRecord[]) {
     phone_1: phone1 ?? null,
     phone_2: phone2 ?? null
   };
+}
+
+function createStudentListPhoneRows(phones: PhoneRecord[]): StudentListPhoneRow[] {
+  const phonesById = new Map<number, PhoneRecord>();
+  const phonesByNormalizedNumber = new Map<string, PhoneRecord>();
+
+  for (const phone of phones) {
+    if (phone.id != null) {
+      phonesById.set(phone.id, phone);
+    }
+
+    if (phone.normalized_phone_number && !phonesByNormalizedNumber.has(phone.normalized_phone_number)) {
+      phonesByNormalizedNumber.set(phone.normalized_phone_number, phone);
+    }
+  }
+
+  return createCompatibilityPhoneList(phones).map((phone) => {
+    const sourcePhone =
+      (phone.id != null ? phonesById.get(phone.id) : undefined) ??
+      phonesByNormalizedNumber.get(phone.normalized_phone_number);
+
+    return {
+      id: phone.id ?? null,
+      phone_number: phone.phone_number,
+      normalized_phone_number: phone.normalized_phone_number,
+      reference_label: phone.reference_label,
+      relation_label: phone.relation_label,
+      display_label: createPhoneDisplayLabel(phone.reference_label, phone.relation_label),
+      source_column: phone.source_column ?? null,
+      phone_status: phone.status,
+      is_primary: Boolean(sourcePhone?.is_primary),
+      is_wrong: phone.is_wrong,
+      is_valid: sourcePhone?.is_valid ?? phone.status !== "invalid"
+    };
+  });
 }
 
 function createPhoneDuplicateInfo(phones: PhoneRecord[]): Map<number, string[]> {
@@ -529,6 +582,8 @@ function mapStudentToRow(
   const callLogs = callLogsByStudent.get(student.id) ?? [];
   const callLogNoteInfo = pickLatestCallNote(callLogs);
   const guardian = pickGuardian(guardians);
+  const phoneRows = createStudentListPhoneRows(phones);
+  const visiblePhones = phoneRows.slice(0, 3);
   const { phone_1: phone1, phone_2: phone2 } = pickPhoneSlots(phones);
   const campaign = student.campaign_id ? campaignMap.get(student.campaign_id) : undefined;
   const phone1Status = phone1?.phone_status ?? (phone1?.is_wrong ? "invalid" : "active");
@@ -558,6 +613,9 @@ function mapStudentToRow(
     phone_2_is_wrong: phone2Status === "invalid" || Boolean(phone2?.is_wrong),
     phone_2_is_contacted: phone2Status === "contacted",
     phone_count: phones.length,
+    phones: phoneRows,
+    visible_phones: visiblePhones,
+    hidden_phone_count: Math.max(0, phoneRows.length - visiblePhones.length),
     has_missing_phone: phones.length === 0,
     has_duplicate_phone: duplicatePhoneKeys.length > 0,
     duplicate_group_key: duplicatePhoneKeys[0] ?? null,

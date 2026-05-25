@@ -197,6 +197,103 @@ describe("studentListReader", () => {
     }
   });
 
+  it("exposes multi-phone read model fields for right card preview", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      await database.phones.bulkAdd([
+        phone(studentId, {
+          phone_number: "05320000001",
+          normalized_phone_number: "05320000001",
+          phone_label: "Telefon 1",
+          reference_label: "Telefon 1",
+          priority: 1,
+          source_column: "Telefon 1"
+        }),
+        phone(studentId, {
+          phone_number: "05320000002",
+          normalized_phone_number: "05320000002",
+          phone_label: "Anne Telefon",
+          reference_label: "Telefon 2",
+          relation_label: "Anne",
+          priority: 2,
+          is_primary: false,
+          source_column: "Anne Telefon"
+        }),
+        phone(studentId, {
+          phone_number: "05320000003",
+          normalized_phone_number: "05320000003",
+          phone_label: "Öğrenci Telefon",
+          reference_label: "Telefon 3",
+          relation_label: "Öğrenci",
+          priority: 3,
+          is_primary: false,
+          phone_status: "contacted",
+          source_column: "Öğrenci Telefon"
+        }),
+        phone(studentId, {
+          phone_number: "05320000004",
+          normalized_phone_number: "05320000004",
+          phone_label: "Veli Telefon",
+          reference_label: "Telefon 4",
+          relation_label: "Veli",
+          priority: 4,
+          is_primary: false,
+          is_valid: false,
+          is_wrong: true,
+          phone_status: "invalid",
+          source_column: "Veli Telefon"
+        }),
+        phone(studentId, {
+          phone_number: "05320000005",
+          normalized_phone_number: "05320000005",
+          phone_label: "Yakın Telefon",
+          reference_label: "Telefon 5",
+          relation_label: "Yakın",
+          priority: 5,
+          is_primary: false,
+          source_column: "Yakın Telefon"
+        })
+      ]);
+
+      const [row] = await readStudentListRows(database);
+
+      expect(row.phone_1).toBe("05320000001");
+      expect(row.phone_2).toBe("05320000002");
+      expect(row.phone_count).toBe(5);
+      expect(row.phones).toHaveLength(5);
+      expect(row.visible_phones.map((item) => item.display_label)).toEqual([
+        "Telefon 1",
+        "Telefon 2 · Anne",
+        "Telefon 3 · Öğrenci"
+      ]);
+      expect(row.hidden_phone_count).toBe(2);
+      expect(row.phones[2]).toMatchObject({
+        phone_number: "05320000003",
+        normalized_phone_number: "05320000003",
+        reference_label: "Telefon 3",
+        relation_label: "Öğrenci",
+        display_label: "Telefon 3 · Öğrenci",
+        source_column: "Öğrenci Telefon",
+        phone_status: "contacted",
+        is_primary: false,
+        is_wrong: false,
+        is_valid: true
+      });
+      expect(row.phones[3]).toMatchObject({
+        phone_number: "05320000004",
+        display_label: "Telefon 4 · Veli",
+        phone_status: "invalid",
+        is_wrong: true,
+        is_valid: false
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
   it("keeps phone 2 as phone 2 when phone 1 is empty", async () => {
     const database = await createDatabase();
 
@@ -232,6 +329,9 @@ describe("studentListReader", () => {
 
       expect(rows[0].phone_count).toBe(0);
       expect(rows[0].has_missing_phone).toBe(true);
+      expect(rows[0].phones).toEqual([]);
+      expect(rows[0].visible_phones).toEqual([]);
+      expect(rows[0].hidden_phone_count).toBe(0);
     } finally {
       database.close();
       await database.delete();
