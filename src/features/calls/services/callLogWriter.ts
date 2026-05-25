@@ -4,6 +4,7 @@ import type { CallResult, LifecycleStatus } from "../../../domain/constants/stat
 import type { PhoneRecord } from "../../../domain/models/phone";
 import { nowIso } from "../../../utils/dateTime";
 import { createUuid } from "../../../utils/id";
+import { createPhoneSnapshot } from "../../students/services/phoneCompatibility";
 
 export type CallLogWriteInput = {
   student_id: number;
@@ -144,12 +145,14 @@ export async function writeCallLog(
 
       const timestamp = nowIso();
       const contactedPhone = await resolveContactPhone(database, student.id, input.contacted_phone_id);
+      const phoneSnapshot = contactedPhone ? createPhoneSnapshot(contactedPhone) : null;
       const trimmedNote = input.note?.trim() || null;
       const callLogId = await database.call_logs.add({
         uuid: createUuid(),
         student_id: student.id,
         guardian_id: input.guardian_id ?? null,
         phone_id: contactedPhone?.id ?? null,
+        phone_snapshot: phoneSnapshot,
         contacted_phone_id: contactedPhone?.id ?? null,
         contacted_phone_number: contactedPhone?.phone_number ?? null,
         contacted_phone_label: contactedPhone?.phone_label ?? null,
@@ -187,6 +190,8 @@ export async function writeCallLog(
           await database.reminders.update(existingReminder.id, {
             reminder_at: input.reminder_at,
             call_log_id: callLogId,
+            phone_id: contactedPhone?.id ?? null,
+            phone_snapshot: phoneSnapshot,
             note: trimmedNote,
             is_default_time_assigned: false,
             updated_at: timestamp
@@ -196,6 +201,8 @@ export async function writeCallLog(
             uuid: createUuid(),
             student_id: student.id,
             call_log_id: callLogId,
+            phone_id: contactedPhone?.id ?? null,
+            phone_snapshot: phoneSnapshot,
             reminder_type: "call",
             reminder_at: input.reminder_at,
             status: "pending",

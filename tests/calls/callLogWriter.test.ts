@@ -102,6 +102,14 @@ describe("callLogWriter", () => {
 
       expect(callLog).toMatchObject({
         student_id: studentId,
+        phone_id: phoneId,
+        phone_snapshot: {
+          phone_id: phoneId,
+          reference_label: "Telefon 1",
+          relation_label: "Telefon",
+          phone_number: "05321234567",
+          source_column: null
+        },
         contacted_phone_id: phoneId,
         contacted_phone_number: "05321234567",
         contacted_phone_label: "Telefon 1",
@@ -116,6 +124,128 @@ describe("callLogWriter", () => {
       await database.delete();
     }
   });
+
+  it("writes phone snapshot while keeping legacy contacted phone fields", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const phoneId = await database.phones.add(
+        phone(studentId, {
+          phone_number: "05327654321",
+          normalized_phone_number: "05327654321",
+          phone_label: "Anne Telefon",
+          reference_label: "Telefon 2",
+          relation_label: "Anne",
+          source_column: "Anne Telefon"
+        })
+      );
+
+      const result = await writeCallLog(
+        {
+          student_id: studentId,
+          contacted_phone_id: phoneId,
+          call_result: "reached"
+        },
+        { database }
+      );
+      const callLog = await database.call_logs.get(result.call_log_id);
+
+      expect(callLog).toMatchObject({
+        phone_id: phoneId,
+        phone_snapshot: {
+          phone_id: phoneId,
+          reference_label: "Telefon 2",
+          relation_label: "Anne",
+          phone_number: "05327654321",
+          source_column: "Anne Telefon"
+        },
+        contacted_phone_id: phoneId,
+        contacted_phone_number: "05327654321",
+        contacted_phone_label: "Anne Telefon"
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("writes phone snapshot when a single eligible phone is auto-selected", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const phoneId = await database.phones.add(
+        phone(studentId, {
+          phone_label: "Veli Telefon",
+          reference_label: "Telefon 5",
+          relation_label: "Veli",
+          source_column: "GSM 5"
+        })
+      );
+
+      const result = await writeCallLog(
+        {
+          student_id: studentId,
+          call_result: "reached"
+        },
+        { database }
+      );
+      const callLog = await database.call_logs.get(result.call_log_id);
+
+      expect(callLog).toMatchObject({
+        phone_id: phoneId,
+        phone_snapshot: {
+          phone_id: phoneId,
+          reference_label: "Telefon 5",
+          relation_label: "Veli",
+          phone_number: "05321234567",
+          source_column: "GSM 5"
+        },
+        contacted_phone_id: phoneId,
+        contacted_phone_number: "05321234567",
+        contacted_phone_label: "Veli Telefon"
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it.each(["Öğrenci", "Yakın", "Diğer"] as const)(
+    "preserves Turkish relation label in persisted phone snapshot: %s",
+    async (relationLabel) => {
+      const database = await createDatabase();
+
+      try {
+        const studentId = await database.students.add(student());
+        const phoneId = await database.phones.add(
+          phone(studentId, {
+            phone_label: `${relationLabel} Telefon`,
+            reference_label: "Telefon 3",
+            relation_label: relationLabel,
+            source_column: `${relationLabel} Telefon`
+          })
+        );
+
+        const result = await writeCallLog(
+          {
+            student_id: studentId,
+            contacted_phone_id: phoneId,
+            call_result: "reached"
+          },
+          { database }
+        );
+        const callLog = await database.call_logs.get(result.call_log_id);
+
+        expect(callLog?.phone_snapshot?.relation_label).toBe(relationLabel);
+        expect(callLog?.phone_snapshot?.reference_label).toBe("Telefon 3");
+      } finally {
+        database.close();
+        await database.delete();
+      }
+    }
+  );
 
   it("keeps only one contacted phone for the student", async () => {
     const database = await createDatabase();
@@ -166,6 +296,8 @@ describe("callLogWriter", () => {
 
       const callLog = (await database.call_logs.toArray())[0];
       expect(callLog.contacted_phone_id).toBeNull();
+      expect(callLog.phone_id).toBeNull();
+      expect(callLog.phone_snapshot).toBeNull();
     } finally {
       database.close();
       await database.delete();
@@ -218,6 +350,14 @@ describe("callLogWriter", () => {
       expect(reminderRecord).toMatchObject({
         student_id: studentId,
         call_log_id: result.call_log_id,
+        phone_id: phoneId,
+        phone_snapshot: {
+          phone_id: phoneId,
+          reference_label: "Telefon 1",
+          relation_label: "Telefon",
+          phone_number: "05321234567",
+          source_column: null
+        },
         status: "pending",
         reminder_at: "2026-05-15T11:00:00.000Z"
       });
@@ -247,6 +387,103 @@ describe("callLogWriter", () => {
       expect(result.updated_existing_reminder).toBe(true);
       expect(await database.reminders.count()).toBe(1);
       expect((await database.reminders.get(reminderId))?.reminder_at).toBe("2026-05-16T11:00:00.000Z");
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("updates existing pending reminder phone context from the contacted phone", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const oldSnapshot = {
+        phone_id: 999,
+        reference_label: "Telefon 9",
+        relation_label: "Diğer" as const,
+        phone_number: "05000000000",
+        source_column: "Eski Telefon"
+      };
+      const reminderId = await database.reminders.add(
+        reminder(studentId, {
+          phone_id: 999,
+          phone_snapshot: oldSnapshot
+        })
+      );
+      const phoneId = await database.phones.add(
+        phone(studentId, {
+          phone_number: "05327654321",
+          normalized_phone_number: "05327654321",
+          phone_label: "Veli Telefon",
+          reference_label: "Telefon 2",
+          relation_label: "Veli",
+          source_column: "Veli Telefon"
+        })
+      );
+
+      const result = await writeCallLog(
+        {
+          student_id: studentId,
+          contacted_phone_id: phoneId,
+          call_result: "call_later",
+          reminder_at: "2026-05-16T11:00:00.000Z"
+        },
+        { database }
+      );
+      const reminderRecord = await database.reminders.get(reminderId);
+
+      expect(result.created_reminder_id).toBe(reminderId);
+      expect(result.updated_existing_reminder).toBe(true);
+      expect(await database.reminders.count()).toBe(1);
+      expect(reminderRecord).toMatchObject({
+        phone_id: phoneId,
+        phone_snapshot: {
+          phone_id: phoneId,
+          reference_label: "Telefon 2",
+          relation_label: "Veli",
+          phone_number: "05327654321",
+          source_column: "Veli Telefon"
+        },
+        reminder_at: "2026-05-16T11:00:00.000Z"
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("clears old pending reminder phone context when no contacted phone exists", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const reminderId = await database.reminders.add(
+        reminder(studentId, {
+          phone_id: 999,
+          phone_snapshot: {
+            phone_id: 999,
+            reference_label: "Telefon 9",
+            relation_label: "Yakın",
+            phone_number: "05000000000",
+            source_column: "Eski Telefon"
+          }
+        })
+      );
+
+      await writeCallLog(
+        {
+          student_id: studentId,
+          call_result: "call_later",
+          reminder_at: "2026-05-16T11:00:00.000Z"
+        },
+        { database }
+      );
+      const reminderRecord = await database.reminders.get(reminderId);
+
+      expect(reminderRecord?.phone_id).toBeNull();
+      expect(reminderRecord?.phone_snapshot).toBeNull();
+      expect(reminderRecord?.reminder_at).toBe("2026-05-16T11:00:00.000Z");
     } finally {
       database.close();
       await database.delete();

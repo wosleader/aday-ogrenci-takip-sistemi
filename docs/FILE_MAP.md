@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.3B-1 Phone Context Model Helpers | Branch: sprint-9-3b-1-phone-context-model-helpers -->
+<!-- Son güncelleme: Sprint 9.3B-2 Phone Context Persistence Wiring | Branch: sprint-9-3b-2-phone-context-persistence-wiring -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -47,14 +47,14 @@ Son doğrulandı: Sprint 8.8
 
 ## 4. Calls / Call Workflow
 
-Son doğrulandı: Sprint 8.2
+Son doğrulandı: Sprint 9.3B-2 Phone Context Persistence Wiring
 
 - `src/features/calls/CallPage.tsx`
   Eski/yardımcı call route sayfası; ana operasyon Aday Listesi + sağ drawer üzerinden yürür.
 - `src/features/calls/services/callSaveValidation.ts`
   Görüşme kaydetme validasyonları, uyarı ve onay mantığı.
 - `src/features/calls/services/callLogWriter.ts`
-  `call_logs`, student son durum, telefon ve reminder güncellemeleri.
+  `writeCallLog` transaction akışı; `call_logs`, student son durum, telefon güncellemeleri ve pending reminder create/update davranışını yönetir. Sprint 9.3B-2 itibarıyla call log ve pending reminder kayıtlarına `phone_id` / `phone_snapshot` persistence wiring yapar; legacy contacted phone alanlarını korur.
 - `src/features/calls/services/callLogPhoneContext.ts`
   Call log telefon bağlamı display/fallback helper’ları; `phone_snapshot` varsa Telefon N / ilişki etiketi label’ı üretir, eski kayıtlarda güvenli fallback döner.
 - `src/features/calls/services/callHistoryReader.ts`
@@ -154,7 +154,7 @@ Son doğrulandı: Sprint 8.9
 
 ## 11. Tests
 
-Son doğrulandı: Sprint 9.1
+Son doğrulandı: Sprint 9.3B-2 Phone Context Persistence Wiring
 
 - `tests/exports/*`
   Detaylı export, özet export, export data reader ve Excel exporter davranışları.
@@ -180,6 +180,8 @@ Son doğrulandı: Sprint 9.1
   Excel okuma, kolon eşleştirme, import simülasyonu, duplicate guard, import writer, log export.
 - `tests/calls/*`
   Call writer, call history ve call save validation.
+- `tests/calls/callLogWriter.test.ts`
+  `writeCallLog` transaction davranışını; call log/reminder phone context persistence, legacy contacted phone alanları, null fallback, existing pending reminder update ve Türkçe relation label korunumunu test eder.
 - `tests/calls/callLogPhoneContext.test.ts`
   Call log telefon bağlamı helper’ını, eski kayıt fallback davranışını, legacy contacted phone label fallback’ini ve Türkçe relation label çıktısını test eder.
 - `tests/utils/*`
@@ -223,6 +225,8 @@ Son doğrulandı: Sprint 9.1
   Sprint 9.3A Çoklu Telefon Core Model + Compatibility kapanış dokümanı; core model/helper kapsamını, test/build sonucunu ve sonraki sprint kararını içerir.
 - `docs/CHECKPOINT_SPRINT_9_3B_1.md`
   Sprint 9.3B-1 Call Log / Reminder Phone Context Model + Helpers kapanış dokümanı; optional phone context model alanlarını, helper/test kapsamını ve sonraki persistence wiring sprintini içerir.
+- `docs/CHECKPOINT_SPRINT_9_3B_2.md`
+  Sprint 9.3B-2 Phone Context Persistence Wiring kapanış dokümanı; `writeCallLog` içinde call log ve pending reminder phone context persistence kapsamını, test/build sonucunu ve sonraki display/read layer discovery kararını içerir.
 - `docs/PILOT_RELEASE_CANDIDATE_REVIEW.md`
   Pilot kullanıma aday sürüm değerlendirmesi, test/build özeti, kapatılan pilot bulguları ve pilot başlatma kararı.
 - `docs/PILOT_V1_RELEASE_NOTES.md`
