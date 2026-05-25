@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.3B-2 Phone Context Persistence Wiring | Branch: sprint-9-3b-2-phone-context-persistence-wiring -->
+<!-- Son güncelleme: Sprint 9.3C Phone Context Display / Read Layer | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -34,6 +34,7 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 - [Sprint 9.3A] Call log/reminder phone context persistence, backup/restore migration ve UI entegrasyonu bilinçli olarak bu sprintin dışında bırakıldı. Call log/reminder phone context Sprint 9.3B’de, import/export ve UI işleri sonraki çoklu telefon sprintlerinde ele alınacak.
 - [Sprint 9.3B-1] Call log ve reminder kayıtları için optional `phone_id` / `phone_snapshot` model alanları ile display/fallback helper’ları tamamlandı. Bu sprintte gerçek call log/reminder writer davranışı, UI, import/export, backup/restore ve storage migration değiştirilmedi. Sonraki sprint Sprint 9.3B-2 — Phone Context Persistence Wiring olarak planlanır.
 - [Sprint 9.3B-2] Phone context persistence writer seviyesinde bağlandı. Call log ve pending reminder kayıtları optional `phone_id` / `phone_snapshot` taşıyabilir. `writeCallLog` içinde yeni pending reminder create ve mevcut pending reminder update akışları seçili telefon bağlamına göre güncellenir; yeni contacted phone yoksa eski phone context korunmaz ve `null` olur. UI display, import/export, backup/restore ve schema migration bu sprintte bilinçli olarak kapsam dışı bırakıldı.
+- [Sprint 9.3C] Historical phone context display/read model'de snapshot öncelikli kabul edildi. Call history legacy contacted phone fallback'i korunur. Reminder list current phone lookup yapmaz; yalnızca reminder snapshot varsa context alanlarını doldurur. UI display, popup, alarm reader, import/export, backup/restore ve schema migration bu sprintte kapsam dışı bırakıldı.
 - [Roadmap] Kullanım kitapçığı pilot öncesi hazırlanacak.
 - [Roadmap] Manuel pilot kontrol checklist’i çalıştırılacak.
 - [Roadmap] Pilot sonrası bulgular ayrı Pilot Feedback Fixes kapsamında ele alınacak.

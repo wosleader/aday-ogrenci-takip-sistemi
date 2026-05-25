@@ -3,11 +3,12 @@
 ## 1. Güncel Repo Durumu
 
 - Repository adı: aday-ogrenci-takip-sistemi
-- Aktif branch: sprint-9-3b-2-phone-context-persistence-wiring
-- Son commit: 0298172 docs: add sprint 9.3b-2 checkpoint
-- Bir önceki kod commit’i: 595979d feat: wire phone context persistence for calls and reminders
+- Aktif branch: sprint-9-2-multi-phone-architecture-plan
+- Son commit: 34d06bd feat: add phone context read models
+- Önceki önemli merge: cc008a7 Merge pull request #6 from wosleader/sprint-9-3b-2-phone-context-persistence-wiring
+- Bir önceki phone context persistence commit’i: 595979d feat: wire phone context persistence for calls and reminders
 - Working tree beklenen durumu: clean
-- GitHub/origin durumu: aktif branch `origin/sprint-9-3b-2-phone-context-persistence-wiring` ile aynı son commit üzerinde görünür.
+- GitHub/origin durumu: aktif branch `origin/sprint-9-2-multi-phone-architecture-plan` ile aynı son commit üzerinde görünür.
 
 ## 2. Proje Özeti
 
@@ -38,17 +39,17 @@ Temel alanlar:
 
 ## 4. Güncel Sprint Durumu
 
-Sprint 9.3B-2 — Phone Context Persistence Wiring tamamlandı.
+Sprint 9.3C — Phone Context Display / Read Layer tamamlandı.
 
 Özet:
 
-- Sprint 9.3B-1’de hazırlanan call log / reminder phone context model ve helper altyapısı gerçek `writeCallLog` kayıt akışına bağlandı.
-- Call log kayıtlarına optional `phone_snapshot` yazılır hale geldi.
-- Pending reminder create/update akışlarına `phone_id` ve `phone_snapshot` bağlandı.
-- Legacy alanlar korundu.
+- Sprint 9.3B-2 ile yazılan phone context persistence bilgisi UI'ya dokunmadan reader/view-model katmanına taşındı.
+- Call history read model'i `phone_context_label` ve `phone_context_number` alanlarını üretir hale geldi.
+- Reminder list read model'i `reminder.phone_snapshot` varsa phone context alanlarını taşır hale geldi.
+- Historical display için snapshot öncelikli kaldı; call history legacy fallback'i korundu.
 - UI/import/export/backup/restore/schema migration kapsam dışı bırakıldı.
-- Test/build daha önce geçmişti.
-- Sprint kapanış dokümantasyonu 0298172 commit’iyle tamamlandı.
+- Test/build daha önce geçti: 38 test files / 214 tests.
+- Sprint kapanış dokümantasyonu `docs/CHECKPOINT_SPRINT_9_3C.md` dosyasındadır.
 
 ## 5. Çoklu Telefon Roadmap Durumu
 
@@ -57,11 +58,11 @@ Tamamlananlar:
 - Sprint 9.3A: Multi-phone core model / compatibility helpers
 - Sprint 9.3B-1: Phone context model helpers for calls and reminders
 - Sprint 9.3B-2: Phone context persistence wiring
+- Sprint 9.3C: Phone context read/display model layer
 
 Sıradaki muhtemel aşamalar:
 
-- Sprint 9.3B-2 PR hazırlığı / merge kontrolü
-- Phone context display/read layer discovery
+- Phone context UI display için ayrı discovery/implementation
 - Arama geçmişi ve Hatırlatmalar UI’da telefon bağlamı gösterimi
 - Çoklu telefon import/export genişletmeleri
 - Backup/restore güvence turu
@@ -127,10 +128,10 @@ Bu projeye yeni başlayan AI önce şunları yapmalı:
 ## 10. Şu Anki En Güvenli Sonraki Adım
 
 Şu anki en güvenli sıradaki iş:
-Sprint 9.3B-2 PR hazırlığı / merge kontrolü.
+Phone context UI display için ayrı discovery/implementation.
 
 Bunun ardından:
-Phone context display/read layer için ayrı discovery/plan sprinti düşünülebilir.
+Çoklu telefon import/export genişletmeleri ve backup/restore güvence turu ayrı sprintlerde düşünülebilir.
 
 ## 11. Kaynak Dosyalar
 
@@ -139,6 +140,7 @@ Phone context display/read layer için ayrı discovery/plan sprinti düşünüle
 - docs/DECISIONS.md
 - docs/CHECKPOINT_SPRINT_9_3B_2.md
 - docs/CHECKPOINT_SPRINT_9_3B_1.md
+- docs/CHECKPOINT_SPRINT_9_3C.md
 - docs/MULTI_PHONE_ARCHITECTURE_PLAN.md
 - docs/PILOT_FINDINGS.md
 - .prompts/codex-start.md

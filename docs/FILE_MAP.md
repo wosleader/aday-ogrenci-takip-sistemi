@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.3B-2 Phone Context Persistence Wiring | Branch: sprint-9-3b-2-phone-context-persistence-wiring -->
+<!-- Son güncelleme: Sprint 9.3C Phone Context Display / Read Layer | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -47,7 +47,7 @@ Son doğrulandı: Sprint 8.8
 
 ## 4. Calls / Call Workflow
 
-Son doğrulandı: Sprint 9.3B-2 Phone Context Persistence Wiring
+Son doğrulandı: Sprint 9.3C Phone Context Display / Read Layer
 
 - `src/features/calls/CallPage.tsx`
   Eski/yardımcı call route sayfası; ana operasyon Aday Listesi + sağ drawer üzerinden yürür.
@@ -58,7 +58,7 @@ Son doğrulandı: Sprint 9.3B-2 Phone Context Persistence Wiring
 - `src/features/calls/services/callLogPhoneContext.ts`
   Call log telefon bağlamı display/fallback helper’ları; `phone_snapshot` varsa Telefon N / ilişki etiketi label’ı üretir, eski kayıtlarda güvenli fallback döner.
 - `src/features/calls/services/callHistoryReader.ts`
-  Sağ drawer iletişim geçmişi için call log okuma.
+  Sağ drawer iletişim geçmişi için call history read model üretir; Sprint 9.3C itibarıyla phone snapshot-first context display alanlarını ve legacy fallback'i taşır.
 
 ## 5. Reminders
 
@@ -66,6 +66,8 @@ Son doğrulandı: Sprint 8.2
 
 - `src/features/reminders/services/reminderAlarmReader.ts`
   Due/overdue reminder okuma ve alarm davranışı.
+- `src/features/reminders/services/reminderListReader.ts`
+  Hatırlatmalar sayfası için reminder list read model üretir; Sprint 9.3C itibarıyla reminder phone snapshot context display alanlarını taşır ve mevcut `phone_1` / `phone_2` davranışını korur.
 - `src/features/reminders/services/reminderDismissalStore.ts`
   Kapatılan reminder popup ve çan paneli geçmişi.
 - `src/features/reminders/services/reminderPopupViewModel.ts`
@@ -154,7 +156,7 @@ Son doğrulandı: Sprint 8.9
 
 ## 11. Tests
 
-Son doğrulandı: Sprint 9.3B-2 Phone Context Persistence Wiring
+Son doğrulandı: Sprint 9.3C Phone Context Display / Read Layer
 
 - `tests/exports/*`
   Detaylı export, özet export, export data reader ve Excel exporter davranışları.
@@ -170,6 +172,8 @@ Son doğrulandı: Sprint 9.3B-2 Phone Context Persistence Wiring
   Reminder alarm, dismissed store, popup view model ve reminder settings.
 - `tests/reminders/reminderPhoneContext.test.ts`
   Reminder telefon bağlamı helper’ını, eski kayıt fallback davranışını ve Türkçe relation label çıktısını test eder.
+- `tests/reminders/reminderListReader.test.ts`
+  Reminder list phone context snapshot/null fallback ve mevcut `phone_1` / `phone_2` regression davranışlarını test eder.
 - `tests/reports/*`
   Günlük rapor metrikleri, call result kırılımları, tarih filtresi, son görüşmeler ve Raporlar sayfası smoke davranışları.
 - `tests/shortcuts/*`
@@ -180,6 +184,8 @@ Son doğrulandı: Sprint 9.3B-2 Phone Context Persistence Wiring
   Excel okuma, kolon eşleştirme, import simülasyonu, duplicate guard, import writer, log export.
 - `tests/calls/*`
   Call writer, call history ve call save validation.
+- `tests/calls/callHistoryReader.test.ts`
+  Call history phone context snapshot, legacy fallback ve null context davranışını test eder.
 - `tests/calls/callLogWriter.test.ts`
   `writeCallLog` transaction davranışını; call log/reminder phone context persistence, legacy contacted phone alanları, null fallback, existing pending reminder update ve Türkçe relation label korunumunu test eder.
 - `tests/calls/callLogPhoneContext.test.ts`
@@ -227,6 +233,8 @@ Son doğrulandı: Sprint 9.1
   Sprint 9.3B-1 Call Log / Reminder Phone Context Model + Helpers kapanış dokümanı; optional phone context model alanlarını, helper/test kapsamını ve sonraki persistence wiring sprintini içerir.
 - `docs/CHECKPOINT_SPRINT_9_3B_2.md`
   Sprint 9.3B-2 Phone Context Persistence Wiring kapanış dokümanı; `writeCallLog` içinde call log ve pending reminder phone context persistence kapsamını, test/build sonucunu ve sonraki display/read layer discovery kararını içerir.
+- `docs/CHECKPOINT_SPRINT_9_3C.md`
+  Sprint 9.3C Phone Context Display / Read Layer kapanış dokümanı; call history ve reminder list reader/view-model phone context alanlarını, snapshot-first fallback kararını ve test/build sonucunu içerir.
 - `docs/PILOT_RELEASE_CANDIDATE_REVIEW.md`
   Pilot kullanıma aday sürüm değerlendirmesi, test/build özeti, kapatılan pilot bulguları ve pilot başlatma kararı.
 - `docs/PILOT_V1_RELEASE_NOTES.md`
