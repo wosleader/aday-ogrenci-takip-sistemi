@@ -18,6 +18,17 @@ const FILTERS: Array<{ value: ReminderTaskFilter; label: string }> = [
   { value: "upcoming", label: "Yaklaşan aramalar" }
 ];
 
+function formatReminderPhoneContext(label?: string | null, number?: string | null): string | null {
+  const normalizedLabel = label?.trim();
+  const normalizedNumber = number?.trim();
+
+  if (normalizedLabel && normalizedNumber) {
+    return `${normalizedLabel}: ${normalizedNumber}`;
+  }
+
+  return normalizedLabel || normalizedNumber || null;
+}
+
 export function RemindersPage() {
   const { openStudentById } = useOutletContext<AppOutletContext>();
   const [activeFilter, setActiveFilter] = useState<ReminderTaskFilter>("all");
@@ -76,7 +87,7 @@ export function RemindersPage() {
                 <tr>
                   <th>Öğrenci</th>
                   <th>Veli</th>
-                  <th>Telefon 1</th>
+                  <th>Aranacak telefon</th>
                   <th>Telefon 2</th>
                   <th>Tarih</th>
                   <th>Saat</th>
@@ -90,7 +101,7 @@ export function RemindersPage() {
                   <tr key={row.reminder_id}>
                     <td title={row.student_full_name}>{row.student_full_name}</td>
                     <td title={row.guardian_full_name ?? undefined}>{row.guardian_full_name || "-"}</td>
-                    <td>{row.phone_1 || "-"}</td>
+                    <td>{formatReminderPhoneContext(row.phone_context_label, row.phone_context_number) ?? row.phone_1 ?? "-"}</td>
                     <td>{row.phone_2 || "-"}</td>
                     <td>{row.reminder_date_label}</td>
                     <td>{row.reminder_time_label}</td>

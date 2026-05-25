@@ -4,6 +4,7 @@ import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AppOutletContext } from "../../src/app/AppLayout";
 import { db } from "../../src/db/db";
+import type { PhoneSnapshot } from "../../src/domain/models/phone";
 import { RemindersPage } from "../../src/features/reminders/RemindersPage";
 import { createSearchText, normalizeText } from "../../src/utils/normalizeText";
 
@@ -39,7 +40,12 @@ function renderRemindersPage(openStudentById = vi.fn()) {
   return { openStudentById };
 }
 
-async function seedReminder() {
+type SeedReminderOptions = {
+  includeSecondPhone?: boolean;
+  phoneSnapshot?: PhoneSnapshot;
+};
+
+async function seedReminder(options: SeedReminderOptions = {}) {
   const now = "2026-05-10T10:00:00.000Z";
   const studentId = await db.students.add({
     uuid: "student-reminder-page",
@@ -79,6 +85,22 @@ async function seedReminder() {
     updated_at: now,
     sync_status: "local"
   });
+  if (options.includeSecondPhone) {
+    await db.phones.add({
+      uuid: "phone-reminder-page-secondary",
+      student_id: studentId,
+      phone_number: "0533 000 00 00",
+      normalized_phone_number: "05330000000",
+      phone_label: "Telefon 2",
+      phone_status: "active",
+      is_valid: true,
+      is_wrong: false,
+      is_primary: false,
+      created_at: now,
+      updated_at: now,
+      sync_status: "local"
+    });
+  }
   await db.reminders.add({
     uuid: "reminder-page",
     student_id: studentId,
@@ -89,7 +111,13 @@ async function seedReminder() {
     is_default_time_assigned: false,
     created_at: timestamp,
     updated_at: timestamp,
-    sync_status: "local"
+    sync_status: "local",
+    ...(options.phoneSnapshot
+      ? {
+          phone_id: options.phoneSnapshot.phone_id ?? null,
+          phone_snapshot: options.phoneSnapshot
+        }
+      : {})
   });
 
   return studentId;
@@ -127,8 +155,27 @@ describe("RemindersPage", () => {
     renderRemindersPage(openStudentById);
 
     expect(await screen.findByText("ZEYNEP SUBAŞI")).toBeInTheDocument();
+    expect(screen.getByText("Aranacak telefon")).toBeInTheDocument();
+    expect(screen.getByText("0532 000 00 00")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Adayı Aç" }));
 
     expect(openStudentById).toHaveBeenCalledWith(studentId);
+  });
+
+  it("shows phone context in the primary reminder phone column", async () => {
+    await seedReminder({
+      includeSecondPhone: true,
+      phoneSnapshot: {
+        phone_id: 5,
+        reference_label: "Telefon 5",
+        relation_label: "Yakın",
+        phone_number: "0555 123 4567",
+        source_column: "Yakın Telefon"
+      }
+    });
+    renderRemindersPage();
+
+    expect(await screen.findByText("Telefon 5 · Yakın: 0555 123 4567")).toBeInTheDocument();
+    expect(screen.getByText("0533 000 00 00")).toBeInTheDocument();
   });
 });
