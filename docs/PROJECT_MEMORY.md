@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.3B-1 Phone Context Model Helpers Kapanış | Branch: sprint-9-3b-1-phone-context-model-helpers -->
+<!-- Son güncelleme: Sprint 9.3B-2 Phone Context Persistence Wiring Kapanış | Branch: sprint-9-3b-2-phone-context-persistence-wiring -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: ✅ Sprint 9.3B-1 Phone Context Model Helpers
-- FILE_MAP: ✅ Sprint 9.3B-1 Phone Context Model Helpers
-- DECISIONS: ✅ Sprint 9.3B-1 Phone Context Model Helpers
-- Son sprint-close çalıştırıldı: ✅ Sprint 9.3B-1
+- PROJECT_MEMORY: ✅ Sprint 9.3B-2 Phone Context Persistence Wiring
+- FILE_MAP: ✅ Sprint 9.3B-2 Phone Context Persistence Wiring
+- DECISIONS: ✅ Sprint 9.3B-2 Phone Context Persistence Wiring
+- Son sprint-close çalıştırıldı: ✅ Sprint 9.3B-2
 
 ## 1. Proje Amacı
 
@@ -145,6 +145,9 @@ Kısa özet:
 - Sprint 9.3B-1 kapsamında call log ve reminder kayıtları için optional phone context model alanları ve UI’ya bağlanmamış display/fallback helper’ları tamamlandı.
 - Sprint 9.3B-1 son feature commit’i: `de15abf feat: add phone context model helpers for calls and reminders`.
 - Sprint 9.3B-1 test/build sonucu: `npm.cmd test` ve `npm.cmd run build` geçti; Vite chunk size uyarısı build başarısızlığı değildir.
+- Sprint 9.3B-2 kapsamında `writeCallLog` transaction içinde call log ve pending reminder kayıtlarına phone context persistence wiring bağlandı.
+- Sprint 9.3B-2 son feature commit’i: `595979d feat: wire phone context persistence for calls and reminders`.
+- Sprint 9.3B-2 test/build sonucu: `npm.cmd test` ve `npm.cmd run build` geçti; 38 test files / 210 tests başarılıdır. Vite chunk size uyarısı build başarısızlığı değildir.
 - Yeni engelleyici sorun bildirilmezse sistem küçük ölçekli kontrollü kullanımda izlenmeye devam eder.
 - Pilot sırasında yeni sorun çıkarsa ayrı Pilot Feedback Fixes kapsamında ele alınacak.
 
@@ -165,25 +168,27 @@ Kısa özet:
 - Sprint 9.2: Çoklu Telefon Mimarisi Planı hazırlanıyor.
 - Sprint 9.3A: Çoklu Telefon Core Model + Compatibility tamamlandı.
 - Sprint 9.3B-1: Call Log / Reminder Phone Context Model + Helpers tamamlandı.
+- Sprint 9.3B-2: Phone Context Persistence Wiring tamamlandı.
 
 ## 13. Yol Haritası
 
 Güncel önerilen sıra:
 
-1. Sprint 9.3B-2 — Phone Context Persistence Wiring
-2. Sprint 9.4 — Çoklu Telefon Import / Duplicate / Export
-3. Sprint 9.5 — Çoklu Telefon UI / Sağ Kişi Kartı
-4. Sprint 9.6 — Çoklu Telefon Responsive Polish
-5. Gerçek kullanım geri bildirimlerini toplamaya devam / gerekirse Pilot Feedback Fixes
-6. Reports Dashboard Polish
-7. Mobile Drawer Polish
-8. Mobile Table/Card View Polish
-9. Akıllı Yardımcılar
-10. Toplu silme / seçim modu
-11. Figma/Stitch operasyon listesi sadeleştirme
-12. Haftalık/aylık rapor veya rapor genişletmeleri
-13. Günlük rapor / mükerrerler ekranı genişletmeleri
-14. VDS/merkez/senkronizasyon
+1. Sprint 9.3B-2 PR hazırlığı / merge kontrolü
+2. Phone context display/read layer discovery
+3. Sprint 9.4 — Çoklu Telefon Import / Duplicate / Export
+4. Sprint 9.5 — Çoklu Telefon UI / Sağ Kişi Kartı
+5. Sprint 9.6 — Çoklu Telefon Responsive Polish
+6. Gerçek kullanım geri bildirimlerini toplamaya devam / gerekirse Pilot Feedback Fixes
+7. Reports Dashboard Polish
+8. Mobile Drawer Polish
+9. Mobile Table/Card View Polish
+10. Akıllı Yardımcılar
+11. Toplu silme / seçim modu
+12. Figma/Stitch operasyon listesi sadeleştirme
+13. Haftalık/aylık rapor veya rapor genişletmeleri
+14. Günlük rapor / mükerrerler ekranı genişletmeleri
+15. VDS/merkez/senkronizasyon
 
 Roadmap kararları:
 
@@ -207,6 +212,7 @@ Roadmap kararları:
 - Çoklu telefon kararı: sabit 10 boş telefon kutusu gösterilmeyecek; telefonlar dinamik liste olacak. Sağ kişi kartında ilk 2-3 telefon hızlı görünür, fazlası “+N numara daha göster” ile açılır. `Telefon N` referans etiketi ile ilişki etiketi ayrı tutulur. Call log ve reminder kayıtları seçili telefon bağlamını `phone_id` + snapshot ile koruyacak şekilde planlanır.
 - Sprint 9.3A kararı: Çoklu telefon için `PhoneRelationLabel`, `PhoneOperationalStatus`, `PhoneSnapshot` type’ları ve phone compatibility helper’ları eklendi; mevcut Telefon 1 / Telefon 2 ekran davranışı bu sprintte değiştirilmedi.
 - Sprint 9.3B-1 kararı: `CallLogRecord` ve `ReminderRecord` içine optional `phone_id` / `phone_snapshot` bağlamı hazırlandı; gerçek kayıt yazma, UI, import/export, backup/restore ve storage migration bu sprintte yapılmadı.
+- Sprint 9.3B-2 kararı: `writeCallLog` transaction içinde call log ve pending reminder kayıtlarına optional `phone_id` / `phone_snapshot` persistence wiring bağlandı; UI display, import/export, backup/restore ve schema migration bu sprintte yapılmadı.
 
 ## Bu Dosya Ne Zaman Güncellenmeli?
 
@@ -235,23 +241,25 @@ Roadmap kararları:
 - Pilot v1.0 release notları değişecekse: `docs/PILOT_V1_RELEASE_NOTES.md`
 - Pilot gerçek kullanım deneme sonucu değişecekse: `docs/PILOT_RUN_REPORT.md`
 - Çoklu Telefon Mimarisi değişecekse: `docs/MULTI_PHONE_ARCHITECTURE_PLAN.md`
+- Phone context persistence değişecekse: `docs/CHECKPOINT_SPRINT_9_3B_2.md`
 - Çok eski sprint bağlamı gerekiyorsa ilgili eski checkpoint okunur; tüm checkpoint’ler gereksiz yere okutulmaz.
 
 ## 14. Güncel Çalışma Bilgisi
 
 Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 
-- Güncel branch: `sprint-9-3b-1-phone-context-model-helpers`
-- Bu branch’in amacı: Call log ve reminder kayıtları için telefon bağlamı model/type/helper/fallback altyapısını kapatmak.
-- Önceki çalışma branch’i: `sprint-9-3a-multi-phone-core-model`
+- Güncel branch: `sprint-9-3b-2-phone-context-persistence-wiring`
+- Bu branch’in amacı: Sprint 9.3B-1 model/helper altyapısını `writeCallLog` transaction içinde call log ve pending reminder persistence akışına bağlamak.
+- Önceki çalışma branch’i: `sprint-9-3b-1-phone-context-model-helpers`
 - Güncel release candidate commit’i: `12062f0 docs: add sprint 9.1 checkpoint and update pilot findings`
 - Güncel Pilot v1.0 release candidate commit’i: `113b44b docs: add pilot release candidate review`
 - Pilot v1.0 release commit’i: `b59e3af docs: add pilot v1 release notes`
 - Son bilinen fix commit’i: `7cdea84 fix: reduce reminders page outer scroll`
 - Son feature commit’i: `76a3b3a feat: add multi-phone core compatibility helpers`
 - Son phone context feature commit’i: `de15abf feat: add phone context model helpers for calls and reminders`
+- Son phone context persistence commit’i: `595979d feat: wire phone context persistence for calls and reminders`
 - Son bilinen dokümantasyon commit’i: `194cb07 docs: record pilot feedback UI polish findings`
-- Sonraki önerilen aşama: Sprint 9.3B-2 — Phone Context Persistence Wiring.
+- Sonraki önerilen aşama: Sprint 9.3B-2 PR hazırlığı / merge kontrolü ve ardından phone context display/read layer discovery.
 
 ## 15. Codex Standart Başlangıç Talimatı
 
