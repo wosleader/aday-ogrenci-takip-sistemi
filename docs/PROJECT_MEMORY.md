@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.3C Phone Context Display / Read Layer Kapanış | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son güncelleme: Sprint 9.3D-1 Call History Phone Context UI Display Kapanış | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: ✅ Sprint 9.3C Phone Context Display / Read Layer
-- FILE_MAP: ✅ Sprint 9.3C Phone Context Display / Read Layer
-- DECISIONS: ✅ Sprint 9.3C Phone Context Display / Read Layer
-- Son sprint-close çalıştırıldı: ✅ Sprint 9.3C
+- PROJECT_MEMORY: ✅ Sprint 9.3D-1 Call History Phone Context UI Display
+- FILE_MAP: ✅ Sprint 9.3D-1 Call History Phone Context UI Display
+- DECISIONS: ✅ Sprint 9.3D-1 Call History Phone Context UI Display
+- Son sprint-close çalıştırıldı: ✅ Sprint 9.3D-1
 
 ## 1. Proje Amacı
 
@@ -151,7 +151,10 @@ Kısa özet:
 - Sprint 9.3C kapsamında phone context bilgisi UI'ya dokunmadan reader/view-model katmanına taşındı.
 - Sprint 9.3C son feature commit’i: `34d06bd feat: add phone context read models`.
 - Sprint 9.3C test/build sonucu: `npm.cmd test` ve `npm.cmd run build` geçti; 38 test files / 214 tests başarılıdır. Vite chunk size uyarısı build başarısızlığı değildir.
-- Sprint 9.3B-2 persistence wiring katmanıdır; Sprint 9.3C read/display model katmanıdır. Detay için `docs/CHECKPOINT_SPRINT_9_3C.md` kullanılmalıdır.
+- Sprint 9.3D-1 kapsamında phone context bilgisi sağ kişi kartındaki call history UI'ında gösterilir hale geldi.
+- Sprint 9.3D-1 son feature commit’i: `23342b3 feat: show phone context in call history`.
+- Sprint 9.3D-1 test/build sonucu: `npm.cmd test` ve `npm.cmd run build` geçti; 39 test files / 216 tests başarılıdır. Vite chunk size uyarısı build başarısızlığı değildir.
+- Sprint 9.3B-2 persistence wiring katmanıdır; Sprint 9.3C read/display model katmanıdır; Sprint 9.3D-1 call history UI display katmanıdır. Detay için `docs/CHECKPOINT_SPRINT_9_3D_1.md` kullanılmalıdır.
 - Yeni engelleyici sorun bildirilmezse sistem küçük ölçekli kontrollü kullanımda izlenmeye devam eder.
 - Pilot sırasında yeni sorun çıkarsa ayrı Pilot Feedback Fixes kapsamında ele alınacak.
 
@@ -174,12 +177,13 @@ Kısa özet:
 - Sprint 9.3B-1: Call Log / Reminder Phone Context Model + Helpers tamamlandı.
 - Sprint 9.3B-2: Phone Context Persistence Wiring tamamlandı.
 - Sprint 9.3C: Phone Context Display / Read Layer tamamlandı.
+- Sprint 9.3D-1: Call History Phone Context UI Display tamamlandı.
 
 ## 13. Yol Haritası
 
 Güncel önerilen sıra:
 
-1. Phone context UI display discovery / implementation
+1. Sprint 9.3D-2 — Reminder List Phone Context UI Display Discovery / Implementation
 2. Sprint 9.4 — Çoklu Telefon Import / Duplicate / Export
 3. Sprint 9.5 — Çoklu Telefon UI / Sağ Kişi Kartı
 4. Sprint 9.6 — Çoklu Telefon Responsive Polish
@@ -218,6 +222,7 @@ Roadmap kararları:
 - Sprint 9.3B-1 kararı: `CallLogRecord` ve `ReminderRecord` içine optional `phone_id` / `phone_snapshot` bağlamı hazırlandı; gerçek kayıt yazma, UI, import/export, backup/restore ve storage migration bu sprintte yapılmadı.
 - Sprint 9.3B-2 kararı: `writeCallLog` transaction içinde call log ve pending reminder kayıtlarına optional `phone_id` / `phone_snapshot` persistence wiring bağlandı; UI display, import/export, backup/restore ve schema migration bu sprintte yapılmadı.
 - Sprint 9.3C kararı: Historical phone context display/read model katmanında `phone_snapshot` önceliklidir. Call history eski kayıtlar için legacy contacted phone fallback'i kullanır. Reminder list current phone lookup yapmaz; yalnızca `reminder.phone_snapshot` varsa context alanlarını doldurur. UI display, popup, alarm reader, import/export, backup/restore ve schema migration bu sprintte yapılmadı.
+- Sprint 9.3D-1 kararı: Phone context UI display önce düşük riskli call history alanında başlatıldı. Sağ kişi kartındaki iletişim geçmişi `phone_context_label` / `phone_context_number` alanlarını gösterir. Reminder list UI tablo/CSS/mobil riskleri nedeniyle ayrı sprintte ele alınacak. Büyük çoklu telefon sağ kişi kartı, Excel'den çoklu telefon import ve `+N numara daha göster` roadmap'te ayrı kalır.
 
 ## Bu Dosya Ne Zaman Güncellenmeli?
 
@@ -248,6 +253,7 @@ Roadmap kararları:
 - Çoklu Telefon Mimarisi değişecekse: `docs/MULTI_PHONE_ARCHITECTURE_PLAN.md`
 - Phone context persistence değişecekse: `docs/CHECKPOINT_SPRINT_9_3B_2.md`
 - Phone context read/display model değişecekse: `docs/CHECKPOINT_SPRINT_9_3C.md`
+- Call history phone context UI display değişecekse: `docs/CHECKPOINT_SPRINT_9_3D_1.md`
 - Çok eski sprint bağlamı gerekiyorsa ilgili eski checkpoint okunur; tüm checkpoint’ler gereksiz yere okutulmaz.
 
 ## 14. Güncel Çalışma Bilgisi
@@ -255,7 +261,7 @@ Roadmap kararları:
 Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 
 - Güncel branch: `sprint-9-2-multi-phone-architecture-plan`
-- Bu branch’in amacı: Çoklu telefon mimarisi ana hattında phone context persistence ve read/display model katmanlarını taşımak.
+- Bu branch’in amacı: Çoklu telefon mimarisi ana hattında phone context persistence, read/display model ve call history UI display katmanlarını taşımak.
 - Önceki çalışma branch’i: `sprint-9-3b-1-phone-context-model-helpers`
 - Güncel release candidate commit’i: `12062f0 docs: add sprint 9.1 checkpoint and update pilot findings`
 - Güncel Pilot v1.0 release candidate commit’i: `113b44b docs: add pilot release candidate review`
@@ -265,8 +271,9 @@ Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 - Son phone context feature commit’i: `de15abf feat: add phone context model helpers for calls and reminders`
 - Son phone context persistence commit’i: `595979d feat: wire phone context persistence for calls and reminders`
 - Son phone context read model commit’i: `34d06bd feat: add phone context read models`
+- Son phone context UI commit’i: `23342b3 feat: show phone context in call history`
 - Son bilinen dokümantasyon commit’i: `194cb07 docs: record pilot feedback UI polish findings`
-- Sonraki önerilen aşama: Phone context UI display discovery / implementation.
+- Sonraki önerilen aşama: Sprint 9.3D-2 — Reminder List Phone Context UI Display Discovery / Implementation.
 
 ## 15. Codex Standart Başlangıç Talimatı
 

@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.3C Phone Context Display / Read Layer | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son güncelleme: Sprint 9.3D-1 Call History Phone Context UI Display | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -32,10 +32,10 @@ Son doğrulandı: Sprint 8.2
 
 ## 3. Students / Candidate List
 
-Son doğrulandı: Sprint 8.8
+Son doğrulandı: Sprint 9.3D-1 Call History Phone Context UI Display
 
 - `src/features/students/StudentsPage.tsx`
-  Aday Listesi, filtreler, sağ drawer, görüşme akışı ve Sprint 8.8 itibarıyla kompakt/açılır-kapanır kısayol yardım barını içerir.
+  Aday Listesi, filtreler, sağ drawer, görüşme akışı, kompakt/açılır-kapanır kısayol yardım barı ve call history UI render alanını içerir. Sprint 9.3D-1 itibarıyla call history `phone_context_label` / `phone_context_number` display alanlarını gösterir ve `Telefon seçilmedi` fallback'ini korur.
 - `src/features/students/services/studentListReader.ts`
   Aday liste satırlarını okuma, filtreleme, Sınıf/Şube helper’ları.
 - `src/features/students/services/studentPhoneStatus.ts`
@@ -47,7 +47,7 @@ Son doğrulandı: Sprint 8.8
 
 ## 4. Calls / Call Workflow
 
-Son doğrulandı: Sprint 9.3C Phone Context Display / Read Layer
+Son doğrulandı: Sprint 9.3D-1 Call History Phone Context UI Display
 
 - `src/features/calls/CallPage.tsx`
   Eski/yardımcı call route sayfası; ana operasyon Aday Listesi + sağ drawer üzerinden yürür.
@@ -168,6 +168,8 @@ Son doğrulandı: Sprint 9.3C Phone Context Display / Read Layer
   Çoklu telefon core helper’larını, legacy Telefon 1/2 uyumluluğunu, Telefon N etiketlerini, relation label display metnini, phone snapshot üretimini ve helper düzeyi tekilleştirmeyi test eder.
 - `tests/students/StudentsPageShortcutHelp.test.tsx`
   Aday Listesi alt kısayol yardım barının kompakt/açık görünümünü, Göster/Gizle davranışını ve localStorage toleransını test eder.
+- `tests/students/StudentsPageCallHistory.test.tsx`
+  Call history UI'da phone context label/number görünürlüğünü ve no-context fallback davranışını test eder.
 - `tests/reminders/*`
   Reminder alarm, dismissed store, popup view model ve reminder settings.
 - `tests/reminders/reminderPhoneContext.test.ts`
@@ -235,6 +237,8 @@ Son doğrulandı: Sprint 9.1
   Sprint 9.3B-2 Phone Context Persistence Wiring kapanış dokümanı; `writeCallLog` içinde call log ve pending reminder phone context persistence kapsamını, test/build sonucunu ve sonraki display/read layer discovery kararını içerir.
 - `docs/CHECKPOINT_SPRINT_9_3C.md`
   Sprint 9.3C Phone Context Display / Read Layer kapanış dokümanı; call history ve reminder list reader/view-model phone context alanlarını, snapshot-first fallback kararını ve test/build sonucunu içerir.
+- `docs/CHECKPOINT_SPRINT_9_3D_1.md`
+  Sprint 9.3D-1 Call History Phone Context UI Display kapanış dokümanı; sağ kişi kartındaki iletişim geçmişinde phone context gösterimini, odaklı UI testini ve sonraki reminder list UI kararını içerir.
 - `docs/PILOT_RELEASE_CANDIDATE_REVIEW.md`
   Pilot kullanıma aday sürüm değerlendirmesi, test/build özeti, kapatılan pilot bulguları ve pilot başlatma kararı.
 - `docs/PILOT_V1_RELEASE_NOTES.md`
