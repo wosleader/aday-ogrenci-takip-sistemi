@@ -1,5 +1,8 @@
 # Feature Plan Prompt
 
+Not:
+Prompt başında ÜST EMİR bloğu kullanılmalı: iş türü, aktif branch, son commit, izinli/yasak dosyalar, test/build, commit/push ve durma şartı net olmalı.
+
 Görev:
 [buraya görev yazılacak]
 

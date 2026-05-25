@@ -1,5 +1,8 @@
 # Codex Start Prompt
 
+Not:
+Her yeni promptta önce ÜST EMİR bloğu kullanılmalı: iş türü, aktif branch, son commit, izinli/yasak dosyalar, test/build, commit/push ve durma şartı net yazılmalı.
+
 Önce mevcut durumu kontrol et:
 - git branch
 - git status

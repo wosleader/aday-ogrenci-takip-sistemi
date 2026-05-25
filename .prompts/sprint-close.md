@@ -1,5 +1,8 @@
 # Sprint Close Prompt
 
+Not:
+Prompt başında ÜST EMİR bloğu kullanılmalı: iş türü, aktif branch, son commit, izinli/yasak dosyalar, test/build, commit/push ve durma şartı net olmalı.
+
 Sprint kapanışlarında kullanılacak standart kontrol promptu.
 
 Önce kontrol et:

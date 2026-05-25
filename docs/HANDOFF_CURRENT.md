@@ -4,7 +4,8 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son commit: 23342b3 feat: show phone context in call history
+- Son commit: 4ec3c61 docs: add sprint 9.3d-1 checkpoint
+- Önceki feature commit: 23342b3 feat: show phone context in call history
 - Önceki docs commit: 8e85ab7 docs: add sprint 9.3c checkpoint
 - Önceki önemli merge: cc008a7 Merge pull request #6 from wosleader/sprint-9-3b-2-phone-context-persistence-wiring
 - Bir önceki phone context persistence commit’i: 595979d feat: wire phone context persistence for calls and reminders
@@ -94,14 +95,15 @@ Yeni AI / Codex için:
 
 1. Önce git durumunu kontrol et.
 2. Önce `docs/PROJECT_MEMORY.md`, `docs/FILE_MAP.md`, `docs/DECISIONS.md` oku.
-3. Sadece ilgili checkpoint’i oku; tüm checkpoint’leri gereksiz okuma.
-4. Kod yazmadan önce gerçek kaynak dosyaları incele.
-5. Plan/discovery istendiyse dosya değiştirme.
-6. Uygulama istendiyse sadece onaylanan kapsamı uygula.
-7. Kod işlerinde test/build çalıştır ve raporla.
-8. Docs-only işlerde `src/` ve `tests/` altına dokunma.
-9. Commit/push/merge yapma; sadece önerilen commit mesajı ver.
-10. Kapsam dışı iyi fikirleri uygulama; sonraki işler bölümüne yaz.
+3. `docs/AI_WORKFLOW_GOVERNANCE.md` içindeki ÜST EMİR ve iş türü standardını kullan.
+4. Sadece ilgili checkpoint’i oku; tüm checkpoint’leri gereksiz okuma.
+5. Kod yazmadan önce gerçek kaynak dosyaları incele.
+6. Plan/discovery istendiyse dosya değiştirme.
+7. Uygulama istendiyse sadece onaylanan kapsamı uygula.
+8. Kod işlerinde test/build çalıştır ve raporla.
+9. Docs-only işlerde `src/` ve `tests/` altına dokunma.
+10. Commit/push/merge yapma; sadece önerilen commit mesajı ver.
+11. Kapsam dışı iyi fikirleri uygulama; sonraki işler bölümüne yaz.
 
 ## 8. Yasaklar / Kırmızı Çizgiler
 
@@ -127,6 +129,7 @@ Bu projeye yeni başlayan AI önce şunları yapmalı:
 - `docs/FILE_MAP.md` oku
 - `docs/DECISIONS.md` oku
 - `docs/HANDOFF_CURRENT.md` oku
+- `docs/AI_WORKFLOW_GOVERNANCE.md` oku
 - ilgili sprint checkpoint’ini oku
 - sonra sadece rapor ver; kullanıcı onayı olmadan dosya değiştirme
 
@@ -143,6 +146,7 @@ Bunun ardından:
 - docs/PROJECT_MEMORY.md
 - docs/FILE_MAP.md
 - docs/DECISIONS.md
+- docs/AI_WORKFLOW_GOVERNANCE.md
 - docs/CHECKPOINT_SPRINT_9_3B_2.md
 - docs/CHECKPOINT_SPRINT_9_3B_1.md
 - docs/CHECKPOINT_SPRINT_9_3C.md
