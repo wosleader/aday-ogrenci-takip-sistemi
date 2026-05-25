@@ -149,7 +149,41 @@ describe("reminderListReader", () => {
         bucket_label: "Süresi geçti",
         phone_1: "05321234567",
         phone_2: "05327654321",
+        phone_context_label: null,
+        phone_context_number: null,
         guardian_full_name: "Fatma Yilmaz"
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("returns reminder phone context from snapshot without changing phone slot fields", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await seedStudent(database, "Telefon Baglamli Aday");
+      await database.reminders.add(
+        reminder(studentId, "2026-05-10T13:00:00.000Z", {
+          phone_id: 7,
+          phone_snapshot: {
+            phone_id: 7,
+            reference_label: "Telefon 5",
+            relation_label: "Yakın",
+            phone_number: "05551234567",
+            source_column: "Yakın Telefon"
+          }
+        })
+      );
+
+      const rows = await readReminderTaskRows(now, database);
+
+      expect(rows[0]).toMatchObject({
+        phone_1: "05321234567",
+        phone_2: "05327654321",
+        phone_context_label: "Telefon 5 · Yakın",
+        phone_context_number: "05551234567"
       });
     } finally {
       database.close();

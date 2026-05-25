@@ -4,6 +4,7 @@ import { CALL_RESULTS } from "../../../domain/constants/statuses";
 import type { CallLogRecord } from "../../../domain/models/callLog";
 import type { GuardianRecord } from "../../../domain/models/guardian";
 import type { PhoneRecord } from "../../../domain/models/phone";
+import { createPhoneSnapshotDisplayLabel } from "../../calls/services/callLogPhoneContext";
 
 export type ReminderTaskBucket = "overdue" | "today" | "upcoming";
 export type ReminderTaskFilter = "all" | ReminderTaskBucket;
@@ -15,6 +16,8 @@ export type ReminderTaskRow = {
   guardian_full_name?: string | null;
   phone_1?: string | null;
   phone_2?: string | null;
+  phone_context_label?: string | null;
+  phone_context_number?: string | null;
   reminder_at: string;
   reminder_date_label: string;
   reminder_time_label: string;
@@ -227,6 +230,8 @@ export async function readReminderTaskRows(
       const pickedPhones = pickPhones(phonesByStudent.get(reminder.student_id) ?? []);
       const latestCallLog = [...(callLogsByStudent.get(reminder.student_id) ?? [])].sort(compareCallLogDesc)[0];
       const bucket = classifyReminderTask(reminder.reminder_at, now);
+      const phoneContextLabel = createPhoneSnapshotDisplayLabel(reminder.phone_snapshot, "") || null;
+      const phoneContextNumber = reminder.phone_snapshot?.phone_number?.trim() || null;
 
       return {
         reminder_id: reminder.id!,
@@ -235,6 +240,8 @@ export async function readReminderTaskRows(
         guardian_full_name: guardian?.guardian_full_name ?? null,
         phone_1: pickedPhones.phone_1,
         phone_2: pickedPhones.phone_2,
+        phone_context_label: phoneContextLabel,
+        phone_context_number: phoneContextNumber,
         reminder_at: reminder.reminder_at,
         reminder_date_label: formatReminderTaskDate(reminder.reminder_at),
         reminder_time_label: formatReminderTaskTime(reminder.reminder_at),
