@@ -4,9 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli commit: 8043507 feat: add multi-phone read model for student cards
-- Sprint 9.3E-1 kod tarafı tamamlandı ve pushlandı.
+- Son güvenli commit: 67812cb feat: show extra phones in right card
+- Sprint 9.3E-2 kod tarafı tamamlandı ve pushlandı.
 - Bu docs closure tamamlanınca yeni docs commit beklenecek.
+- Önceki right card read model commit: 8043507 feat: add multi-phone read model for student cards
+- Önceki docs commit: 53f8695 docs: add sprint 9.3e-1 checkpoint
 - Önceki governance commit: a9bc3c6 docs: add ai workflow governance
 - Önceki reminder UI commit: dba4cc6 feat: show phone context in reminders list
 - Önceki feature commit: 23342b3 feat: show phone context in call history
@@ -45,17 +47,18 @@ Temel alanlar:
 
 ## 4. Güncel Sprint Durumu
 
-Sprint 9.3E-1 — Right Card Multi-Phone Read Model tamamlandı.
+Sprint 9.3E-2 — Right Card Multi-Phone UI Display tamamlandı.
 
 Özet:
 
-- Sprint 9.3E-1 ile sağ kişi kartı çoklu telefon UI öncesi `StudentListRow` read model'i hazırlandı.
-- `phones`, `visible_phones` ve `hidden_phone_count` alanları eklendi.
-- İlk görünüm veri katmanında 3 telefon taşır; fazla telefon sayısı `hidden_phone_count` ile verilir.
-- Legacy `phone_1`, `phone_2` ve `phone_count` alanları korundu.
-- UI, `StudentsPage.tsx`, CSS, import/export, backup/restore ve schema/storage kapsam dışı bırakıldı.
-- Test/build daha önce geçti: 39 test files / 218 tests.
-- Sprint kapanış dokümantasyonu `docs/CHECKPOINT_SPRINT_9_3E_1.md` dosyasındadır.
+- Sprint 9.3E-2 ile sağ kişi kartında Telefon 3+ readonly / görüntüleme-only olarak görünür hale geldi.
+- Telefon 1 / Telefon 2 mevcut aksiyonlu kartlar olarak korundu.
+- `visible_phones`, `phones` ve `hidden_phone_count` alanları UI'da kullanıldı.
+- `+N numara daha göster` ve `Daha az göster` davranışı eklendi.
+- Aday değişince extra phone expanded state resetlenir.
+- Telefon 3+ için aksiyon/persistence, call save, `validateCallSave`, shortcut, CSS, reader/model, import/export ve backup/restore değişikliği yapılmadı.
+- Test/build daha önce geçti: 40 test files / 221 tests.
+- Sprint kapanış dokümantasyonu `docs/CHECKPOINT_SPRINT_9_3E_2.md` dosyasındadır.
 
 ## 5. Çoklu Telefon Roadmap Durumu
 
@@ -68,13 +71,14 @@ Tamamlananlar:
 - Sprint 9.3D-1: Call history UI phone context display
 - Sprint 9.3D-2: Reminder list UI phone context display
 - Sprint 9.3E-1: Right card multi-phone read model
+- Sprint 9.3E-2: Right card multi-phone UI display
 
 Sıradaki muhtemel aşamalar:
 
-- Sprint 9.3E-1 docs-only commit/push doğrulaması
-- Sprint 9.3E-2 right card multi-phone UI display discovery/implementation
+- Sprint 9.3E-2 docs-only commit/push doğrulaması
 - Telefon 3+ seçim/call log ilişkisi discovery
 - Excel çoklu telefon import discovery
+- Export/report/backup uyumu discovery
 - Çoklu telefon import/export genişletmeleri
 - Backup/restore güvence turu
 - Mobile polish ve diğer pilot sonrası işler
@@ -144,12 +148,14 @@ Bu projeye yeni başlayan AI önce şunları yapmalı:
 ## 10. Şu Anki En Güvenli Sonraki Adım
 
 Şu anki en güvenli sıradaki iş:
-Sprint 9.3E-1 docs-only commit/push.
+Sprint 9.3E-2 docs-only commit/push.
 
 Bunun ardından:
-Sprint 9.3E-2 right card multi-phone UI display discovery/implementation, Telefon 3+ seçim/call log ilişkisi discovery ve Excel çoklu telefon import discovery ayrı ayrı düşünülebilir.
+Telefon 3+ seçim/call log ilişkisi discovery, Excel çoklu telefon import discovery ve Export/report/backup uyumu discovery ayrı ayrı düşünülebilir.
 
-Yeni kod işi başlatmadan önce Sprint 9.3E-1 docs-only kapanış commit/push edildiği doğrulanmalıdır.
+Yeni kod işi başlatmadan önce Sprint 9.3E-2 docs-only kapanış commit/push edildiği doğrulanmalıdır.
+
+Telefon 3+ aksiyon/persistence henüz yapılmadı; bu konu ayrı discovery olmadan uygulanmamalıdır.
 
 ## 11. Kaynak Dosyalar
 
@@ -163,6 +169,7 @@ Yeni kod işi başlatmadan önce Sprint 9.3E-1 docs-only kapanış commit/push e
 - docs/CHECKPOINT_SPRINT_9_3D_1.md
 - docs/CHECKPOINT_SPRINT_9_3D_2.md
 - docs/CHECKPOINT_SPRINT_9_3E_1.md
+- docs/CHECKPOINT_SPRINT_9_3E_2.md
 - docs/MULTI_PHONE_ARCHITECTURE_PLAN.md
 - docs/PILOT_FINDINGS.md
 - .prompts/codex-start.md

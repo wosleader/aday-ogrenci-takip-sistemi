@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.3E-1 Right Card Multi-Phone Read Model | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son güncelleme: Sprint 9.3E-2 Right Card Multi-Phone UI Display | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -32,10 +32,10 @@ Son doğrulandı: Sprint 8.2
 
 ## 3. Students / Candidate List
 
-Son doğrulandı: Sprint 9.3E-1 Right Card Multi-Phone Read Model
+Son doğrulandı: Sprint 9.3E-2 Right Card Multi-Phone UI Display
 
 - `src/features/students/StudentsPage.tsx`
-  Aday Listesi, filtreler, sağ drawer, görüşme akışı, kompakt/açılır-kapanır kısayol yardım barı ve call history UI render alanını içerir. Sprint 9.3D-1 itibarıyla call history `phone_context_label` / `phone_context_number` display alanlarını gösterir ve `Telefon seçilmedi` fallback'ini korur.
+  Aday Listesi, filtreler, sağ drawer, görüşme akışı, kompakt/açılır-kapanır kısayol yardım barı, call history UI ve sağ kişi kartı telefon alanını içerir. Sprint 9.3D-1 itibarıyla call history `phone_context_label` / `phone_context_number` display alanlarını gösterir. Sprint 9.3E-2 itibarıyla Telefon 1 / Telefon 2 aksiyonlu kartlarını korur, Telefon 3+ için readonly görünüm sunar, `+N numara daha göster` / `Daha az göster` interaction'ını yönetir ve `visible_phones` / `phones` / `hidden_phone_count` alanlarını tüketir.
 - `src/features/students/services/studentListReader.ts`
   Aday liste satırlarını okuma, filtreleme, Sınıf/Şube helper’ları ve `StudentListRow` read model üretimi. Legacy `phone_1` / `phone_2` / `phone_count` alanlarını korur; Sprint 9.3E-1 itibarıyla sağ kişi kartı çoklu telefon hazırlığı için `phones`, `visible_phones` ve `hidden_phone_count` alanlarını taşır.
 - `src/features/students/services/studentPhoneStatus.ts`
@@ -158,7 +158,7 @@ Son doğrulandı: Sprint 8.9
 
 ## 11. Tests
 
-Son doğrulandı: Sprint 9.3D-2 Reminder List Phone Context UI Display
+Son doğrulandı: Sprint 9.3E-2 Right Card Multi-Phone UI Display
 
 - `tests/exports/*`
   Detaylı export, özet export, export data reader ve Excel exporter davranışları.
@@ -174,6 +174,8 @@ Son doğrulandı: Sprint 9.3D-2 Reminder List Phone Context UI Display
   Aday Listesi alt kısayol yardım barının kompakt/açık görünümünü, Göster/Gizle davranışını ve localStorage toleransını test eder.
 - `tests/students/StudentsPageCallHistory.test.tsx`
   Call history UI'da phone context label/number görünürlüğünü ve no-context fallback davranışını test eder.
+- `tests/students/StudentsPageMultiPhone.test.tsx`
+  Sağ kişi kartında 5 telefonlu aday için Telefon 3+ readonly görünümü, expand/collapse davranışı, `hidden_phone_count` sıfır durumu, telefonsuz aday fallback'i ve Telefon 3+ için aksiyon butonu gösterilmemesini test eder.
 - `tests/reminders/*`
   Reminder alarm, dismissed store, popup view model ve reminder settings.
 - `tests/reminders/reminderPhoneContext.test.ts`
@@ -203,7 +205,7 @@ Son doğrulandı: Sprint 9.3D-2 Reminder List Phone Context UI Display
 
 ## 12. Docs / Prompts
 
-Son doğrulandı: Sprint 9.1
+Son doğrulandı: Sprint 9.3E-2 Right Card Multi-Phone UI Display
 
 - `docs/PROJECT_MEMORY.md`
   Codex için güncel kısa proje hafızası.
@@ -249,6 +251,8 @@ Son doğrulandı: Sprint 9.1
   Sprint 9.3D-2 Reminder List Phone Context UI Display kapanış dokümanı; Hatırlatmalar listesinde `Aranacak telefon` context-aware gösterimini, odaklı UI testini ve sonraki çoklu telefon roadmap kararını içerir.
 - `docs/CHECKPOINT_SPRINT_9_3E_1.md`
   Sprint 9.3E-1 Right Card Multi-Phone Read Model kapanış dokümanı; `StudentListRow` çoklu telefon read model alanlarını, ilk 3/kalan sayı davranışını, geriye dönük uyumluluğu ve kapsam dışı UI/import/export/backup kararlarını içerir.
+- `docs/CHECKPOINT_SPRINT_9_3E_2.md`
+  Sprint 9.3E-2 Right Card Multi-Phone UI Display kapanış dokümanı; sağ kişi kartında Telefon 3+ readonly görünümü, `+N numara daha göster` / `Daha az göster` davranışı, Telefon 1/2 aksiyonlarının korunması, test/build sonucu ve Telefon 3+ aksiyon/persistence kapsam dışı kararlarını içerir.
 - `docs/PILOT_RELEASE_CANDIDATE_REVIEW.md`
   Pilot kullanıma aday sürüm değerlendirmesi, test/build özeti, kapatılan pilot bulguları ve pilot başlatma kararı.
 - `docs/PILOT_V1_RELEASE_NOTES.md`
