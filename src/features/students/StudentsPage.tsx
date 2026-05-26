@@ -46,6 +46,7 @@ import {
   readStudentListRows,
   type StudentGroupFilterValue,
   type StudentListFilter,
+  type StudentListPhoneRow,
   type StudentListRow
 } from "./services/studentListReader";
 import { markPhoneAsContacted, markPhoneAsInvalid } from "./services/studentPhoneStatus";
@@ -273,8 +274,10 @@ type PhoneCardProps = {
   value?: string | null;
   isContacted: boolean;
   isWrong: boolean;
-  onContacted: (phoneId: number) => void;
-  onInvalid: (phoneId: number) => void;
+  isReadOnly?: boolean;
+  statusText?: string;
+  onContacted?: (phoneId: number) => void;
+  onInvalid?: (phoneId: number) => void;
 };
 
 type OperationToast = {
@@ -338,42 +341,81 @@ function createShortcutHelpGroups(items: ShortcutBarItem[]): Array<{ title: stri
   return otherItems.length > 0 ? [...groups, { title: "Diğer", items: otherItems }] : groups;
 }
 
-function PhoneCard({ label, phoneId, value, isContacted, isWrong, onContacted, onInvalid }: PhoneCardProps) {
+function PhoneCard({
+  label,
+  phoneId,
+  value,
+  isContacted,
+  isWrong,
+  isReadOnly = false,
+  statusText,
+  onContacted,
+  onInvalid
+}: PhoneCardProps) {
   return (
     <div className={`drawer-phone-card ${isContacted ? "contacted" : ""} ${isWrong ? "invalid" : ""}`}>
       <div>
         <span className="form-label">{label}</span>
         <strong>{value || "Telefon yok"}</strong>
         <small>
-          {isContacted ? "Son görüşülen / iletişim kurulan numara" : null}
-          {isWrong ? "Yanlış numara / kullanılmıyor" : null}
-          {!isContacted && !isWrong ? "Aktif numara" : null}
+          {statusText ? statusText : null}
+          {!statusText && isContacted ? "Son görüşülen / iletişim kurulan numara" : null}
+          {!statusText && isWrong ? "Yanlış numara / kullanılmıyor" : null}
+          {!statusText && !isContacted && !isWrong ? "Aktif numara" : null}
         </small>
       </div>
-      <div className="phone-actions">
-        <button
-          aria-label="Son görüşülen numara olarak işaretle"
-          className={isContacted ? "active" : ""}
-          disabled={!phoneId || isWrong}
-          onClick={() => phoneId && onContacted(phoneId)}
-          title="Son görüşülen / iletişim kurulan numara"
-          type="button"
-        >
-          <Check aria-hidden="true" size={14} />
-        </button>
-        <button
-          aria-label="Yanlış numara veya kullanılmıyor olarak işaretle"
-          className={isWrong ? "active invalid" : ""}
-          disabled={!phoneId}
-          onClick={() => phoneId && onInvalid(phoneId)}
-          title="Yanlış numara / kullanılmıyor"
-          type="button"
-        >
-          x
-        </button>
-      </div>
+      {!isReadOnly && onContacted && onInvalid ? (
+        <div className="phone-actions">
+          <button
+            aria-label="Son görüşülen numara olarak işaretle"
+            className={isContacted ? "active" : ""}
+            disabled={!phoneId || isWrong}
+            onClick={() => phoneId && onContacted(phoneId)}
+            title="Son görüşülen / iletişim kurulan numara"
+            type="button"
+          >
+            <Check aria-hidden="true" size={14} />
+          </button>
+          <button
+            aria-label="Yanlış numara veya kullanılmıyor olarak işaretle"
+            className={isWrong ? "active invalid" : ""}
+            disabled={!phoneId}
+            onClick={() => phoneId && onInvalid(phoneId)}
+            title="Yanlış numara / kullanılmıyor"
+            type="button"
+          >
+            x
+          </button>
+        </div>
+      ) : null}
     </div>
   );
+}
+
+function isLegacyDrawerPhone(row: StudentListRow, phone: StudentListPhoneRow): boolean {
+  return Boolean(
+    (phone.id != null && (phone.id === row.phone_1_id || phone.id === row.phone_2_id)) ||
+      phone.phone_number === row.phone_1 ||
+      phone.phone_number === row.phone_2
+  );
+}
+
+function getReadonlyDrawerPhones(row: StudentListRow, isExpanded: boolean): StudentListPhoneRow[] {
+  const sourcePhones = isExpanded ? row.phones : row.visible_phones;
+
+  return sourcePhones.filter((phone) => !isLegacyDrawerPhone(row, phone));
+}
+
+function getReadonlyPhoneStatusText(phone: StudentListPhoneRow): string {
+  if (phone.phone_status === "invalid" || phone.is_wrong || !phone.is_valid) {
+    return "Yanlış numara / kullanılmıyor";
+  }
+
+  if (phone.phone_status === "contacted") {
+    return "Son görüşülen / iletişim kurulan numara";
+  }
+
+  return "Aktif numara";
 }
 
 export function StudentsPage() {
@@ -393,6 +435,7 @@ export function StudentsPage() {
   const [studentGroupFilter, setStudentGroupFilter] = useState<StudentGroupFilterValue>(ALL_STUDENT_GROUPS_FILTER);
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
+  const [isExtraPhonesExpanded, setIsExtraPhonesExpanded] = useState(false);
   const [isStudentActionsOpen, setIsStudentActionsOpen] = useState(false);
   const [studentDeleteCandidate, setStudentDeleteCandidate] = useState<StudentListRow | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -479,6 +522,10 @@ export function StudentsPage() {
 
     return (rows ?? []).find((row) => row.student_id === selectedStudentId) ?? visibleRows[0] ?? null;
   }, [isDrawerOpen, rows, selectedStudentId, visibleRows]);
+  const readonlyDrawerPhones = useMemo(
+    () => (selectedRow ? getReadonlyDrawerPhones(selectedRow, isExtraPhonesExpanded) : []),
+    [isExtraPhonesExpanded, selectedRow]
+  );
   const callHistory = useLiveQuery(
     () => (selectedRow ? readCallHistoryForStudent(selectedRow.student_id) : Promise.resolve([])),
     [selectedRow?.student_id],
@@ -546,6 +593,7 @@ export function StudentsPage() {
     setNewNote("");
     setReminderDate(toDateInputValue(selectedRow.next_reminder_at));
     setReminderTime(toTimeInputValue(selectedRow.next_reminder_at));
+    setIsExtraPhonesExpanded(false);
   }, [selectedRow?.student_id]);
 
   useEffect(() => {
@@ -1390,6 +1438,28 @@ export function StudentsPage() {
                 onContacted={(phoneId) => void updatePhoneStatus("contacted", phoneId)}
                 onInvalid={(phoneId) => void updatePhoneStatus("invalid", phoneId)}
               />
+              {readonlyDrawerPhones.map((phone) => (
+                <PhoneCard
+                  key={phone.id ?? phone.normalized_phone_number}
+                  label={phone.display_label}
+                  phoneId={phone.id}
+                  value={phone.phone_number}
+                  isContacted={phone.phone_status === "contacted"}
+                  isWrong={phone.phone_status === "invalid" || phone.is_wrong || !phone.is_valid}
+                  isReadOnly
+                  statusText={getReadonlyPhoneStatusText(phone)}
+                />
+              ))}
+              {selectedRow.hidden_phone_count > 0 ? (
+                <Button
+                  aria-expanded={isExtraPhonesExpanded}
+                  onClick={() => setIsExtraPhonesExpanded((current) => !current)}
+                  type="button"
+                  variant="secondary"
+                >
+                  {isExtraPhonesExpanded ? "Daha az göster" : `+${selectedRow.hidden_phone_count} numara daha göster`}
+                </Button>
+              ) : null}
 
               <div>
                 <label className="form-label">Görüşme durumu</label>
