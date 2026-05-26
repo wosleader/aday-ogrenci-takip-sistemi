@@ -4,9 +4,10 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli commit: 0c40524 feat: collapse long import review lists
-- Sprint 9.3G-2 kod tarafı tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: 2e1bbff feat: add multi-phone import simulation
+- Sprint 9.3G-4 code tarafı tamamlandı ve pushlandı.
 - Bu docs closure tamamlanınca yeni docs commit beklenecek.
+- Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
 - Önceki Telefon 3+ call save selection commit: 121f175 feat: select extra phone for call save
 - Önceki right card multi-phone UI commit: 67812cb feat: show extra phones in right card
 - Önceki right card read model commit: 8043507 feat: add multi-phone read model for student cards
@@ -49,17 +50,21 @@ Temel alanlar:
 
 ## 4. Güncel Sprint Durumu
 
-Sprint 9.3G-2 — Import UI Progressive Disclosure tamamlandı.
+Sprint 9.3G-4 — Multi-Phone Import Mapping / Simulation code tarafı tamamlandı ve pushlandı.
 
 Özet:
 
-- Sprint 9.3G-2 ile Excel İçe Aktar ekranında Kolon Eşleştirme, Hatalar ve Uyarılar listeleri kademeli gösterime alındı.
-- Uzun kolon listelerinde öncelikli / `mapping_required` / manuel / auto-fixed / önemli kolonlar dar görünümde korunur.
-- Hatalar ve Uyarılar ilk 10 kayıtla sınırlı gösterilir; fazlası kullanıcı isteğiyle açılır.
-- Yeni dosya veya simülasyon temizleme durumlarında expanded state'ler resetlenir.
-- Import logic, mapping seçenekleri, column definitions, simulation, writer, schema/storage, global CSS, Telefon 3-10, AD/SOYAD, Anne/Baba ve Mahalle değiştirilmedi.
-- Test/build daha önce geçti: 42 test files / 229 tests.
-- Sprint kapanış dokümantasyonu `docs/CHECKPOINT_SPRINT_9_3G_2.md` dosyasındadır.
+- Sprint 9.3G-4 ile Telefon 3-10 mapping key'leri eklendi.
+- Column definitions Telefon 3 - Telefon 10 seçeneklerini ve `gsm3` / `gsm 3` / `telefon 3` / `tel 3` / `phone 3` alias pattern'lerini 10'a kadar destekler.
+- Import simulation artık çoklu telefonları `phones[]` array modelinde taşır.
+- `phone_1` / `phone_2` backward compatibility korundu.
+- Boş telefonlar `phones[]` içine alınmaz; aynı satırdaki duplicate telefonlar tekilleştirilir.
+- Invalid ama non-empty telefonlar `is_valid: false` metadata ile taşınır.
+- Duplicate warning kontrolü tüm `phones[]` alanlarını kapsayacak şekilde genişletildi.
+- `ImportPage.tsx`, `importWriter.ts`, schema/storage, export/report/backup, students/calls/reminders, Ad/Soyad, Anne/Baba ve Mahalle değişmedi.
+- Gerçek DB writer/persistence hâlâ Telefon 1/2 ile sınırlıdır; Telefon 3-10 writer ayrı sprinttir.
+- Test/build daha önce geçti: 42 test files / 235 tests.
+- Bu docs closure tamamlanınca `docs/CHECKPOINT_SPRINT_9_3G_4.md` resmi kapanış checkpoint'i olacaktır.
 
 ## 5. Çoklu Telefon Roadmap Durumu
 
@@ -75,11 +80,12 @@ Tamamlananlar:
 - Sprint 9.3E-2: Right card multi-phone UI display
 - Sprint 9.3F-1: Phone 3+ call save selection
 - Sprint 9.3G-2: Import UI progressive disclosure
+- Sprint 9.3G-4: Multi-phone import mapping/simulation
 
 Sıradaki muhtemel aşamalar:
 
-- Sprint 9.3G-2 docs-only commit/push doğrulaması
-- Çoklu telefon import mapping/simulation
+- Sprint 9.3G-4 docs-only commit/push
+- Obsidian update değerlendirmesi
 - Çoklu telefon import writer
 - AD/SOYAD + Anne/Baba + Mahalle data model discovery/implementation
 - Export/report/backup uyumu discovery
@@ -89,6 +95,9 @@ Sıradaki muhtemel aşamalar:
 
 Not:
 Büyük çoklu telefon roadmap'i ayrı kalır: Excel'den çoklu telefon import, sağ kişi kartında dinamik/aşamalı telefon gösterimi, `+N numara daha göster`, import/export ve backup/restore güvence işleri ayrı sprintlerde ele alınacaktır.
+
+Not:
+9.3G-4 ile Telefon 3-10 mapping/simulation vardır; gerçek DB writer/persistence yoktur. `importWriter.ts` hâlâ Telefon 1/2 yazar. Obsidian vault repo dışıdır; resmi kayıt repo docs dosyalarıdır.
 
 Not:
 Akıllı Operasyon Yardımcıları gelecekte park edilmiş fazdır. İlk yaklaşım dış AI değil; Telefon Kalitesi, Arama Öncelik, Hatırlatma Öneri, Veri Kalitesi ve Yönetici Özet gibi offline / rule-based / testable helper fikirleri olmalıdır. Dış AI/LLM ancak KVKK, gizlilik, offline-first ve maliyet discovery sonrasında ele alınır.
@@ -155,14 +164,14 @@ Bu projeye yeni başlayan AI önce şunları yapmalı:
 ## 10. Şu Anki En Güvenli Sonraki Adım
 
 Şu anki en güvenli sıradaki iş:
-Sprint 9.3G-2 docs-only commit/push.
+Sprint 9.3G-4 docs-only commit/push.
 
 Bunun ardından:
-Roadmap kararına göre çoklu telefon import mapping/simulation, çoklu telefon import writer veya AD/SOYAD + Anne/Baba + Mahalle data model discovery/implementation düşünülebilir. Export/report/backup uyumu discovery daha sonra ayrı ele alınmalıdır.
+Obsidian update değerlendirmesi yapılabilir. Sonraki teknik aday iş çoklu telefon import writer sprintidir; ardından AD/SOYAD + Anne/Baba + Mahalle data model discovery/implementation düşünülebilir. Export/report/backup uyumu discovery daha sonra ayrı ele alınmalıdır.
 
-Yeni kod işi başlatmadan önce Sprint 9.3G-2 docs-only kapanış commit/push edildiği doğrulanmalıdır.
+Yeni kod işi başlatmadan önce Sprint 9.3G-4 docs-only kapanış commit/push edildiği doğrulanmalıdır.
 
-Import UI progressive disclosure yapıldı. Telefon 3-10 import, AD/SOYAD, Anne/Baba ve Mahalle henüz yapılmadı. Telefon 3+ status aksiyonları da henüz yapılmadı. Bu konular ayrı discovery olmadan uygulanmamalıdır.
+Telefon 3-10 mapping/simulation yapıldı, ancak gerçek DB writer/persistence henüz yapılmadı. `importWriter.ts` hâlâ Telefon 1/2 yazar. AD/SOYAD, Anne/Baba ve Mahalle henüz yapılmadı. Telefon 3+ status aksiyonları da henüz yapılmadı. Bu konular ayrı discovery olmadan uygulanmamalıdır.
 
 ## 11. Kaynak Dosyalar
 
@@ -179,6 +188,7 @@ Import UI progressive disclosure yapıldı. Telefon 3-10 import, AD/SOYAD, Anne/
 - docs/CHECKPOINT_SPRINT_9_3E_2.md
 - docs/CHECKPOINT_SPRINT_9_3F_1.md
 - docs/CHECKPOINT_SPRINT_9_3G_2.md
+- docs/CHECKPOINT_SPRINT_9_3G_4.md
 - docs/MULTI_PHONE_ARCHITECTURE_PLAN.md
 - docs/PILOT_FINDINGS.md
 - .prompts/codex-start.md

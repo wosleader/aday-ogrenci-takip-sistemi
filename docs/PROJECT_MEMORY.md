@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Sprint 9.3G-2 Import UI Progressive Disclosure Kapanis | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Sprint 9.3G-4 Multi-Phone Import Mapping / Simulation Kapanis | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Sprint 9.3G-2 Import UI Progressive Disclosure
-- FILE_MAP: Sprint 9.3G-2 Import UI Progressive Disclosure
-- DECISIONS: Sprint 9.3G-2 Import UI Progressive Disclosure
-- Son sprint-close çalıştırıldı: Sprint 9.3G-2
+- PROJECT_MEMORY: Sprint 9.3G-4 Multi-Phone Import Mapping / Simulation
+- FILE_MAP: Sprint 9.3G-4 Multi-Phone Import Mapping / Simulation
+- DECISIONS: Sprint 9.3G-4 Multi-Phone Import Mapping / Simulation
+- Son sprint-close çalıştırıldı: Sprint 9.3G-4
 
 ## 1. Proje Amacı
 
@@ -172,7 +172,12 @@ Kısa özet:
 - Sprint 9.3G-2 son feature commit'i: `0c40524 feat: collapse long import review lists`.
 - Sprint 9.3G-2 test/build sonucu: `npm.cmd test` ve `npm.cmd run build` gecti; 42 test files / 229 tests basarilidir. Vite chunk size uyarisi build basarisizligi degildir.
 - Sprint 9.3G-2 ile Kolon Eslestirme uzun listeleri kademeli gosterilir; Hatalar ve Uyarilar ilk 10 kayitla sinirli gosterilir, fazlasi kullanici istegiyle acilir. Import logic, mapping, writer, simulation, schema/storage, global CSS, Telefon 3-10, AD/SOYAD, Anne/Baba ve Mahalle degistirilmedi.
-- Sprint 9.3B-2 persistence wiring katmanıdır; Sprint 9.3C read/display model katmanıdır; Sprint 9.3D-1 call history UI display katmanıdır; Sprint 9.3D-2 reminder list UI display katmanıdır; Sprint 9.3E-1 right card multi-phone read model katmanıdır; Sprint 9.3E-2 right card multi-phone UI display katmanıdır; Sprint 9.3F-1 Telefon 3+ call save selection katmanıdır; Sprint 9.3G-2 import UI progressive disclosure katmanidir. Detay için `docs/CHECKPOINT_SPRINT_9_3G_2.md` kullanılmalıdır.
+- Sprint 9.3G-4 kapsaminda Telefon 3-10 import mapping key'leri ve import simulation `phones[]` coklu telefon modeli hazirlandi.
+- Sprint 9.3G-4 son code commit'i: `2e1bbff feat: add multi-phone import simulation`.
+- Sprint 9.3G-4 test/build sonucu: `npm.cmd test` ve `npm.cmd run build` gecti; 42 test files / 235 tests basarilidir. Vite chunk size uyarisi build basarisizligi degildir.
+- Sprint 9.3G-4 ile `phone_1` / `phone_2` backward compatibility korunur; bos telefonlar `phones[]` icine alinmaz, ayni satirdaki duplicate telefonlar tekillestirilir, invalid non-empty telefonlar `is_valid: false` metadata ile tasinir ve duplicate warning kontrolu tum `phones[]` alanlarini kapsar.
+- Sprint 9.3G-4'te `importWriter.ts`, `ImportPage.tsx`, schema/storage, export/report/backup, students/calls/reminders, Ad/Soyad, Anne/Baba ve Mahalle degistirilmedi. Telefon 3-10 DB writer/persistence henuz yapilmadi.
+- Sprint 9.3B-2 persistence wiring katmanıdır; Sprint 9.3C read/display model katmanıdır; Sprint 9.3D-1 call history UI display katmanıdır; Sprint 9.3D-2 reminder list UI display katmanıdır; Sprint 9.3E-1 right card multi-phone read model katmanıdır; Sprint 9.3E-2 right card multi-phone UI display katmanıdır; Sprint 9.3F-1 Telefon 3+ call save selection katmanıdır; Sprint 9.3G-2 import UI progressive disclosure katmanidir; Sprint 9.3G-4 multi-phone import mapping/simulation katmanidir. Detay için `docs/CHECKPOINT_SPRINT_9_3G_4.md` kullanılmalıdır.
 - Yeni engelleyici sorun bildirilmezse sistem küçük ölçekli kontrollü kullanımda izlenmeye devam eder.
 - Pilot sırasında yeni sorun çıkarsa ayrı Pilot Feedback Fixes kapsamında ele alınacak.
 
@@ -201,12 +206,13 @@ Kısa özet:
 - Sprint 9.3E-2: Right Card Multi-Phone UI Display tamamlandı.
 - Sprint 9.3F-1: Phone 3+ Call Save Selection tamamlandı.
 - Sprint 9.3G-2: Import UI Progressive Disclosure tamamlandı.
+- Sprint 9.3G-4: Multi-Phone Import Mapping / Simulation tamamlandı.
 
 ## 13. Yol Haritası
 
 Güncel önerilen sıra:
 
-1. Çoklu telefon import mapping/simulation
+1. Sprint 9.3G-4 docs-only commit/push
 2. Çoklu telefon import writer
 3. AD/SOYAD + Anne/Baba + Mahalle data model discovery/implementation
 4. Export/report/backup uyumu discovery
@@ -255,6 +261,7 @@ Roadmap kararları:
 - Sprint 9.3F-1 kararı: Telefon 3+ yalnızca call save selection için bağlandı. Seçilen Telefon 3+ `contacted_phone_id` olarak call log kaydına gider; `callLogWriter` ve schema/storage değiştirilmedi. Telefon 3+ yanlış/kullanılmıyor ve son görüşülen status aksiyonları ayrı discovery gerektirir.
 - Excel çoklu telefon import ayrı discovery/implementation gerektirir.
 - Sprint 9.3G-2 kararı: Excel İçe Aktar ekranında progressive disclosure yapıldı. Kolon Eşleştirme, Hatalar ve Uyarılar listeleri uzun olduğunda kademeli gösterilir. Import engine, writer, simulation, mapping definitions, schema/storage, Telefon 3-10, AD/SOYAD, Anne/Baba ve Mahalle kapsam dışı bırakıldı.
+- Sprint 9.3G-4 kararı: Çoklu telefon import mapping/simulation uygulandı. Telefon 3-10 mapping key'leri ve simulation `phones[]` modeli hazırlandı; gerçek DB yazımı/import writer ayrı sprintte kalır. Writer sprinti yapılmadan Telefon 3-10 tam import edildi kabul edilmemelidir.
 - Akıllı Operasyon Yardımcıları gelecekte park edilmiş fazdır; ilk yaklaşım dış AI değil, offline/rule-based/testable helper olmalıdır. Mevcut 9.3G hattını dağıtmayacaktır.
 
 ## Bu Dosya Ne Zaman Güncellenmeli?
@@ -291,6 +298,7 @@ Roadmap kararları:
 - Right card multi-phone read model değişecekse: `docs/CHECKPOINT_SPRINT_9_3E_1.md`
 - Right card multi-phone UI display değişecekse: `docs/CHECKPOINT_SPRINT_9_3E_2.md`
 - Import UI progressive disclosure değişecekse: `docs/CHECKPOINT_SPRINT_9_3G_2.md`
+- Multi-phone import mapping/simulation değişecekse: `docs/CHECKPOINT_SPRINT_9_3G_4.md`
 - Çok eski sprint bağlamı gerekiyorsa ilgili eski checkpoint okunur; tüm checkpoint’ler gereksiz yere okutulmaz.
 
 ## 14. Güncel Çalışma Bilgisi
@@ -298,7 +306,7 @@ Roadmap kararları:
 Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 
 - Güncel branch: `sprint-9-2-multi-phone-architecture-plan`
-- Bu branch’in amacı: Çoklu telefon mimarisi ana hattında phone context persistence, read/display model, call history UI display, reminder list UI display, right card multi-phone read model, right card multi-phone readonly UI display, Telefon 3+ call save selection ve import UI progressive disclosure katmanlarını taşımak.
+- Bu branch’in amacı: Çoklu telefon mimarisi ana hattında phone context persistence, read/display model, call history UI display, reminder list UI display, right card multi-phone read model, right card multi-phone readonly UI display, Telefon 3+ call save selection, import UI progressive disclosure ve multi-phone import mapping/simulation katmanlarını taşımak.
 - Önceki çalışma branch’i: `sprint-9-3b-1-phone-context-model-helpers`
 - Güncel release candidate commit’i: `12062f0 docs: add sprint 9.1 checkpoint and update pilot findings`
 - Güncel Pilot v1.0 release candidate commit’i: `113b44b docs: add pilot release candidate review`
@@ -314,8 +322,9 @@ Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 - Son right card multi-phone UI commit’i: `67812cb feat: show extra phones in right card`
 - Son Telefon 3+ call save selection commit’i: `121f175 feat: select extra phone for call save`
 - Son import UI progressive disclosure commit’i: `0c40524 feat: collapse long import review lists`
+- Son multi-phone import simulation commit’i: `2e1bbff feat: add multi-phone import simulation`
 - Son bilinen dokümantasyon commit’i: `194cb07 docs: record pilot feedback UI polish findings`
-- Sonraki önerilen aşama: Çoklu telefon import mapping/simulation veya çoklu telefon import writer; ardından AD/SOYAD + Anne/Baba + Mahalle data model discovery/implementation ve Export/report/backup uyumu discovery.
+- Sonraki zorunlu aşama: Sprint 9.3G-4 docs-only commit/push. Sonraki teknik aday iş: Multi-Phone Import Writer ayrı sprinti; ardından AD/SOYAD + Anne/Baba + Mahalle data model discovery/implementation ve Export/report/backup uyumu discovery.
 
 ## 15. Codex Standart Başlangıç Talimatı
 
