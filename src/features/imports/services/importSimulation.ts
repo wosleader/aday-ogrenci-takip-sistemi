@@ -9,9 +9,11 @@ import type {
   DuplicatePhoneWarning,
   ImportEngineLog,
   ImportFieldKey,
+  ImportPhoneFieldKey,
   ImportSimulationOptions,
   ImportSimulationSummary,
   ParsedWorksheet,
+  SimulatedImportPhone,
   SimulatedImportRow
 } from "./types";
 
@@ -21,6 +23,19 @@ const DEFAULT_SIMULATION_OPTIONS: ImportSimulationOptions = {
   callStartTime: "10:00",
   callEndTime: "18:00"
 };
+
+const PHONE_IMPORT_FIELDS: ImportPhoneFieldKey[] = [
+  "phone_1",
+  "phone_2",
+  "phone_3",
+  "phone_4",
+  "phone_5",
+  "phone_6",
+  "phone_7",
+  "phone_8",
+  "phone_9",
+  "phone_10"
+];
 
 function stringifyCell(value: unknown): string {
   if (value == null) {
@@ -58,6 +73,18 @@ function createFieldIndex(matches: ColumnMatch[]): Map<ImportFieldKey, number> {
   return fieldIndex;
 }
 
+function createFieldMatchIndex(matches: ColumnMatch[]): Map<ImportFieldKey, ColumnMatch> {
+  const fieldMatchIndex = new Map<ImportFieldKey, ColumnMatch>();
+
+  for (const match of matches) {
+    if (match.target_field && !fieldMatchIndex.has(match.target_field)) {
+      fieldMatchIndex.set(match.target_field, match);
+    }
+  }
+
+  return fieldMatchIndex;
+}
+
 function getCell(row: unknown[], fieldIndex: Map<ImportFieldKey, number>, field: ImportFieldKey) {
   const index = fieldIndex.get(field);
   return index == null ? "" : row[index];
@@ -69,6 +96,48 @@ function getTextCell(
   field: ImportFieldKey
 ): string {
   return stringifyCell(getCell(row, fieldIndex, field));
+}
+
+function collectImportPhones(
+  row: unknown[],
+  fieldIndex: Map<ImportFieldKey, number>,
+  fieldMatchIndex: Map<ImportFieldKey, ColumnMatch>
+): SimulatedImportPhone[] {
+  const phones: SimulatedImportPhone[] = [];
+  const seenPhoneNumbers = new Set<string>();
+
+  PHONE_IMPORT_FIELDS.forEach((field, index) => {
+    const rawValue = getTextCell(row, fieldIndex, field);
+
+    if (!rawValue) {
+      return;
+    }
+
+    const normalizedPhone = normalizePhone(rawValue);
+
+    if (!normalizedPhone.normalized_phone_number || seenPhoneNumbers.has(normalizedPhone.normalized_phone_number)) {
+      return;
+    }
+
+    const match = fieldMatchIndex.get(field);
+    seenPhoneNumbers.add(normalizedPhone.normalized_phone_number);
+
+    phones.push({
+      field,
+      source_index: match?.source_index ?? -1,
+      source_header: match?.source_header ?? "",
+      source_column_letter: match?.source_column_letter ?? "",
+      raw_value: rawValue,
+      phone_number: normalizedPhone.phone_number,
+      normalized_phone_number: normalizedPhone.normalized_phone_number,
+      reference_label: getImportFieldLabel(field),
+      source_column: match?.source_header || getImportFieldLabel(field),
+      priority: index + 1,
+      is_valid: normalizedPhone.is_valid
+    });
+  });
+
+  return phones;
 }
 
 function collectDuplicatePhoneWarnings(
@@ -83,7 +152,10 @@ function collectDuplicatePhoneWarnings(
   >();
 
   for (const row of rows) {
-    const rowPhones = new Set([row.phone_1, row.phone_2].filter(Boolean) as string[]);
+    const rowPhones = new Set(
+      (row.phones.length ? row.phones.map((phone) => phone.normalized_phone_number) : [row.phone_1, row.phone_2])
+        .filter(Boolean) as string[]
+    );
 
     for (const phone of rowPhones) {
       const existing = phoneMap.get(phone) ?? {
@@ -113,6 +185,7 @@ export function simulateImport(
   const effectiveOptions = { ...DEFAULT_SIMULATION_OPTIONS, ...options };
   const { matches, logs } = matchColumns(worksheet.headers, effectiveOptions.manualMappings);
   const fieldIndex = createFieldIndex(matches);
+  const fieldMatchIndex = createFieldMatchIndex(matches);
   const simulationLogs: ImportEngineLog[] = [
     {
       severity: "info",
@@ -210,20 +283,21 @@ export function simulateImport(
     }
 
     const studentFullName = getTextCell(row, fieldIndex, "student_full_name");
+    const phones = collectImportPhones(row, fieldIndex, fieldMatchIndex);
     const primaryPhone = normalizePhone(getTextCell(row, fieldIndex, "phone_1"));
     const secondaryPhoneRaw = getTextCell(row, fieldIndex, "phone_2");
     const secondaryPhone = secondaryPhoneRaw ? normalizePhone(secondaryPhoneRaw) : undefined;
 
     if (!primaryPhone.normalized_phone_number) {
       emptyPhoneCount += 1;
-      if (secondaryPhone?.normalized_phone_number) {
+      if (phones.length > 0) {
         phone1EmptyWithAlternativeCount += 1;
         detailedLogs.push({
           row_number: rowNumber,
           column_name: "Telefon",
           field_name: "Telefon",
           severity: "info",
-          message: `Satır ${rowNumber}: Telefon 1 boş, ancak 2. Telefon dolu olduğu için kayıt içe aktarılabilir.`,
+          message: `Satır ${rowNumber}: Telefon 1 boş, ancak alternatif telefon dolu olduğu için kayıt içe aktarılabilir.`,
           suggested_action: "Telefon 1 zorunlu değilse işlem yapmanız gerekmez; isterseniz numarayı Telefon 1'e taşıyın.",
           auto_fixed: false
         });
@@ -292,6 +366,7 @@ export function simulateImport(
       guardian_full_name: getTextCell(row, fieldIndex, "guardian_full_name") || undefined,
       phone_1: primaryPhone.normalized_phone_number || undefined,
       phone_2: secondaryPhone?.normalized_phone_number || undefined,
+      phones,
       last_call_result: getTextCell(row, fieldIndex, "last_call_result") || undefined,
       should_call_again: shouldCallAgain,
       general_note: getTextCell(row, fieldIndex, "general_note") || undefined,

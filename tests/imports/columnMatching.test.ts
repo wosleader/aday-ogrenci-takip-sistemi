@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { COLUMN_DEFINITIONS } from "../../src/features/imports/services/columnDefinitions";
 import { matchColumns, normalizeColumnHeader } from "../../src/features/imports/services/columnMatching";
 
 describe("column matching", () => {
@@ -48,5 +49,31 @@ describe("column matching", () => {
 
     expect(matches[0].target_field).toBe("current_class");
     expect(matches[1].target_field).toBe("student_group");
+  });
+  it("includes Telefon 3-10 as import mapping definitions", () => {
+    const phoneFields = COLUMN_DEFINITIONS.filter((definition) => definition.field.startsWith("phone_")).map(
+      (definition) => definition.field
+    );
+
+    expect(phoneFields).toEqual([
+      "phone_1",
+      "phone_2",
+      "phone_3",
+      "phone_4",
+      "phone_5",
+      "phone_6",
+      "phone_7",
+      "phone_8",
+      "phone_9",
+      "phone_10"
+    ]);
+  });
+
+  it("matches multi-phone GSM and Telefon aliases", () => {
+    const { matches } = matchColumns(["GSM3", "GSM 4", "Telefon 10"]);
+
+    expect(matches[0].target_field).toBe("phone_3");
+    expect(matches[1].target_field).toBe("phone_4");
+    expect(matches[2].target_field).toBe("phone_10");
   });
 });

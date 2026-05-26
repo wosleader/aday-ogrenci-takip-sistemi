@@ -138,4 +138,75 @@ describe("simulateImport", () => {
       true
     );
   });
+  it("creates multi-phone simulation rows while keeping phone 1 and phone 2 compatibility", () => {
+    const summary = simulateImport(
+      worksheet(
+        ["Ad Soyad", "Telefon", "2. Telefon", "GSM3", "GSM 4", "Telefon 5"],
+        [["AyÅŸe YÄ±lmaz", "05320000001", "5320000002", "5320000003", "5320000004", "5320000005"]]
+      )
+    );
+
+    expect(summary.preview_rows[0].phone_1).toBe("05320000001");
+    expect(summary.preview_rows[0].phone_2).toBe("05320000002");
+    expect(summary.preview_rows[0].phones).toHaveLength(5);
+    expect(summary.preview_rows[0].phones.map((phone) => phone.reference_label)).toEqual([
+      "Telefon",
+      "2. Telefon",
+      "Telefon 3",
+      "Telefon 4",
+      "Telefon 5"
+    ]);
+    expect(summary.preview_rows[0].phones.map((phone) => phone.normalized_phone_number)).toEqual([
+      "05320000001",
+      "05320000002",
+      "05320000003",
+      "05320000004",
+      "05320000005"
+    ]);
+  });
+
+  it("skips empty phone cells and de-duplicates phones within the same row", () => {
+    const summary = simulateImport(
+      worksheet(
+        ["Ad Soyad", "Telefon", "2. Telefon", "GSM3", "GSM4"],
+        [["AyÅŸe YÄ±lmaz", "05321234567", "", "+90 532 123 45 67", "5320000004"]]
+      )
+    );
+
+    expect(summary.preview_rows[0].phones).toHaveLength(2);
+    expect(summary.preview_rows[0].phones.map((phone) => phone.normalized_phone_number)).toEqual([
+      "05321234567",
+      "05320000004"
+    ]);
+    expect(summary.duplicate_phone_warnings).toHaveLength(0);
+  });
+
+  it("keeps invalid non-empty phone values in simulation with validity metadata", () => {
+    const summary = simulateImport(
+      worksheet(["Ad Soyad", "Telefon", "GSM3"], [["AyÅŸe YÄ±lmaz", "5321234567", "12345"]])
+    );
+
+    expect(summary.preview_rows[0].phones).toHaveLength(2);
+    expect(summary.preview_rows[0].phones[1]).toMatchObject({
+      reference_label: "Telefon 3",
+      normalized_phone_number: "12345",
+      is_valid: false
+    });
+  });
+
+  it("detects duplicate phones across all simulated phone fields", () => {
+    const summary = simulateImport(
+      worksheet(
+        ["Ad Soyad", "Telefon", "GSM3"],
+        [
+          ["AyÅŸe YÄ±lmaz", "05320000001", "5321234567"],
+          ["Mehmet Kaya", "05320000002", "+90 532 123 45 67"]
+        ]
+      )
+    );
+
+    expect(summary.duplicate_phone_warnings).toHaveLength(1);
+    expect(summary.duplicate_phone_warnings[0].phone_number).toBe("05321234567");
+    expect(summary.duplicate_phone_warnings[0].row_numbers).toEqual([2, 3]);
+  });
 });

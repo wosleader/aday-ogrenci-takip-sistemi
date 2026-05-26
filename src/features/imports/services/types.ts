@@ -1,10 +1,21 @@
+export type ImportPhoneFieldKey =
+  | "phone_1"
+  | "phone_2"
+  | "phone_3"
+  | "phone_4"
+  | "phone_5"
+  | "phone_6"
+  | "phone_7"
+  | "phone_8"
+  | "phone_9"
+  | "phone_10";
+
 export type ImportFieldKey =
   | "current_class"
   | "student_group"
   | "student_full_name"
   | "guardian_full_name"
-  | "phone_1"
-  | "phone_2"
+  | ImportPhoneFieldKey
   | "last_call_result"
   | "should_call_again"
   | "general_note"
@@ -58,6 +69,21 @@ export type HeaderDetectionResult = {
   score: number;
 };
 
+export type SimulatedImportPhone = {
+  field: ImportPhoneFieldKey;
+  source_index: number;
+  source_header: string;
+  source_column_letter: string;
+  raw_value: string;
+  phone_number: string;
+  normalized_phone_number: string;
+  reference_label: string;
+  relation_label?: string;
+  source_column: string;
+  priority: number;
+  is_valid: boolean;
+};
+
 export type SimulatedImportRow = {
   row_number: number;
   current_class?: string;
@@ -66,6 +92,7 @@ export type SimulatedImportRow = {
   guardian_full_name?: string;
   phone_1?: string;
   phone_2?: string;
+  phones: SimulatedImportPhone[];
   last_call_result?: string;
   should_call_again: boolean;
   general_note?: string;
