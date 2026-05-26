@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.3E-2 Right Card Multi-Phone UI Display | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son güncelleme: Sprint 9.3F-1 Phone 3+ Call Save Selection | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -40,7 +40,8 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 - [Sprint 9.3E-1] Sağ kişi kartı 3+ telefon UI'dan önce read model hazırlığı yapılmıştır. `StudentListRow` artık `phones`, `visible_phones` ve `hidden_phone_count` alanlarını taşır; ilk görünüm için `visible_phones` 3 telefon içerir ve fazla telefon sayısı `hidden_phone_count` ile verilir. Yanlış/geçersiz telefonlar read model'den düşürülmez; UI sprintinde badge/display kararı verilir. `phone_1`, `phone_2` ve `phone_count` geriye dönük uyumluluk için korunur. UI'ya bağlama Sprint 9.3E-2'ye bırakılmıştır.
 - [Sprint 9.3E-1] Telefon 3+ seçiminin arama kaydıyla ilişkisi ayrı discovery gerektirir. Excel çoklu telefon import bu sprintin kapsamı değildir.
 - [Sprint 9.3E-2] Telefon 1 / Telefon 2 mevcut aksiyonlu kartlar olarak korunmuştur. Telefon 3+ bu sprintte readonly / görüntüleme-only gösterilmiştir. Telefon 3+ için aksiyon/persistence eklenmemiştir. `+N numara daha göster` / `Daha az göster` davranışı sağ kişi kartında kabul edilmiştir. CSS değişikliği yapılmadan mevcut yapı içinde dar UI geçişi tercih edilmiştir. Telefon 3+ seçim/call log/validation/shortcut ilişkisi ayrı discovery gerektirir. Excel çoklu telefon import ayrı discovery/implementation gerektirir.
-- [Roadmap] Akıllı Operasyon Yardımcıları gelecekte offline/rule-based/testable helper yaklaşımıyla değerlendirilebilir; Telefon Kalitesi, Arama Öncelik, Hatırlatma Öneri, Veri Kalitesi ve Yönetici Özet yardımcıları aday fikirlerdir. Dış AI/LLM ancak KVKK, gizlilik, offline-first ve maliyet discovery sonrasında ele alınır; mevcut 9.3E hattına dahil edilmez.
+- [Sprint 9.3F-1] Telefon 3+ için yalnızca call save selection eklendi. Telefon 3+ selected phone state üzerinden `contacted_phone_id` olarak call log kaydına bağlandı. `callLogWriter` değiştirilmedi; mevcut dynamic phone context altyapısı kullanıldı. Schema/storage migration yapılmadı. Telefon 3+ için yanlış/kullanılmıyor aksiyonu ve son görüşülen status aksiyonu eklenmedi. Shortcut sistemi değiştirilmedi; T/Y/X mevcut Telefon 1/2 davranışını korur. Validation mesajı Telefon 1/2'ye özel olmaktan çıkarılıp genel hale getirildi. Telefon 3+ status aksiyonları ayrı discovery gerektirir. Excel çoklu telefon import ayrı discovery/implementation gerektirir.
+- [Roadmap] Akıllı Operasyon Yardımcıları gelecekte offline/rule-based/testable helper yaklaşımıyla değerlendirilebilir; Telefon Kalitesi, Arama Öncelik, Hatırlatma Öneri, Veri Kalitesi ve Yönetici Özet yardımcıları aday fikirlerdir. Dış AI/LLM ancak KVKK, gizlilik, offline-first ve maliyet discovery sonrasında ele alınır; mevcut 9.3F hattına dahil edilmez.
 - [Roadmap] Kullanım kitapçığı pilot öncesi hazırlanacak.
 - [Roadmap] Manuel pilot kontrol checklist’i çalıştırılacak.
 - [Roadmap] Pilot sonrası bulgular ayrı Pilot Feedback Fixes kapsamında ele alınacak.

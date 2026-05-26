@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.3E-2 Right Card Multi-Phone UI Display | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son güncelleme: Sprint 9.3F-1 Phone 3+ Call Save Selection | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -32,10 +32,10 @@ Son doğrulandı: Sprint 8.2
 
 ## 3. Students / Candidate List
 
-Son doğrulandı: Sprint 9.3E-2 Right Card Multi-Phone UI Display
+Son doğrulandı: Sprint 9.3F-1 Phone 3+ Call Save Selection
 
 - `src/features/students/StudentsPage.tsx`
-  Aday Listesi, filtreler, sağ drawer, görüşme akışı, kompakt/açılır-kapanır kısayol yardım barı, call history UI ve sağ kişi kartı telefon alanını içerir. Sprint 9.3D-1 itibarıyla call history `phone_context_label` / `phone_context_number` display alanlarını gösterir. Sprint 9.3E-2 itibarıyla Telefon 1 / Telefon 2 aksiyonlu kartlarını korur, Telefon 3+ için readonly görünüm sunar, `+N numara daha göster` / `Daha az göster` interaction'ını yönetir ve `visible_phones` / `phones` / `hidden_phone_count` alanlarını tüketir.
+  Aday Listesi, filtreler, sağ drawer, görüşme akışı, kompakt/açılır-kapanır kısayol yardım barı, call history UI ve sağ kişi kartı telefon alanını içerir. Sprint 9.3D-1 itibarıyla call history `phone_context_label` / `phone_context_number` display alanlarını gösterir. Sprint 9.3E-2 itibarıyla Telefon 1 / Telefon 2 aksiyonlu kartlarını korur, Telefon 3+ için readonly görünüm sunar, `+N numara daha göster` / `Daha az göster` interaction'ını yönetir ve `visible_phones` / `phones` / `hidden_phone_count` alanlarını tüketir. Sprint 9.3F-1 itibarıyla Telefon 3+ için call save selection, selected call phone state, `saveCallAndGoNext` içinde `contacted_phone_id` hesaplaması ve legacy Telefon 1/2 fallback davranışını taşır.
 - `src/features/students/services/studentListReader.ts`
   Aday liste satırlarını okuma, filtreleme, Sınıf/Şube helper’ları ve `StudentListRow` read model üretimi. Legacy `phone_1` / `phone_2` / `phone_count` alanlarını korur; Sprint 9.3E-1 itibarıyla sağ kişi kartı çoklu telefon hazırlığı için `phones`, `visible_phones` ve `hidden_phone_count` alanlarını taşır.
 - `src/features/students/services/studentPhoneStatus.ts`
@@ -47,12 +47,12 @@ Son doğrulandı: Sprint 9.3E-2 Right Card Multi-Phone UI Display
 
 ## 4. Calls / Call Workflow
 
-Son doğrulandı: Sprint 9.3D-1 Call History Phone Context UI Display
+Son doğrulandı: Sprint 9.3F-1 Phone 3+ Call Save Selection
 
 - `src/features/calls/CallPage.tsx`
   Eski/yardımcı call route sayfası; ana operasyon Aday Listesi + sağ drawer üzerinden yürür.
 - `src/features/calls/services/callSaveValidation.ts`
-  Görüşme kaydetme validasyonları, uyarı ve onay mantığı.
+  Görüşme kaydetme validasyonları, uyarı ve onay mantığı. Sprint 9.3F-1 itibarıyla görüşülen telefon seçimi için Telefon 1/2'ye özel olmayan genel validation mesajını ve çoklu telefon listesiyle uyumlu seçim kontrolünü taşır.
 - `src/features/calls/services/callLogWriter.ts`
   `writeCallLog` transaction akışı; `call_logs`, student son durum, telefon güncellemeleri ve pending reminder create/update davranışını yönetir. Sprint 9.3B-2 itibarıyla call log ve pending reminder kayıtlarına `phone_id` / `phone_snapshot` persistence wiring yapar; legacy contacted phone alanlarını korur.
 - `src/features/calls/services/callLogPhoneContext.ts`
@@ -158,7 +158,7 @@ Son doğrulandı: Sprint 8.9
 
 ## 11. Tests
 
-Son doğrulandı: Sprint 9.3E-2 Right Card Multi-Phone UI Display
+Son doğrulandı: Sprint 9.3F-1 Phone 3+ Call Save Selection
 
 - `tests/exports/*`
   Detaylı export, özet export, export data reader ve Excel exporter davranışları.
@@ -176,6 +176,8 @@ Son doğrulandı: Sprint 9.3E-2 Right Card Multi-Phone UI Display
   Call history UI'da phone context label/number görünürlüğünü ve no-context fallback davranışını test eder.
 - `tests/students/StudentsPageMultiPhone.test.tsx`
   Sağ kişi kartında 5 telefonlu aday için Telefon 3+ readonly görünümü, expand/collapse davranışı, `hidden_phone_count` sıfır durumu, telefonsuz aday fallback'i ve Telefon 3+ için aksiyon butonu gösterilmemesini test eder.
+- `tests/students/StudentsPagePhoneSelection.test.tsx`
+  Telefon 3+ seçimini, seçili Telefon 3+'ün call log context'e gitmesini, seçili aday değişince selected phone state reset davranışını ve Telefon 3+ status aksiyonlarının olmamasını test eder.
 - `tests/reminders/*`
   Reminder alarm, dismissed store, popup view model ve reminder settings.
 - `tests/reminders/reminderPhoneContext.test.ts`
@@ -194,6 +196,8 @@ Son doğrulandı: Sprint 9.3E-2 Right Card Multi-Phone UI Display
   Excel okuma, kolon eşleştirme, import simülasyonu, duplicate guard, import writer, log export.
 - `tests/calls/*`
   Call writer, call history ve call save validation.
+- `tests/calls/callSaveValidation.test.ts`
+  Görüşme kaydetme validation davranışını, çoklu telefon için genel görüşülen telefon seçimi mesajını ve mevcut call result/reminder/appointment uyarılarını test eder.
 - `tests/calls/callHistoryReader.test.ts`
   Call history phone context snapshot, legacy fallback ve null context davranışını test eder.
 - `tests/calls/callLogWriter.test.ts`
@@ -205,7 +209,7 @@ Son doğrulandı: Sprint 9.3E-2 Right Card Multi-Phone UI Display
 
 ## 12. Docs / Prompts
 
-Son doğrulandı: Sprint 9.3E-2 Right Card Multi-Phone UI Display
+Son doğrulandı: Sprint 9.3F-1 Phone 3+ Call Save Selection
 
 - `docs/PROJECT_MEMORY.md`
   Codex için güncel kısa proje hafızası.
@@ -253,6 +257,8 @@ Son doğrulandı: Sprint 9.3E-2 Right Card Multi-Phone UI Display
   Sprint 9.3E-1 Right Card Multi-Phone Read Model kapanış dokümanı; `StudentListRow` çoklu telefon read model alanlarını, ilk 3/kalan sayı davranışını, geriye dönük uyumluluğu ve kapsam dışı UI/import/export/backup kararlarını içerir.
 - `docs/CHECKPOINT_SPRINT_9_3E_2.md`
   Sprint 9.3E-2 Right Card Multi-Phone UI Display kapanış dokümanı; sağ kişi kartında Telefon 3+ readonly görünümü, `+N numara daha göster` / `Daha az göster` davranışı, Telefon 1/2 aksiyonlarının korunması, test/build sonucu ve Telefon 3+ aksiyon/persistence kapsam dışı kararlarını içerir.
+- `docs/CHECKPOINT_SPRINT_9_3F_1.md`
+  Sprint 9.3F-1 Phone 3+ Call Save Selection kapanış checkpoint'i; Telefon 3+ call save selection, `selectedCallPhoneId`, `contacted_phone_id` hesaplaması, validation genel mesajı, test/build sonucu ve Telefon 3+ status aksiyonlarının kapsam dışı kaldığını içerir.
 - `docs/PILOT_RELEASE_CANDIDATE_REVIEW.md`
   Pilot kullanıma aday sürüm değerlendirmesi, test/build özeti, kapatılan pilot bulguları ve pilot başlatma kararı.
 - `docs/PILOT_V1_RELEASE_NOTES.md`

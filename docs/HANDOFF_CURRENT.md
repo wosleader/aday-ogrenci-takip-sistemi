@@ -4,9 +4,10 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli commit: 67812cb feat: show extra phones in right card
-- Sprint 9.3E-2 kod tarafı tamamlandı ve pushlandı.
+- Son güvenli commit: 121f175 feat: select extra phone for call save
+- Sprint 9.3F-1 kod tarafı tamamlandı ve pushlandı.
 - Bu docs closure tamamlanınca yeni docs commit beklenecek.
+- Önceki right card multi-phone UI commit: 67812cb feat: show extra phones in right card
 - Önceki right card read model commit: 8043507 feat: add multi-phone read model for student cards
 - Önceki docs commit: 53f8695 docs: add sprint 9.3e-1 checkpoint
 - Önceki governance commit: a9bc3c6 docs: add ai workflow governance
@@ -47,18 +48,18 @@ Temel alanlar:
 
 ## 4. Güncel Sprint Durumu
 
-Sprint 9.3E-2 — Right Card Multi-Phone UI Display tamamlandı.
+Sprint 9.3F-1 — Phone 3+ Call Save Selection tamamlandı.
 
 Özet:
 
-- Sprint 9.3E-2 ile sağ kişi kartında Telefon 3+ readonly / görüntüleme-only olarak görünür hale geldi.
-- Telefon 1 / Telefon 2 mevcut aksiyonlu kartlar olarak korundu.
-- `visible_phones`, `phones` ve `hidden_phone_count` alanları UI'da kullanıldı.
-- `+N numara daha göster` ve `Daha az göster` davranışı eklendi.
-- Aday değişince extra phone expanded state resetlenir.
-- Telefon 3+ için aksiyon/persistence, call save, `validateCallSave`, shortcut, CSS, reader/model, import/export ve backup/restore değişikliği yapılmadı.
-- Test/build daha önce geçti: 40 test files / 221 tests.
-- Sprint kapanış dokümantasyonu `docs/CHECKPOINT_SPRINT_9_3E_2.md` dosyasındadır.
+- Sprint 9.3F-1 ile Telefon 3+ artık görüşme kaydında kullanılacak telefon olarak seçilebilir.
+- Sağ kişi kartında Telefon 3+ için `Bu numarayla görüşüldü` seçimi eklendi.
+- Seçilen Telefon 3+ kaydetme sırasında `contacted_phone_id` olarak call log kaydına gider.
+- Mevcut `phone_snapshot` altyapısı kullanılır; `callLogWriter` değiştirilmedi.
+- Telefon 1 / Telefon 2 legacy davranışı, son görüşülen ve yanlış/kullanılmıyor aksiyonları korundu.
+- Telefon 3+ status aksiyonları, shortcut genişletmesi, CSS, reader/model, schema/storage, import/export ve backup/restore değişikliği yapılmadı.
+- Test/build daha önce geçti: 41 test files / 225 tests.
+- Sprint kapanış dokümantasyonu `docs/CHECKPOINT_SPRINT_9_3F_1.md` dosyasındadır.
 
 ## 5. Çoklu Telefon Roadmap Durumu
 
@@ -72,11 +73,12 @@ Tamamlananlar:
 - Sprint 9.3D-2: Reminder list UI phone context display
 - Sprint 9.3E-1: Right card multi-phone read model
 - Sprint 9.3E-2: Right card multi-phone UI display
+- Sprint 9.3F-1: Phone 3+ call save selection
 
 Sıradaki muhtemel aşamalar:
 
-- Sprint 9.3E-2 docs-only commit/push doğrulaması
-- Telefon 3+ seçim/call log ilişkisi discovery
+- Sprint 9.3F-1 docs-only commit/push doğrulaması
+- Telefon 3+ status aksiyonları discovery
 - Excel çoklu telefon import discovery
 - Export/report/backup uyumu discovery
 - Çoklu telefon import/export genişletmeleri
@@ -85,6 +87,9 @@ Sıradaki muhtemel aşamalar:
 
 Not:
 Büyük çoklu telefon roadmap'i ayrı kalır: Excel'den çoklu telefon import, sağ kişi kartında dinamik/aşamalı telefon gösterimi, `+N numara daha göster`, import/export ve backup/restore güvence işleri ayrı sprintlerde ele alınacaktır.
+
+Not:
+Akıllı Operasyon Yardımcıları gelecekte park edilmiş fazdır. İlk yaklaşım dış AI değil; Telefon Kalitesi, Arama Öncelik, Hatırlatma Öneri, Veri Kalitesi ve Yönetici Özet gibi offline / rule-based / testable helper fikirleri olmalıdır. Dış AI/LLM ancak KVKK, gizlilik, offline-first ve maliyet discovery sonrasında ele alınır.
 
 Not:
 Bu roadmap öneri seviyesindedir. Her yeni iş öncesi ayrı discovery/plan yapılmalıdır.
@@ -148,14 +153,14 @@ Bu projeye yeni başlayan AI önce şunları yapmalı:
 ## 10. Şu Anki En Güvenli Sonraki Adım
 
 Şu anki en güvenli sıradaki iş:
-Sprint 9.3E-2 docs-only commit/push.
+Sprint 9.3F-1 docs-only commit/push.
 
 Bunun ardından:
-Telefon 3+ seçim/call log ilişkisi discovery, Excel çoklu telefon import discovery ve Export/report/backup uyumu discovery ayrı ayrı düşünülebilir.
+Roadmap kararına göre Telefon 3+ status aksiyonları discovery veya Excel çoklu telefon import discovery düşünülebilir. Export/report/backup uyumu discovery daha sonra ayrı ele alınmalıdır.
 
-Yeni kod işi başlatmadan önce Sprint 9.3E-2 docs-only kapanış commit/push edildiği doğrulanmalıdır.
+Yeni kod işi başlatmadan önce Sprint 9.3F-1 docs-only kapanış commit/push edildiği doğrulanmalıdır.
 
-Telefon 3+ aksiyon/persistence henüz yapılmadı; bu konu ayrı discovery olmadan uygulanmamalıdır.
+Telefon 3+ call save selection yapıldı; status aksiyonları henüz yapılmadı. Excel çoklu telefon import henüz yapılmadı. Bu konular ayrı discovery olmadan uygulanmamalıdır.
 
 ## 11. Kaynak Dosyalar
 
@@ -170,6 +175,7 @@ Telefon 3+ aksiyon/persistence henüz yapılmadı; bu konu ayrı discovery olmad
 - docs/CHECKPOINT_SPRINT_9_3D_2.md
 - docs/CHECKPOINT_SPRINT_9_3E_1.md
 - docs/CHECKPOINT_SPRINT_9_3E_2.md
+- docs/CHECKPOINT_SPRINT_9_3F_1.md
 - docs/MULTI_PHONE_ARCHITECTURE_PLAN.md
 - docs/PILOT_FINDINGS.md
 - .prompts/codex-start.md
