@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.3D-2 Reminder List Phone Context UI Display Kapanış | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son güncelleme: Sprint 9.3E-1 Right Card Multi-Phone Read Model Kapanış | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: ✅ Sprint 9.3D-2 Reminder List Phone Context UI Display
-- FILE_MAP: ✅ Sprint 9.3D-2 Reminder List Phone Context UI Display
-- DECISIONS: ✅ Sprint 9.3D-2 Reminder List Phone Context UI Display
-- Son sprint-close çalıştırıldı: ✅ Sprint 9.3D-2
+- PROJECT_MEMORY: ✅ Sprint 9.3E-1 Right Card Multi-Phone Read Model
+- FILE_MAP: ✅ Sprint 9.3E-1 Right Card Multi-Phone Read Model
+- DECISIONS: ✅ Sprint 9.3E-1 Right Card Multi-Phone Read Model
+- Son sprint-close çalıştırıldı: ✅ Sprint 9.3E-1
 
 ## 1. Proje Amacı
 
@@ -157,7 +157,10 @@ Kısa özet:
 - Sprint 9.3D-2 kapsamında phone context bilgisi Hatırlatmalar listesindeki `Aranacak telefon` kolonunda gösterilir hale geldi.
 - Sprint 9.3D-2 son feature commit’i: `dba4cc6 feat: show phone context in reminders list`.
 - Sprint 9.3D-2 test/build sonucu: `npm.cmd test` ve `npm.cmd run build` geçti; 39 test files / 217 tests başarılıdır. Vite chunk size uyarısı build başarısızlığı değildir.
-- Sprint 9.3B-2 persistence wiring katmanıdır; Sprint 9.3C read/display model katmanıdır; Sprint 9.3D-1 call history UI display katmanıdır; Sprint 9.3D-2 reminder list UI display katmanıdır. Detay için `docs/CHECKPOINT_SPRINT_9_3D_2.md` kullanılmalıdır.
+- Sprint 9.3E-1 kapsamında sağ kişi kartı çoklu telefon UI öncesi `StudentListRow` read model'i hazırlandı.
+- Sprint 9.3E-1 son feature commit’i: `8043507 feat: add multi-phone read model for student cards`.
+- Sprint 9.3E-1 test/build sonucu: `npm.cmd test` ve `npm.cmd run build` geçti; 39 test files / 218 tests başarılıdır. Vite chunk size uyarısı build başarısızlığı değildir.
+- Sprint 9.3B-2 persistence wiring katmanıdır; Sprint 9.3C read/display model katmanıdır; Sprint 9.3D-1 call history UI display katmanıdır; Sprint 9.3D-2 reminder list UI display katmanıdır; Sprint 9.3E-1 right card multi-phone read model katmanıdır. Detay için `docs/CHECKPOINT_SPRINT_9_3E_1.md` kullanılmalıdır.
 - Yeni engelleyici sorun bildirilmezse sistem küçük ölçekli kontrollü kullanımda izlenmeye devam eder.
 - Pilot sırasında yeni sorun çıkarsa ayrı Pilot Feedback Fixes kapsamında ele alınacak.
 
@@ -182,12 +185,13 @@ Kısa özet:
 - Sprint 9.3C: Phone Context Display / Read Layer tamamlandı.
 - Sprint 9.3D-1: Call History Phone Context UI Display tamamlandı.
 - Sprint 9.3D-2: Reminder List Phone Context UI Display tamamlandı.
+- Sprint 9.3E-1: Right Card Multi-Phone Read Model tamamlandı.
 
 ## 13. Yol Haritası
 
 Güncel önerilen sıra:
 
-1. Çoklu telefon sağ kişi kartı UI discovery veya Excel çoklu telefon import discovery
+1. Sprint 9.3E-2 — Right card multi-phone UI display discovery/implementation
 2. Sprint 9.4 — Çoklu Telefon Import / Duplicate / Export
 3. Sprint 9.5 — Çoklu Telefon UI / Sağ Kişi Kartı
 4. Sprint 9.6 — Çoklu Telefon Responsive Polish
@@ -228,6 +232,10 @@ Roadmap kararları:
 - Sprint 9.3C kararı: Historical phone context display/read model katmanında `phone_snapshot` önceliklidir. Call history eski kayıtlar için legacy contacted phone fallback'i kullanır. Reminder list current phone lookup yapmaz; yalnızca `reminder.phone_snapshot` varsa context alanlarını doldurur. UI display, popup, alarm reader, import/export, backup/restore ve schema migration bu sprintte yapılmadı.
 - Sprint 9.3D-1 kararı: Phone context UI display önce düşük riskli call history alanında başlatıldı. Sağ kişi kartındaki iletişim geçmişi `phone_context_label` / `phone_context_number` alanlarını gösterir. Reminder list UI tablo/CSS/mobil riskleri nedeniyle ayrı sprintte ele alınacak. Büyük çoklu telefon sağ kişi kartı, Excel'den çoklu telefon import ve `+N numara daha göster` roadmap'te ayrı kalır.
 - Sprint 9.3D-2 kararı: Reminder list UI'da yeni kolon eklenmeden mevcut Telefon 1 kolonu operasyonel olarak `Aranacak telefon` haline getirildi. Context varsa `phone_context_label` / `phone_context_number` gösterilir; context yoksa `phone_1` fallback'i korunur. Telefon 2 kolonu, CSS, reader/model, popup/alarm, import/export, backup/restore ve schema migration kapsam dışı tutuldu.
+- Sprint 9.3E-1 kararı: Sağ kişi kartı 3+ telefon UI'dan önce `StudentListRow` read model hazırlığı yapıldı. `phones`, `visible_phones` ve `hidden_phone_count` alanları eklendi; ilk görünüm veri katmanında 3 telefon taşır. UI henüz bağlanmadı; Sprint 9.3E-2'ye bırakıldı.
+- Telefon 3+ seçiminin arama kaydıyla ilişkisi ayrı discovery gerektirir.
+- Excel çoklu telefon import ayrı discovery/implementation gerektirir.
+- Akıllı Operasyon Yardımcıları gelecekte park edilmiş fazdır; ilk yaklaşım dış AI değil, offline/rule-based/testable helper olmalıdır. Mevcut 9.3E hattını dağıtmayacaktır.
 
 ## Bu Dosya Ne Zaman Güncellenmeli?
 
@@ -260,6 +268,7 @@ Roadmap kararları:
 - Phone context read/display model değişecekse: `docs/CHECKPOINT_SPRINT_9_3C.md`
 - Call history phone context UI display değişecekse: `docs/CHECKPOINT_SPRINT_9_3D_1.md`
 - Reminder list phone context UI display değişecekse: `docs/CHECKPOINT_SPRINT_9_3D_2.md`
+- Right card multi-phone read model değişecekse: `docs/CHECKPOINT_SPRINT_9_3E_1.md`
 - Çok eski sprint bağlamı gerekiyorsa ilgili eski checkpoint okunur; tüm checkpoint’ler gereksiz yere okutulmaz.
 
 ## 14. Güncel Çalışma Bilgisi
@@ -267,7 +276,7 @@ Roadmap kararları:
 Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 
 - Güncel branch: `sprint-9-2-multi-phone-architecture-plan`
-- Bu branch’in amacı: Çoklu telefon mimarisi ana hattında phone context persistence, read/display model, call history UI display ve reminder list UI display katmanlarını taşımak.
+- Bu branch’in amacı: Çoklu telefon mimarisi ana hattında phone context persistence, read/display model, call history UI display, reminder list UI display ve right card multi-phone read model katmanlarını taşımak.
 - Önceki çalışma branch’i: `sprint-9-3b-1-phone-context-model-helpers`
 - Güncel release candidate commit’i: `12062f0 docs: add sprint 9.1 checkpoint and update pilot findings`
 - Güncel Pilot v1.0 release candidate commit’i: `113b44b docs: add pilot release candidate review`
@@ -279,8 +288,9 @@ Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 - Son phone context read model commit’i: `34d06bd feat: add phone context read models`
 - Son phone context UI commit’i: `23342b3 feat: show phone context in call history`
 - Son reminder list phone context UI commit’i: `dba4cc6 feat: show phone context in reminders list`
+- Son right card multi-phone read model commit’i: `8043507 feat: add multi-phone read model for student cards`
 - Son bilinen dokümantasyon commit’i: `194cb07 docs: record pilot feedback UI polish findings`
-- Sonraki önerilen aşama: Çoklu telefon sağ kişi kartı UI discovery veya Excel çoklu telefon import discovery.
+- Sonraki önerilen aşama: Sprint 9.3E-2 right card multi-phone UI display discovery/implementation; ardından Telefon 3+ seçim/call log ilişkisi discovery ve Excel çoklu telefon import discovery.
 
 ## 15. Codex Standart Başlangıç Talimatı
 

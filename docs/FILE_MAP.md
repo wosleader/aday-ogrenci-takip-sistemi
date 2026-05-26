@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.3D-2 Reminder List Phone Context UI Display | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son güncelleme: Sprint 9.3E-1 Right Card Multi-Phone Read Model | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -32,12 +32,12 @@ Son doğrulandı: Sprint 8.2
 
 ## 3. Students / Candidate List
 
-Son doğrulandı: Sprint 9.3D-1 Call History Phone Context UI Display
+Son doğrulandı: Sprint 9.3E-1 Right Card Multi-Phone Read Model
 
 - `src/features/students/StudentsPage.tsx`
   Aday Listesi, filtreler, sağ drawer, görüşme akışı, kompakt/açılır-kapanır kısayol yardım barı ve call history UI render alanını içerir. Sprint 9.3D-1 itibarıyla call history `phone_context_label` / `phone_context_number` display alanlarını gösterir ve `Telefon seçilmedi` fallback'ini korur.
 - `src/features/students/services/studentListReader.ts`
-  Aday liste satırlarını okuma, filtreleme, Sınıf/Şube helper’ları.
+  Aday liste satırlarını okuma, filtreleme, Sınıf/Şube helper’ları ve `StudentListRow` read model üretimi. Legacy `phone_1` / `phone_2` / `phone_count` alanlarını korur; Sprint 9.3E-1 itibarıyla sağ kişi kartı çoklu telefon hazırlığı için `phones`, `visible_phones` ve `hidden_phone_count` alanlarını taşır.
 - `src/features/students/services/studentPhoneStatus.ts`
   Telefon 1/2 son görüşülen ve yanlış numara durumları.
 - `src/features/students/services/phoneCompatibility.ts`
@@ -62,7 +62,7 @@ Son doğrulandı: Sprint 9.3D-1 Call History Phone Context UI Display
 
 ## 5. Reminders
 
-Son doğrulandı: Sprint 9.3D-2 Reminder List Phone Context UI Display
+Son doğrulandı: Sprint 9.3E-1 Right Card Multi-Phone Read Model
 
 - `src/features/reminders/RemindersPage.tsx`
   Reminder list UI render eder; Sprint 9.3D-2 itibarıyla `Aranacak telefon` kolonunda `phone_context_label` / `phone_context_number` gösterir, context yoksa `phone_1` fallback'ini korur ve Telefon 2 kolonunu aynen tutar.
@@ -166,6 +166,8 @@ Son doğrulandı: Sprint 9.3D-2 Reminder List Phone Context UI Display
   Veri yönetimi, backup/restore, SettingsPage UI davranışları ve restore uyarı/başarı bildirimleri.
 - `tests/students/*`
   Aday listesi okuma/filtreleme, Sınıf/Şube helper’ları, telefon status, aday silme.
+- `tests/students/studentListReader.test.ts`
+  Student list reader davranışlarını test eder; Sprint 9.3E-1 itibarıyla 5 telefonlu adayda `phones`, ilk 3 `visible_phones`, `hidden_phone_count`, yanlış/geçersiz telefonların listede kalması ve telefonsuz aday fallback davranışlarını doğrular.
 - `tests/students/phoneCompatibility.test.ts`
   Çoklu telefon core helper’larını, legacy Telefon 1/2 uyumluluğunu, Telefon N etiketlerini, relation label display metnini, phone snapshot üretimini ve helper düzeyi tekilleştirmeyi test eder.
 - `tests/students/StudentsPageShortcutHelp.test.tsx`
@@ -245,6 +247,8 @@ Son doğrulandı: Sprint 9.1
   Sprint 9.3D-1 Call History Phone Context UI Display kapanış dokümanı; sağ kişi kartındaki iletişim geçmişinde phone context gösterimini, odaklı UI testini ve sonraki reminder list UI kararını içerir.
 - `docs/CHECKPOINT_SPRINT_9_3D_2.md`
   Sprint 9.3D-2 Reminder List Phone Context UI Display kapanış dokümanı; Hatırlatmalar listesinde `Aranacak telefon` context-aware gösterimini, odaklı UI testini ve sonraki çoklu telefon roadmap kararını içerir.
+- `docs/CHECKPOINT_SPRINT_9_3E_1.md`
+  Sprint 9.3E-1 Right Card Multi-Phone Read Model kapanış dokümanı; `StudentListRow` çoklu telefon read model alanlarını, ilk 3/kalan sayı davranışını, geriye dönük uyumluluğu ve kapsam dışı UI/import/export/backup kararlarını içerir.
 - `docs/PILOT_RELEASE_CANDIDATE_REVIEW.md`
   Pilot kullanıma aday sürüm değerlendirmesi, test/build özeti, kapatılan pilot bulguları ve pilot başlatma kararı.
 - `docs/PILOT_V1_RELEASE_NOTES.md`

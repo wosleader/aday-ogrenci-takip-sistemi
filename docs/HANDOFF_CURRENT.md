@@ -4,8 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son commit: dba4cc6 feat: show phone context in reminders list
+- Son güvenli commit: 8043507 feat: add multi-phone read model for student cards
+- Sprint 9.3E-1 kod tarafı tamamlandı ve pushlandı.
+- Bu docs closure tamamlanınca yeni docs commit beklenecek.
 - Önceki governance commit: a9bc3c6 docs: add ai workflow governance
+- Önceki reminder UI commit: dba4cc6 feat: show phone context in reminders list
 - Önceki feature commit: 23342b3 feat: show phone context in call history
 - Önceki docs commit: 4ec3c61 docs: add sprint 9.3d-1 checkpoint
 - Önceki önemli merge: cc008a7 Merge pull request #6 from wosleader/sprint-9-3b-2-phone-context-persistence-wiring
@@ -42,16 +45,17 @@ Temel alanlar:
 
 ## 4. Güncel Sprint Durumu
 
-Sprint 9.3D-2 — Reminder List Phone Context UI Display tamamlandı.
+Sprint 9.3E-1 — Right Card Multi-Phone Read Model tamamlandı.
 
 Özet:
 
-- Sprint 9.3C ile üretilen reminder list `phone_context_label` / `phone_context_number` alanları Hatırlatmalar listesinde gösterilir hale geldi.
-- `Telefon 1` kolonu operasyonel dil açısından `Aranacak telefon` olarak değiştirildi.
-- Context varsa `Telefon 5 · Yakın: 0555 123 4567` formatı kullanılır; context yoksa mevcut `phone_1` fallback'i korunur.
-- `Telefon 2` kolonu, CSS, reader/model, popup/alarm, import/export ve backup/restore kapsam dışı bırakıldı.
-- Test/build daha önce geçti: 39 test files / 217 tests.
-- Sprint kapanış dokümantasyonu `docs/CHECKPOINT_SPRINT_9_3D_2.md` dosyasındadır.
+- Sprint 9.3E-1 ile sağ kişi kartı çoklu telefon UI öncesi `StudentListRow` read model'i hazırlandı.
+- `phones`, `visible_phones` ve `hidden_phone_count` alanları eklendi.
+- İlk görünüm veri katmanında 3 telefon taşır; fazla telefon sayısı `hidden_phone_count` ile verilir.
+- Legacy `phone_1`, `phone_2` ve `phone_count` alanları korundu.
+- UI, `StudentsPage.tsx`, CSS, import/export, backup/restore ve schema/storage kapsam dışı bırakıldı.
+- Test/build daha önce geçti: 39 test files / 218 tests.
+- Sprint kapanış dokümantasyonu `docs/CHECKPOINT_SPRINT_9_3E_1.md` dosyasındadır.
 
 ## 5. Çoklu Telefon Roadmap Durumu
 
@@ -63,10 +67,14 @@ Tamamlananlar:
 - Sprint 9.3C: Phone context read/display model layer
 - Sprint 9.3D-1: Call history UI phone context display
 - Sprint 9.3D-2: Reminder list UI phone context display
+- Sprint 9.3E-1: Right card multi-phone read model
 
 Sıradaki muhtemel aşamalar:
 
-- Çoklu telefon sağ kişi kartı UI discovery veya Excel çoklu telefon import discovery
+- Sprint 9.3E-1 docs-only commit/push doğrulaması
+- Sprint 9.3E-2 right card multi-phone UI display discovery/implementation
+- Telefon 3+ seçim/call log ilişkisi discovery
+- Excel çoklu telefon import discovery
 - Çoklu telefon import/export genişletmeleri
 - Backup/restore güvence turu
 - Mobile polish ve diğer pilot sonrası işler
@@ -136,10 +144,12 @@ Bu projeye yeni başlayan AI önce şunları yapmalı:
 ## 10. Şu Anki En Güvenli Sonraki Adım
 
 Şu anki en güvenli sıradaki iş:
-Çoklu telefon sağ kişi kartı UI discovery veya Excel çoklu telefon import discovery.
+Sprint 9.3E-1 docs-only commit/push.
 
 Bunun ardından:
-Çoklu telefon import/export genişletmeleri ve backup/restore güvence turu ayrı sprintlerde düşünülebilir.
+Sprint 9.3E-2 right card multi-phone UI display discovery/implementation, Telefon 3+ seçim/call log ilişkisi discovery ve Excel çoklu telefon import discovery ayrı ayrı düşünülebilir.
+
+Yeni kod işi başlatmadan önce Sprint 9.3E-1 docs-only kapanış commit/push edildiği doğrulanmalıdır.
 
 ## 11. Kaynak Dosyalar
 
@@ -152,6 +162,7 @@ Bunun ardından:
 - docs/CHECKPOINT_SPRINT_9_3C.md
 - docs/CHECKPOINT_SPRINT_9_3D_1.md
 - docs/CHECKPOINT_SPRINT_9_3D_2.md
+- docs/CHECKPOINT_SPRINT_9_3E_1.md
 - docs/MULTI_PHONE_ARCHITECTURE_PLAN.md
 - docs/PILOT_FINDINGS.md
 - .prompts/codex-start.md
