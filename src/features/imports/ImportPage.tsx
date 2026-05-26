@@ -20,10 +20,12 @@ import {
   groupLogsBySeverity,
   type PrivacyMode
 } from "./services/logExport";
-import type { ImportFieldKey, ImportSimulationSummary, ParsedWorksheet } from "./services/types";
+import type { ColumnMatch, ImportFieldKey, ImportSimulationSummary, ParsedWorksheet } from "./services/types";
 
 const STORAGE_KEY = "aday-takip:last-import-simulation";
-const MAX_VISIBLE_LOGS = 50;
+const INITIAL_VISIBLE_COLUMN_MATCHES = 10;
+const INITIAL_VISIBLE_IMPORT_LOGS = 10;
+const MAX_VISIBLE_INFO_LOGS = 50;
 
 type StoredSimulationState = {
   worksheet: ParsedWorksheet;
@@ -46,11 +48,23 @@ export function ImportPage() {
   const [duplicateWarning, setDuplicateWarning] = useState<DuplicateImportWarning | null>(null);
   const [duplicateOverrideAccepted, setDuplicateOverrideAccepted] = useState(false);
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
+  const [isColumnMappingExpanded, setIsColumnMappingExpanded] = useState(false);
+  const [isErrorsExpanded, setIsErrorsExpanded] = useState(false);
+  const [isWarningsExpanded, setIsWarningsExpanded] = useState(false);
 
   const columnMatches = useMemo(
     () => (worksheet ? matchColumns(worksheet.headers, manualMappings).matches : []),
     [manualMappings, worksheet]
   );
+  const collapsedColumnMatches = useMemo(
+    () => getInitialVisibleColumnMatches(columnMatches, manualMappings),
+    [columnMatches, manualMappings]
+  );
+  const visibleColumnMatches = useMemo(
+    () => (isColumnMappingExpanded ? columnMatches : collapsedColumnMatches),
+    [collapsedColumnMatches, columnMatches, isColumnMappingExpanded]
+  );
+  const hiddenColumnMatchCount = columnMatches.length - collapsedColumnMatches.length;
   const groupedLogs = useMemo(
     () => (summary ? groupLogsBySeverity([...summary.logs, ...summary.detailed_logs]) : null),
     [summary]
@@ -108,6 +122,12 @@ export function ImportPage() {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
   }
 
+  function resetProgressiveDisclosure() {
+    setIsColumnMappingExpanded(false);
+    setIsErrorsExpanded(false);
+    setIsWarningsExpanded(false);
+  }
+
   function applySimulation(
     nextWorksheet: ParsedWorksheet,
     nextManualMappings: Record<number, ImportFieldKey | "ignore" | ""> = manualMappings
@@ -121,6 +141,7 @@ export function ImportPage() {
     setImportResult(null);
     setDuplicateOverrideAccepted(false);
     setIsDuplicateModalOpen(false);
+    resetProgressiveDisclosure();
     persistSimulation({
       worksheet: nextWorksheet,
       summary: simulation,
@@ -145,6 +166,7 @@ export function ImportPage() {
     } catch (caughtError) {
       setWorksheet(null);
       setSummary(null);
+      resetProgressiveDisclosure();
       setError(caughtError instanceof Error ? caughtError.message : "Excel dosyası okunamadı.");
     }
   }
@@ -184,6 +206,7 @@ export function ImportPage() {
     setDuplicateWarning(null);
     setDuplicateOverrideAccepted(false);
     setIsDuplicateModalOpen(false);
+    resetProgressiveDisclosure();
   }
 
   function createFileSuffix() {
@@ -506,7 +529,7 @@ export function ImportPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {columnMatches.map((match) => (
+                  {visibleColumnMatches.map((match) => (
                     <tr key={match.source_index}>
                       <td>
                         {match.source_column_letter} ({match.source_column_number})
@@ -547,6 +570,19 @@ export function ImportPage() {
                 </tbody>
               </table>
             </div>
+            {hiddenColumnMatchCount > 0 ? (
+              <div className="toolbar">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setIsColumnMappingExpanded((current) => !current)}
+                >
+                  {isColumnMappingExpanded
+                    ? "Daha az göster"
+                    : `+${hiddenColumnMatchCount} kolon daha göster`}
+                </Button>
+              </div>
+            ) : null}
             <Button type="button" variant="secondary" onClick={rerunSimulationWithMappings}>
               Eşleştirmeyi Güncelle ve Tekrar Simüle Et
             </Button>
@@ -595,9 +631,21 @@ export function ImportPage() {
             </div>
             {groupedLogs ? (
               <>
-                <LogGroup title="Hatalar" logs={groupedLogs.error.slice(0, MAX_VISIBLE_LOGS)} />
-                <LogGroup title="Uyarılar" logs={groupedLogs.warning.slice(0, MAX_VISIBLE_LOGS)} />
-                <LogGroup title="Bilgiler" logs={groupedLogs.info.slice(0, MAX_VISIBLE_LOGS)} />
+                <CollapsibleLogGroup
+                  title="Hatalar"
+                  logs={groupedLogs.error}
+                  isExpanded={isErrorsExpanded}
+                  hiddenItemLabel="hata"
+                  onToggle={() => setIsErrorsExpanded((current) => !current)}
+                />
+                <CollapsibleLogGroup
+                  title="Uyarılar"
+                  logs={groupedLogs.warning}
+                  isExpanded={isWarningsExpanded}
+                  hiddenItemLabel="uyarı"
+                  onToggle={() => setIsWarningsExpanded((current) => !current)}
+                />
+                <LogGroup title={`Bilgiler (${groupedLogs.info.length})`} logs={groupedLogs.info.slice(0, MAX_VISIBLE_INFO_LOGS)} />
               </>
             ) : null}
             {summary.detailed_logs.length ? (
@@ -668,6 +716,58 @@ export function ImportPage() {
   );
 }
 
+function isPriorityColumnMatch(
+  match: ColumnMatch,
+  manualMappings: Record<number, ImportFieldKey | "ignore" | "">
+) {
+  const manualMapping = manualMappings[match.source_index];
+
+  return (
+    match.status === "mapping_required" ||
+    match.status === "manual" ||
+    match.status === "auto_fixed" ||
+    Boolean(manualMapping) ||
+    match.target_field === "student_full_name"
+  );
+}
+
+function getInitialVisibleColumnMatches(
+  matches: ColumnMatch[],
+  manualMappings: Record<number, ImportFieldKey | "ignore" | "">
+) {
+  if (matches.length <= INITIAL_VISIBLE_COLUMN_MATCHES) {
+    return matches;
+  }
+
+  const visibleIndexes = new Set<number>();
+
+  for (const match of matches) {
+    if (isPriorityColumnMatch(match, manualMappings)) {
+      visibleIndexes.add(match.source_index);
+    }
+  }
+
+  for (const match of matches) {
+    if (visibleIndexes.size >= INITIAL_VISIBLE_COLUMN_MATCHES) {
+      break;
+    }
+
+    if (match.status !== "ignored") {
+      visibleIndexes.add(match.source_index);
+    }
+  }
+
+  for (const match of matches) {
+    if (visibleIndexes.size >= INITIAL_VISIBLE_COLUMN_MATCHES) {
+      break;
+    }
+
+    visibleIndexes.add(match.source_index);
+  }
+
+  return matches.filter((match) => visibleIndexes.has(match.source_index));
+}
+
 function SummaryMetric({
   label,
   value,
@@ -703,6 +803,51 @@ function LogGroup({ title, logs }: { title: string; logs: ImportSimulationSummar
       ) : (
         <p>Bu grupta kayıt yok.</p>
       )}
+    </section>
+  );
+}
+
+function CollapsibleLogGroup({
+  title,
+  logs,
+  isExpanded,
+  hiddenItemLabel,
+  onToggle
+}: {
+  title: string;
+  logs: ImportSimulationSummary["logs"];
+  isExpanded: boolean;
+  hiddenItemLabel: string;
+  onToggle: () => void;
+}) {
+  const visibleLogs = isExpanded ? logs : logs.slice(0, INITIAL_VISIBLE_IMPORT_LOGS);
+  const collapsedHiddenLogCount = Math.max(logs.length - INITIAL_VISIBLE_IMPORT_LOGS, 0);
+
+  return (
+    <section className="log-group">
+      <h3>
+        {title} ({logs.length})
+      </h3>
+      {visibleLogs.length ? (
+        <ul className="log-list">
+          {visibleLogs.map((log, index) => (
+            <li key={`${title}-${log.message}-${index}`} data-severity={log.severity}>
+              <strong>{log.row_number ? `Satır ${log.row_number}: ` : ""}</strong>
+              {log.message}
+              {log.suggested_action ? <small>Önerilen işlem: {log.suggested_action}</small> : null}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>Bu grupta kayıt yok.</p>
+      )}
+      {collapsedHiddenLogCount > 0 ? (
+        <div className="toolbar">
+          <Button type="button" variant="secondary" onClick={onToggle}>
+            {isExpanded ? "Daha az göster" : `+${collapsedHiddenLogCount} ${hiddenItemLabel} daha göster`}
+          </Button>
+        </div>
+      ) : null}
     </section>
   );
 }
