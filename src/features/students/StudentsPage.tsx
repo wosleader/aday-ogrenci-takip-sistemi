@@ -276,8 +276,10 @@ type PhoneCardProps = {
   isWrong: boolean;
   isReadOnly?: boolean;
   statusText?: string;
+  isSelectedForCall?: boolean;
   onContacted?: (phoneId: number) => void;
   onInvalid?: (phoneId: number) => void;
+  onSelectForCall?: (phoneId: number) => void;
 };
 
 type OperationToast = {
@@ -349,8 +351,10 @@ function PhoneCard({
   isWrong,
   isReadOnly = false,
   statusText,
+  isSelectedForCall = false,
   onContacted,
-  onInvalid
+  onInvalid,
+  onSelectForCall
 }: PhoneCardProps) {
   return (
     <div className={`drawer-phone-card ${isContacted ? "contacted" : ""} ${isWrong ? "invalid" : ""}`}>
@@ -388,6 +392,17 @@ function PhoneCard({
           </button>
         </div>
       ) : null}
+      {isReadOnly && onSelectForCall ? (
+        <Button
+          aria-pressed={isSelectedForCall}
+          disabled={!phoneId || isWrong}
+          onClick={() => phoneId && onSelectForCall(phoneId)}
+          type="button"
+          variant="secondary"
+        >
+          {isSelectedForCall ? "Görüşmede kullanılacak" : "Bu numarayla görüşüldü"}
+        </Button>
+      ) : null}
     </div>
   );
 }
@@ -418,6 +433,41 @@ function getReadonlyPhoneStatusText(phone: StudentListPhoneRow): string {
   return "Aktif numara";
 }
 
+function getLegacyContactedPhoneId(row: StudentListRow): number | null {
+  if (row.phone_1_is_contacted) {
+    return row.phone_1_id ?? null;
+  }
+
+  if (row.phone_2_is_contacted) {
+    return row.phone_2_id ?? null;
+  }
+
+  return null;
+}
+
+function createCallSaveValidationPhones(row: StudentListRow) {
+  if (row.phones.length > 0) {
+    return row.phones.map((phone) => ({
+      id: phone.id,
+      phone_status: phone.phone_status,
+      is_wrong: phone.is_wrong || !phone.is_valid
+    }));
+  }
+
+  return [
+    {
+      id: row.phone_1_id,
+      phone_status: row.phone_1_status,
+      is_wrong: row.phone_1_is_wrong
+    },
+    {
+      id: row.phone_2_id,
+      phone_status: row.phone_2_status,
+      is_wrong: row.phone_2_is_wrong
+    }
+  ];
+}
+
 export function StudentsPage() {
   const navigate = useNavigate();
   const {
@@ -436,6 +486,7 @@ export function StudentsPage() {
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [isExtraPhonesExpanded, setIsExtraPhonesExpanded] = useState(false);
+  const [selectedCallPhoneId, setSelectedCallPhoneId] = useState<number | null>(null);
   const [isStudentActionsOpen, setIsStudentActionsOpen] = useState(false);
   const [studentDeleteCandidate, setStudentDeleteCandidate] = useState<StudentListRow | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -594,6 +645,7 @@ export function StudentsPage() {
     setReminderDate(toDateInputValue(selectedRow.next_reminder_at));
     setReminderTime(toTimeInputValue(selectedRow.next_reminder_at));
     setIsExtraPhonesExpanded(false);
+    setSelectedCallPhoneId(null);
   }, [selectedRow?.student_id]);
 
   useEffect(() => {
@@ -735,6 +787,7 @@ export function StudentsPage() {
       return;
     }
 
+    setSelectedCallPhoneId(null);
     void updatePhoneStatus("contacted", phoneId);
   }
 
@@ -856,11 +909,8 @@ export function StudentsPage() {
       return;
     }
 
-    const contactedPhoneId = selectedRow.phone_1_is_contacted
-      ? selectedRow.phone_1_id
-      : selectedRow.phone_2_is_contacted
-        ? selectedRow.phone_2_id
-        : null;
+    const legacyContactedPhoneId = getLegacyContactedPhoneId(selectedRow);
+    const contactedPhoneId = selectedCallPhoneId ?? legacyContactedPhoneId;
     const validation = validateCallSave({
       call_result: callResult,
       note: newNote,
@@ -869,18 +919,7 @@ export function StudentsPage() {
       contacted_phone_id: contactedPhoneId ?? null,
       allow_appointment_without_note: allowAppointmentWithoutNote,
       past_appointment_confirm_count: pastAppointmentConfirmCount,
-      phones: [
-        {
-          id: selectedRow.phone_1_id,
-          phone_status: selectedRow.phone_1_status,
-          is_wrong: selectedRow.phone_1_is_wrong
-        },
-        {
-          id: selectedRow.phone_2_id,
-          phone_status: selectedRow.phone_2_status,
-          is_wrong: selectedRow.phone_2_is_wrong
-        }
-      ]
+      phones: createCallSaveValidationPhones(selectedRow)
     });
 
     if (!validation.ok) {
@@ -918,6 +957,7 @@ export function StudentsPage() {
       });
 
       setNewNote("");
+      setSelectedCallPhoneId(null);
       setAllowAppointmentWithoutNote(false);
       setPastAppointmentConfirmCount(0);
 
@@ -1426,7 +1466,10 @@ export function StudentsPage() {
                 value={selectedRow.phone_1}
                 isContacted={selectedRow.phone_1_is_contacted}
                 isWrong={selectedRow.phone_1_is_wrong}
-                onContacted={(phoneId) => void updatePhoneStatus("contacted", phoneId)}
+                onContacted={(phoneId) => {
+                  setSelectedCallPhoneId(null);
+                  void updatePhoneStatus("contacted", phoneId);
+                }}
                 onInvalid={(phoneId) => void updatePhoneStatus("invalid", phoneId)}
               />
               <PhoneCard
@@ -1435,7 +1478,10 @@ export function StudentsPage() {
                 value={selectedRow.phone_2}
                 isContacted={selectedRow.phone_2_is_contacted}
                 isWrong={selectedRow.phone_2_is_wrong}
-                onContacted={(phoneId) => void updatePhoneStatus("contacted", phoneId)}
+                onContacted={(phoneId) => {
+                  setSelectedCallPhoneId(null);
+                  void updatePhoneStatus("contacted", phoneId);
+                }}
                 onInvalid={(phoneId) => void updatePhoneStatus("invalid", phoneId)}
               />
               {readonlyDrawerPhones.map((phone) => (
@@ -1447,6 +1493,8 @@ export function StudentsPage() {
                   isContacted={phone.phone_status === "contacted"}
                   isWrong={phone.phone_status === "invalid" || phone.is_wrong || !phone.is_valid}
                   isReadOnly
+                  isSelectedForCall={phone.id === selectedCallPhoneId}
+                  onSelectForCall={(phoneId) => setSelectedCallPhoneId(phoneId)}
                   statusText={getReadonlyPhoneStatusText(phone)}
                 />
               ))}

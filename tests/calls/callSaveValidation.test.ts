@@ -164,7 +164,7 @@ describe("callSaveValidation", () => {
     expect(validateCallSave({ call_result: "reached", phones: [phone1, phone2] })).toEqual({
       ok: false,
       severity: "error",
-      message: "Hangi numarayla görüşüldü? Lütfen Telefon 1 veya Telefon 2 için ✓ işaretleyin."
+      message: "Hangi numarayla görüşüldü? Lütfen görüşmede kullanılan telefonu seçin."
     });
   });
 
