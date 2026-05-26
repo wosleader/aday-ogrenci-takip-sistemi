@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.3F-1 Phone 3+ Call Save Selection | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Sprint 9.3G-2 Import UI Progressive Disclosure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -92,10 +92,10 @@ Son doğrulandı: Sprint 8.2
 
 ## 7. Import
 
-Son doğrulandı: Sprint 9.0
+Son doğrulandı: Sprint 9.3G-2 Import UI Progressive Disclosure
 
 - `src/features/imports/ImportPage.tsx`
-  İçe aktarma ekranı; kolon eşleştirme, simülasyon, duplicate kontrolü, import log ve pilot öncesi kullanıcı dostu metinleri içerir.
+  İçe aktarma ekranı; kolon eşleştirme, simülasyon, duplicate kontrolü, import log ve pilot öncesi kullanıcı dostu metinleri içerir. Sprint 9.3G-2 itibarıyla Kolon Eşleştirme, Hatalar ve Uyarılar listelerinde progressive disclosure local state'ini, `+N kolon/hata/uyarı daha göster` ve `Daha az göster` davranışlarını taşır.
 - `src/features/imports/services/excelReader.ts`
   Excel dosyası ve worksheet okuma.
 - `src/features/imports/services/columnDefinitions.ts`
@@ -158,7 +158,7 @@ Son doğrulandı: Sprint 8.9
 
 ## 11. Tests
 
-Son doğrulandı: Sprint 9.3F-1 Phone 3+ Call Save Selection
+Son doğrulandı: Sprint 9.3G-2 Import UI Progressive Disclosure
 
 - `tests/exports/*`
   Detaylı export, özet export, export data reader ve Excel exporter davranışları.
@@ -193,7 +193,9 @@ Son doğrulandı: Sprint 9.3F-1 Phone 3+ Call Save Selection
 - `tests/app/*`
   AppLayout, global arama, route değişiminde dropdown kapanma, üst bar ve bildirim çanı davranışları.
 - `tests/imports/*`
-  Excel okuma, kolon eşleştirme, import simülasyonu, duplicate guard, import writer, log export.
+  Excel okuma, kolon eşleştirme, import simülasyonu, duplicate guard, import writer, log export ve import UI progressive disclosure davranışları.
+- `tests/imports/ImportPageProgressiveDisclosure.test.tsx`
+  Uzun kolon listesi kademeli gösterimini, `mapping_required` / önemli kolonların dar görünümde kalmasını, hata listesi expand/collapse davranışını ve uyarı listesi expand/collapse davranışını test eder.
 - `tests/calls/*`
   Call writer, call history ve call save validation.
 - `tests/calls/callSaveValidation.test.ts`
@@ -209,7 +211,7 @@ Son doğrulandı: Sprint 9.3F-1 Phone 3+ Call Save Selection
 
 ## 12. Docs / Prompts
 
-Son doğrulandı: Sprint 9.3F-1 Phone 3+ Call Save Selection
+Son doğrulandı: Sprint 9.3G-2 Import UI Progressive Disclosure
 
 - `docs/PROJECT_MEMORY.md`
   Codex için güncel kısa proje hafızası.
@@ -259,6 +261,8 @@ Son doğrulandı: Sprint 9.3F-1 Phone 3+ Call Save Selection
   Sprint 9.3E-2 Right Card Multi-Phone UI Display kapanış dokümanı; sağ kişi kartında Telefon 3+ readonly görünümü, `+N numara daha göster` / `Daha az göster` davranışı, Telefon 1/2 aksiyonlarının korunması, test/build sonucu ve Telefon 3+ aksiyon/persistence kapsam dışı kararlarını içerir.
 - `docs/CHECKPOINT_SPRINT_9_3F_1.md`
   Sprint 9.3F-1 Phone 3+ Call Save Selection kapanış checkpoint'i; Telefon 3+ call save selection, `selectedCallPhoneId`, `contacted_phone_id` hesaplaması, validation genel mesajı, test/build sonucu ve Telefon 3+ status aksiyonlarının kapsam dışı kaldığını içerir.
+- `docs/CHECKPOINT_SPRINT_9_3G_2.md`
+  Sprint 9.3G-2 Import UI Progressive Disclosure kapanış checkpoint'i; Excel İçe Aktar ekranında kolon eşleştirme, hata ve uyarı listelerinin kademeli gösterimini, UI-only kapsamı, test/build sonucu ve import data-model işlerinin kapsam dışı kaldığını içerir.
 - `docs/PILOT_RELEASE_CANDIDATE_REVIEW.md`
   Pilot kullanıma aday sürüm değerlendirmesi, test/build özeti, kapatılan pilot bulguları ve pilot başlatma kararı.
 - `docs/PILOT_V1_RELEASE_NOTES.md`

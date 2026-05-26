@@ -1,4 +1,4 @@
-<!-- Son güncelleme: Sprint 9.3F-1 Phone 3+ Call Save Selection Kapanış | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Sprint 9.3G-2 Import UI Progressive Disclosure Kapanis | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: ✅ Sprint 9.3F-1 Phone 3+ Call Save Selection
-- FILE_MAP: ✅ Sprint 9.3F-1 Phone 3+ Call Save Selection
-- DECISIONS: ✅ Sprint 9.3F-1 Phone 3+ Call Save Selection
-- Son sprint-close çalıştırıldı: ✅ Sprint 9.3F-1
+- PROJECT_MEMORY: Sprint 9.3G-2 Import UI Progressive Disclosure
+- FILE_MAP: Sprint 9.3G-2 Import UI Progressive Disclosure
+- DECISIONS: Sprint 9.3G-2 Import UI Progressive Disclosure
+- Son sprint-close çalıştırıldı: Sprint 9.3G-2
 
 ## 1. Proje Amacı
 
@@ -168,7 +168,11 @@ Kısa özet:
 - Sprint 9.3F-1 test/build sonucu: `npm.cmd test` ve `npm.cmd run build` geçti; 41 test files / 225 tests başarılıdır. Vite chunk size uyarısı build başarısızlığı değildir.
 - Sprint 9.3F-1 ile sağ kişi kartında Telefon 3+ artık görüşmede kullanılan telefon olarak seçilebilir; seçilen Telefon 3+ `contacted_phone_id` olarak call log kaydına gider ve mevcut `phone_snapshot` altyapısı kullanılır. `callLogWriter`, schema/storage, reader/model, CSS, import/export/backup değiştirilmedi.
 - Telefon 1/2 legacy davranışı korundu; validation mesajı Telefon 1/2'ye özel olmaktan çıkarıldı. Telefon 3+ yanlış/kullanılmıyor ve son görüşülen status aksiyonları hâlâ kapsam dışıdır.
-- Sprint 9.3B-2 persistence wiring katmanıdır; Sprint 9.3C read/display model katmanıdır; Sprint 9.3D-1 call history UI display katmanıdır; Sprint 9.3D-2 reminder list UI display katmanıdır; Sprint 9.3E-1 right card multi-phone read model katmanıdır; Sprint 9.3E-2 right card multi-phone UI display katmanıdır; Sprint 9.3F-1 Telefon 3+ call save selection katmanıdır. Detay için `docs/CHECKPOINT_SPRINT_9_3F_1.md` kullanılmalıdır.
+- Sprint 9.3G-2 kapsaminda Excel Ice Aktar ekraninda progressive disclosure eklendi.
+- Sprint 9.3G-2 son feature commit'i: `0c40524 feat: collapse long import review lists`.
+- Sprint 9.3G-2 test/build sonucu: `npm.cmd test` ve `npm.cmd run build` gecti; 42 test files / 229 tests basarilidir. Vite chunk size uyarisi build basarisizligi degildir.
+- Sprint 9.3G-2 ile Kolon Eslestirme uzun listeleri kademeli gosterilir; Hatalar ve Uyarilar ilk 10 kayitla sinirli gosterilir, fazlasi kullanici istegiyle acilir. Import logic, mapping, writer, simulation, schema/storage, global CSS, Telefon 3-10, AD/SOYAD, Anne/Baba ve Mahalle degistirilmedi.
+- Sprint 9.3B-2 persistence wiring katmanıdır; Sprint 9.3C read/display model katmanıdır; Sprint 9.3D-1 call history UI display katmanıdır; Sprint 9.3D-2 reminder list UI display katmanıdır; Sprint 9.3E-1 right card multi-phone read model katmanıdır; Sprint 9.3E-2 right card multi-phone UI display katmanıdır; Sprint 9.3F-1 Telefon 3+ call save selection katmanıdır; Sprint 9.3G-2 import UI progressive disclosure katmanidir. Detay için `docs/CHECKPOINT_SPRINT_9_3G_2.md` kullanılmalıdır.
 - Yeni engelleyici sorun bildirilmezse sistem küçük ölçekli kontrollü kullanımda izlenmeye devam eder.
 - Pilot sırasında yeni sorun çıkarsa ayrı Pilot Feedback Fixes kapsamında ele alınacak.
 
@@ -196,27 +200,29 @@ Kısa özet:
 - Sprint 9.3E-1: Right Card Multi-Phone Read Model tamamlandı.
 - Sprint 9.3E-2: Right Card Multi-Phone UI Display tamamlandı.
 - Sprint 9.3F-1: Phone 3+ Call Save Selection tamamlandı.
+- Sprint 9.3G-2: Import UI Progressive Disclosure tamamlandı.
 
 ## 13. Yol Haritası
 
 Güncel önerilen sıra:
 
-1. Telefon 3+ status aksiyonları discovery
-2. Excel çoklu telefon import discovery
-3. Export/report/backup uyumu discovery
-4. Sprint 9.4 — Çoklu Telefon Import / Duplicate / Export
-5. Sprint 9.5 — Çoklu Telefon UI / Sağ Kişi Kartı
-6. Sprint 9.6 — Çoklu Telefon Responsive Polish
-7. Gerçek kullanım geri bildirimlerini toplamaya devam / gerekirse Pilot Feedback Fixes
-8. Reports Dashboard Polish
-9. Mobile Drawer Polish
-10. Mobile Table/Card View Polish
-11. Akıllı Yardımcılar
-12. Toplu silme / seçim modu
-13. Figma/Stitch operasyon listesi sadeleştirme
-14. Haftalık/aylık rapor veya rapor genişletmeleri
-15. Günlük rapor / mükerrerler ekranı genişletmeleri
-16. VDS/merkez/senkronizasyon
+1. Çoklu telefon import mapping/simulation
+2. Çoklu telefon import writer
+3. AD/SOYAD + Anne/Baba + Mahalle data model discovery/implementation
+4. Export/report/backup uyumu discovery
+5. Sprint 9.4 — Çoklu Telefon Import / Duplicate / Export
+6. Sprint 9.5 — Çoklu Telefon UI / Sağ Kişi Kartı
+7. Sprint 9.6 — Çoklu Telefon Responsive Polish
+8. Gerçek kullanım geri bildirimlerini toplamaya devam / gerekirse Pilot Feedback Fixes
+9. Reports Dashboard Polish
+10. Mobile Drawer Polish
+11. Mobile Table/Card View Polish
+12. Akıllı Yardımcılar
+13. Toplu silme / seçim modu
+14. Figma/Stitch operasyon listesi sadeleştirme
+15. Haftalık/aylık rapor veya rapor genişletmeleri
+16. Günlük rapor / mükerrerler ekranı genişletmeleri
+17. VDS/merkez/senkronizasyon
 
 Roadmap kararları:
 
@@ -248,7 +254,8 @@ Roadmap kararları:
 - Sprint 9.3E-2 kararı: Sağ kişi kartında Telefon 1 / Telefon 2 mevcut aksiyonlu kartlar olarak korundu; Telefon 3+ readonly / görüntüleme-only gösterildi. `visible_phones`, `phones` ve `hidden_phone_count` UI'da kullanıldı; `+N numara daha göster` / `Daha az göster` davranışı eklendi. Telefon 3+ aksiyon/persistence, call log seçimi, shortcut, validation, CSS, reader/model, import/export ve backup/restore kapsam dışı bırakıldı.
 - Sprint 9.3F-1 kararı: Telefon 3+ yalnızca call save selection için bağlandı. Seçilen Telefon 3+ `contacted_phone_id` olarak call log kaydına gider; `callLogWriter` ve schema/storage değiştirilmedi. Telefon 3+ yanlış/kullanılmıyor ve son görüşülen status aksiyonları ayrı discovery gerektirir.
 - Excel çoklu telefon import ayrı discovery/implementation gerektirir.
-- Akıllı Operasyon Yardımcıları gelecekte park edilmiş fazdır; ilk yaklaşım dış AI değil, offline/rule-based/testable helper olmalıdır. Mevcut 9.3F hattını dağıtmayacaktır.
+- Sprint 9.3G-2 kararı: Excel İçe Aktar ekranında progressive disclosure yapıldı. Kolon Eşleştirme, Hatalar ve Uyarılar listeleri uzun olduğunda kademeli gösterilir. Import engine, writer, simulation, mapping definitions, schema/storage, Telefon 3-10, AD/SOYAD, Anne/Baba ve Mahalle kapsam dışı bırakıldı.
+- Akıllı Operasyon Yardımcıları gelecekte park edilmiş fazdır; ilk yaklaşım dış AI değil, offline/rule-based/testable helper olmalıdır. Mevcut 9.3G hattını dağıtmayacaktır.
 
 ## Bu Dosya Ne Zaman Güncellenmeli?
 
@@ -283,6 +290,7 @@ Roadmap kararları:
 - Reminder list phone context UI display değişecekse: `docs/CHECKPOINT_SPRINT_9_3D_2.md`
 - Right card multi-phone read model değişecekse: `docs/CHECKPOINT_SPRINT_9_3E_1.md`
 - Right card multi-phone UI display değişecekse: `docs/CHECKPOINT_SPRINT_9_3E_2.md`
+- Import UI progressive disclosure değişecekse: `docs/CHECKPOINT_SPRINT_9_3G_2.md`
 - Çok eski sprint bağlamı gerekiyorsa ilgili eski checkpoint okunur; tüm checkpoint’ler gereksiz yere okutulmaz.
 
 ## 14. Güncel Çalışma Bilgisi
@@ -290,7 +298,7 @@ Roadmap kararları:
 Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 
 - Güncel branch: `sprint-9-2-multi-phone-architecture-plan`
-- Bu branch’in amacı: Çoklu telefon mimarisi ana hattında phone context persistence, read/display model, call history UI display, reminder list UI display, right card multi-phone read model, right card multi-phone readonly UI display ve Telefon 3+ call save selection katmanlarını taşımak.
+- Bu branch’in amacı: Çoklu telefon mimarisi ana hattında phone context persistence, read/display model, call history UI display, reminder list UI display, right card multi-phone read model, right card multi-phone readonly UI display, Telefon 3+ call save selection ve import UI progressive disclosure katmanlarını taşımak.
 - Önceki çalışma branch’i: `sprint-9-3b-1-phone-context-model-helpers`
 - Güncel release candidate commit’i: `12062f0 docs: add sprint 9.1 checkpoint and update pilot findings`
 - Güncel Pilot v1.0 release candidate commit’i: `113b44b docs: add pilot release candidate review`
@@ -305,8 +313,9 @@ Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 - Son right card multi-phone read model commit’i: `8043507 feat: add multi-phone read model for student cards`
 - Son right card multi-phone UI commit’i: `67812cb feat: show extra phones in right card`
 - Son Telefon 3+ call save selection commit’i: `121f175 feat: select extra phone for call save`
+- Son import UI progressive disclosure commit’i: `0c40524 feat: collapse long import review lists`
 - Son bilinen dokümantasyon commit’i: `194cb07 docs: record pilot feedback UI polish findings`
-- Sonraki önerilen aşama: Telefon 3+ status aksiyonları discovery veya Excel çoklu telefon import discovery; ardından Export/report/backup uyumu discovery.
+- Sonraki önerilen aşama: Çoklu telefon import mapping/simulation veya çoklu telefon import writer; ardından AD/SOYAD + Anne/Baba + Mahalle data model discovery/implementation ve Export/report/backup uyumu discovery.
 
 ## 15. Codex Standart Başlangıç Talimatı
 
