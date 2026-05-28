@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Sprint 9.3G-4 Multi-Phone Import Mapping / Simulation | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -92,7 +92,7 @@ Son doğrulandı: Sprint 8.2
 
 ## 7. Import
 
-Son doğrulandı: Sprint 9.3G-4 Multi-Phone Import Mapping / Simulation
+Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
 
 - `src/features/imports/ImportPage.tsx`
   İçe aktarma ekranı; kolon eşleştirme, simülasyon, duplicate kontrolü, import log ve pilot öncesi kullanıcı dostu metinleri içerir. Sprint 9.3G-2 itibarıyla Kolon Eşleştirme, Hatalar ve Uyarılar listelerinde progressive disclosure local state'ini, `+N kolon/hata/uyarı daha göster` ve `Daha az göster` davranışlarını taşır. Sprint 9.3G-4'te değişmedi; dropdown `COLUMN_DEFINITIONS` üzerinden beslendiği için Telefon 3-10 seçenekleri ImportPage değişmeden görünür.
@@ -105,7 +105,7 @@ Son doğrulandı: Sprint 9.3G-4 Multi-Phone Import Mapping / Simulation
 - `src/features/imports/services/importSimulation.ts`
   Import önizleme, uyarılar ve simülasyon özeti. Sprint 9.3G-4 itibarıyla `phones[]` üretimi, empty phone skip, row-level duplicate dedupe, invalid phone metadata ve duplicate warning kontrolünün tüm `phones[]` üzerinden çalışması davranışlarını taşır.
 - `src/features/imports/services/importWriter.ts`
-  Gerçek IndexedDB import transaction akışı. Sprint 9.3G-4'te değişmedi; gerçek DB yazımı hâlâ Telefon 1/2 ile sınırlıdır ve Telefon 3-10 writer ayrı sprinttir.
+  Gerçek IndexedDB import transaction akışı. Sprint 9.3G-5 itibarıyla `row.phones[]` tüketir, `phone_1` / `phone_2` fallback'ini korur, Telefon 1-10 `PhoneRecord` persistence yapar, `phone_label` / `reference_label` / `priority` / `source_column` / `original_phone_value` / `is_valid` metadata'sını taşır, invalid non-empty phone persistence kararını uygular, `search_text` içine tüm `row.phones[]` numaralarını ekler ve dedupe / empty skip / `is_primary` davranışını yönetir.
 - `src/features/imports/services/importDuplicateGuard.ts`
   Aynı dosya/sheet/fingerprint şüphesini yakalama.
 - `src/features/imports/services/logExport.ts`
@@ -158,7 +158,7 @@ Son doğrulandı: Sprint 8.9
 
 ## 11. Tests
 
-Son doğrulandı: Sprint 9.3G-4 Multi-Phone Import Mapping / Simulation
+Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
 
 - `tests/exports/*`
   Detaylı export, özet export, export data reader ve Excel exporter davranışları.
@@ -198,6 +198,8 @@ Son doğrulandı: Sprint 9.3G-4 Multi-Phone Import Mapping / Simulation
   Telefon 3-10 mapping key ve alias davranışlarını test eder; mevcut Telefon / 2. Telefon davranışının korunmasını doğrular.
 - `tests/imports/importSimulation.test.ts`
   `phones[]` simulation üretimini, `phone_1` / `phone_2` compatibility davranışını, boş telefonların atlanmasını, aynı satır duplicate tekilleştirmesini, invalid phone metadata davranışını ve duplicate warning kontrolünün tüm phone alanlarını kapsamasını test eder.
+- `tests/imports/importWriter.test.ts`
+  Telefon 3-10 writer/persistence, metadata persistence, duplicate/empty/invalid/search_text/rollback davranışları ve Telefon 1/2 backward compatibility testlerini içerir.
 - `tests/imports/ImportPageProgressiveDisclosure.test.tsx`
   Uzun kolon listesi kademeli gösterimini, `mapping_required` / önemli kolonların dar görünümde kalmasını, hata listesi expand/collapse davranışını ve uyarı listesi expand/collapse davranışını test eder.
 - `tests/calls/*`
@@ -215,7 +217,7 @@ Son doğrulandı: Sprint 9.3G-4 Multi-Phone Import Mapping / Simulation
 
 ## 12. Docs / Prompts
 
-Son doğrulandı: Sprint 9.3G-4 Multi-Phone Import Mapping / Simulation
+Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
 
 - `docs/PROJECT_MEMORY.md`
   Codex için güncel kısa proje hafızası.
@@ -269,6 +271,8 @@ Son doğrulandı: Sprint 9.3G-4 Multi-Phone Import Mapping / Simulation
   Sprint 9.3G-2 Import UI Progressive Disclosure kapanış checkpoint'i; Excel İçe Aktar ekranında kolon eşleştirme, hata ve uyarı listelerinin kademeli gösterimini, UI-only kapsamı, test/build sonucu ve import data-model işlerinin kapsam dışı kaldığını içerir.
 - `docs/CHECKPOINT_SPRINT_9_3G_4.md`
   Sprint 9.3G-4 Multi-Phone Import Mapping / Simulation kapanış checkpoint'i; Telefon 3-10 mapping key'lerini, `phones[]` simulation modelini, `phone_1` / `phone_2` compatibility kararını ve import writer/persistence kapsam dışı notunu içerir.
+- `docs/CHECKPOINT_SPRINT_9_3G_5.md`
+  Sprint 9.3G-5 Multi-Phone Import Writer / Persistence kapanış checkpoint'i; Telefon 3-10 gerçek DB writer/persistence davranışını, metadata/search_text/invalid/dedupe/primary kararlarını, test/build sonucunu ve export/report/backup kapsam dışı notunu içerir.
 - `docs/PILOT_RELEASE_CANDIDATE_REVIEW.md`
   Pilot kullanıma aday sürüm değerlendirmesi, test/build özeti, kapatılan pilot bulguları ve pilot başlatma kararı.
 - `docs/PILOT_V1_RELEASE_NOTES.md`

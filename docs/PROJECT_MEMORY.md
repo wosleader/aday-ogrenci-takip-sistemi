@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Sprint 9.3G-4 Multi-Phone Import Mapping / Simulation Kapanis | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence Kapanis | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Sprint 9.3G-4 Multi-Phone Import Mapping / Simulation
-- FILE_MAP: Sprint 9.3G-4 Multi-Phone Import Mapping / Simulation
-- DECISIONS: Sprint 9.3G-4 Multi-Phone Import Mapping / Simulation
-- Son sprint-close çalıştırıldı: Sprint 9.3G-4
+- PROJECT_MEMORY: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
+- FILE_MAP: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
+- DECISIONS: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
+- Son sprint-close çalıştırıldı: Sprint 9.3G-5
 
 ## 1. Proje Amacı
 
@@ -177,7 +177,14 @@ Kısa özet:
 - Sprint 9.3G-4 test/build sonucu: `npm.cmd test` ve `npm.cmd run build` gecti; 42 test files / 235 tests basarilidir. Vite chunk size uyarisi build basarisizligi degildir.
 - Sprint 9.3G-4 ile `phone_1` / `phone_2` backward compatibility korunur; bos telefonlar `phones[]` icine alinmaz, ayni satirdaki duplicate telefonlar tekillestirilir, invalid non-empty telefonlar `is_valid: false` metadata ile tasinir ve duplicate warning kontrolu tum `phones[]` alanlarini kapsar.
 - Sprint 9.3G-4'te `importWriter.ts`, `ImportPage.tsx`, schema/storage, export/report/backup, students/calls/reminders, Ad/Soyad, Anne/Baba ve Mahalle degistirilmedi. Telefon 3-10 DB writer/persistence henuz yapilmadi.
-- Sprint 9.3B-2 persistence wiring katmanıdır; Sprint 9.3C read/display model katmanıdır; Sprint 9.3D-1 call history UI display katmanıdır; Sprint 9.3D-2 reminder list UI display katmanıdır; Sprint 9.3E-1 right card multi-phone read model katmanıdır; Sprint 9.3E-2 right card multi-phone UI display katmanıdır; Sprint 9.3F-1 Telefon 3+ call save selection katmanıdır; Sprint 9.3G-2 import UI progressive disclosure katmanidir; Sprint 9.3G-4 multi-phone import mapping/simulation katmanidir. Detay için `docs/CHECKPOINT_SPRINT_9_3G_4.md` kullanılmalıdır.
+- Sprint 9.3G-5 code tarafı tamamlandı ve pushlandı.
+- Sprint 9.3G-5 son code commit'i: `34ec8d5 feat: persist multi-phone import records`.
+- Sprint 9.3G-5 test/build sonucu: `npm.cmd test` ve `npm.cmd run build` geçti; 42 test files / 240 tests başarılıdır. Vite chunk size uyarısı build başarısızlığı değildir.
+- Sprint 9.3G-5 ile Telefon 3-10 gerçek import writer/persistence tamamlandı; `importWriter.ts` artık `row.phones[]` üzerinden Telefon 1-10 phone records yazar.
+- `phone_1` / `phone_2` fallback ve backward compatibility korunur. `phone_label`, `reference_label`, `priority`, `source_column`, `original_phone_value` ve `is_valid` metadata'sı korunur.
+- Invalid non-empty phones DB'ye `is_valid: false` ve `is_wrong: false` olarak yazılır. `search_text` tüm `row.phones[]` `normalized_phone_number` değerlerini içerir; sadece Telefon 3+ numarası olan öğrenci telefon aramasıyla bulunabilir.
+- Sprint 9.3G-5'te `ImportPage`, `importSimulation`, `types`, `columnDefinitions`, schema/storage, export/report/backup, Ad/Soyad, Anne/Baba ve Mahalle değiştirilmedi.
+- Sprint 9.3B-2 persistence wiring katmanıdır; Sprint 9.3C read/display model katmanıdır; Sprint 9.3D-1 call history UI display katmanıdır; Sprint 9.3D-2 reminder list UI display katmanıdır; Sprint 9.3E-1 right card multi-phone read model katmanıdır; Sprint 9.3E-2 right card multi-phone UI display katmanıdır; Sprint 9.3F-1 Telefon 3+ call save selection katmanıdır; Sprint 9.3G-2 import UI progressive disclosure katmanidir; Sprint 9.3G-4 multi-phone import mapping/simulation katmanidir; Sprint 9.3G-5 multi-phone import writer/persistence katmanıdır. Detay için `docs/CHECKPOINT_SPRINT_9_3G_5.md` kullanılmalıdır.
 - Yeni engelleyici sorun bildirilmezse sistem küçük ölçekli kontrollü kullanımda izlenmeye devam eder.
 - Pilot sırasında yeni sorun çıkarsa ayrı Pilot Feedback Fixes kapsamında ele alınacak.
 
@@ -207,28 +214,31 @@ Kısa özet:
 - Sprint 9.3F-1: Phone 3+ Call Save Selection tamamlandı.
 - Sprint 9.3G-2: Import UI Progressive Disclosure tamamlandı.
 - Sprint 9.3G-4: Multi-Phone Import Mapping / Simulation tamamlandı.
+- Sprint 9.3G-5: Multi-Phone Import Writer / Persistence tamamlandı.
 
 ## 13. Yol Haritası
 
 Güncel önerilen sıra:
 
-1. Sprint 9.3G-4 docs-only commit/push
-2. Çoklu telefon import writer
-3. AD/SOYAD + Anne/Baba + Mahalle data model discovery/implementation
-4. Export/report/backup uyumu discovery
-5. Sprint 9.4 — Çoklu Telefon Import / Duplicate / Export
-6. Sprint 9.5 — Çoklu Telefon UI / Sağ Kişi Kartı
-7. Sprint 9.6 — Çoklu Telefon Responsive Polish
-8. Gerçek kullanım geri bildirimlerini toplamaya devam / gerekirse Pilot Feedback Fixes
-9. Reports Dashboard Polish
-10. Mobile Drawer Polish
-11. Mobile Table/Card View Polish
-12. Akıllı Yardımcılar
-13. Toplu silme / seçim modu
-14. Figma/Stitch operasyon listesi sadeleştirme
-15. Haftalık/aylık rapor veya rapor genişletmeleri
-16. Günlük rapor / mükerrerler ekranı genişletmeleri
-17. VDS/merkez/senkronizasyon
+1. Sprint 9.3G-5 docs-only commit/push
+2. Obsidian/Graphify update değerlendirmesi
+3. Localhost manuel QA / dar pilot readiness kontrolü
+4. Dar pilot öncesi kırıcı bug/risk değerlendirmesi
+5. Dar pilot sonrası AD/SOYAD + Anne/Baba + Mahalle data model discovery/implementation
+6. Export/report/backup uyumu discovery
+7. Sprint 9.4 — Çoklu Telefon Import / Duplicate / Export
+8. Sprint 9.5 — Çoklu Telefon UI / Sağ Kişi Kartı
+9. Sprint 9.6 — Çoklu Telefon Responsive Polish
+10. Gerçek kullanım geri bildirimlerini toplamaya devam / gerekirse Pilot Feedback Fixes
+11. Reports Dashboard Polish
+12. Mobile Drawer Polish
+13. Mobile Table/Card View Polish
+14. Akıllı Yardımcılar
+15. Toplu silme / seçim modu
+16. Figma/Stitch operasyon listesi sadeleştirme
+17. Haftalık/aylık rapor veya rapor genişletmeleri
+18. Günlük rapor / mükerrerler ekranı genişletmeleri
+19. VDS/merkez/senkronizasyon
 
 Roadmap kararları:
 
@@ -262,6 +272,7 @@ Roadmap kararları:
 - Excel çoklu telefon import ayrı discovery/implementation gerektirir.
 - Sprint 9.3G-2 kararı: Excel İçe Aktar ekranında progressive disclosure yapıldı. Kolon Eşleştirme, Hatalar ve Uyarılar listeleri uzun olduğunda kademeli gösterilir. Import engine, writer, simulation, mapping definitions, schema/storage, Telefon 3-10, AD/SOYAD, Anne/Baba ve Mahalle kapsam dışı bırakıldı.
 - Sprint 9.3G-4 kararı: Çoklu telefon import mapping/simulation uygulandı. Telefon 3-10 mapping key'leri ve simulation `phones[]` modeli hazırlandı; gerçek DB yazımı/import writer ayrı sprintte kalır. Writer sprinti yapılmadan Telefon 3-10 tam import edildi kabul edilmemelidir.
+- Sprint 9.3G-5 kararı: Çoklu telefon import writer/persistence uygulandı. Writer `row.phones[]` varsa Telefon 1-10 phone records yazar; yoksa `phone_1` / `phone_2` fallback korunur. Schema/storage/version, export/report/backup, Ad/Soyad, Anne/Baba ve Mahalle kapsam dışıdır. Dar pilot eşiği için Telefon 3-10 import hattı mapping/simulation + writer/persistence olarak tamamlanmış kabul edilebilir; pilot readiness için manual QA ve kırıcı risk kontrolü ayrıca yapılmalıdır.
 - Akıllı Operasyon Yardımcıları gelecekte park edilmiş fazdır; ilk yaklaşım dış AI değil, offline/rule-based/testable helper olmalıdır. Mevcut 9.3G hattını dağıtmayacaktır.
 
 ## Bu Dosya Ne Zaman Güncellenmeli?
@@ -299,6 +310,7 @@ Roadmap kararları:
 - Right card multi-phone UI display değişecekse: `docs/CHECKPOINT_SPRINT_9_3E_2.md`
 - Import UI progressive disclosure değişecekse: `docs/CHECKPOINT_SPRINT_9_3G_2.md`
 - Multi-phone import mapping/simulation değişecekse: `docs/CHECKPOINT_SPRINT_9_3G_4.md`
+- Multi-phone import writer/persistence değişecekse: `docs/CHECKPOINT_SPRINT_9_3G_5.md`
 - Çok eski sprint bağlamı gerekiyorsa ilgili eski checkpoint okunur; tüm checkpoint’ler gereksiz yere okutulmaz.
 
 ## 14. Güncel Çalışma Bilgisi
@@ -306,7 +318,7 @@ Roadmap kararları:
 Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 
 - Güncel branch: `sprint-9-2-multi-phone-architecture-plan`
-- Bu branch’in amacı: Çoklu telefon mimarisi ana hattında phone context persistence, read/display model, call history UI display, reminder list UI display, right card multi-phone read model, right card multi-phone readonly UI display, Telefon 3+ call save selection, import UI progressive disclosure ve multi-phone import mapping/simulation katmanlarını taşımak.
+- Bu branch’in amacı: Çoklu telefon mimarisi ana hattında phone context persistence, read/display model, call history UI display, reminder list UI display, right card multi-phone read model, right card multi-phone readonly UI display, Telefon 3+ call save selection, import UI progressive disclosure, multi-phone import mapping/simulation ve multi-phone import writer/persistence katmanlarını taşımak.
 - Önceki çalışma branch’i: `sprint-9-3b-1-phone-context-model-helpers`
 - Güncel release candidate commit’i: `12062f0 docs: add sprint 9.1 checkpoint and update pilot findings`
 - Güncel Pilot v1.0 release candidate commit’i: `113b44b docs: add pilot release candidate review`
@@ -323,8 +335,9 @@ Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 - Son Telefon 3+ call save selection commit’i: `121f175 feat: select extra phone for call save`
 - Son import UI progressive disclosure commit’i: `0c40524 feat: collapse long import review lists`
 - Son multi-phone import simulation commit’i: `2e1bbff feat: add multi-phone import simulation`
+- Son multi-phone import writer commit’i: `34ec8d5 feat: persist multi-phone import records`
 - Son bilinen dokümantasyon commit’i: `194cb07 docs: record pilot feedback UI polish findings`
-- Sonraki zorunlu aşama: Sprint 9.3G-4 docs-only commit/push. Sonraki teknik aday iş: Multi-Phone Import Writer ayrı sprinti; ardından AD/SOYAD + Anne/Baba + Mahalle data model discovery/implementation ve Export/report/backup uyumu discovery.
+- Sonraki zorunlu aşama: Sprint 9.3G-5 docs-only commit/push. Sonra Obsidian/Graphify update değerlendirmesi, localhost manuel QA / dar pilot readiness kontrolü ve kırıcı bug/risk değerlendirmesi yapılmalı; dar pilot sonrası AD/SOYAD + Anne/Baba + Mahalle data model discovery/implementation ve Export/report/backup uyumu discovery ele alınmalıdır.
 
 ## 15. Codex Standart Başlangıç Talimatı
 
