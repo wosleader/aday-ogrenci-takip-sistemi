@@ -280,6 +280,7 @@ type PhoneCardProps = {
   onContacted?: (phoneId: number) => void;
   onInvalid?: (phoneId: number) => void;
   onSelectForCall?: (phoneId: number) => void;
+  onClearCallSelection?: () => void;
 };
 
 type OperationToast = {
@@ -354,7 +355,8 @@ function PhoneCard({
   isSelectedForCall = false,
   onContacted,
   onInvalid,
-  onSelectForCall
+  onSelectForCall,
+  onClearCallSelection
 }: PhoneCardProps) {
   return (
     <div className={`drawer-phone-card ${isContacted ? "contacted" : ""} ${isWrong ? "invalid" : ""}`}>
@@ -393,15 +395,29 @@ function PhoneCard({
         </div>
       ) : null}
       {isReadOnly && onSelectForCall ? (
-        <Button
-          aria-pressed={isSelectedForCall}
-          disabled={!phoneId || isWrong}
-          onClick={() => phoneId && onSelectForCall(phoneId)}
-          type="button"
-          variant="secondary"
-        >
-          {isSelectedForCall ? "Görüşmede kullanılacak" : "Bu numarayla görüşüldü"}
-        </Button>
+        <div className="phone-actions">
+          <button
+            aria-label={isSelectedForCall ? "Görüşmede kullanılacak" : "Bu numarayla görüşüldü"}
+            aria-pressed={isSelectedForCall}
+            className={isSelectedForCall ? "active" : ""}
+            disabled={!phoneId || isWrong}
+            onClick={() => phoneId && onSelectForCall(phoneId)}
+            title={isSelectedForCall ? "Görüşmede kullanılacak" : "Bu numarayla görüşüldü"}
+            type="button"
+          >
+            <Check aria-hidden="true" size={14} />
+          </button>
+          {isSelectedForCall && onClearCallSelection ? (
+            <button
+              aria-label="Görüşme telefonu seçimini kaldır"
+              onClick={onClearCallSelection}
+              title="Görüşme telefonu seçimini kaldır"
+              type="button"
+            >
+              <X aria-hidden="true" size={14} />
+            </button>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );
@@ -1495,6 +1511,7 @@ export function StudentsPage() {
                   isReadOnly
                   isSelectedForCall={phone.id === selectedCallPhoneId}
                   onSelectForCall={(phoneId) => setSelectedCallPhoneId(phoneId)}
+                  onClearCallSelection={() => setSelectedCallPhoneId(null)}
                   statusText={getReadonlyPhoneStatusText(phone)}
                 />
               ))}

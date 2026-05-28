@@ -163,11 +163,18 @@ describe("StudentsPage phone selection", () => {
       })
     );
 
+    const selectedPhoneControl = within(phone3Card as HTMLElement).getByRole("button", {
+      name: "Görüşmede kullanılacak"
+    });
+
+    expect(selectedPhoneControl).toHaveAttribute("aria-pressed", "true");
+    expect(selectedPhoneControl.closest(".phone-actions")).not.toBeNull();
+    expect(selectedPhoneControl).not.toHaveTextContent("Görüşmede kullanılacak");
     expect(
       within(phone3Card as HTMLElement).getByRole("button", {
-        name: "Görüşmede kullanılacak"
+        name: "Görüşme telefonu seçimini kaldır"
       })
-    ).toHaveAttribute("aria-pressed", "true");
+    ).toBeInTheDocument();
 
     await user.selectOptions(getCallResultSelect(), "reached");
     await user.click(screen.getByRole("button", { name: /Kaydet ve sonrakine geç/ }));
