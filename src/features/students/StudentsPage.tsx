@@ -280,7 +280,6 @@ type PhoneCardProps = {
   onContacted?: (phoneId: number) => void;
   onInvalid?: (phoneId: number) => void;
   onSelectForCall?: (phoneId: number) => void;
-  onClearCallSelection?: () => void;
 };
 
 type OperationToast = {
@@ -355,19 +354,21 @@ function PhoneCard({
   isSelectedForCall = false,
   onContacted,
   onInvalid,
-  onSelectForCall,
-  onClearCallSelection
+  onSelectForCall
 }: PhoneCardProps) {
+  const isEffectiveContacted = isContacted || isSelectedForCall;
+  const effectiveStatusText = isSelectedForCall ? undefined : statusText;
+
   return (
-    <div className={`drawer-phone-card ${isContacted ? "contacted" : ""} ${isWrong ? "invalid" : ""}`}>
+    <div className={`drawer-phone-card ${isEffectiveContacted ? "contacted" : ""} ${isWrong ? "invalid" : ""}`}>
       <div>
         <span className="form-label">{label}</span>
         <strong>{value || "Telefon yok"}</strong>
         <small>
-          {statusText ? statusText : null}
-          {!statusText && isContacted ? "Son görüşülen / iletişim kurulan numara" : null}
-          {!statusText && isWrong ? "Yanlış numara / kullanılmıyor" : null}
-          {!statusText && !isContacted && !isWrong ? "Aktif numara" : null}
+          {effectiveStatusText ? effectiveStatusText : null}
+          {!effectiveStatusText && isEffectiveContacted ? "Son görüşülen / iletişim kurulan numara" : null}
+          {!effectiveStatusText && isWrong ? "Yanlış numara / kullanılmıyor" : null}
+          {!effectiveStatusText && !isEffectiveContacted && !isWrong ? "Aktif numara" : null}
         </small>
       </div>
       {!isReadOnly && onContacted && onInvalid ? (
@@ -394,29 +395,29 @@ function PhoneCard({
           </button>
         </div>
       ) : null}
-      {isReadOnly && onSelectForCall ? (
+      {isReadOnly && onSelectForCall && onInvalid ? (
         <div className="phone-actions">
           <button
-            aria-label={isSelectedForCall ? "Görüşmede kullanılacak" : "Bu numarayla görüşüldü"}
-            aria-pressed={isSelectedForCall}
-            className={isSelectedForCall ? "active" : ""}
+            aria-label={isEffectiveContacted ? "Görüşmede kullanılacak" : "Bu numarayla görüşüldü"}
+            aria-pressed={isEffectiveContacted}
+            className={isEffectiveContacted ? "active" : ""}
             disabled={!phoneId || isWrong}
             onClick={() => phoneId && onSelectForCall(phoneId)}
-            title={isSelectedForCall ? "Görüşmede kullanılacak" : "Bu numarayla görüşüldü"}
+            title={isEffectiveContacted ? "Görüşmede kullanılacak" : "Bu numarayla görüşüldü"}
             type="button"
           >
             <Check aria-hidden="true" size={14} />
           </button>
-          {isSelectedForCall && onClearCallSelection ? (
-            <button
-              aria-label="Görüşme telefonu seçimini kaldır"
-              onClick={onClearCallSelection}
-              title="Görüşme telefonu seçimini kaldır"
-              type="button"
-            >
-              <X aria-hidden="true" size={14} />
-            </button>
-          ) : null}
+          <button
+            aria-label="Yanlış numara veya kullanılmıyor olarak işaretle"
+            className={isWrong ? "active invalid" : ""}
+            disabled={!phoneId}
+            onClick={() => phoneId && onInvalid(phoneId)}
+            title="Yanlış numara / kullanılmıyor"
+            type="button"
+          >
+            x
+          </button>
         </div>
       ) : null}
     </div>
@@ -1510,8 +1511,16 @@ export function StudentsPage() {
                   isWrong={phone.phone_status === "invalid" || phone.is_wrong || !phone.is_valid}
                   isReadOnly
                   isSelectedForCall={phone.id === selectedCallPhoneId}
-                  onSelectForCall={(phoneId) => setSelectedCallPhoneId(phoneId)}
-                  onClearCallSelection={() => setSelectedCallPhoneId(null)}
+                  onSelectForCall={(phoneId) => {
+                    const isCurrentlySelected = selectedCallPhoneId === phoneId || phone.phone_status === "contacted";
+
+                    setSelectedCallPhoneId(isCurrentlySelected ? null : phoneId);
+                    void updatePhoneStatus("contacted", phoneId);
+                  }}
+                  onInvalid={(phoneId) => {
+                    setSelectedCallPhoneId((currentPhoneId) => (currentPhoneId === phoneId ? null : currentPhoneId));
+                    void updatePhoneStatus("invalid", phoneId);
+                  }}
                   statusText={getReadonlyPhoneStatusText(phone)}
                 />
               ))}

@@ -134,6 +134,14 @@ function getCallResultSelect(): HTMLSelectElement {
   return selects[selects.length - 1] as HTMLSelectElement;
 }
 
+function getDrawerPhoneCard(label: string): HTMLElement {
+  const labelElement = screen.getAllByText(label).find((element) => element.closest(".drawer-phone-card"));
+
+  expect(labelElement).toBeDefined();
+
+  return labelElement!.closest(".drawer-phone-card") as HTMLElement;
+}
+
 describe("StudentsPage phone selection", () => {
   beforeEach(async () => {
     Element.prototype.scrollIntoView = vi.fn();
@@ -170,9 +178,11 @@ describe("StudentsPage phone selection", () => {
     expect(selectedPhoneControl).toHaveAttribute("aria-pressed", "true");
     expect(selectedPhoneControl.closest(".phone-actions")).not.toBeNull();
     expect(selectedPhoneControl).not.toHaveTextContent("Görüşmede kullanılacak");
+    expect(phone3Card).toHaveClass("contacted");
+    expect(within(phone3Card as HTMLElement).getByText("Son görüşülen / iletişim kurulan numara")).toBeInTheDocument();
     expect(
       within(phone3Card as HTMLElement).getByRole("button", {
-        name: "Görüşme telefonu seçimini kaldır"
+        name: "Yanlış numara veya kullanılmıyor olarak işaretle"
       })
     ).toBeInTheDocument();
 
@@ -182,7 +192,66 @@ describe("StudentsPage phone selection", () => {
     expect(await screen.findByText("Telefon 3 · Öğrenci: 0532 100 0003")).toBeInTheDocument();
   });
 
-  it("keeps extra phone status actions out of readonly cards", async () => {
+  it("keeps one contacted phone across legacy and extra phone controls", async () => {
+    const user = userEvent.setup();
+    await seedStudentWithPhones("MELIS KAYA", "parity");
+
+    renderStudentsPage();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+
+    await user.click(
+      within(phone1Card).getByRole("button", {
+        name: "Son görüşülen numara olarak işaretle"
+      })
+    );
+
+    await waitFor(() => {
+      expect(getDrawerPhoneCard("Telefon 1")).toHaveClass("contacted");
+    });
+
+    const phone3Card = getDrawerPhoneCard("Telefon 3 · Öğrenci");
+
+    await user.click(
+      within(phone3Card).getByRole("button", {
+        name: "Bu numarayla görüşüldü"
+      })
+    );
+
+    await waitFor(async () => {
+      const phone1 = await db.phones.where("normalized_phone_number").equals("05321000001").first();
+      const phone3 = await db.phones.where("normalized_phone_number").equals("05321000003").first();
+
+      expect(phone1?.phone_status).toBe("active");
+      expect(phone3?.phone_status).toBe("contacted");
+      expect(getDrawerPhoneCard("Telefon 1")).not.toHaveClass("contacted");
+      expect(getDrawerPhoneCard("Telefon 3 · Öğrenci")).toHaveClass("contacted");
+      expect(
+        within(getDrawerPhoneCard("Telefon 3 · Öğrenci")).getByText("Son görüşülen / iletişim kurulan numara")
+      ).toBeInTheDocument();
+    });
+
+    await user.click(
+      within(getDrawerPhoneCard("Telefon 3 · Öğrenci")).getByRole("button", {
+        name: "Görüşmede kullanılacak"
+      })
+    );
+
+    await waitFor(async () => {
+      const phone3 = await db.phones.where("normalized_phone_number").equals("05321000003").first();
+
+      expect(phone3?.phone_status).toBe("active");
+      expect(getDrawerPhoneCard("Telefon 3 · Öğrenci")).not.toHaveClass("contacted");
+      expect(
+        within(getDrawerPhoneCard("Telefon 3 · Öğrenci")).getByRole("button", {
+          name: "Bu numarayla görüşüldü"
+        })
+      ).toHaveAttribute("aria-pressed", "false");
+    });
+  });
+
+  it("lets extra phone unused action update the phone status", async () => {
+    const user = userEvent.setup();
     await seedStudentWithPhones("MELIS KAYA", "readonly");
 
     renderStudentsPage();
@@ -195,11 +264,27 @@ describe("StudentsPage phone selection", () => {
         name: "Son görüşülen numara olarak işaretle"
       })
     ).not.toBeInTheDocument();
+
+    const invalidControl = within(phone3Card as HTMLElement).getByRole("button", {
+      name: "Yanlış numara veya kullanılmıyor olarak işaretle"
+    });
+
+    expect(invalidControl).toBeInTheDocument();
+
+    await user.click(invalidControl);
+
+    await waitFor(async () => {
+      const updatedPhone = await db.phones.where("normalized_phone_number").equals("05321000003").first();
+
+      expect(updatedPhone?.phone_status).toBe("invalid");
+      expect(updatedPhone?.is_wrong).toBe(true);
+    });
+
     expect(
-      within(phone3Card as HTMLElement).queryByRole("button", {
+      within(phone3Card as HTMLElement).getByRole("button", {
         name: "Yanlış numara veya kullanılmıyor olarak işaretle"
       })
-    ).not.toBeInTheDocument();
+    ).toHaveClass("active", "invalid");
   });
 
   it("requires an explicit call phone when multiple eligible phones exist", async () => {
