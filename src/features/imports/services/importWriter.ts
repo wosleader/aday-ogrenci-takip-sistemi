@@ -8,7 +8,12 @@ import { createUuid } from "../../../utils/id";
 import { createPreImportBackup, type PreImportBackup } from "./importBackup";
 import { createImportFingerprint } from "./importDuplicateGuard";
 import { getAllImportLogs } from "./logExport";
-import type { ImportSimulationSummary, ParsedWorksheet, SimulatedImportRow } from "./types";
+import type {
+  ImportSimulationSummary,
+  ParsedWorksheet,
+  SimulatedImportPhone,
+  SimulatedImportRow
+} from "./types";
 
 export type ImportWriteResult = {
   import_id: number;
@@ -52,12 +57,63 @@ async function ensureDefaultCampaign(database: AppDatabase, timestamp: string): 
   return { ...campaign, id };
 }
 
-function uniquePhones(row: SimulatedImportRow) {
-  const phones = [
-    { value: row.phone_1, label: "Telefon 1" },
-    { value: row.phone_2, label: "Telefon 2" }
-  ].filter((phone) => Boolean(phone.value));
+type WritableImportPhone = {
+  phone_number: string;
+  normalized_phone_number: string;
+  original_phone_value: string;
+  phone_label: string;
+  reference_label: string;
+  relation_label: null;
+  source_column: string | null;
+  priority: number;
+  is_valid: boolean;
+  is_primary: boolean;
+};
+
+function getLegacyPhoneLabel(phone: Pick<SimulatedImportPhone, "field" | "reference_label">): string {
+  if (phone.field === "phone_1") {
+    return "Telefon 1";
+  }
+
+  if (phone.field === "phone_2") {
+    return "Telefon 2";
+  }
+
+  return phone.reference_label;
+}
+
+function uniquePhones(row: SimulatedImportRow): WritableImportPhone[] {
   const seen = new Set<string>();
+
+  if (row.phones?.length > 0) {
+    return row.phones.flatMap((phone) => {
+      if (!phone.normalized_phone_number || seen.has(phone.normalized_phone_number)) {
+        return [];
+      }
+
+      seen.add(phone.normalized_phone_number);
+
+      return [
+        {
+          phone_number: phone.phone_number,
+          normalized_phone_number: phone.normalized_phone_number,
+          original_phone_value: phone.raw_value,
+          phone_label: getLegacyPhoneLabel(phone),
+          reference_label: getLegacyPhoneLabel(phone),
+          relation_label: null,
+          source_column: phone.source_column || null,
+          priority: phone.priority,
+          is_valid: phone.is_valid,
+          is_primary: seen.size === 1
+        }
+      ];
+    });
+  }
+
+  const phones = [
+    { value: row.phone_1, label: "Telefon 1", priority: 1 },
+    { value: row.phone_2, label: "Telefon 2", priority: 2 }
+  ].filter((phone) => Boolean(phone.value));
 
   return phones.flatMap((phone) => {
     const normalized = normalizePhone(phone.value);
@@ -70,13 +126,27 @@ function uniquePhones(row: SimulatedImportRow) {
 
     return [
       {
-        original: phone.value ?? "",
-        normalized,
-        label: phone.label,
+        phone_number: normalized.phone_number,
+        normalized_phone_number: normalized.normalized_phone_number,
+        original_phone_value: phone.value ?? "",
+        phone_label: phone.label,
+        reference_label: phone.label,
+        relation_label: null,
+        source_column: null,
+        priority: phone.priority,
+        is_valid: normalized.is_valid,
         is_primary: seen.size === 1
       }
     ];
   });
+}
+
+function getSearchPhones(row: SimulatedImportRow): string[] {
+  if (row.phones?.length > 0) {
+    return row.phones.map((phone) => phone.normalized_phone_number);
+  }
+
+  return [row.phone_1, row.phone_2].filter(Boolean) as string[];
 }
 
 export async function writeImportToDatabase(
@@ -160,8 +230,7 @@ export async function writeImportToDatabase(
           search_text: createSearchText([
             row.student_full_name,
             row.guardian_full_name,
-            row.phone_1,
-            row.phone_2,
+            ...getSearchPhones(row),
             row.current_class,
             row.student_group
           ]),
@@ -208,11 +277,15 @@ export async function writeImportToDatabase(
             uuid: createUuid(),
             student_id: studentId,
             guardian_id: guardianId,
-            phone_number: phone.normalized.phone_number,
-            normalized_phone_number: phone.normalized.normalized_phone_number,
-            original_phone_value: phone.original,
-            phone_label: phone.label,
-            is_valid: phone.normalized.is_valid,
+            phone_number: phone.phone_number,
+            normalized_phone_number: phone.normalized_phone_number,
+            original_phone_value: phone.original_phone_value,
+            phone_label: phone.phone_label,
+            reference_label: phone.reference_label,
+            relation_label: phone.relation_label,
+            source_column: phone.source_column,
+            priority: phone.priority,
+            is_valid: phone.is_valid,
             is_wrong: false,
             is_primary: phone.is_primary,
             note: null,

@@ -4,6 +4,10 @@ import { seedDatabase } from "../../src/db/seed";
 import { createPreImportBackup } from "../../src/features/imports/services/importBackup";
 import { writeImportToDatabase } from "../../src/features/imports/services/importWriter";
 import { simulateImport } from "../../src/features/imports/services/importSimulation";
+import {
+  filterStudentListRows,
+  readStudentListRows
+} from "../../src/features/students/services/studentListReader";
 import type { ParsedWorksheet } from "../../src/features/imports/services/types";
 
 function worksheet(headers: string[], rows: unknown[][]): ParsedWorksheet {
@@ -115,6 +119,163 @@ describe("writeImportToDatabase", () => {
     }
   });
 
+  it("persists multi-phone simulation rows with writer metadata", async () => {
+    const database = await createDatabase();
+    const parsedWorksheet = worksheet(
+      ["Ad Soyad", "Telefon", "2. Telefon", "GSM3", "GSM4"],
+      [["Ayşe Yılmaz", "05320000001", "5320000002", "5320000003", "5320000004"]]
+    );
+
+    try {
+      const summary = simulateImport(parsedWorksheet);
+      const result = await writeImportToDatabase(parsedWorksheet, summary, { database });
+      const phones = (await database.phones.toArray()).sort(
+        (left, right) => (left.priority ?? 0) - (right.priority ?? 0)
+      );
+
+      expect(result.created_phones).toBe(4);
+      expect(phones).toHaveLength(4);
+      expect(phones.map((phone) => phone.normalized_phone_number)).toEqual([
+        "05320000001",
+        "05320000002",
+        "05320000003",
+        "05320000004"
+      ]);
+      expect(phones.map((phone) => phone.phone_label)).toEqual([
+        "Telefon 1",
+        "Telefon 2",
+        "Telefon 3",
+        "Telefon 4"
+      ]);
+      expect(phones.map((phone) => phone.reference_label)).toEqual([
+        "Telefon 1",
+        "Telefon 2",
+        "Telefon 3",
+        "Telefon 4"
+      ]);
+      expect(phones.map((phone) => phone.priority)).toEqual([1, 2, 3, 4]);
+      expect(phones[2]).toMatchObject({
+        original_phone_value: "5320000003",
+        source_column: "GSM3",
+        is_valid: true,
+        is_wrong: false,
+        is_primary: false
+      });
+      expect(phones.filter((phone) => phone.is_primary)).toHaveLength(1);
+      expect(phones[0].is_primary).toBe(true);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("skips empty phone slots and marks the first imported extra phone as primary", async () => {
+    const database = await createDatabase();
+    const parsedWorksheet = worksheet(
+      ["Ad Soyad", "Telefon", "2. Telefon", "GSM3"],
+      [["Ayşe Yılmaz", "", "", "5320000003"]]
+    );
+
+    try {
+      const summary = simulateImport(parsedWorksheet);
+      const result = await writeImportToDatabase(parsedWorksheet, summary, { database });
+      const phones = await database.phones.toArray();
+
+      expect(result.created_phones).toBe(1);
+      expect(phones).toHaveLength(1);
+      expect(phones[0]).toMatchObject({
+        normalized_phone_number: "05320000003",
+        phone_label: "Telefon 3",
+        reference_label: "Telefon 3",
+        priority: 3,
+        is_primary: true
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("de-duplicates multi-phone records within the same imported row", async () => {
+    const database = await createDatabase();
+    const parsedWorksheet = worksheet(
+      ["Ad Soyad", "Telefon", "GSM3", "GSM4"],
+      [["Ayşe Yılmaz", "05321234567", "+90 532 123 45 67", "5320000004"]]
+    );
+
+    try {
+      const summary = simulateImport(parsedWorksheet);
+      const result = await writeImportToDatabase(parsedWorksheet, summary, { database });
+      const phones = (await database.phones.toArray()).sort(
+        (left, right) => (left.priority ?? 0) - (right.priority ?? 0)
+      );
+
+      expect(result.created_phones).toBe(2);
+      expect(phones.map((phone) => phone.normalized_phone_number)).toEqual([
+        "05321234567",
+        "05320000004"
+      ]);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("persists invalid non-empty phone values from simulation metadata", async () => {
+    const database = await createDatabase();
+    const parsedWorksheet = worksheet(
+      ["Ad Soyad", "GSM3"],
+      [["Ayşe Yılmaz", "12345"]]
+    );
+
+    try {
+      const summary = simulateImport(parsedWorksheet);
+      expect(summary.preview_rows[0].phones[0]).toMatchObject({
+        reference_label: "Telefon 3",
+        normalized_phone_number: "12345",
+        is_valid: false
+      });
+
+      const result = await writeImportToDatabase(parsedWorksheet, summary, { database });
+      const phones = await database.phones.toArray();
+
+      expect(result.created_phones).toBe(1);
+      expect(phones[0]).toMatchObject({
+        normalized_phone_number: "12345",
+        original_phone_value: "12345",
+        phone_label: "Telefon 3",
+        reference_label: "Telefon 3",
+        is_valid: false,
+        is_wrong: false
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("includes extra phones in imported student search text", async () => {
+    const database = await createDatabase();
+    const parsedWorksheet = worksheet(
+      ["Ad Soyad", "GSM3"],
+      [["Ayşe Yılmaz", "5320000003"]]
+    );
+
+    try {
+      const summary = simulateImport(parsedWorksheet);
+      await writeImportToDatabase(parsedWorksheet, summary, { database });
+
+      const student = (await database.students.toArray())[0];
+      expect(student.search_text).toContain("05320000003");
+
+      const rows = await readStudentListRows(database);
+      expect(filterStudentListRows(rows, "05320000003")).toHaveLength(1);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
   it("creates reminders when reminder date exists", async () => {
     const database = await createDatabase();
     const parsedWorksheet = worksheet(
@@ -182,7 +343,10 @@ describe("writeImportToDatabase", () => {
 
   it("rolls back transaction when writing fails", async () => {
     const database = await createDatabase();
-    const parsedWorksheet = worksheet(["Ad Soyad"], [["Ayşe Yılmaz"]]);
+    const parsedWorksheet = worksheet(
+      ["Ad Soyad", "Telefon", "GSM3", "GSM4"],
+      [["Ayşe Yılmaz", "5320000001", "5320000003", "5320000004"]]
+    );
 
     try {
       const summary = simulateImport(parsedWorksheet);
@@ -195,6 +359,7 @@ describe("writeImportToDatabase", () => {
       ).rejects.toThrow("rollback");
 
       expect(await database.students.count()).toBe(0);
+      expect(await database.phones.count()).toBe(0);
       expect(await database.imports.count()).toBe(0);
     } finally {
       database.close();
