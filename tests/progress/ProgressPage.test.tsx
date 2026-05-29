@@ -9,7 +9,8 @@ describe("ProgressPage", () => {
     expect(screen.getByRole("heading", { name: "Proje İlerlemesi" })).toBeInTheDocument();
     expect(screen.getByText("Dar Pilot Hazırlığı")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Son Güncelleme" })).toBeInTheDocument();
-    expect(screen.getByText(/91498b4/)).toBeInTheDocument();
+    expect(screen.getByText(/fa41132/)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Pilot Sonrası Takip Edilecekler" })).toBeInTheDocument();
     expect(screen.getByText(/Bu sayfa geçici takip ekranıdır/i)).toBeInTheDocument();
   });
 });

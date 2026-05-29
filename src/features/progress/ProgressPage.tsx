@@ -11,21 +11,21 @@ type ProgressItem = {
 const mainCards: ProgressItem[] = [
   {
     title: "Dar Pilot Hazırlığı",
-    percent: 90,
+    percent: 95,
     description:
-      "Telefonlu aday akışı ve import ekranı büyük ölçüde hazır. Kalan işler daha çok karar ve uyumluluk maddeleri.",
+      "Ana akış pilot seviyesine geldi. Kalan başlıklar bilinen sınırlama ve pilot sonrası takip maddeleri.",
     tone: "#16a34a"
   },
   {
     title: "Genel MVP Hazırlığı",
-    percent: 82,
+    percent: 84,
     description:
       "Ana kullanım akışı güçlü. Export, tekrar import ve bazı düzeltme araçları hâlâ planlanıyor.",
     tone: "#2563eb"
   },
   {
     title: "Tam Ürün Genişliği",
-    percent: 60,
+    percent: 62,
     description:
       "Dar pilot güçlü, fakat tam ürün için rapor, model genişletme ve gelişmiş yönetim işleri devam edecek.",
     tone: "#9333ea"
@@ -35,13 +35,13 @@ const mainCards: ProgressItem[] = [
 const detailCards: ProgressItem[] = [
   {
     title: "Import Ekranı",
-    percent: 95,
+    percent: 96,
     description: "Hata, uyarı, bilgi ve ön izleme alanları daha okunabilir hale getirildi.",
     tone: "#0891b2"
   },
   {
     title: "Telefon 1-10 Akışı",
-    percent: 90,
+    percent: 92,
     description: "Çoklu telefon import, arama kartı ve görüşme kaydı akışı çalışıyor.",
     tone: "#059669"
   },
@@ -53,8 +53,8 @@ const detailCards: ProgressItem[] = [
   },
   {
     title: "Pilot Kapanış Kararları",
-    percent: 85,
-    description: "Kalan maddelerin pilot blocker mı yoksa backlog mu olduğuna karar verilecek.",
+    percent: 95,
+    description: "Kalan maddelerin pilot sonrası backlog olarak izleneceği netleştirildi.",
     tone: "#4f46e5"
   }
 ];
@@ -69,11 +69,12 @@ const completedItems = [
 ];
 
 const decisionItems = [
-  "Telefon 3-10 bilgisinin export/rapor tarafına nasıl ekleneceği belirlenecek.",
-  "“Eski import verisini temizleyip yeniden içe aktar” davranışı güvenli şekilde tasarlanacak.",
-  "Telefonun Excel’de hangi kolondan geldiğini gösteren sade bilgi işareti değerlendirilecek.",
-  "Yanlış girilen iletişim geçmişi kayıtları için silme/düzeltme yöntemi planlanacak.",
-  "Ad/Soyad, Anne/Baba ve Mahalle alanları ayrı keşif çalışmasına alınacak."
+  "Telefon 3-10 bilgisinin export/rapor tarafına eklenmesi.",
+  "Eski import verisini güvenli şekilde temizleyip yeniden içe aktarma tasarımı.",
+  "Telefonun Excel’de hangi kolondan geldiğini gösteren sade bilgi işareti.",
+  "Yanlış girilen iletişim geçmişi kayıtları için silme/düzeltme yöntemi.",
+  "Telefonsuz adaylarda kayıt davranışı için uyarı veya onay kararı.",
+  "Ad/Soyad, Anne/Baba ve Mahalle alanları için ayrı keşif çalışması."
 ];
 
 const pageStyles = {
@@ -179,9 +180,9 @@ export function ProgressPage() {
       <section style={pageStyles.section}>
         <h2>Şu An Neredeyiz?</h2>
         <p>
-          Telefon 1-10 içe aktarma, aday kartında çoklu telefon kullanımı ve import ekranı büyük ölçüde
-          toparlandı. Dar pilot için ana akış çalışır durumda. Kalan maddeler pilotu engelleyen büyük
-          hatalardan çok, ürün kararı ve sonraki geliştirme başlıklarıdır.
+          Dar pilot için ana akış hazır seviyeye geldi. Telefon 1-10 import, aday kartı, görüşme kaydı,
+          import ekranı ve temel yedek/export erişimi test edildi. Kalan başlıklar pilotu durduran hatalar
+          değil; daha güvenli ve daha eksiksiz ürün için takip edilecek geliştirme kararlarıdır.
         </p>
       </section>
 
@@ -202,7 +203,7 @@ export function ProgressPage() {
         </section>
 
         <section style={pageStyles.section}>
-          <h2>Sıradaki Kararlar</h2>
+          <h2>Pilot Sonrası Takip Edilecekler</h2>
           <ul style={pageStyles.list}>
             {decisionItems.map((item) => (
               <li key={item}>{item}</li>
@@ -216,12 +217,14 @@ export function ProgressPage() {
         <div style={pageStyles.updateBody}>
           <div style={pageStyles.updateItem}>
             <span style={{ color: "#166534", fontSize: "0.78rem", fontWeight: 700 }}>Tarih/saat</span>
-            <strong>29.05.2026 18:29</strong>
+            <strong>29.05.2026 20:44</strong>
           </div>
           <div style={pageStyles.updateItem}>
             <span style={{ color: "#166534", fontSize: "0.78rem", fontWeight: 700 }}>Not</span>
             <p style={{ margin: 0 }}>
-              Import ekranı kademeli gösterim ve scroll davranışı tamamlandı. Son güvenli commit: 91498b4.
+              Dar pilot kararları netleştirildi. Kalan maddeler pilotu engelleyen büyük hatalar değil; export
+              uyumluluğu, güvenli yeniden import, telefon kaynak bilgisi ve düzeltme araçları pilot sonrası
+              backlog olarak izlenecek. Son güvenli commit: fa41132.
             </p>
           </div>
         </div>
