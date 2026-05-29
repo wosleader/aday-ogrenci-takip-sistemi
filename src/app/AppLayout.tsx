@@ -1,6 +1,7 @@
 import {
   Bell,
   CalendarClock,
+  ClipboardList,
   FileDown,
   FileSpreadsheet,
   LayoutDashboard,
@@ -74,6 +75,12 @@ const navSections: Array<{ title: string; items: NavItem[] }> = [
       { to: "/export", label: "Excel dışa aktar", icon: FileDown },
       { to: "/settings", label: "Ayarlar", icon: Settings },
       { to: "/reports", label: "Raporlar", icon: LayoutDashboard }
+    ]
+  },
+  {
+    title: "Pilot Takibi",
+    items: [
+      { to: "/progress", label: "Proje İlerlemesi", icon: ClipboardList }
     ]
   }
 ];
