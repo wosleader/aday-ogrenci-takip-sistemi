@@ -11,21 +11,21 @@ type ProgressItem = {
 const mainCards: ProgressItem[] = [
   {
     title: "Dar Pilot Hazırlığı",
-    percent: 95,
+    percent: 97,
     description:
-      "Ana akış pilot seviyesine geldi. Kalan başlıklar bilinen sınırlama ve pilot sonrası takip maddeleri.",
+      "Ana akış pilot için güçlü hale geldi. Kalan başlıklar daha çok güvenli tekrar import ve sonraki ürün kararları.",
     tone: "#16a34a"
   },
   {
     title: "Genel MVP Hazırlığı",
-    percent: 84,
+    percent: 86,
     description:
-      "Ana kullanım akışı güçlü. Export, tekrar import ve bazı düzeltme araçları hâlâ planlanıyor.",
+      "Ana kullanım akışı güçlü. Detaylı export ve manuel veli eşleştirme toparlandı; bazı düzeltme araçları planlanıyor.",
     tone: "#2563eb"
   },
   {
     title: "Tam Ürün Genişliği",
-    percent: 62,
+    percent: 64,
     description:
       "Dar pilot güçlü, fakat tam ürün için rapor, model genişletme ve gelişmiş yönetim işleri devam edecek.",
     tone: "#9333ea"
@@ -35,25 +35,25 @@ const mainCards: ProgressItem[] = [
 const detailCards: ProgressItem[] = [
   {
     title: "Import Ekranı",
-    percent: 96,
-    description: "Hata, uyarı, bilgi ve ön izleme alanları daha okunabilir hale getirildi.",
+    percent: 97,
+    description: "Hata, uyarı, bilgi, ön izleme ve manuel eşleştirme akışı daha güvenilir hale getirildi.",
     tone: "#0891b2"
   },
   {
     title: "Telefon 1-10 Akışı",
-    percent: 92,
-    description: "Çoklu telefon import, arama kartı ve görüşme kaydı akışı çalışıyor.",
+    percent: 94,
+    description: "Çoklu telefon import, arama kartı, görüşme kaydı ve detaylı export akışı çalışıyor.",
     tone: "#059669"
   },
   {
     title: "Export / Rapor Uyumu",
-    percent: 62,
-    description: "Ekran çalışıyor, fakat Telefon 3-10 detaylı export tarafı ayrıca ele alınacak.",
+    percent: 78,
+    description: "Detaylı export Telefon 3-10 uyumunu aldı; gelişmiş rapor kararları sonraki fazda ele alınacak.",
     tone: "#d97706"
   },
   {
     title: "Pilot Kapanış Kararları",
-    percent: 95,
+    percent: 96,
     description: "Kalan maddelerin pilot sonrası backlog olarak izleneceği netleştirildi.",
     tone: "#4f46e5"
   }
@@ -65,16 +65,20 @@ const completedItems = [
   "Uzun listelerde “Daha az göster” sonrası sayfa doğru yere dönüyor.",
   "Import sonrası aynı dosya tekrar seçme/reset sorunu düzeltildi.",
   "Telefon 3+ seçim ve yanlış numara işaretleme davranışı Telefon 1/2 ile uyumlu hale getirildi.",
-  "Telefon 1-10 import ve kayıt akışı pilot testlerde doğrulandı."
+  "Telefon 1-10 import ve kayıt akışı pilot testlerde doğrulandı.",
+  "Detaylı Excel export Telefon 3-10 + Durumu kolonlarını destekleyecek hale getirildi.",
+  "Telefon 3-only, Telefon 7-only ve invalid Telefon 3 değerleri exportta doğru kolonlarında kalıyor.",
+  "Veli Adı manuel olarak Veli Ad Soyad seçildiğinde import artık bu güncel eşleştirmeyi kullanıyor.",
+  "Detaylı exportta Veli Ad Soyad alanının dolu gelmesi doğrulandı."
 ];
 
 const decisionItems = [
-  "Telefon 3-10 bilgisinin export/rapor tarafına eklenmesi.",
   "Eski import verisini güvenli şekilde temizleyip yeniden içe aktarma tasarımı.",
   "Telefonun Excel’de hangi kolondan geldiğini gösteren sade bilgi işareti.",
   "Yanlış girilen iletişim geçmişi kayıtları için silme/düzeltme yöntemi.",
   "Telefonsuz adaylarda kayıt davranışı için uyarı veya onay kararı.",
-  "Ad/Soyad, Anne/Baba ve Mahalle alanları için ayrı keşif çalışması."
+  "Ad/Soyad, Anne/Baba ve Mahalle alanları için ayrı keşif çalışması.",
+  "Daha gelişmiş rapor/export ihtiyaçları için sonraki ürün kararı."
 ];
 
 const pageStyles = {
@@ -180,9 +184,10 @@ export function ProgressPage() {
       <section style={pageStyles.section}>
         <h2>Şu An Neredeyiz?</h2>
         <p>
-          Dar pilot için ana akış hazır seviyeye geldi. Telefon 1-10 import, aday kartı, görüşme kaydı,
-          import ekranı ve temel yedek/export erişimi test edildi. Kalan başlıklar pilotu durduran hatalar
-          değil; daha güvenli ve daha eksiksiz ürün için takip edilecek geliştirme kararlarıdır.
+          Dar pilot için ana akış oldukça güçlü hale geldi. Telefon 1-10 import, aday kartı, görüşme kaydı,
+          detaylı export ve manuel Veli Ad Soyad eşleştirme akışı test edildi. Kalan başlıklar pilotu durduran
+          temel hatalar değil; daha güvenli tekrar import, küçük kaynak bilgisi gösterimleri ve ilerideki veri
+          modeli genişletmeleri için takip edilecek kararlardır.
         </p>
       </section>
 
@@ -217,14 +222,14 @@ export function ProgressPage() {
         <div style={pageStyles.updateBody}>
           <div style={pageStyles.updateItem}>
             <span style={{ color: "#166534", fontSize: "0.78rem", fontWeight: 700 }}>Tarih/saat</span>
-            <strong>29.05.2026 20:44</strong>
+            <strong>30.05.2026 00:17</strong>
           </div>
           <div style={pageStyles.updateItem}>
             <span style={{ color: "#166534", fontSize: "0.78rem", fontWeight: 700 }}>Not</span>
             <p style={{ margin: 0 }}>
-              Dar pilot kararları netleştirildi. Kalan maddeler pilotu engelleyen büyük hatalar değil; export
-              uyumluluğu, güvenli yeniden import, telefon kaynak bilgisi ve düzeltme araçları pilot sonrası
-              backlog olarak izlenecek. Son güvenli commit: fa41132.
+              Telefon 3-10 detaylı Excel export uyumluluğu tamamlandı. Veli Adı manuel olarak Veli Ad Soyad
+              seçildiğinde import artık güncel mapping ile yazıyor ve detaylı exportta Veli Ad Soyad dolu
+              görünüyor. Son güvenli commit: a448f65.
             </p>
           </div>
         </div>
