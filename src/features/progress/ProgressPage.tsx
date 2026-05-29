@@ -80,6 +80,9 @@ const pageStyles = {
   wrapper: {
     display: "grid",
     gap: "1rem",
+    width: "100%",
+    maxWidth: "1180px",
+    margin: "0 auto",
     paddingBottom: "80px"
   },
   hero: {

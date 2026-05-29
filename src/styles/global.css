@@ -100,7 +100,9 @@ textarea {
 .page {
   display: grid;
   gap: 20px;
+  width: 100%;
   max-width: 1180px;
+  margin: 0 auto;
 }
 
 .page-header h1 {
