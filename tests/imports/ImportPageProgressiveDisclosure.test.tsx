@@ -18,6 +18,8 @@ const importWriterMocks = vi.hoisted(() => ({
   writeImportToDatabase: vi.fn()
 }));
 
+const scrollIntoViewMock = vi.fn();
+
 vi.mock("../../src/features/imports/services/excelReader", () => excelReaderMocks);
 
 vi.mock("../../src/features/imports/services/importDuplicateGuard", () => duplicateGuardMocks);
@@ -96,6 +98,11 @@ function findLogItem(section: HTMLElement, rowText: string, messageText: string)
 describe("ImportPage progressive disclosure", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    Object.defineProperty(Element.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoViewMock
+    });
+    scrollIntoViewMock.mockClear();
     window.localStorage.clear();
     window.sessionStorage.clear();
     window.confirm = vi.fn(() => true);
@@ -131,10 +138,12 @@ describe("ImportPage progressive disclosure", () => {
     await user.click(within(mappingSection).getByRole("button", { name: "+4 kolon daha göster" }));
 
     expect(within(mappingSection).getAllByText("Başlık boş")).toHaveLength(12);
+    expect(scrollIntoViewMock).not.toHaveBeenCalled();
 
     await user.click(within(mappingSection).getByRole("button", { name: "Daha az göster" }));
 
     expect(within(mappingSection).getAllByText("Başlık boş")).toHaveLength(8);
+    expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
   });
 
   it("keeps mapping-required columns visible in the collapsed column mapping list", async () => {
@@ -150,40 +159,140 @@ describe("ImportPage progressive disclosure", () => {
     expect(within(mappingSection).getByText("Bilinmeyen Önemli")).toBeInTheDocument();
   });
 
-  it("collapses long error logs and expands them on demand", async () => {
-    const rows = Array.from({ length: 12 }, (_, index) => ["", `0555 000 00${String(index).padStart(2, "0")}`]);
+  it("stages long error logs from 5 to 20, 50, and all items", async () => {
+    const rows = Array.from({ length: 60 }, (_, index) => ["", `0555 000 00${String(index).padStart(2, "0")}`]);
     const worksheet = createWorksheet(["Ad Soyad", "Telefon"], rows);
     const user = await uploadWorksheet(worksheet);
-    const errorsSection = getSectionByHeading("Hatalar (13)");
+    const errorsSection = getSectionByHeading("Hatalar (61)");
 
-    expect(findLogItem(errorsSection, "Satır 10", "Ad Soyad alanı boş")).toBeInTheDocument();
-    expect(findLogItem(errorsSection, "Satır 11", "Ad Soyad alanı boş")).not.toBeInTheDocument();
+    expect(findLogItem(errorsSection, "Satır 5", "Ad Soyad alanı boş")).toBeInTheDocument();
+    expect(findLogItem(errorsSection, "Satır 6", "Ad Soyad alanı boş")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Detayları göster/)).not.toBeInTheDocument();
 
-    await user.click(within(errorsSection).getByRole("button", { name: "+3 hata daha göster" }));
+    await user.click(within(errorsSection).getByRole("button", { name: "+15 daha fazla göster" }));
 
-    expect(findLogItem(errorsSection, "Satır 11", "Ad Soyad alanı boş")).toBeInTheDocument();
+    expect(findLogItem(errorsSection, "Satır 20", "Ad Soyad alanı boş")).toBeInTheDocument();
+    expect(findLogItem(errorsSection, "Satır 21", "Ad Soyad alanı boş")).not.toBeInTheDocument();
+
+    await user.click(within(errorsSection).getByRole("button", { name: "+30 daha fazla göster" }));
+
+    expect(findLogItem(errorsSection, "Satır 50", "Ad Soyad alanı boş")).toBeInTheDocument();
+    expect(findLogItem(errorsSection, "Satır 51", "Ad Soyad alanı boş")).not.toBeInTheDocument();
+
+    await user.click(within(errorsSection).getByRole("button", { name: "+11 daha fazla göster" }));
+
+    expect(findLogItem(errorsSection, "Satır 61", "Ad Soyad alanı boş")).toBeInTheDocument();
 
     await user.click(within(errorsSection).getByRole("button", { name: "Daha az göster" }));
 
-    expect(findLogItem(errorsSection, "Satır 11", "Ad Soyad alanı boş")).not.toBeInTheDocument();
+    expect(findLogItem(errorsSection, "Satır 6", "Ad Soyad alanı boş")).not.toBeInTheDocument();
   });
 
-  it("collapses long warning logs and expands them on demand", async () => {
-    const rows = Array.from({ length: 12 }, () => [""]);
+  it("stages long warning logs from 5 to 20, 50, and all items", async () => {
+    const rows = Array.from({ length: 100 }, () => [""]);
     const worksheet = createWorksheet(["Ad Soyad"], rows);
     const user = await uploadWorksheet(worksheet);
-    const warningsSection = getSectionByHeading("Uyarılar (13)");
+    const warningsSection = getSectionByHeading("Uyarılar (101)");
 
-    expect(findLogItem(warningsSection, "Satır 10", "satır tamamen boş")).toBeInTheDocument();
-    expect(findLogItem(warningsSection, "Satır 11", "satır tamamen boş")).not.toBeInTheDocument();
+    expect(findLogItem(warningsSection, "Satır 5", "satır tamamen boş")).toBeInTheDocument();
+    expect(findLogItem(warningsSection, "Satır 6", "satır tamamen boş")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Detayları göster/)).not.toBeInTheDocument();
 
-    await user.click(within(warningsSection).getByRole("button", { name: "+3 uyarı daha göster" }));
+    await user.click(within(warningsSection).getByRole("button", { name: "+15 daha fazla göster" }));
 
-    expect(findLogItem(warningsSection, "Satır 11", "satır tamamen boş")).toBeInTheDocument();
+    expect(findLogItem(warningsSection, "Satır 20", "satır tamamen boş")).toBeInTheDocument();
+    expect(findLogItem(warningsSection, "Satır 21", "satır tamamen boş")).not.toBeInTheDocument();
+    expect(scrollIntoViewMock).not.toHaveBeenCalled();
+
+    await user.click(within(warningsSection).getByRole("button", { name: "+30 daha fazla göster" }));
+
+    expect(findLogItem(warningsSection, "Satır 50", "satır tamamen boş")).toBeInTheDocument();
+    expect(findLogItem(warningsSection, "Satır 51", "satır tamamen boş")).not.toBeInTheDocument();
+
+    await user.click(within(warningsSection).getByRole("button", { name: "+51 daha fazla göster" }));
+
+    expect(findLogItem(warningsSection, "Satır 101", "satır tamamen boş")).toBeInTheDocument();
+    expect(within(warningsSection).getAllByText((content, element) => {
+      const text = element?.textContent ?? content;
+
+      return element?.tagName.toLowerCase() === "li" && text.includes("Satır 6:") && text.includes("satır tamamen boş");
+    })).toHaveLength(1);
+    expect(scrollIntoViewMock).not.toHaveBeenCalled();
 
     await user.click(within(warningsSection).getByRole("button", { name: "Daha az göster" }));
 
-    expect(findLogItem(warningsSection, "Satır 11", "satır tamamen boş")).not.toBeInTheDocument();
+    expect(findLogItem(warningsSection, "Satır 6", "satır tamamen boş")).not.toBeInTheDocument();
+    expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
+  });
+
+  it("stages long info logs without a duplicate detail block", async () => {
+    const rows = Array.from({ length: 60 }, (_, index) => [
+      `Aday ${index + 1}`,
+      "",
+      `0555 100 00${String(index).padStart(2, "0")}`
+    ]);
+    const worksheet = createWorksheet(["Ad Soyad", "Telefon", "2. Telefon"], rows);
+    const user = await uploadWorksheet(worksheet);
+    const infoSection = getSectionByHeading("Bilgiler (63)");
+
+    expect(findLogItem(infoSection, "Satır 3", "Telefon 1 boş")).toBeInTheDocument();
+    expect(findLogItem(infoSection, "Satır 4", "Telefon 1 boş")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Detayları göster/)).not.toBeInTheDocument();
+
+    await user.click(within(infoSection).getByRole("button", { name: "+15 daha fazla göster" }));
+
+    expect(findLogItem(infoSection, "Satır 18", "Telefon 1 boş")).toBeInTheDocument();
+    expect(findLogItem(infoSection, "Satır 19", "Telefon 1 boş")).not.toBeInTheDocument();
+
+    await user.click(within(infoSection).getByRole("button", { name: "+30 daha fazla göster" }));
+
+    expect(findLogItem(infoSection, "Satır 48", "Telefon 1 boş")).toBeInTheDocument();
+    expect(findLogItem(infoSection, "Satır 49", "Telefon 1 boş")).not.toBeInTheDocument();
+
+    await user.click(within(infoSection).getByRole("button", { name: "+13 daha fazla göster" }));
+
+    expect(findLogItem(infoSection, "Satır 61", "Telefon 1 boş")).toBeInTheDocument();
+
+    await user.click(within(infoSection).getByRole("button", { name: "Daha az göster" }));
+
+    expect(findLogItem(infoSection, "Satır 4", "Telefon 1 boş")).not.toBeInTheDocument();
+  });
+
+  it("collapses the first 20 preview rows to 10 and expands them on demand", async () => {
+    const rows = Array.from({ length: 20 }, (_, index) => [
+      `Aday ${index + 1}`,
+      `0555 200 00${String(index).padStart(2, "0")}`
+    ]);
+    const worksheet = createWorksheet(["Ad Soyad", "Telefon"], rows);
+    const user = await uploadWorksheet(worksheet);
+    const previewSection = getSectionByHeading("İlk 20 Satır Ön İzleme");
+
+    expect(within(previewSection).getByText("Aday 10")).toBeInTheDocument();
+    expect(within(previewSection).queryByText("Aday 11")).not.toBeInTheDocument();
+
+    await user.click(within(previewSection).getByRole("button", { name: "+10 daha göster" }));
+
+    expect(within(previewSection).getByText("Aday 20")).toBeInTheDocument();
+    expect(scrollIntoViewMock).not.toHaveBeenCalled();
+
+    await user.click(within(previewSection).getByRole("button", { name: "Daha az göster" }));
+
+    expect(within(previewSection).queryByText("Aday 11")).not.toBeInTheDocument();
+    expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
+  });
+
+  it("does not show a preview expansion control for 10 or fewer preview rows", async () => {
+    const rows = Array.from({ length: 10 }, (_, index) => [
+      `Aday ${index + 1}`,
+      `0555 300 00${String(index).padStart(2, "0")}`
+    ]);
+    const worksheet = createWorksheet(["Ad Soyad", "Telefon"], rows);
+
+    await uploadWorksheet(worksheet);
+    const previewSection = getSectionByHeading("İlk 20 Satır Ön İzleme");
+
+    expect(within(previewSection).getByText("Aday 10")).toBeInTheDocument();
+    expect(within(previewSection).queryByRole("button", { name: "+10 daha göster" })).not.toBeInTheDocument();
   });
 
   it("clears stale simulation and duplicate warning controls after a successful import", async () => {

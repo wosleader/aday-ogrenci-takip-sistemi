@@ -24,8 +24,10 @@ import type { ColumnMatch, ImportFieldKey, ImportSimulationSummary, ParsedWorksh
 
 const STORAGE_KEY = "aday-takip:last-import-simulation";
 const INITIAL_VISIBLE_COLUMN_MATCHES = 10;
-const INITIAL_VISIBLE_IMPORT_LOGS = 10;
-const MAX_VISIBLE_INFO_LOGS = 50;
+const INITIAL_VISIBLE_IMPORT_MESSAGES = 5;
+const IMPORT_MESSAGE_EXPANSION_STEPS = [5, 20, 50];
+const INITIAL_VISIBLE_PREVIEW_ROWS = 10;
+const MAX_VISIBLE_PREVIEW_ROWS = 20;
 
 type StoredSimulationState = {
   worksheet: ParsedWorksheet;
@@ -36,6 +38,8 @@ type StoredSimulationState = {
 export function ImportPage() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const columnMappingSectionRef = useRef<HTMLElement | null>(null);
+  const previewSectionRef = useRef<HTMLElement | null>(null);
   const [worksheet, setWorksheet] = useState<ParsedWorksheet | null>(null);
   const [summary, setSummary] = useState<ImportSimulationSummary | null>(null);
   const [manualMappings, setManualMappings] = useState<Record<number, ImportFieldKey | "ignore" | "">>(
@@ -50,8 +54,10 @@ export function ImportPage() {
   const [duplicateOverrideAccepted, setDuplicateOverrideAccepted] = useState(false);
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
   const [isColumnMappingExpanded, setIsColumnMappingExpanded] = useState(false);
-  const [isErrorsExpanded, setIsErrorsExpanded] = useState(false);
-  const [isWarningsExpanded, setIsWarningsExpanded] = useState(false);
+  const [errorsVisibleCount, setErrorsVisibleCount] = useState(INITIAL_VISIBLE_IMPORT_MESSAGES);
+  const [warningsVisibleCount, setWarningsVisibleCount] = useState(INITIAL_VISIBLE_IMPORT_MESSAGES);
+  const [infoVisibleCount, setInfoVisibleCount] = useState(INITIAL_VISIBLE_IMPORT_MESSAGES);
+  const [previewVisibleRowCount, setPreviewVisibleRowCount] = useState(INITIAL_VISIBLE_PREVIEW_ROWS);
 
   const columnMatches = useMemo(
     () => (worksheet ? matchColumns(worksheet.headers, manualMappings).matches : []),
@@ -125,8 +131,10 @@ export function ImportPage() {
 
   function resetProgressiveDisclosure() {
     setIsColumnMappingExpanded(false);
-    setIsErrorsExpanded(false);
-    setIsWarningsExpanded(false);
+    setErrorsVisibleCount(INITIAL_VISIBLE_IMPORT_MESSAGES);
+    setWarningsVisibleCount(INITIAL_VISIBLE_IMPORT_MESSAGES);
+    setInfoVisibleCount(INITIAL_VISIBLE_IMPORT_MESSAGES);
+    setPreviewVisibleRowCount(INITIAL_VISIBLE_PREVIEW_ROWS);
   }
 
   function resetFileInput() {
@@ -572,7 +580,7 @@ export function ImportPage() {
             </label>
           </section>
 
-          <section className="panel">
+          <section className="panel" ref={columnMappingSectionRef}>
             <h2>Kolon Eşleştirme</h2>
             <div className="table-wrap">
               <table>
@@ -632,7 +640,15 @@ export function ImportPage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => setIsColumnMappingExpanded((current) => !current)}
+                  onClick={() =>
+                    setIsColumnMappingExpanded((current) => {
+                      if (current) {
+                        scrollToImportSection(columnMappingSectionRef.current);
+                      }
+
+                      return !current;
+                    })
+                  }
                 >
                   {isColumnMappingExpanded
                     ? "Daha az göster"
@@ -645,7 +661,7 @@ export function ImportPage() {
             </Button>
           </section>
 
-          <section className="panel">
+          <section className="panel" ref={previewSectionRef}>
             <h2>İlk 20 Satır Ön İzleme</h2>
             <div className="table-wrap">
               <table>
@@ -661,7 +677,7 @@ export function ImportPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {summary.preview_rows.map((row) => (
+                  {summary.preview_rows.slice(0, previewVisibleRowCount).map((row) => (
                     <tr key={row.row_number}>
                       <td>{row.row_number}</td>
                       <td>{row.student_full_name}</td>
@@ -675,11 +691,35 @@ export function ImportPage() {
                 </tbody>
               </table>
             </div>
+            {summary.preview_rows.length > INITIAL_VISIBLE_PREVIEW_ROWS ? (
+              <div className="toolbar">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    const maxPreviewRows = Math.min(summary.preview_rows.length, MAX_VISIBLE_PREVIEW_ROWS);
+
+                    setPreviewVisibleRowCount((current) => {
+                      if (current >= maxPreviewRows) {
+                        scrollToImportSection(previewSectionRef.current);
+                        return INITIAL_VISIBLE_PREVIEW_ROWS;
+                      }
+
+                      return maxPreviewRows;
+                    });
+                  }}
+                >
+                  {previewVisibleRowCount >= Math.min(summary.preview_rows.length, MAX_VISIBLE_PREVIEW_ROWS)
+                    ? "Daha az göster"
+                    : `+${Math.min(summary.preview_rows.length, MAX_VISIBLE_PREVIEW_ROWS) - previewVisibleRowCount} daha göster`}
+                </Button>
+              </div>
+            ) : null}
           </section>
 
           <section className="panel">
             <h2>İçe Aktarma Logu</h2>
-            <p>Önce özet gösterilir; satır detayları Detayları göster içinde tutulur.</p>
+            <p>Hatalar, uyarılar ve bilgiler ilk 5 kayıtla gösterilir; fazlası aynı listede açılır.</p>
             <div className="toolbar">
               <Button type="button" variant="secondary" onClick={downloadImportLog}>
                 <Download size={16} aria-hidden="true" />
@@ -691,25 +731,22 @@ export function ImportPage() {
                 <CollapsibleLogGroup
                   title="Hatalar"
                   logs={groupedLogs.error}
-                  isExpanded={isErrorsExpanded}
-                  hiddenItemLabel="hata"
-                  onToggle={() => setIsErrorsExpanded((current) => !current)}
+                  visibleCount={errorsVisibleCount}
+                  onVisibleCountChange={setErrorsVisibleCount}
                 />
                 <CollapsibleLogGroup
                   title="Uyarılar"
                   logs={groupedLogs.warning}
-                  isExpanded={isWarningsExpanded}
-                  hiddenItemLabel="uyarı"
-                  onToggle={() => setIsWarningsExpanded((current) => !current)}
+                  visibleCount={warningsVisibleCount}
+                  onVisibleCountChange={setWarningsVisibleCount}
                 />
-                <LogGroup title={`Bilgiler (${groupedLogs.info.length})`} logs={groupedLogs.info.slice(0, MAX_VISIBLE_INFO_LOGS)} />
+                <CollapsibleLogGroup
+                  title="Bilgiler"
+                  logs={groupedLogs.info}
+                  visibleCount={infoVisibleCount}
+                  onVisibleCountChange={setInfoVisibleCount}
+                />
               </>
-            ) : null}
-            {summary.detailed_logs.length ? (
-              <details className="details-block">
-                <summary>Detayları göster ({summary.detailed_logs.length})</summary>
-                <LogGroup title="Satır Detayları" logs={summary.detailed_logs} />
-              </details>
             ) : null}
           </section>
 
@@ -843,45 +880,27 @@ function SummaryMetric({
   );
 }
 
-function LogGroup({ title, logs }: { title: string; logs: ImportSimulationSummary["logs"] }) {
-  return (
-    <section className="log-group">
-      <h3>{title}</h3>
-      {logs.length ? (
-        <ul className="log-list">
-          {logs.map((log, index) => (
-            <li key={`${title}-${log.message}-${index}`} data-severity={log.severity}>
-              <strong>{log.row_number ? `Satır ${log.row_number}: ` : ""}</strong>
-              {log.message}
-              {log.suggested_action ? <small>Önerilen işlem: {log.suggested_action}</small> : null}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>Bu grupta kayıt yok.</p>
-      )}
-    </section>
-  );
-}
-
 function CollapsibleLogGroup({
   title,
   logs,
-  isExpanded,
-  hiddenItemLabel,
-  onToggle
+  visibleCount,
+  onVisibleCountChange
 }: {
   title: string;
   logs: ImportSimulationSummary["logs"];
-  isExpanded: boolean;
-  hiddenItemLabel: string;
-  onToggle: () => void;
+  visibleCount: number;
+  onVisibleCountChange: (nextVisibleCount: number) => void;
 }) {
-  const visibleLogs = isExpanded ? logs : logs.slice(0, INITIAL_VISIBLE_IMPORT_LOGS);
-  const collapsedHiddenLogCount = Math.max(logs.length - INITIAL_VISIBLE_IMPORT_LOGS, 0);
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const boundedVisibleCount = Math.min(visibleCount, logs.length);
+  const visibleLogs = logs.slice(0, boundedVisibleCount);
+  const isFullyVisible = boundedVisibleCount >= logs.length;
+  const nextVisibleCount = getNextImportMessageVisibleCount(boundedVisibleCount, logs.length);
+  const nextHiddenLogCount = Math.max(nextVisibleCount - boundedVisibleCount, 0);
+  const shouldShowToggle = logs.length > INITIAL_VISIBLE_IMPORT_MESSAGES;
 
   return (
-    <section className="log-group">
+    <section className="log-group" ref={sectionRef}>
       <h3>
         {title} ({logs.length})
       </h3>
@@ -891,20 +910,52 @@ function CollapsibleLogGroup({
             <li key={`${title}-${log.message}-${index}`} data-severity={log.severity}>
               <strong>{log.row_number ? `Satır ${log.row_number}: ` : ""}</strong>
               {log.message}
-              {log.suggested_action ? <small>Önerilen işlem: {log.suggested_action}</small> : null}
+              {log.suggested_action ? (
+                <small>Önerilen işlem: {formatLogSuggestedAction(log.suggested_action)}</small>
+              ) : null}
             </li>
           ))}
         </ul>
       ) : (
         <p>Bu grupta kayıt yok.</p>
       )}
-      {collapsedHiddenLogCount > 0 ? (
+      {shouldShowToggle ? (
         <div className="toolbar">
-          <Button type="button" variant="secondary" onClick={onToggle}>
-            {isExpanded ? "Daha az göster" : `+${collapsedHiddenLogCount} ${hiddenItemLabel} daha göster`}
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              if (isFullyVisible) {
+                onVisibleCountChange(INITIAL_VISIBLE_IMPORT_MESSAGES);
+                scrollToImportSection(sectionRef.current);
+                return;
+              }
+
+              onVisibleCountChange(nextVisibleCount);
+            }}
+          >
+            {isFullyVisible ? "Daha az göster" : `+${nextHiddenLogCount} daha fazla göster`}
           </Button>
         </div>
       ) : null}
     </section>
   );
+}
+
+function scrollToImportSection(section: HTMLElement | null) {
+  section?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+}
+
+function getNextImportMessageVisibleCount(currentVisibleCount: number, totalCount: number) {
+  for (const step of IMPORT_MESSAGE_EXPANSION_STEPS) {
+    if (step > currentVisibleCount) {
+      return Math.min(step, totalCount);
+    }
+  }
+
+  return totalCount;
+}
+
+function formatLogSuggestedAction(suggestedAction: string) {
+  return suggestedAction.replace("Detayları göster bölümünden", "Aynı listedeki");
 }
