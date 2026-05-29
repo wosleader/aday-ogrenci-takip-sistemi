@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -142,6 +142,15 @@ function getDrawerPhoneCard(label: string): HTMLElement {
   return labelElement!.closest(".drawer-phone-card") as HTMLElement;
 }
 
+function mockClipboard(writeText = vi.fn().mockResolvedValue(undefined)) {
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: { writeText }
+  });
+
+  return writeText;
+}
+
 describe("StudentsPage phone selection", () => {
   beforeEach(async () => {
     Element.prototype.scrollIntoView = vi.fn();
@@ -152,6 +161,11 @@ describe("StudentsPage phone selection", () => {
 
   afterEach(async () => {
     vi.restoreAllMocks();
+    vi.useRealTimers();
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: undefined
+    });
     window.localStorage.clear();
     await db.delete();
   });
@@ -285,6 +299,156 @@ describe("StudentsPage phone selection", () => {
         name: "Yanlış numara veya kullanılmıyor olarak işaretle"
       })
     ).toHaveClass("active", "invalid");
+  });
+
+  it("copies visible phone numbers from the copy control without changing phone action behavior", async () => {
+    const user = userEvent.setup();
+    const writeText = mockClipboard();
+    await seedStudentWithPhones("MELIS KAYA", "copy");
+
+    renderStudentsPage();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    const phone1Number = within(phone1Card).getByText("0532 100 0001");
+
+    await user.click(phone1Number);
+    expect(writeText).not.toHaveBeenCalled();
+    expect(phone1Number).toBeInTheDocument();
+
+    await user.hover(phone1Number);
+    await user.click(within(phone1Card).getByRole("button", { name: "Telefon numarasını kopyala" }));
+
+    expect(writeText).toHaveBeenCalledWith("0532 100 0001");
+    expect(within(phone1Card).getByRole("button", { name: "Telefon numarasını kopyala" })).toHaveAttribute(
+      "title",
+      "Kopyalandı"
+    );
+
+    const phone3Card = getDrawerPhoneCard("Telefon 3 · Öğrenci");
+    const phone3Number = within(phone3Card).getByText("0532 100 0003");
+    await user.click(phone3Number);
+    expect(writeText).not.toHaveBeenCalledWith("0532 100 0003");
+
+    await user.hover(phone3Number);
+    await user.click(within(phone3Card).getByRole("button", { name: "Telefon numarasını kopyala" }));
+
+    expect(writeText).toHaveBeenCalledWith("0532 100 0003");
+
+    writeText.mockClear();
+
+    await user.click(
+      within(phone3Card).getByRole("button", {
+        name: "Bu numarayla görüşüldü"
+      })
+    );
+
+    expect(writeText).not.toHaveBeenCalled();
+
+    await waitFor(() => {
+      expect(getDrawerPhoneCard("Telefon 3 · Öğrenci")).toHaveClass("contacted");
+    });
+
+    await user.click(
+      within(getDrawerPhoneCard("Telefon 3 · Öğrenci")).getByRole("button", {
+        name: "Yanlış numara veya kullanılmıyor olarak işaretle"
+      })
+    );
+
+    expect(writeText).not.toHaveBeenCalled();
+  });
+
+  it("does not crash when clipboard access is unavailable", async () => {
+    const user = userEvent.setup();
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: undefined
+    });
+    await seedStudentWithPhones("MELIS KAYA", "no-clipboard");
+
+    renderStudentsPage();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    const phone1Number = within(phone1Card).getByText("0532 100 0001");
+    await user.hover(phone1Number);
+    await user.click(within(phone1Card).getByRole("button", { name: "Telefon numarasını kopyala" }));
+
+    expect(within(phone1Card).getByText("0532 100 0001")).toBeInTheDocument();
+  });
+
+  it("keeps the copy control briefly visible after mouse leave", async () => {
+    mockClipboard();
+    await seedStudentWithPhones("MELIS KAYA", "copy-timer");
+
+    renderStudentsPage();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    const phone1Number = within(phone1Card).getByText("0532 100 0001");
+
+    vi.useFakeTimers();
+
+    fireEvent.mouseEnter(phone1Number);
+    expect(within(phone1Card).getByRole("button", { name: "Telefon numarasını kopyala" })).toBeInTheDocument();
+
+    fireEvent.mouseLeave(phone1Number);
+
+    act(() => {
+      vi.advanceTimersByTime(199);
+    });
+
+    expect(within(phone1Card).getByRole("button", { name: "Telefon numarasını kopyala" })).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+
+    expect(within(phone1Card).queryByRole("button", { name: "Telefon numarasını kopyala" })).not.toBeInTheDocument();
+  });
+
+  it("hides the copied state after a short tick without returning to the copy icon", async () => {
+    const writeText = mockClipboard();
+    await seedStudentWithPhones("MELIS KAYA", "copy-success-timer");
+
+    renderStudentsPage();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    const phone1Number = within(phone1Card).getByText("0532 100 0001");
+
+    vi.useFakeTimers();
+
+    fireEvent.mouseEnter(phone1Number);
+    fireEvent.click(within(phone1Card).getByRole("button", { name: "Telefon numarasını kopyala" }));
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(writeText).toHaveBeenCalledWith("0532 100 0001");
+    expect(within(phone1Card).getByRole("button", { name: "Telefon numarasını kopyala" })).toHaveAttribute(
+      "title",
+      "Kopyalandı"
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(199);
+    });
+
+    expect(within(phone1Card).getByRole("button", { name: "Telefon numarasını kopyala" })).toHaveAttribute(
+      "title",
+      "Kopyalandı"
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+
+    expect(within(phone1Card).queryByRole("button", { name: "Telefon numarasını kopyala" })).not.toBeInTheDocument();
+
+    fireEvent.mouseEnter(phone1Number);
+
+    expect(within(phone1Card).getByRole("button", { name: "Telefon numarasını kopyala" })).toHaveAttribute(
+      "title",
+      "Telefon numarasını kopyala"
+    );
   });
 
   it("requires an explicit call phone when multiple eligible phones exist", async () => {

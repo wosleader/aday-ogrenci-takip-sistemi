@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Bell, Check, ChevronsRight, MoreVertical, Trash2, X } from "lucide-react";
+import { Bell, Check, ChevronsRight, Copy, MoreVertical, Trash2, X } from "lucide-react";
 import type { AppOutletContext } from "../../app/AppLayout";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/EmptyState";
@@ -358,12 +358,153 @@ function PhoneCard({
 }: PhoneCardProps) {
   const isEffectiveContacted = isContacted || isSelectedForCall;
   const effectiveStatusText = isSelectedForCall ? undefined : statusText;
+  const [isCopied, setIsCopied] = useState(false);
+  const [isCopyControlVisible, setIsCopyControlVisible] = useState(false);
+  const hideCopyControlTimeoutRef = useRef<number | null>(null);
+  const copySuccessTimeoutRef = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (hideCopyControlTimeoutRef.current != null) {
+        window.clearTimeout(hideCopyControlTimeoutRef.current);
+      }
+
+      if (copySuccessTimeoutRef.current != null) {
+        window.clearTimeout(copySuccessTimeoutRef.current);
+      }
+    },
+    []
+  );
+
+  function clearCopyControlHideTimeout() {
+    if (hideCopyControlTimeoutRef.current == null) {
+      return;
+    }
+
+    window.clearTimeout(hideCopyControlTimeoutRef.current);
+    hideCopyControlTimeoutRef.current = null;
+  }
+
+  function clearCopySuccessTimeout() {
+    if (copySuccessTimeoutRef.current == null) {
+      return;
+    }
+
+    window.clearTimeout(copySuccessTimeoutRef.current);
+    copySuccessTimeoutRef.current = null;
+  }
+
+  function finishCopySuccessCycle() {
+    setIsCopied(false);
+    setIsCopyControlVisible(false);
+    copySuccessTimeoutRef.current = null;
+  }
+
+  function showCopyControl() {
+    clearCopyControlHideTimeout();
+    if (!isCopied) {
+      clearCopySuccessTimeout();
+    }
+    setIsCopyControlVisible(true);
+  }
+
+  function scheduleCopyControlHide() {
+    clearCopyControlHideTimeout();
+    hideCopyControlTimeoutRef.current = window.setTimeout(() => {
+      setIsCopyControlVisible(false);
+      hideCopyControlTimeoutRef.current = null;
+    }, 200);
+  }
+
+  async function copyPhoneNumber() {
+    if (!value) {
+      return;
+    }
+
+    try {
+      const clipboard = navigator.clipboard;
+      if (typeof clipboard?.writeText !== "function") {
+        return;
+      }
+
+      await clipboard.writeText(value);
+      clearCopyControlHideTimeout();
+      clearCopySuccessTimeout();
+      setIsCopyControlVisible(true);
+      setIsCopied(true);
+      copySuccessTimeoutRef.current = window.setTimeout(finishCopySuccessCycle, 200);
+    } catch {
+      clearCopySuccessTimeout();
+      setIsCopied(false);
+    }
+  }
 
   return (
     <div className={`drawer-phone-card ${isEffectiveContacted ? "contacted" : ""} ${isWrong ? "invalid" : ""}`}>
       <div>
         <span className="form-label">{label}</span>
-        <strong>{value || "Telefon yok"}</strong>
+        <strong>
+          {value ? (
+            <span
+              onBlur={(event) => {
+                const nextTarget = event.relatedTarget;
+                if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
+                  return;
+                }
+
+                scheduleCopyControlHide();
+              }}
+              onFocus={showCopyControl}
+              onMouseEnter={showCopyControl}
+              onMouseLeave={scheduleCopyControlHide}
+              style={{ alignItems: "center", display: "inline-flex", gap: 4, lineHeight: 1.2 }}
+              tabIndex={0}
+            >
+              <span style={{ userSelect: "text" }}>{value}</span>
+              <span
+                aria-hidden={!isCopyControlVisible}
+                style={{
+                  alignItems: "center",
+                  display: "inline-flex",
+                  flex: "0 0 18px",
+                  height: 18,
+                  justifyContent: "center",
+                  visibility: isCopyControlVisible ? "visible" : "hidden",
+                  width: 18
+                }}
+              >
+                <button
+                  aria-label="Telefon numarasını kopyala"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void copyPhoneNumber();
+                  }}
+                  onFocus={showCopyControl}
+                  style={{
+                    alignItems: "center",
+                    background: "transparent",
+                    border: "0",
+                    color: "currentColor",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    height: 18,
+                    justifyContent: "center",
+                    lineHeight: 1,
+                    opacity: isCopied ? 1 : 0.7,
+                    padding: 0,
+                    width: 18
+                  }}
+                  title={isCopied ? "Kopyalandı" : "Telefon numarasını kopyala"}
+                  type="button"
+                >
+                  {isCopied ? <Check aria-hidden="true" size={11} /> : <Copy aria-hidden="true" size={11} />}
+                </button>
+              </span>
+            </span>
+          ) : (
+            "Telefon yok"
+          )}
+        </strong>
         <small>
           {effectiveStatusText ? effectiveStatusText : null}
           {!effectiveStatusText && isEffectiveContacted ? "Son görüşülen / iletişim kurulan numara" : null}
