@@ -175,7 +175,12 @@ describe("StudentsPage right card multi-phone display", () => {
       })
     ).toBeInTheDocument();
 
+    const scrollIntoViewMock = vi.mocked(Element.prototype.scrollIntoView);
+    scrollIntoViewMock.mockClear();
+
     await user.click(screen.getByRole("button", { name: "+2 numara daha göster" }));
+
+    expect(scrollIntoViewMock).not.toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
 
     expect(await screen.findByText("Telefon 4 · Veli")).toBeInTheDocument();
     expect(screen.getByText("0532 000 0004")).toBeInTheDocument();
@@ -183,11 +188,14 @@ describe("StudentsPage right card multi-phone display", () => {
     expect(screen.getByText("0532 000 0005")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Daha az göster" })).toBeInTheDocument();
 
+    scrollIntoViewMock.mockClear();
+
     await user.click(screen.getByRole("button", { name: "Daha az göster" }));
 
     expect(screen.queryByText("Telefon 4 · Veli")).not.toBeInTheDocument();
     expect(screen.queryByText("Telefon 5 · Yakın")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "+2 numara daha göster" })).toBeInTheDocument();
+    expect(scrollIntoViewMock).toHaveBeenCalledTimes(1);
   });
 
   it("does not show an expand button when there are no hidden phones", async () => {

@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Bell, Check, ChevronsRight, MoreVertical, Trash2, X } from "lucide-react";
@@ -520,6 +520,8 @@ export function StudentsPage() {
   const [dismissedReminderKeys, setDismissedReminderKeys] = useState(() => readPersistedDismissedReminderKeys());
   const [chimedReminderIds, setChimedReminderIds] = useState<number[]>([]);
   const [reminderTick, setReminderTick] = useState(() => Date.now());
+  const drawerPhoneListRef = useRef<HTMLDivElement | null>(null);
+  const shouldScrollPhoneListAfterCollapseRef = useRef(false);
   const rows = useLiveQuery(
     async () => {
       try {
@@ -663,7 +665,21 @@ export function StudentsPage() {
     setReminderTime(toTimeInputValue(selectedRow.next_reminder_at));
     setIsExtraPhonesExpanded(false);
     setSelectedCallPhoneId(null);
+    shouldScrollPhoneListAfterCollapseRef.current = false;
   }, [selectedRow?.student_id]);
+
+  useEffect(() => {
+    if (isExtraPhonesExpanded || !shouldScrollPhoneListAfterCollapseRef.current) {
+      return;
+    }
+
+    shouldScrollPhoneListAfterCollapseRef.current = false;
+
+    const phoneListElement = drawerPhoneListRef.current;
+    if (typeof phoneListElement?.scrollIntoView === "function") {
+      phoneListElement.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [isExtraPhonesExpanded]);
 
   useEffect(() => {
     if (!reminderPopup || !reminderSettings?.sound_enabled) {
@@ -1477,6 +1493,7 @@ export function StudentsPage() {
             </div>
 
             <div className="drawer-body">
+              <div ref={drawerPhoneListRef} aria-hidden="true" />
               <PhoneCard
                 label="Telefon 1"
                 phoneId={selectedRow.phone_1_id}
@@ -1527,7 +1544,15 @@ export function StudentsPage() {
               {selectedRow.hidden_phone_count > 0 ? (
                 <Button
                   aria-expanded={isExtraPhonesExpanded}
-                  onClick={() => setIsExtraPhonesExpanded((current) => !current)}
+                  onClick={() => {
+                    if (isExtraPhonesExpanded) {
+                      shouldScrollPhoneListAfterCollapseRef.current = true;
+                      setIsExtraPhonesExpanded(false);
+                      return;
+                    }
+
+                    setIsExtraPhonesExpanded(true);
+                  }}
                   type="button"
                   variant="secondary"
                 >
