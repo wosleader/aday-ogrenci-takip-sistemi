@@ -14,9 +14,26 @@ const duplicateGuardMocks = vi.hoisted(() => ({
   checkPossibleDuplicateImport: vi.fn()
 }));
 
+const importWriterMocks = vi.hoisted(() => ({
+  writeImportToDatabase: vi.fn()
+}));
+
 vi.mock("../../src/features/imports/services/excelReader", () => excelReaderMocks);
 
 vi.mock("../../src/features/imports/services/importDuplicateGuard", () => duplicateGuardMocks);
+
+vi.mock("../../src/features/imports/services/importWriter", () => importWriterMocks);
+
+vi.mock("../../src/features/imports/services/logExport", async () => {
+  const actual = await vi.importActual<typeof import("../../src/features/imports/services/logExport")>(
+    "../../src/features/imports/services/logExport"
+  );
+
+  return {
+    ...actual,
+    downloadTextFile: vi.fn()
+  };
+});
 
 function createWorksheet(headers: string[], rows: unknown[][]): ParsedWorksheet {
   return {
@@ -42,12 +59,16 @@ function renderImportPage() {
   );
 }
 
+function getFileInput() {
+  return document.querySelector('input[type="file"]') as HTMLInputElement;
+}
+
 async function uploadWorksheet(worksheet: ParsedWorksheet) {
   const user = userEvent.setup();
   excelReaderMocks.parseFirstWorksheet.mockResolvedValueOnce(worksheet);
   renderImportPage();
 
-  const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+  const fileInput = getFileInput();
   await user.upload(fileInput, new File(["mock"], "test-import.xlsx"));
 
   await screen.findByRole("heading", { name: "Kolon Eşleştirme" });
@@ -77,9 +98,22 @@ describe("ImportPage progressive disclosure", () => {
     vi.clearAllMocks();
     window.localStorage.clear();
     window.sessionStorage.clear();
+    window.confirm = vi.fn(() => true);
     duplicateGuardMocks.checkPossibleDuplicateImport.mockResolvedValue({
       isPossibleDuplicate: false,
       matched_imports: []
+    });
+    importWriterMocks.writeImportToDatabase.mockResolvedValue({
+      created_students: 1,
+      created_guardians: 1,
+      created_phones: 1,
+      created_reminders: 0,
+      saved_import_logs: 1,
+      skipped_rows: 0,
+      backup: {
+        file_name: "import-oncesi-yedek.json",
+        json: "{}"
+      }
     });
   });
 
@@ -150,5 +184,90 @@ describe("ImportPage progressive disclosure", () => {
     await user.click(within(warningsSection).getByRole("button", { name: "Daha az göster" }));
 
     expect(findLogItem(warningsSection, "Satır 11", "satır tamamen boş")).not.toBeInTheDocument();
+  });
+
+  it("clears stale simulation and duplicate warning controls after a successful import", async () => {
+    const worksheet = createWorksheet(
+      ["Ad Soyad", "Telefon"],
+      [["Ayşe Yılmaz", "0555 123 4567"]]
+    );
+    const user = await uploadWorksheet(worksheet);
+
+    expect(screen.getByRole("heading", { name: "Kolon Eşleştirme" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "İçe Aktar" }));
+
+    expect(await screen.findByRole("heading", { name: "İçe Aktarma Tamamlandı" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Kolon Eşleştirme" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Bu dosya daha önce içe aktarılmış olabilir" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Yine de içe aktar" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Eski import verisini temizleyip yeniden içe aktar" })
+    ).not.toBeInTheDocument();
+    expect(getFileInput().value).toBe("");
+
+    duplicateGuardMocks.checkPossibleDuplicateImport.mockResolvedValueOnce({
+      isPossibleDuplicate: true,
+      matched_imports: [
+        {
+          import_id: 1,
+          file_name: "test-import.xlsx",
+          sheet_name: "Sayfa1",
+          started_at: "2026-05-29T09:00:00.000Z",
+          finished_at: "2026-05-29T09:01:00.000Z",
+          imported_rows: 1
+        }
+      ]
+    });
+    excelReaderMocks.parseFirstWorksheet.mockResolvedValueOnce(worksheet);
+
+    const fileInput = getFileInput();
+    await user.upload(fileInput, new File(["mock"], "test-import.xlsx"));
+
+    expect(await screen.findByRole("heading", { name: "Bu dosya daha önce içe aktarılmış olabilir" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Yine de içe aktar" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "İçe Aktarma Tamamlandı" })).not.toBeInTheDocument();
+    expect(excelReaderMocks.parseFirstWorksheet).toHaveBeenCalledTimes(2);
+    expect(fileInput.value).toBe("");
+  });
+
+  it("allows selecting the same file again after clearing the simulation", async () => {
+    const worksheet = createWorksheet(
+      ["Ad Soyad", "Telefon"],
+      [["Ayşe Yılmaz", "0555 123 4567"]]
+    );
+    const user = await uploadWorksheet(worksheet);
+
+    await user.click(screen.getByRole("button", { name: "Simülasyonu Temizle" }));
+
+    expect(await screen.findByRole("heading", { name: "Henüz simülasyon yok" })).toBeInTheDocument();
+    expect(getFileInput().value).toBe("");
+
+    excelReaderMocks.parseFirstWorksheet.mockResolvedValueOnce(worksheet);
+    await user.upload(getFileInput(), new File(["mock"], "test-import.xlsx"));
+
+    expect(await screen.findByRole("heading", { name: "Kolon Eşleştirme" })).toBeInTheDocument();
+    expect(excelReaderMocks.parseFirstWorksheet).toHaveBeenCalledTimes(2);
+  });
+
+  it("clears previous success state when a different file is selected after import", async () => {
+    const firstWorksheet = createWorksheet(
+      ["Ad Soyad", "Telefon"],
+      [["Ayşe Yılmaz", "0555 123 4567"]]
+    );
+    const secondWorksheet = createWorksheet(
+      ["Ad Soyad", "Telefon"],
+      [["Mehmet Kaya", "0555 765 4321"]]
+    );
+    const user = await uploadWorksheet(firstWorksheet);
+
+    await user.click(screen.getByRole("button", { name: "İçe Aktar" }));
+    expect(await screen.findByRole("heading", { name: "İçe Aktarma Tamamlandı" })).toBeInTheDocument();
+
+    excelReaderMocks.parseFirstWorksheet.mockResolvedValueOnce(secondWorksheet);
+    await user.upload(getFileInput(), new File(["second"], "second-import.xlsx"));
+
+    expect(await screen.findByRole("heading", { name: "Kolon Eşleştirme" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "İçe Aktarma Tamamlandı" })).not.toBeInTheDocument();
   });
 });

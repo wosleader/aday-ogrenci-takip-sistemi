@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type MouseEvent } from "react";
 import { Clipboard, Download, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/Button";
@@ -35,6 +35,7 @@ type StoredSimulationState = {
 
 export function ImportPage() {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [worksheet, setWorksheet] = useState<ParsedWorksheet | null>(null);
   const [summary, setSummary] = useState<ImportSimulationSummary | null>(null);
   const [manualMappings, setManualMappings] = useState<Record<number, ImportFieldKey | "ignore" | "">>(
@@ -128,6 +129,16 @@ export function ImportPage() {
     setIsWarningsExpanded(false);
   }
 
+  function resetFileInput() {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  function prepareFileInputForSelection(event: MouseEvent<HTMLInputElement>) {
+    event.currentTarget.value = "";
+  }
+
   function applySimulation(
     nextWorksheet: ParsedWorksheet,
     nextManualMappings: Record<number, ImportFieldKey | "ignore" | ""> = manualMappings
@@ -150,6 +161,7 @@ export function ImportPage() {
   }
 
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const fileInput = event.currentTarget;
     const file = event.target.files?.[0];
 
     if (!file) {
@@ -158,6 +170,10 @@ export function ImportPage() {
 
     try {
       setError(null);
+      setImportResult(null);
+      setDuplicateWarning(null);
+      setDuplicateOverrideAccepted(false);
+      setIsDuplicateModalOpen(false);
       const buffer = await file.arrayBuffer();
       const parsedWorksheet = await parseFirstWorksheet(buffer, file.name);
       parsedWorksheet.file_size = file.size;
@@ -168,6 +184,8 @@ export function ImportPage() {
       setSummary(null);
       resetProgressiveDisclosure();
       setError(caughtError instanceof Error ? caughtError.message : "Excel dosyası okunamadı.");
+    } finally {
+      fileInput.value = "";
     }
   }
 
@@ -196,6 +214,7 @@ export function ImportPage() {
   }
 
   function clearSimulation() {
+    resetFileInput();
     sessionStorage.removeItem(STORAGE_KEY);
     setWorksheet(null);
     setSummary(null);
@@ -203,6 +222,19 @@ export function ImportPage() {
     setHeaderRowNumber(1);
     setError(null);
     setImportResult(null);
+    setDuplicateWarning(null);
+    setDuplicateOverrideAccepted(false);
+    setIsDuplicateModalOpen(false);
+    resetProgressiveDisclosure();
+  }
+
+  function clearCompletedSimulation() {
+    resetFileInput();
+    sessionStorage.removeItem(STORAGE_KEY);
+    setWorksheet(null);
+    setSummary(null);
+    setManualMappings({});
+    setHeaderRowNumber(1);
     setDuplicateWarning(null);
     setDuplicateOverrideAccepted(false);
     setIsDuplicateModalOpen(false);
@@ -296,6 +328,7 @@ export function ImportPage() {
 
       const result = await writeImportToDatabase(worksheet, summary);
       downloadTextFile(result.backup.file_name, result.backup.json);
+      clearCompletedSimulation();
       setImportResult(result);
     } catch (caughtError) {
       const message =
@@ -394,7 +427,13 @@ export function ImportPage() {
 
       <section className="panel">
         <label className="file-picker">
-          <input accept=".xlsx,.xls" type="file" onChange={handleFileChange} />
+          <input
+            accept=".xlsx,.xls"
+            ref={fileInputRef}
+            type="file"
+            onClick={prepareFileInputForSelection}
+            onChange={handleFileChange}
+          />
           <Button type="button" variant="secondary" className="file-picker-button">
             <Upload size={18} aria-hidden="true" />
             Excel Dosyası Seç ve Ön Kontrol Yap
@@ -409,6 +448,23 @@ export function ImportPage() {
       </section>
 
       {!summary ? (
+        importResult ? (
+          <section className="import-result">
+            <h3>İçe Aktarma Tamamlandı</h3>
+            <div className="summary-grid">
+              <SummaryMetric label="Oluşturulan öğrenci" value={importResult.created_students} />
+              <SummaryMetric label="Oluşturulan veli" value={importResult.created_guardians} />
+              <SummaryMetric label="Oluşturulan telefon" value={importResult.created_phones} />
+              <SummaryMetric label="Oluşturulan hatırlatma" value={importResult.created_reminders} />
+              <SummaryMetric label="Kaydedilen içe aktarma logu" value={importResult.saved_import_logs} />
+              <SummaryMetric label="Atlanan satır" value={importResult.skipped_rows} />
+            </div>
+            <p>İçe aktarma öncesi güvenlik yedeği oluşturuldu ve indirilebilir hale getirildi.</p>
+            <Button type="button" variant="secondary" onClick={() => navigate("/students")}>
+              Aday Listesine Git
+            </Button>
+          </section>
+        ) : (
         <EmptyState
           title="Henüz simülasyon yok"
           description="İlk Excel sekmesi okunur, kolonlar otomatik eşleştirilir, hatalar ve uyarılar gösterilir. Onay vermeden kayıt yapılmaz."
@@ -421,6 +477,7 @@ export function ImportPage() {
             </ul>
           }
         />
+        )
       ) : (
         <>
           <section className="summary-grid" aria-label="İçe aktarma ön kontrol özeti">
