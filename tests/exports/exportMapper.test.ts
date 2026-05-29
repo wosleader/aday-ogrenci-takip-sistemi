@@ -57,6 +57,21 @@ function phone(overrides: Partial<PhoneRecord> = {}): PhoneRecord {
   };
 }
 
+function phoneForSlot(slot: number, overrides: Partial<PhoneRecord> = {}): PhoneRecord {
+  const phoneNumber = `05${slot.toString().padStart(2, "0")}0000000`;
+
+  return phone({
+    id: slot,
+    phone_number: phoneNumber,
+    normalized_phone_number: phoneNumber,
+    phone_label: `Telefon ${slot}`,
+    reference_label: `Telefon ${slot}`,
+    priority: slot,
+    is_primary: slot === 1,
+    ...overrides
+  });
+}
+
 function callLog(id: number, callTime: string, overrides: Partial<CallLogRecord> = {}): CallLogRecord & { id: number } {
   return {
     id,
@@ -93,6 +108,19 @@ function reminder(overrides: Partial<ReminderRecord> = {}): ReminderRecord {
 }
 
 function dataset(callLogs: Array<CallLogRecord & { id: number }> = []): ExportDataset {
+  const primaryPhone = phone({ phone_status: "contacted" });
+  const secondaryPhone = phone({
+    id: 2,
+    phone_number: "05431234567",
+    normalized_phone_number: "05431234567",
+    phone_label: "2. Telefon",
+    reference_label: "Telefon 2",
+    priority: 2,
+    phone_status: "invalid",
+    is_wrong: true,
+    is_primary: false
+  });
+
   return {
     bundles: [
       {
@@ -122,16 +150,9 @@ function dataset(callLogs: Array<CallLogRecord & { id: number }> = []): ExportDa
         },
         pending_reminder: reminder(),
         appointment: null,
-        phone_1: phone({ phone_status: "contacted" }),
-        phone_2: phone({
-          id: 2,
-          phone_number: "05431234567",
-          normalized_phone_number: "05431234567",
-          phone_label: "2. Telefon",
-          phone_status: "invalid",
-          is_wrong: true,
-          is_primary: false
-        }),
+        phone_1: primaryPhone,
+        phone_2: secondaryPhone,
+        phones: [primaryPhone, secondaryPhone],
         call_logs: callLogs,
         duplicate_phone_keys: ["05321234567"]
       }
@@ -139,11 +160,137 @@ function dataset(callLogs: Array<CallLogRecord & { id: number }> = []): ExportDa
   };
 }
 
+function cellByHeader(sheet: ReturnType<typeof createDetailedExportSheet>, header: string): string | number {
+  const index = sheet.headers.indexOf(header);
+
+  expect(index).toBeGreaterThanOrEqual(0);
+
+  return sheet.rows[0][index];
+}
+
 describe("exportMapper", () => {
   it("creates Turkish base headers before dynamic call columns", () => {
     const sheet = createDetailedExportSheet(dataset());
 
     expect(sheet.headers.slice(0, BASE_EXPORT_HEADERS.length)).toEqual([...BASE_EXPORT_HEADERS]);
+  });
+
+  it("adds Telefon 3-10 detailed headers immediately after Telefon 2 Durumu", () => {
+    const sheet = createDetailedExportSheet(dataset());
+    const telefon1Index = sheet.headers.indexOf("Telefon 1");
+
+    expect(sheet.headers.slice(telefon1Index, telefon1Index + 20)).toEqual([
+      "Telefon 1",
+      "Telefon 1 Durumu",
+      "Telefon 2",
+      "Telefon 2 Durumu",
+      "Telefon 3",
+      "Telefon 3 Durumu",
+      "Telefon 4",
+      "Telefon 4 Durumu",
+      "Telefon 5",
+      "Telefon 5 Durumu",
+      "Telefon 6",
+      "Telefon 6 Durumu",
+      "Telefon 7",
+      "Telefon 7 Durumu",
+      "Telefon 8",
+      "Telefon 8 Durumu",
+      "Telefon 9",
+      "Telefon 9 Durumu",
+      "Telefon 10",
+      "Telefon 10 Durumu"
+    ]);
+  });
+
+  it("maps Telefon 3-only and Telefon 7-only records to their explicit detailed export slots", () => {
+    const telefon3 = phoneForSlot(3, { phone_number: "05553333333", normalized_phone_number: "05553333333" });
+    const telefon3Only = dataset();
+    telefon3Only.bundles[0].phone_1 = telefon3;
+    telefon3Only.bundles[0].phone_2 = null;
+    telefon3Only.bundles[0].phones = [telefon3];
+
+    const telefon3Sheet = createDetailedExportSheet(telefon3Only);
+
+    expect(cellByHeader(telefon3Sheet, "Telefon 1")).toBe("");
+    expect(cellByHeader(telefon3Sheet, "Telefon 2")).toBe("");
+    expect(cellByHeader(telefon3Sheet, "Telefon 3")).toBe("05553333333");
+    expect(cellByHeader(telefon3Sheet, "Telefon 4")).toBe("");
+
+    const telefon7 = phoneForSlot(7, { phone_number: "05557777777", normalized_phone_number: "05557777777" });
+    const telefon7Only = dataset();
+    telefon7Only.bundles[0].phone_1 = telefon7;
+    telefon7Only.bundles[0].phone_2 = null;
+    telefon7Only.bundles[0].phones = [telefon7];
+
+    const telefon7Sheet = createDetailedExportSheet(telefon7Only);
+
+    expect(cellByHeader(telefon7Sheet, "Telefon 1")).toBe("");
+    expect(cellByHeader(telefon7Sheet, "Telefon 2")).toBe("");
+    expect(cellByHeader(telefon7Sheet, "Telefon 3")).toBe("");
+    expect(cellByHeader(telefon7Sheet, "Telefon 6")).toBe("");
+    expect(cellByHeader(telefon7Sheet, "Telefon 7")).toBe("05557777777");
+  });
+
+  it("maps Telefon 10-only records without copying them into Telefon 1 or Telefon 2", () => {
+    const telefon10 = phoneForSlot(10, { phone_number: "05551010101", normalized_phone_number: "05551010101" });
+    const data = dataset();
+    data.bundles[0].phone_1 = null;
+    data.bundles[0].phone_2 = telefon10;
+    data.bundles[0].phones = [telefon10];
+
+    const sheet = createDetailedExportSheet(data);
+
+    expect(cellByHeader(sheet, "Telefon 1")).toBe("");
+    expect(cellByHeader(sheet, "Telefon 2")).toBe("");
+    expect(cellByHeader(sheet, "Telefon 10")).toBe("05551010101");
+  });
+
+  it("maps Telefon 1-10 records into their detailed export columns", () => {
+    const data = dataset();
+    const phones = Array.from({ length: 10 }, (_, index) => phoneForSlot(index + 1));
+    data.bundles[0].phone_1 = phones[0];
+    data.bundles[0].phone_2 = phones[1];
+    data.bundles[0].phones = phones;
+
+    const sheet = createDetailedExportSheet(data);
+
+    for (const exportPhone of phones) {
+      expect(cellByHeader(sheet, exportPhone.reference_label ?? "")).toBe(exportPhone.phone_number);
+    }
+  });
+
+  it("exports invalid, wrong and duplicate extra phones with the expected detailed statuses", () => {
+    const invalidTelefon3 = phoneForSlot(3, {
+      phone_number: "05550000000",
+      normalized_phone_number: "05550000000",
+      is_valid: false
+    });
+    const data = dataset();
+    data.bundles[0].phone_1 = invalidTelefon3;
+    data.bundles[0].phone_2 = null;
+    data.bundles[0].phones = [
+      invalidTelefon3,
+      phoneForSlot(4, {
+        phone_number: "05554444444",
+        normalized_phone_number: "05554444444",
+        is_wrong: true
+      }),
+      phoneForSlot(5, {
+        phone_number: "05550000000",
+        normalized_phone_number: "05550000000"
+      })
+    ];
+
+    const sheet = createDetailedExportSheet(data);
+
+    expect(cellByHeader(sheet, "Telefon 1")).toBe("");
+    expect(cellByHeader(sheet, "Telefon 3")).toBe("05550000000");
+    expect(cellByHeader(sheet, "Telefon 3 Durumu")).toBe("Geçersiz format");
+    expect(cellByHeader(sheet, "Telefon 4")).toBe("05554444444");
+    expect(cellByHeader(sheet, "Telefon 4 Durumu")).toBe("Yanlış numara / kullanılmıyor");
+    expect(cellByHeader(sheet, "Telefon 5")).toBe("");
+    expect(cellByHeader(sheet, "Telefon 5 Durumu")).toBe("");
   });
 
   it("maps call logs into dynamic chronological Arama columns", () => {
@@ -177,18 +324,17 @@ describe("exportMapper", () => {
 
   it("marks pending reminder and duplicate phone state in base columns", () => {
     const sheet = createDetailedExportSheet(dataset());
-    const row = sheet.rows[0];
 
-    expect(row[15]).toBe("Evet");
-    expect(row[16]).toBe("12.05.2026");
-    expect(row[17]).toBe("11:00");
-    expect(row[21]).toBe("Var - aynı telefon farklı adaylarda geçiyor");
+    expect(cellByHeader(sheet, "Tekrar Aranacak mı?")).toBe("Evet");
+    expect(cellByHeader(sheet, "Tekrar Arama Tarihi")).toBe("12.05.2026");
+    expect(cellByHeader(sheet, "Tekrar Arama Saati")).toBe("11:00");
+    expect(cellByHeader(sheet, "Mükerrer Telefon Uyarısı")).toBe("Var - aynı telefon farklı adaylarda geçiyor");
   });
 
   it("uses Hayır when there is no pending reminder", () => {
     const data = dataset();
     data.bundles[0].pending_reminder = null;
 
-    expect(createDetailedExportSheet(data).rows[0][15]).toBe("Hayır");
+    expect(cellByHeader(createDetailedExportSheet(data), "Tekrar Aranacak mı?")).toBe("Hayır");
   });
 });

@@ -129,6 +129,66 @@ describe("exportDataReader", () => {
     }
   });
 
+  it("keeps legacy phone slots while carrying all active phones in export order", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student("Ayşe Yılmaz"));
+      await database.phones.bulkAdd([
+        phone(studentId, {
+          phone_number: "05550000003",
+          normalized_phone_number: "05550000003",
+          phone_label: "Telefon 3",
+          reference_label: "Telefon 3",
+          priority: 3,
+          is_primary: false,
+          created_at: "2026-05-08T09:03:00"
+        }),
+        phone(studentId, {
+          phone_number: "05320000001",
+          normalized_phone_number: "05320000001",
+          phone_label: "Telefon 1",
+          reference_label: "Telefon 1",
+          priority: 1,
+          is_primary: true,
+          created_at: "2026-05-08T09:01:00"
+        }),
+        phone(studentId, {
+          phone_number: "05430000002",
+          normalized_phone_number: "05430000002",
+          phone_label: "2. Telefon",
+          reference_label: "Telefon 2",
+          priority: 2,
+          is_primary: false,
+          created_at: "2026-05-08T09:02:00"
+        }),
+        phone(studentId, {
+          phone_number: "05550000004",
+          normalized_phone_number: "05550000004",
+          phone_label: "Telefon 4",
+          reference_label: "Telefon 4",
+          priority: 4,
+          is_primary: false,
+          deleted_at: "2026-05-09T09:00:00"
+        })
+      ]);
+
+      const data = await readDetailedExportData({ database });
+      const bundle = data.bundles[0];
+
+      expect(bundle.phone_1?.phone_number).toBe("05320000001");
+      expect(bundle.phone_2?.phone_number).toBe("05430000002");
+      expect(bundle.phones?.map((exportPhone) => exportPhone.phone_number)).toEqual([
+        "05320000001",
+        "05430000002",
+        "05550000003"
+      ]);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
   it("marks duplicate phones only when the same number belongs to different students", async () => {
     const database = await createDatabase();
 

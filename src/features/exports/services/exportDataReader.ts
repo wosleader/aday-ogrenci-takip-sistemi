@@ -21,6 +21,14 @@ function byCreatedAt<T extends { created_at: string; id?: number }>(left: T, rig
   return left.created_at.localeCompare(right.created_at) || (left.id ?? 0) - (right.id ?? 0);
 }
 
+function byPhoneExportOrder(left: PhoneRecord, right: PhoneRecord): number {
+  return (
+    (left.priority ?? Number.MAX_SAFE_INTEGER) - (right.priority ?? Number.MAX_SAFE_INTEGER) ||
+    left.created_at.localeCompare(right.created_at) ||
+    (left.id ?? 0) - (right.id ?? 0)
+  );
+}
+
 function isSecondPhoneLabel(label?: string | null): boolean {
   const normalizedLabel = normalizeText(label ?? "");
 
@@ -139,6 +147,7 @@ export async function readDetailedExportData(options: ExportDataReaderOptions = 
   return {
     bundles: activeStudents.map((student) => {
       const phonesForStudent = phonesByStudent.get(student.id) ?? [];
+      const sortedPhonesForExport = [...phonesForStudent].sort(byPhoneExportOrder);
       const callLogsForStudent = [...(callLogsByStudent.get(student.id) ?? [])].sort(
         (left, right) => left.call_time.localeCompare(right.call_time) || (left.id ?? 0) - (right.id ?? 0)
       );
@@ -151,6 +160,7 @@ export async function readDetailedExportData(options: ExportDataReaderOptions = 
         appointment: [...(appointmentsByStudent.get(student.id) ?? [])].sort(byCreatedAt)[0] ?? null,
         call_logs: callLogsForStudent,
         duplicate_phone_keys: duplicatedPhonesByStudent.get(student.id) ?? [],
+        phones: sortedPhonesForExport,
         ...pickPhoneSlots(phonesForStudent)
       };
     })

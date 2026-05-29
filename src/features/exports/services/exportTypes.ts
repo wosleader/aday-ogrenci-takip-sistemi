@@ -19,6 +19,7 @@ export type FilteredExportSnapshot = {
 export type ExportPhoneSlots = {
   phone_1?: PhoneRecord | null;
   phone_2?: PhoneRecord | null;
+  phones?: PhoneRecord[];
 };
 
 export type ExportStudentBundle = ExportPhoneSlots & {

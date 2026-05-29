@@ -142,6 +142,28 @@ describe("summaryExportMapper", () => {
     expect(sheet.headers).not.toContain("Tekrar Arama Tarihi");
   });
 
+  it("does not add Telefon 3-10 columns to the summary report", () => {
+    const data = dataset([]);
+    data.bundles[0].phones = [
+      phone({ reference_label: "Telefon 1", priority: 1 }),
+      phone({
+        id: 3,
+        phone_number: "05553333333",
+        normalized_phone_number: "05553333333",
+        phone_label: "Telefon 3",
+        reference_label: "Telefon 3",
+        priority: 3,
+        is_primary: false
+      })
+    ];
+
+    const sheet = createSummaryConversationReportSheet(data);
+
+    expect(sheet.headers).toEqual([...SUMMARY_EXPORT_BASE_HEADERS, ...SUMMARY_EXPORT_TRAILING_HEADERS]);
+    expect(sheet.headers).not.toContain("Telefon 3");
+    expect(sheet.headers).not.toContain("Telefon 3 Durumu");
+  });
+
   it("maps only filled call notes into chronological explanation columns", () => {
     const sheet = createSummaryConversationReportSheet(
       dataset([

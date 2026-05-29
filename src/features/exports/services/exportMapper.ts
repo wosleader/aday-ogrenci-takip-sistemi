@@ -20,6 +20,22 @@ export const BASE_EXPORT_HEADERS = [
   "Telefon 1 Durumu",
   "Telefon 2",
   "Telefon 2 Durumu",
+  "Telefon 3",
+  "Telefon 3 Durumu",
+  "Telefon 4",
+  "Telefon 4 Durumu",
+  "Telefon 5",
+  "Telefon 5 Durumu",
+  "Telefon 6",
+  "Telefon 6 Durumu",
+  "Telefon 7",
+  "Telefon 7 Durumu",
+  "Telefon 8",
+  "Telefon 8 Durumu",
+  "Telefon 9",
+  "Telefon 9 Durumu",
+  "Telefon 10",
+  "Telefon 10 Durumu",
   "Sınıf",
   "Öğrenci Grubu",
   "Kategori",
@@ -87,6 +103,8 @@ const APPOINTMENT_LABELS: Record<string, string> = {
   registered: "Kayıt oldu"
 };
 
+const DETAILED_PHONE_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+
 function pad(value: number): string {
   return value.toString().padStart(2, "0");
 }
@@ -144,6 +162,10 @@ export function getLifecycleLabel(value?: LifecycleStatus | string | null): stri
 export function getPhoneStatusLabel(phone?: PhoneRecord | null): string {
   if (!phone) {
     return "Belirtilmedi";
+  }
+
+  if (phone.is_valid === false) {
+    return "Geçersiz format";
   }
 
   if (phone.is_wrong || phone.phone_status === "invalid") {
@@ -229,6 +251,77 @@ function createDynamicCallHeaders(maxCallLogCount: number): string[] {
   });
 }
 
+function getExplicitPhoneSlot(phone: PhoneRecord): number | null {
+  const labels = [phone.reference_label, phone.phone_label].filter(Boolean) as string[];
+
+  for (const label of labels) {
+    const directMatch = label.match(/\b(?:telefon|phone|tel|gsm)\s*(10|[1-9])\b/i);
+    const reverseMatch = label.match(/\b(10|[1-9])\s*\.?\s*(?:telefon|phone|tel|gsm)\b/i);
+    const slot = Number(directMatch?.[1] ?? reverseMatch?.[1]);
+
+    if (slot >= 1 && slot <= 10) {
+      return slot;
+    }
+  }
+
+  return null;
+}
+
+function getPhoneSlot(phone: PhoneRecord): number | null {
+  const explicitSlot = getExplicitPhoneSlot(phone);
+
+  if (explicitSlot) {
+    return explicitSlot;
+  }
+
+  const priority = phone.priority;
+
+  return typeof priority === "number" && priority >= 1 && priority <= 10 && Number.isInteger(priority) ? priority : null;
+}
+
+function createDetailedPhoneSlotMap(bundle: ExportStudentBundle): Map<number, PhoneRecord> {
+  const phoneSlots = new Map<number, PhoneRecord>();
+  const seenNormalizedPhones = new Set<string>();
+  const sourcePhones =
+    bundle.phones && bundle.phones.length > 0 ? bundle.phones : ([bundle.phone_1, bundle.phone_2].filter(Boolean) as PhoneRecord[]);
+
+  for (const phone of sourcePhones) {
+    if (!phone) {
+      continue;
+    }
+
+    const normalizedPhone = phone.normalized_phone_number?.trim();
+
+    if (normalizedPhone && seenNormalizedPhones.has(normalizedPhone)) {
+      continue;
+    }
+
+    const slot = getPhoneSlot(phone);
+
+    if (!slot || phoneSlots.has(slot)) {
+      continue;
+    }
+
+    phoneSlots.set(slot, phone);
+
+    if (normalizedPhone) {
+      seenNormalizedPhones.add(normalizedPhone);
+    }
+  }
+
+  return phoneSlots;
+}
+
+function createDetailedPhoneCells(bundle: ExportStudentBundle): Array<string | number> {
+  const phoneSlots = createDetailedPhoneSlotMap(bundle);
+
+  return DETAILED_PHONE_SLOTS.flatMap((slot) => {
+    const phone = phoneSlots.get(slot);
+
+    return [phone?.phone_number ?? "", phone ? getPhoneStatusLabel(phone) : ""];
+  });
+}
+
 function createBaseRow(bundle: ExportStudentBundle, index: number): Array<string | number> {
   const lastCallLog = getLastCallLog(bundle);
   const pendingReminder = bundle.pending_reminder;
@@ -237,10 +330,7 @@ function createBaseRow(bundle: ExportStudentBundle, index: number): Array<string
     index + 1,
     bundle.student.student_full_name,
     bundle.guardian?.guardian_full_name ?? "",
-    bundle.phone_1?.phone_number ?? "",
-    getPhoneStatusLabel(bundle.phone_1),
-    bundle.phone_2?.phone_number ?? "",
-    getPhoneStatusLabel(bundle.phone_2),
+    ...createDetailedPhoneCells(bundle),
     bundle.student.current_class ?? "",
     bundle.student.student_group,
     bundle.student.category,
