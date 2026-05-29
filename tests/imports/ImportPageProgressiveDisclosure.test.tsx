@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -338,6 +338,31 @@ describe("ImportPage progressive disclosure", () => {
     expect(screen.queryByRole("heading", { name: "İçe Aktarma Tamamlandı" })).not.toBeInTheDocument();
     expect(excelReaderMocks.parseFirstWorksheet).toHaveBeenCalledTimes(2);
     expect(fileInput.value).toBe("");
+  });
+
+  it("applies manual guardian mapping when importing without rerunning simulation", async () => {
+    const worksheet = createWorksheet(
+      ["Ad Soyad", "Veli Adı", "Telefon"],
+      [["Ayşe Yılmaz", "Ahmet Veli", "0555 123 4567"]]
+    );
+    const user = await uploadWorksheet(worksheet);
+    const mappingSection = getSectionByHeading("Kolon Eşleştirme");
+    const guardianHeaderCell = within(mappingSection).getByText("Veli Adı");
+    const guardianRow = guardianHeaderCell.closest("tr");
+
+    expect(guardianRow).not.toBeNull();
+    expect(within(guardianRow as HTMLElement).getByText("Eşleştirme gerekli")).toBeInTheDocument();
+
+    await user.selectOptions(within(guardianRow as HTMLElement).getByRole("combobox"), "guardian_full_name");
+    await user.click(screen.getByRole("button", { name: "İçe Aktar" }));
+
+    await waitFor(() => expect(importWriterMocks.writeImportToDatabase).toHaveBeenCalledTimes(1));
+
+    const [, summary] = importWriterMocks.writeImportToDatabase.mock.calls[0];
+    const latestDuplicateCheckCall = duplicateGuardMocks.checkPossibleDuplicateImport.mock.calls.at(-1);
+
+    expect(summary.simulated_rows[0].guardian_full_name).toBe("Ahmet Veli");
+    expect(latestDuplicateCheckCall?.[1].simulated_rows[0].guardian_full_name).toBe("Ahmet Veli");
   });
 
   it("allows selecting the same file again after clearing the simulation", async () => {

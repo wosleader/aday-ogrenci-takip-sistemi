@@ -314,17 +314,29 @@ export function ImportPage() {
   }
 
   async function performImport({ skipDuplicateCheck = false } = {}) {
-    if (!worksheet || !summary || summary.readable_rows === 0) {
+    if (!worksheet) {
+      return;
+    }
+
+    const currentSummary = simulateImport(worksheet, { manualMappings });
+
+    if (currentSummary.readable_rows === 0) {
       return;
     }
 
     setIsImporting(true);
     setError(null);
     setImportResult(null);
+    setSummary(currentSummary);
+    persistSimulation({
+      worksheet,
+      summary: currentSummary,
+      manualMappings
+    });
 
     try {
       if (!skipDuplicateCheck) {
-        const duplicateWarning = await checkPossibleDuplicateImport(worksheet, summary);
+        const duplicateWarning = await checkPossibleDuplicateImport(worksheet, currentSummary);
 
         if (duplicateWarning.isPossibleDuplicate && !duplicateOverrideAccepted) {
           setDuplicateWarning(duplicateWarning);
@@ -334,7 +346,7 @@ export function ImportPage() {
         }
       }
 
-      const result = await writeImportToDatabase(worksheet, summary);
+      const result = await writeImportToDatabase(worksheet, currentSummary);
       downloadTextFile(result.backup.file_name, result.backup.json);
       clearCompletedSimulation();
       setImportResult(result);
