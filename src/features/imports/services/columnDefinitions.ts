@@ -34,12 +34,12 @@ export const COLUMN_DEFINITIONS: ColumnDefinition[] = [
   },
   {
     field: "phone_1",
-    label: "Telefon",
+    label: "Telefon 1",
     aliases: ["telefon", "telefon 1", "tel", "cep telefonu"]
   },
   {
     field: "phone_2",
-    label: "2. Telefon",
+    label: "Telefon 2",
     aliases: ["2 telefon", "telefon 2", "ikinci telefon", "2 tel"]
   },
   {

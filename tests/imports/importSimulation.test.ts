@@ -150,8 +150,8 @@ describe("simulateImport", () => {
     expect(summary.preview_rows[0].phone_2).toBe("05320000002");
     expect(summary.preview_rows[0].phones).toHaveLength(5);
     expect(summary.preview_rows[0].phones.map((phone) => phone.reference_label)).toEqual([
-      "Telefon",
-      "2. Telefon",
+      "Telefon 1",
+      "Telefon 2",
       "Telefon 3",
       "Telefon 4",
       "Telefon 5"

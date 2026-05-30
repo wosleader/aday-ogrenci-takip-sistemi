@@ -95,6 +95,31 @@ function findLogItem(section: HTMLElement, rowText: string, messageText: string)
   });
 }
 
+function getMappingRowByHeader(mappingSection: HTMLElement, header: string) {
+  const headerCell = within(mappingSection).getByText(header);
+  const row = headerCell.closest("tr");
+
+  expect(row).not.toBeNull();
+
+  return row as HTMLElement;
+}
+
+function getMappingSelect(mappingSection: HTMLElement, header: string) {
+  return within(getMappingRowByHeader(mappingSection, header)).getByRole("combobox") as HTMLSelectElement;
+}
+
+function getMappingOption(select: HTMLSelectElement, label: string) {
+  return within(select).getByRole("option", { name: label }) as HTMLOptionElement;
+}
+
+function getMappingOptionByValue(select: HTMLSelectElement, value: string) {
+  const option = Array.from(select.options).find((item) => item.value === value);
+
+  expect(option).toBeDefined();
+
+  return option as HTMLOptionElement;
+}
+
 describe("ImportPage progressive disclosure", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -363,6 +388,49 @@ describe("ImportPage progressive disclosure", () => {
 
     expect(summary.simulated_rows[0].guardian_full_name).toBe("Ahmet Veli");
     expect(latestDuplicateCheckCall?.[1].simulated_rows[0].guardian_full_name).toBe("Ahmet Veli");
+  });
+
+  it("shows normalized phone labels in manual mapping dropdowns", async () => {
+    const worksheet = createWorksheet(
+      ["Ad Soyad", "Telefon", "2. Telefon", "Telefon 3"],
+      [["Ayşe Yılmaz", "0555 111 1111", "0555 222 2222", "0555 333 3333"]]
+    );
+    await uploadWorksheet(worksheet);
+
+    const mappingSection = getSectionByHeading("Kolon Eşleştirme");
+    const phoneSelect = getMappingSelect(mappingSection, "Telefon");
+
+    expect(getMappingOptionByValue(phoneSelect, "phone_1")).toHaveTextContent("Telefon 1");
+    expect(getMappingOptionByValue(phoneSelect, "phone_2")).toHaveTextContent("Telefon 2");
+    expect(getMappingOptionByValue(phoneSelect, "phone_3")).toHaveTextContent("Telefon 3");
+    expect(within(phoneSelect).queryByRole("option", { name: "2. Telefon" })).not.toBeInTheDocument();
+  });
+
+  it("disables duplicate CRM field choices across automatic and manual mappings", async () => {
+    const worksheet = createWorksheet(
+      ["Ad Soyad", "Aday Adı", "Telefon", "Cep 2"],
+      [["Ayşe Yılmaz", "Mehmet Kaya", "0555 111 1111", "0555 222 2222"]]
+    );
+    const user = await uploadWorksheet(worksheet);
+
+    const mappingSection = getSectionByHeading("Kolon Eşleştirme");
+    const candidateNameSelect = getMappingSelect(mappingSection, "Aday Adı");
+    const phoneSelect = getMappingSelect(mappingSection, "Telefon");
+    const secondPhoneSelect = getMappingSelect(mappingSection, "Cep 2");
+
+    expect(getMappingOption(candidateNameSelect, "Ad Soyad — başka kolonda seçildi")).toBeDisabled();
+    expect(getMappingOption(secondPhoneSelect, "Telefon 1 — başka kolonda seçildi")).toBeDisabled();
+    expect(getMappingOption(secondPhoneSelect, "Telefon 2")).not.toBeDisabled();
+
+    await user.selectOptions(phoneSelect, "ignore");
+
+    expect(getMappingOption(secondPhoneSelect, "Telefon 1")).not.toBeDisabled();
+    expect(getMappingOption(secondPhoneSelect, "Telefon 2")).not.toBeDisabled();
+
+    await user.selectOptions(secondPhoneSelect, "phone_2");
+
+    expect(getMappingOption(phoneSelect, "Telefon 1")).not.toBeDisabled();
+    expect(getMappingOption(phoneSelect, "Telefon 2 — başka kolonda seçildi")).toBeDisabled();
   });
 
   it("allows selecting the same file again after clearing the simulation", async () => {

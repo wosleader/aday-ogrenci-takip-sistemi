@@ -71,6 +71,10 @@ export function ImportPage() {
     () => (isColumnMappingExpanded ? columnMatches : collapsedColumnMatches),
     [collapsedColumnMatches, columnMatches, isColumnMappingExpanded]
   );
+  const selectedMappingOwners = useMemo(
+    () => createSelectedMappingOwners(columnMatches, manualMappings),
+    [columnMatches, manualMappings]
+  );
   const hiddenColumnMatchCount = columnMatches.length - collapsedColumnMatches.length;
   const groupedLogs = useMemo(
     () => (summary ? groupLogsBySeverity([...summary.logs, ...summary.detailed_logs]) : null),
@@ -635,11 +639,23 @@ export function ImportPage() {
                         >
                           <option value="">Otomatik</option>
                           <option value="ignore">Yok say</option>
-                          {COLUMN_DEFINITIONS.map((definition) => (
-                            <option key={definition.field} value={definition.field}>
-                              {definition.label}
-                            </option>
-                          ))}
+                          {COLUMN_DEFINITIONS.map((definition) => {
+                            const selectedSourceIndex = selectedMappingOwners.get(definition.field);
+                            const isSelectedByAnotherColumn =
+                              selectedSourceIndex != null && selectedSourceIndex !== match.source_index;
+
+                            return (
+                              <option
+                                disabled={isSelectedByAnotherColumn}
+                                key={definition.field}
+                                value={definition.field}
+                              >
+                                {isSelectedByAnotherColumn
+                                  ? `${definition.label} — başka kolonda seçildi`
+                                  : definition.label}
+                              </option>
+                            );
+                          })}
                         </select>
                       </td>
                     </tr>
@@ -872,6 +888,25 @@ function getInitialVisibleColumnMatches(
   }
 
   return matches.filter((match) => visibleIndexes.has(match.source_index));
+}
+
+function createSelectedMappingOwners(
+  matches: ColumnMatch[],
+  manualMappings: Record<number, ImportFieldKey | "ignore" | "">
+) {
+  const owners = new Map<ImportFieldKey, number>();
+
+  for (const match of matches) {
+    const selectedField = manualMappings[match.source_index] ?? match.target_field;
+
+    if (!selectedField || selectedField === "ignore" || owners.has(selectedField)) {
+      continue;
+    }
+
+    owners.set(selectedField, match.source_index);
+  }
+
+  return owners;
 }
 
 function SummaryMetric({
