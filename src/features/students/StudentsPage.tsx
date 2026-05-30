@@ -637,6 +637,7 @@ export function StudentsPage() {
   const {
     globalSearch,
     focusGlobalSearch,
+    clearGlobalSearch,
     pendingOpenStudentId,
     consumePendingOpenStudentId,
     pendingSearchListRequestId,
@@ -645,6 +646,7 @@ export function StudentsPage() {
     useOutletContext<AppOutletContext>();
   const debouncedQuery = useDebouncedValue(globalSearch);
   const [activeFilter, setActiveFilter] = useState<StudentListFilter>("all");
+  const [duplicateGroupFilterKey, setDuplicateGroupFilterKey] = useState<string | null>(null);
   const [campaignFilter, setCampaignFilter] = useState("all");
   const [studentGroupFilter, setStudentGroupFilter] = useState<StudentGroupFilterValue>(ALL_STUDENT_GROUPS_FILTER);
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
@@ -712,9 +714,13 @@ export function StudentsPage() {
         ? bySearchAndStatus
         : bySearchAndStatus.filter((row) => (row.campaign_name || "Diğer") === campaignFilter);
     const byStudentGroup = filterRowsByStudentGroup(byCampaign, studentGroupFilter);
+    const byDuplicateGroup =
+      activeFilter === "duplicate_phone" && duplicateGroupFilterKey
+        ? byStudentGroup.filter((row) => row.duplicate_phone_keys.includes(duplicateGroupFilterKey))
+        : byStudentGroup;
 
-    return activeFilter === "duplicate_phone" ? sortDuplicateRows(byStudentGroup) : byStudentGroup;
-  }, [activeFilter, campaignFilter, debouncedQuery, rows, studentGroupFilter]);
+    return activeFilter === "duplicate_phone" ? sortDuplicateRows(byDuplicateGroup) : byDuplicateGroup;
+  }, [activeFilter, campaignFilter, debouncedQuery, duplicateGroupFilterKey, rows, studentGroupFilter]);
   const duplicateGroupCounts = useMemo(() => {
     const counts = new Map<string, number>();
 
@@ -768,10 +774,17 @@ export function StudentsPage() {
   const compactShortcutItems = useMemo(() => getCompactShortcutItems(shortcutBarItems), [shortcutBarItems]);
   const shortcutHelpGroups = useMemo(() => createShortcutHelpGroups(shortcutBarItems), [shortcutBarItems]);
   const [isShortcutHelpExpanded, setIsShortcutHelpExpanded] = useState(readShortcutHelpExpandedPreference);
+  const canResetStatusFilter = activeFilter !== "all" || Boolean(duplicateGroupFilterKey);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeFilter, campaignFilter, debouncedQuery, studentGroupFilter]);
+  }, [activeFilter, campaignFilter, debouncedQuery, duplicateGroupFilterKey, studentGroupFilter]);
+
+  useEffect(() => {
+    if (activeFilter !== "duplicate_phone") {
+      setDuplicateGroupFilterKey(null);
+    }
+  }, [activeFilter]);
 
   useEffect(() => {
     saveFilteredExportSnapshot({
@@ -894,6 +907,12 @@ export function StudentsPage() {
       message,
       type
     });
+  }
+
+  function resetStatusFilter() {
+    setActiveFilter("all");
+    setDuplicateGroupFilterKey(null);
+    setCurrentPage(1);
   }
 
   useEffect(() => {
@@ -1358,15 +1377,25 @@ export function StudentsPage() {
       ) : null}
       <section className="student-main">
         <div className="student-toolbar">
-          <div className="toolbar-left">
+          <div className="toolbar-left" style={{ flex: "0 0 170px", width: 170 }}>
             <h2>Aday Listesi</h2>
-            <span className="count-badge">{filteredRows.length} aday</span>
+            <span className="count-badge" style={{ boxSizing: "border-box", width: 76, textAlign: "center" }}>
+              {filteredRows.length} aday
+            </span>
           </div>
           <div className="student-filters">
-            <div className="student-filter-selects" aria-label="Liste filtreleri">
-              <label className="campaign-filter">
+            <div
+              className="student-filter-selects"
+              aria-label="Liste filtreleri"
+              style={{ alignItems: "center", columnGap: 6, flexWrap: "nowrap" }}
+            >
+              <label className="campaign-filter" style={{ boxSizing: "border-box", width: 200 }}>
                 <span>Kampanya</span>
-                <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)}>
+                <select
+                  style={{ boxSizing: "border-box", width: 124 }}
+                  value={campaignFilter}
+                  onChange={(event) => setCampaignFilter(event.target.value)}
+                >
                   {campaignOptions.map((campaignName) => (
                     <option key={campaignName} value={campaignName}>
                       {campaignName === "all" ? "Tüm kampanyalar" : campaignName}
@@ -1374,9 +1403,10 @@ export function StudentsPage() {
                   ))}
                 </select>
               </label>
-              <label className="campaign-filter student-group-filter">
+              <label className="campaign-filter student-group-filter" style={{ boxSizing: "border-box", width: 220 }}>
                 <span>Sınıf / Şube</span>
                 <select
+                  style={{ boxSizing: "border-box", width: 142 }}
                   value={studentGroupFilter}
                   onChange={(event) => setStudentGroupFilter(event.target.value as StudentGroupFilterValue)}
                 >
@@ -1410,9 +1440,10 @@ export function StudentsPage() {
                   ) : null}
                 </select>
               </label>
-              <label className="campaign-filter status-filter">
+              <label className="campaign-filter status-filter" style={{ boxSizing: "border-box", width: 236 }}>
                 <span>Durum Filtresi</span>
                 <select
+                  style={{ boxSizing: "border-box", width: 144 }}
                   value={activeFilter}
                   onChange={(event) => setActiveFilter(event.target.value as StudentListFilter)}
                 >
@@ -1423,6 +1454,33 @@ export function StudentsPage() {
                   ))}
                 </select>
               </label>
+              <button
+                aria-label="Filtreyi sıfırla"
+                disabled={!canResetStatusFilter}
+                onClick={resetStatusFilter}
+                style={{
+                  alignSelf: "center",
+                  background: canResetStatusFilter ? "rgba(245, 158, 11, 0.07)" : "var(--aots-surface)",
+                  border: "1px solid var(--aots-border)",
+                  borderRadius: "var(--aots-radius)",
+                  boxSizing: "border-box",
+                  color: canResetStatusFilter ? "var(--aots-amber)" : "var(--aots-muted)",
+                  cursor: canResetStatusFilter ? "pointer" : "default",
+                  flex: "0 0 62px",
+                  fontFamily: "var(--sans)",
+                  fontSize: 11,
+                  fontWeight: canResetStatusFilter ? 600 : 400,
+                  height: 28,
+                  lineHeight: 1,
+                  minWidth: 62,
+                  opacity: canResetStatusFilter ? 0.92 : 0.48,
+                  padding: "4px 7px",
+                  whiteSpace: "nowrap"
+                }}
+                type="button"
+              >
+                Sıfırla
+              </button>
             </div>
           </div>
         </div>
@@ -1592,8 +1650,35 @@ export function StudentsPage() {
               <div className="drawer-header-top">
                 <div>
                   <div className="drawer-name">{selectedRow.student_full_name}</div>
-                  <div className="drawer-class">
-                    Sınıf: {selectedRow.current_class || "-"} · {selectedRow.student_group}
+                  <div className="drawer-class" style={{ alignItems: "center", display: "inline-flex", flexWrap: "wrap", gap: 8 }}>
+                    <span>
+                      Sınıf: {selectedRow.current_class || "-"} · {selectedRow.student_group}
+                    </span>
+                    {selectedRow.has_duplicate_phone && selectedRow.duplicate_group_key ? (
+                      <button
+                        onClick={() => {
+                          clearGlobalSearch?.();
+                          setActiveFilter("duplicate_phone");
+                          setDuplicateGroupFilterKey(selectedRow.duplicate_group_key ?? null);
+                          setCurrentPage(1);
+                        }}
+                        style={{
+                          background: "var(--aots-amber-bg)",
+                          border: "0",
+                          borderRadius: 999,
+                          color: "var(--aots-amber)",
+                          cursor: "pointer",
+                          fontSize: 10,
+                          fontWeight: 700,
+                          padding: "2px 7px",
+                          verticalAlign: "middle"
+                        }}
+                        title="Aynı mükerrer telefon grubunu listele"
+                        type="button"
+                      >
+                        Mükerrer
+                      </button>
+                    ) : null}
                   </div>
                 </div>
                 <div className="drawer-header-actions">

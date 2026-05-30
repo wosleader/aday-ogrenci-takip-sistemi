@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AppOutletContext } from "../../src/app/AppLayout";
@@ -110,10 +111,53 @@ async function seedStudentWithPhones(phoneCount: number, fullName = "MELIS KAYA"
   }
 }
 
-function StudentsPageHost() {
+async function seedStudentWithSinglePhone(fullName: string, uuidPrefix: string, phoneNumber: string) {
+  const normalizedPhone = phoneNumber.replace(/\D/g, "");
+  const studentId = await db.students.add({
+    uuid: `${uuidPrefix}-student`,
+    student_full_name: fullName,
+    normalized_student_name: normalizeText(fullName),
+    search_text: createSearchText([fullName, normalizedPhone]),
+    current_class: "11",
+    student_group: "YKS",
+    category: "YKS",
+    campaign_id: null,
+    lifecycle_status: "candidate",
+    last_call_result: "not_called",
+    general_note: null,
+    created_at: now,
+    updated_at: now,
+    sync_status: "local"
+  });
+
+  await db.phones.add({
+    uuid: `${uuidPrefix}-${normalizedPhone}`,
+    student_id: studentId,
+    guardian_id: null,
+    phone_number: phoneNumber,
+    normalized_phone_number: normalizedPhone,
+    phone_label: "Telefon 1",
+    reference_label: "Telefon 1",
+    relation_label: "Telefon",
+    priority: 1,
+    phone_status: "active",
+    is_valid: true,
+    is_wrong: false,
+    is_primary: true,
+    created_at: now,
+    updated_at: now,
+    sync_status: "local"
+  });
+
+  return studentId;
+}
+
+function StudentsPageHost({ initialGlobalSearch = "" }: { initialGlobalSearch?: string }) {
+  const [globalSearch, setGlobalSearch] = useState(initialGlobalSearch);
   const context: AppOutletContext = {
-    globalSearch: "",
+    globalSearch,
     focusGlobalSearch: vi.fn(),
+    clearGlobalSearch: () => setGlobalSearch(""),
     openStudentById: vi.fn(),
     pendingOpenStudentId: null,
     consumePendingOpenStudentId: vi.fn(),
@@ -124,17 +168,38 @@ function StudentsPageHost() {
   return <Outlet context={context} />;
 }
 
-function renderStudentsPage() {
+function renderStudentsPage(initialGlobalSearch?: string) {
   render(
     <MemoryRouter initialEntries={["/students"]}>
       <Routes>
-        <Route element={<StudentsPageHost />}>
+        <Route element={<StudentsPageHost initialGlobalSearch={initialGlobalSearch} />}>
           <Route path="/students" element={<StudentsPage />} />
         </Route>
         <Route path="/import" element={<div>Import</div>} />
       </Routes>
     </MemoryRouter>
   );
+}
+
+async function getStudentTable() {
+  return (await screen.findByRole("table")) as HTMLElement;
+}
+
+function getStudentDrawer() {
+  const drawer = document.querySelector(".student-drawer");
+
+  expect(drawer).not.toBeNull();
+
+  return drawer as HTMLElement;
+}
+
+function getStatusFilterSelect() {
+  const filterLabel = screen.getByText("Durum Filtresi").closest("label");
+  const select = filterLabel?.querySelector("select");
+
+  expect(select).not.toBeNull();
+
+  return select as HTMLSelectElement;
 }
 
 describe("StudentsPage right card multi-phone display", () => {
@@ -217,5 +282,93 @@ describe("StudentsPage right card multi-phone display", () => {
     expect(await screen.findAllByText("TELEFONSUZ ADAY")).toHaveLength(2);
     expect(screen.getAllByText("Telefon yok").length).toBeGreaterThanOrEqual(2);
     expect(screen.queryByRole("button", { name: /\+\d+ numara daha göster/ })).not.toBeInTheDocument();
+  });
+
+  it("filters the table to the selected duplicate phone group from the drawer badge", async () => {
+    const user = userEvent.setup();
+    await seedStudentWithSinglePhone("BEGUM KOLEF", "begum", "0532 111 1111");
+    await seedStudentWithSinglePhone("BERK KOLEF", "berk", "0532 111 1111");
+    await seedStudentWithSinglePhone("CEM DEMIR", "cem", "0532 222 2222");
+    await seedStudentWithSinglePhone("DENIZ DEMIR", "deniz", "0532 222 2222");
+    await seedStudentWithSinglePhone("ECE YILMAZ", "ece", "0532 333 3333");
+
+    renderStudentsPage();
+
+    const table = await getStudentTable();
+    expect(await within(table).findByText("BEGUM KOLEF")).toBeInTheDocument();
+
+    await user.selectOptions(getStatusFilterSelect(), "duplicate_phone");
+
+    expect(within(table).getByText("BEGUM KOLEF")).toBeInTheDocument();
+    expect(within(table).getByText("BERK KOLEF")).toBeInTheDocument();
+    expect(within(table).getByText("CEM DEMIR")).toBeInTheDocument();
+    expect(within(table).getByText("DENIZ DEMIR")).toBeInTheDocument();
+    expect(within(table).queryByText("ECE YILMAZ")).not.toBeInTheDocument();
+    expect(within(table).getAllByText("Mükerrer").length).toBeGreaterThanOrEqual(4);
+
+    await user.selectOptions(getStatusFilterSelect(), "all");
+    await user.click(within(table).getByText("BEGUM KOLEF"));
+
+    const drawer = getStudentDrawer();
+    const drawerDuplicateBadge = within(drawer).getByRole("button", { name: "Mükerrer" });
+    expect(drawerDuplicateBadge).toBeInTheDocument();
+    expect(drawerDuplicateBadge.closest(".drawer-class")).not.toBeNull();
+    expect(drawerDuplicateBadge.closest(".drawer-name")).toBeNull();
+
+    await user.click(drawerDuplicateBadge);
+
+    expect(within(table).getByText("BEGUM KOLEF")).toBeInTheDocument();
+    expect(within(table).getByText("BERK KOLEF")).toBeInTheDocument();
+    expect(within(table).queryByText("CEM DEMIR")).not.toBeInTheDocument();
+    expect(within(table).queryByText("DENIZ DEMIR")).not.toBeInTheDocument();
+    expect(within(table).queryByText("ECE YILMAZ")).not.toBeInTheDocument();
+    expect(within(drawer).getByText("BEGUM KOLEF")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Filtreyi sıfırla" }));
+
+    expect(within(table).getByText("BEGUM KOLEF")).toBeInTheDocument();
+    expect(within(table).getByText("BERK KOLEF")).toBeInTheDocument();
+    expect(within(table).getByText("CEM DEMIR")).toBeInTheDocument();
+    expect(within(table).getByText("DENIZ DEMIR")).toBeInTheDocument();
+    expect(within(table).getByText("ECE YILMAZ")).toBeInTheDocument();
+    expect(within(drawer).getByText("BEGUM KOLEF")).toBeInTheDocument();
+
+    await user.selectOptions(getStatusFilterSelect(), "duplicate_phone");
+
+    expect(within(table).getByText("BEGUM KOLEF")).toBeInTheDocument();
+    expect(within(table).getByText("BERK KOLEF")).toBeInTheDocument();
+    expect(within(table).getByText("CEM DEMIR")).toBeInTheDocument();
+    expect(within(table).getByText("DENIZ DEMIR")).toBeInTheDocument();
+    expect(within(table).queryByText("ECE YILMAZ")).not.toBeInTheDocument();
+  });
+
+  it("clears global search when filtering from the drawer duplicate badge", async () => {
+    const user = userEvent.setup();
+    await seedStudentWithSinglePhone("MEDINE KAYRAN", "medine", "0532 444 4444");
+    await seedStudentWithSinglePhone("ELIF KAYRAN", "elif", "0532 444 4444");
+    await seedStudentWithSinglePhone("ZEYNEP ARSLAN", "zeynep", "0532 555 5555");
+
+    renderStudentsPage("MEDINE KAYRAN");
+
+    const table = await getStudentTable();
+    expect(await within(table).findByText("MEDINE KAYRAN")).toBeInTheDocument();
+    expect(within(table).queryByText("ELIF KAYRAN")).not.toBeInTheDocument();
+
+    const drawer = getStudentDrawer();
+    await user.click(within(drawer).getByRole("button", { name: "Mükerrer" }));
+
+    expect(await within(table).findByText("ELIF KAYRAN")).toBeInTheDocument();
+    expect(within(table).getByText("MEDINE KAYRAN")).toBeInTheDocument();
+    expect(within(table).queryByText("ZEYNEP ARSLAN")).not.toBeInTheDocument();
+    expect(within(drawer).getByText("MEDINE KAYRAN")).toBeInTheDocument();
+  });
+
+  it("does not show the drawer duplicate badge for a unique phone", async () => {
+    await seedStudentWithSinglePhone("ECE YILMAZ", "unique-ece", "0532 333 3333");
+
+    renderStudentsPage();
+
+    expect(await screen.findAllByText("ECE YILMAZ")).toHaveLength(2);
+    expect(within(getStudentDrawer()).queryByRole("button", { name: "Mükerrer" })).not.toBeInTheDocument();
   });
 });

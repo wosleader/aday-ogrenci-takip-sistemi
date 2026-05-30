@@ -48,6 +48,7 @@ type NavItem = {
 export type AppOutletContext = {
   globalSearch: string;
   focusGlobalSearch: () => void;
+  clearGlobalSearch?: () => void;
   openStudentById: (studentId: number) => void;
   pendingOpenStudentId: number | null;
   consumePendingOpenStudentId: () => void;
@@ -161,6 +162,12 @@ export function AppLayout() {
   function focusGlobalSearch() {
     globalSearchRef.current?.focus();
     globalSearchRef.current?.select();
+  }
+
+  function clearGlobalSearch() {
+    setGlobalSearch("");
+    setIsGlobalSearchOpen(false);
+    setActiveGlobalSearchIndex(0);
   }
 
   useEffect(() => {
@@ -590,6 +597,7 @@ export function AppLayout() {
             context={{
               globalSearch,
               focusGlobalSearch,
+              clearGlobalSearch,
               openStudentById,
               pendingOpenStudentId,
               consumePendingOpenStudentId,
