@@ -174,6 +174,7 @@ describe("StudentsPage right card multi-phone display", () => {
         name: "Yanlış numara veya kullanılmıyor olarak işaretle"
       })
     ).toBeInTheDocument();
+    expect(within(readonlyCard as HTMLElement).queryByText("Aktif numara")).not.toBeInTheDocument();
 
     const scrollIntoViewMock = vi.mocked(Element.prototype.scrollIntoView);
     scrollIntoViewMock.mockClear();
@@ -186,6 +187,7 @@ describe("StudentsPage right card multi-phone display", () => {
     expect(screen.getByText("0532 000 0004")).toBeInTheDocument();
     expect(screen.getByText("Telefon 5 · Yakın")).toBeInTheDocument();
     expect(screen.getByText("0532 000 0005")).toBeInTheDocument();
+    expect(screen.queryByText("Aktif numara")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Daha az göster" })).toBeInTheDocument();
 
     scrollIntoViewMock.mockClear();

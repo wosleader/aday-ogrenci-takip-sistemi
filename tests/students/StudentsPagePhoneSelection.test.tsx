@@ -206,6 +206,68 @@ describe("StudentsPage phone selection", () => {
     expect(await screen.findByText("Telefon 3 · Öğrenci: 0532 100 0003")).toBeInTheDocument();
   });
 
+  it("hides default active phone labels while keeping special phone status labels", async () => {
+    const user = userEvent.setup();
+    await seedStudentWithPhones("MELIS KAYA", "status-labels");
+
+    renderStudentsPage();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    const phone3Card = getDrawerPhoneCard("Telefon 3 · Öğrenci");
+
+    expect(within(phone1Card).queryByText("Aktif numara")).not.toBeInTheDocument();
+    expect(within(phone3Card).queryByText("Aktif numara")).not.toBeInTheDocument();
+
+    await user.click(
+      within(phone3Card).getByRole("button", {
+        name: "Bu numarayla görüşüldü"
+      })
+    );
+
+    expect(
+      within(getDrawerPhoneCard("Telefon 3 · Öğrenci")).getByText("Son görüşülen / iletişim kurulan numara")
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(getDrawerPhoneCard("Telefon 3 · Öğrenci")).getByRole("button", {
+        name: "Görüşmede kullanılacak"
+      })
+    );
+    await waitFor(() => {
+      expect(getDrawerPhoneCard("Telefon 3 · Öğrenci")).not.toHaveClass("contacted");
+    });
+
+    await user.click(
+      within(getDrawerPhoneCard("Telefon 3 · Öğrenci")).getByRole("button", {
+        name: "Yanlış numara veya kullanılmıyor olarak işaretle"
+      })
+    );
+
+    await waitFor(() => {
+      expect(
+        within(getDrawerPhoneCard("Telefon 3 · Öğrenci")).getByText("Yanlış numara / kullanılmıyor")
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("shows invalid format for invalid extra phones", async () => {
+    await seedStudentWithPhones("MELIS KAYA", "invalid-format");
+    const phone3 = await db.phones.where("normalized_phone_number").equals("05321000003").first();
+    expect(phone3?.id).toBeDefined();
+    await db.phones.update(phone3!.id!, {
+      is_valid: false,
+      phone_status: "active",
+      is_wrong: false
+    });
+
+    renderStudentsPage();
+
+    const phone3Card = await waitFor(() => getDrawerPhoneCard("Telefon 3 · Öğrenci"));
+
+    expect(within(phone3Card).getByText("Geçersiz format")).toBeInTheDocument();
+    expect(within(phone3Card).queryByText("Aktif numara")).not.toBeInTheDocument();
+  });
+
   it("keeps one contacted phone across legacy and extra phone controls", async () => {
     const user = userEvent.setup();
     await seedStudentWithPhones("MELIS KAYA", "parity");

@@ -275,7 +275,7 @@ type PhoneCardProps = {
   isContacted: boolean;
   isWrong: boolean;
   isReadOnly?: boolean;
-  statusText?: string;
+  statusText?: string | null;
   isSelectedForCall?: boolean;
   onContacted?: (phoneId: number) => void;
   onInvalid?: (phoneId: number) => void;
@@ -358,6 +358,13 @@ function PhoneCard({
 }: PhoneCardProps) {
   const isEffectiveContacted = isContacted || isSelectedForCall;
   const effectiveStatusText = isSelectedForCall ? undefined : statusText;
+  const displayStatusText =
+    effectiveStatusText ??
+    (isEffectiveContacted
+      ? "Son görüşülen / iletişim kurulan numara"
+      : isWrong
+        ? "Yanlış numara / kullanılmıyor"
+        : null);
   const [isCopied, setIsCopied] = useState(false);
   const [isCopyControlVisible, setIsCopyControlVisible] = useState(false);
   const hideCopyControlTimeoutRef = useRef<number | null>(null);
@@ -505,12 +512,7 @@ function PhoneCard({
             "Telefon yok"
           )}
         </strong>
-        <small>
-          {effectiveStatusText ? effectiveStatusText : null}
-          {!effectiveStatusText && isEffectiveContacted ? "Son görüşülen / iletişim kurulan numara" : null}
-          {!effectiveStatusText && isWrong ? "Yanlış numara / kullanılmıyor" : null}
-          {!effectiveStatusText && !isEffectiveContacted && !isWrong ? "Aktif numara" : null}
-        </small>
+        {displayStatusText ? <small>{displayStatusText}</small> : null}
       </div>
       {!isReadOnly && onContacted && onInvalid ? (
         <div className="phone-actions">
@@ -579,8 +581,12 @@ function getReadonlyDrawerPhones(row: StudentListRow, isExpanded: boolean): Stud
   return sourcePhones.filter((phone) => !isLegacyDrawerPhone(row, phone));
 }
 
-function getReadonlyPhoneStatusText(phone: StudentListPhoneRow): string {
-  if (phone.phone_status === "invalid" || phone.is_wrong || !phone.is_valid) {
+function getReadonlyPhoneStatusText(phone: StudentListPhoneRow): string | null {
+  if (!phone.is_valid) {
+    return "Geçersiz format";
+  }
+
+  if (phone.phone_status === "invalid" || phone.is_wrong) {
     return "Yanlış numara / kullanılmıyor";
   }
 
@@ -588,7 +594,7 @@ function getReadonlyPhoneStatusText(phone: StudentListPhoneRow): string {
     return "Son görüşülen / iletişim kurulan numara";
   }
 
-  return "Aktif numara";
+  return null;
 }
 
 function getLegacyContactedPhoneId(row: StudentListRow): number | null {
