@@ -420,8 +420,8 @@ describe("ImportPage progressive disclosure", () => {
 
   it("shows system export info columns as safe non-imported fields", async () => {
     const worksheet = createWorksheet(
-      ["Ad Soyad", "Genel Açıklama", "Sıra No", "Telefon 1 Durumu", "Arama 2 Sonucu", "Dış Excel Notu"],
-      [["Ayşe Yılmaz", "Export notu", "1", "Aktif", "Görüşüldü", "Harici not"]]
+      ["Ad Soyad", "Genel Açıklama", "Telefon 10", "Sıra No", "Telefon 1 Durumu", "Arama 2 Sonucu", "Dış Excel Notu"],
+      [["Ayşe Yılmaz", "Export notu", "0555 000 0010", "1", "Aktif", "Görüşüldü", "Harici not"]]
     );
     const user = await uploadWorksheet(worksheet);
 
@@ -439,6 +439,10 @@ describe("ImportPage progressive disclosure", () => {
     expect(within(generalNoteRow).getAllByText("Açıklama")[0].tagName).toBe("TD");
     expect(within(generalNoteRow).getByText("Tam eşleşti")).toBeInTheDocument();
     expect(within(generalNoteRow).queryByText("Sistem bilgisi — şu an içe aktarılmaz")).not.toBeInTheDocument();
+    expect(within(getMappingRowByHeader(mappingSection, "Telefon 10")).getByText("Tam eşleşti")).toBeInTheDocument();
+    expect(
+      within(mappingSection).getByRole("button", { name: "İçe aktarılmayacak kolonları gizle" })
+    ).toBeInTheDocument();
 
     let firstInfoBadge: HTMLElement | null = null;
 
@@ -481,6 +485,22 @@ describe("ImportPage progressive disclosure", () => {
     await waitFor(() => expect(screen.queryByRole("tooltip")).not.toBeInTheDocument());
 
     expect(within(getMappingRowByHeader(mappingSection, "Dış Excel Notu")).getByText("Elle eşleştirme gerekli")).toBeInTheDocument();
+
+    await user.click(within(mappingSection).getByRole("button", { name: "İçe aktarılmayacak kolonları gizle" }));
+
+    expect(within(mappingSection).queryByText("Sıra No")).not.toBeInTheDocument();
+    expect(within(mappingSection).queryByText("Telefon 1 Durumu")).not.toBeInTheDocument();
+    expect(within(mappingSection).queryByText("Arama 2 Sonucu")).not.toBeInTheDocument();
+    expect(within(getMappingRowByHeader(mappingSection, "Genel Açıklama")).getByText("Tam eşleşti")).toBeInTheDocument();
+    expect(within(getMappingRowByHeader(mappingSection, "Telefon 10")).getByText("Tam eşleşti")).toBeInTheDocument();
+    expect(within(getMappingRowByHeader(mappingSection, "Dış Excel Notu")).getByText("Elle eşleştirme gerekli")).toBeInTheDocument();
+
+    await user.click(
+      within(mappingSection).getByRole("button", { name: "3 içe aktarılmayacak kolon gizlendi · Göster" })
+    );
+
+    expect(within(getMappingRowByHeader(mappingSection, "Sıra No")).getByText("İçe Aktarılamaz")).toBeInTheDocument();
+    expect(within(getMappingRowByHeader(mappingSection, "Telefon 1 Durumu")).getByText("İçe Aktarılamaz")).toBeInTheDocument();
   });
 
   it("shows friendly status labels instead of technical match scores", async () => {

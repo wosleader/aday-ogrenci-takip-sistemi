@@ -187,24 +187,36 @@ export function ImportPage() {
   const [warningsVisibleCount, setWarningsVisibleCount] = useState(INITIAL_VISIBLE_IMPORT_MESSAGES);
   const [infoVisibleCount, setInfoVisibleCount] = useState(INITIAL_VISIBLE_IMPORT_MESSAGES);
   const [previewVisibleRowCount, setPreviewVisibleRowCount] = useState(INITIAL_VISIBLE_PREVIEW_ROWS);
+  const [hideSystemExportColumns, setHideSystemExportColumns] = useState(false);
 
   const columnMatches = useMemo(
     () => (worksheet ? matchColumns(worksheet.headers, manualMappings).matches : []),
     [manualMappings, worksheet]
   );
+  const systemExportInfoMatches = useMemo(
+    () => columnMatches.filter(isSystemExportInfoMatch),
+    [columnMatches]
+  );
+  const displayColumnMatches = useMemo(
+    () =>
+      hideSystemExportColumns
+        ? columnMatches.filter((match) => !isSystemExportInfoMatch(match))
+        : columnMatches,
+    [columnMatches, hideSystemExportColumns]
+  );
   const collapsedColumnMatches = useMemo(
-    () => getInitialVisibleColumnMatches(columnMatches, manualMappings),
-    [columnMatches, manualMappings]
+    () => getInitialVisibleColumnMatches(displayColumnMatches, manualMappings),
+    [displayColumnMatches, manualMappings]
   );
   const visibleColumnMatches = useMemo(
-    () => (isColumnMappingExpanded ? columnMatches : collapsedColumnMatches),
-    [collapsedColumnMatches, columnMatches, isColumnMappingExpanded]
+    () => (isColumnMappingExpanded ? displayColumnMatches : collapsedColumnMatches),
+    [collapsedColumnMatches, displayColumnMatches, isColumnMappingExpanded]
   );
   const selectedMappingOwners = useMemo(
     () => createSelectedMappingOwners(columnMatches, manualMappings),
     [columnMatches, manualMappings]
   );
-  const hiddenColumnMatchCount = columnMatches.length - collapsedColumnMatches.length;
+  const hiddenColumnMatchCount = displayColumnMatches.length - collapsedColumnMatches.length;
   const groupedLogs = useMemo(
     () => (summary ? groupLogsBySeverity([...summary.logs, ...summary.detailed_logs]) : null),
     [summary]
@@ -315,6 +327,7 @@ export function ImportPage() {
       setDuplicateWarning(null);
       setDuplicateOverrideAccepted(false);
       setIsDuplicateModalOpen(false);
+      setHideSystemExportColumns(false);
       const buffer = await file.arrayBuffer();
       const parsedWorksheet = await parseFirstWorksheet(buffer, file.name);
       parsedWorksheet.file_size = file.size;
@@ -336,6 +349,7 @@ export function ImportPage() {
     }
 
     const reparsedWorksheet = reparseWorksheetWithHeaderRow(worksheet, nextHeaderRowNumber);
+    setHideSystemExportColumns(false);
     applySimulation(reparsedWorksheet, {});
   }
 
@@ -366,6 +380,7 @@ export function ImportPage() {
     setDuplicateWarning(null);
     setDuplicateOverrideAccepted(false);
     setIsDuplicateModalOpen(false);
+    setHideSystemExportColumns(false);
     resetProgressiveDisclosure();
   }
 
@@ -379,6 +394,7 @@ export function ImportPage() {
     setDuplicateWarning(null);
     setDuplicateOverrideAccepted(false);
     setIsDuplicateModalOpen(false);
+    setHideSystemExportColumns(false);
     resetProgressiveDisclosure();
   }
 
@@ -731,6 +747,19 @@ export function ImportPage() {
               Bazı kolonlar sistem tarafından tanınır ancak standart içe aktarmada kullanılmaz. Bu
               kolonlar “İçe Aktarılamaz” olarak gösterilir.
             </p>
+            {systemExportInfoMatches.length > 0 ? (
+              <div className="toolbar">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setHideSystemExportColumns((current) => !current)}
+                >
+                  {hideSystemExportColumns
+                    ? `${systemExportInfoMatches.length} içe aktarılmayacak kolon gizlendi · Göster`
+                    : "İçe aktarılmayacak kolonları gizle"}
+                </Button>
+              </div>
+            ) : null}
             <div className="table-wrap">
               <table>
                 <thead>
