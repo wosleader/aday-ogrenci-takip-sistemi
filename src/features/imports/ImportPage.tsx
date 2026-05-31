@@ -35,6 +35,135 @@ type StoredSimulationState = {
   manualMappings: Record<number, ImportFieldKey | "ignore" | "">;
 };
 
+const SYSTEM_EXPORT_INFO_TOOLTIP =
+  "Bu kolon rapor/sistem bilgisidir. Aday kaydına aktarılmaz.";
+const SYSTEM_EXPORT_INFO_TOOLTIP_DELAY_MS = 120;
+
+function isSystemExportInfoMatch(match: ColumnMatch) {
+  return match.status === "ignored" && match.note?.startsWith("Sistem bilgisi");
+}
+
+function getColumnMatchStatusLabel(match: ColumnMatch) {
+  if (match.status === "manual") {
+    return "Elle eşleştirildi";
+  }
+
+  if (match.status === "mapping_required") {
+    return "Elle eşleştirme gerekli";
+  }
+
+  if (match.status === "ignored") {
+    return "İçe aktarılmayacak";
+  }
+
+  if (match.status === "matched" && match.confidence >= 1) {
+    return "Tam eşleşti";
+  }
+
+  return "Eşleşti";
+}
+
+function SystemExportInfoLabel() {
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+  const tooltipTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (tooltipTimerRef.current != null) {
+        window.clearTimeout(tooltipTimerRef.current);
+      }
+    };
+  }, []);
+
+  function showTooltipSoon() {
+    if (tooltipTimerRef.current != null) {
+      window.clearTimeout(tooltipTimerRef.current);
+    }
+
+    tooltipTimerRef.current = window.setTimeout(() => {
+      setIsTooltipVisible(true);
+    }, SYSTEM_EXPORT_INFO_TOOLTIP_DELAY_MS);
+  }
+
+  function hideTooltip() {
+    if (tooltipTimerRef.current != null) {
+      window.clearTimeout(tooltipTimerRef.current);
+      tooltipTimerRef.current = null;
+    }
+
+    setIsTooltipVisible(false);
+  }
+
+  return (
+    <span
+      onBlur={hideTooltip}
+      onFocus={showTooltipSoon}
+      onMouseEnter={showTooltipSoon}
+      onMouseLeave={hideTooltip}
+      style={{
+        alignItems: "center",
+        display: "inline-flex",
+        gap: 5,
+        position: "relative",
+        verticalAlign: "middle"
+      }}
+      tabIndex={0}
+    >
+      <span>İçe Aktarılamaz</span>
+      <span
+        aria-label={SYSTEM_EXPORT_INFO_TOOLTIP}
+        role="img"
+        style={{
+          alignItems: "center",
+          backgroundColor: "#f7f1e8",
+          border: "1px solid #ded2c1",
+          borderRadius: "999px",
+          color: "#786a55",
+          cursor: "help",
+          display: "inline-flex",
+          flexShrink: 0,
+          fontSize: 9,
+          fontWeight: 700,
+          height: 13,
+          justifyContent: "center",
+          lineHeight: 1,
+          transform: "translateY(1px)",
+          userSelect: "none",
+          verticalAlign: "middle",
+          width: 13
+        }}
+      >
+        <span aria-hidden="true" style={{ display: "block", lineHeight: 1, transform: "none" }}>
+          i
+        </span>
+      </span>
+      {isTooltipVisible ? (
+        <span
+          role="tooltip"
+          style={{
+            backgroundColor: "#3f382f",
+            borderRadius: 6,
+            boxShadow: "0 8px 20px rgba(31, 26, 20, 0.18)",
+            color: "#fffaf2",
+            fontSize: 11,
+            fontWeight: 500,
+            left: 0,
+            lineHeight: 1.35,
+            padding: "6px 8px",
+            position: "absolute",
+            top: "calc(100% + 5px)",
+            userSelect: "none",
+            whiteSpace: "nowrap",
+            zIndex: 20
+          }}
+        >
+          {SYSTEM_EXPORT_INFO_TOOLTIP}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
 export function ImportPage() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -598,6 +727,10 @@ export function ImportPage() {
 
           <section className="panel" ref={columnMappingSectionRef}>
             <h2>Kolon Eşleştirme</h2>
+            <p className="muted">
+              Bazı kolonlar sistem tarafından tanınır ancak standart içe aktarmada kullanılmaz. Bu
+              kolonlar “İçe Aktarılamaz” olarak gösterilir.
+            </p>
             <div className="table-wrap">
               <table>
                 <thead>
@@ -605,7 +738,7 @@ export function ImportPage() {
                     <th>Kolon</th>
                     <th>Excel Başlığı</th>
                     <th>Algılanan CRM Alanı</th>
-                    <th>Güven</th>
+                    <th>Durum</th>
                     <th>Manuel Seçim</th>
                   </tr>
                 </thead>
@@ -621,16 +754,12 @@ export function ImportPage() {
                           ? COLUMN_DEFINITIONS.find((definition) => definition.field === match.target_field)
                               ?.label
                           : match.status === "ignored"
-                            ? match.note?.startsWith("Sistem bilgisi")
-                              ? match.note
+                            ? isSystemExportInfoMatch(match)
+                              ? <SystemExportInfoLabel />
                               : "Yok sayıldı"
                             : "Eşleştirme gerekli"}
                       </td>
-                      <td>
-                        {match.status === "ignored" && match.note?.startsWith("Sistem bilgisi")
-                          ? "Güvenli şekilde yok sayıldı"
-                          : `${match.status} / ${Math.round(match.confidence * 100)}%`}
-                      </td>
+                      <td>{getColumnMatchStatusLabel(match)}</td>
                       <td>
                         <select
                           value={manualMappings[match.source_index] ?? match.target_field ?? ""}

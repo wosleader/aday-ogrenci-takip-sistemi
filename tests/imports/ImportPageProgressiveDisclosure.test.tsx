@@ -96,12 +96,21 @@ function findLogItem(section: HTMLElement, rowText: string, messageText: string)
 }
 
 function getMappingRowByHeader(mappingSection: HTMLElement, header: string) {
-  const headerCell = within(mappingSection).getByText(header);
-  const row = headerCell.closest("tr");
+  const row = Array.from(mappingSection.querySelectorAll("tbody tr")).find((item) => {
+    const cells = item.querySelectorAll("td");
 
-  expect(row).not.toBeNull();
+    return cells[1]?.textContent === header;
+  });
+
+  expect(row).toBeDefined();
 
   return row as HTMLElement;
+}
+
+function getMappingRowsByHeader(mappingSection: HTMLElement, header: string) {
+  return Array.from(mappingSection.querySelectorAll("tbody tr")).filter((row) =>
+    Array.from(row.querySelectorAll("td")).some((cell) => cell.textContent === header)
+  ) as HTMLElement[];
 }
 
 function getMappingSelect(mappingSection: HTMLElement, header: string) {
@@ -376,9 +385,12 @@ describe("ImportPage progressive disclosure", () => {
     const guardianRow = guardianHeaderCell.closest("tr");
 
     expect(guardianRow).not.toBeNull();
-    expect(within(guardianRow as HTMLElement).getByText("Eşleştirme gerekli")).toBeInTheDocument();
+    expect(within(guardianRow as HTMLElement).getByText("Elle eşleştirme gerekli")).toBeInTheDocument();
 
     await user.selectOptions(within(guardianRow as HTMLElement).getByRole("combobox"), "guardian_full_name");
+
+    expect(within(guardianRow as HTMLElement).getByText("Elle eşleştirildi")).toBeInTheDocument();
+
     await user.click(screen.getByRole("button", { name: "İçe Aktar" }));
 
     await waitFor(() => expect(importWriterMocks.writeImportToDatabase).toHaveBeenCalledTimes(1));
@@ -411,24 +423,88 @@ describe("ImportPage progressive disclosure", () => {
       ["Ad Soyad", "Genel Açıklama", "Sıra No", "Telefon 1 Durumu", "Arama 2 Sonucu", "Dış Excel Notu"],
       [["Ayşe Yılmaz", "Export notu", "1", "Aktif", "Görüşüldü", "Harici not"]]
     );
-    await uploadWorksheet(worksheet);
+    const user = await uploadWorksheet(worksheet);
 
     const mappingSection = getSectionByHeading("Kolon Eşleştirme");
     const generalNoteRow = getMappingRowByHeader(mappingSection, "Genel Açıklama");
+    const systemInfoTooltipText = "Bu kolon rapor/sistem bilgisidir. Aday kaydına aktarılmaz.";
 
+    expect(within(mappingSection).getByText("Durum")).toBeInTheDocument();
+    expect(within(mappingSection).queryByText("Güven")).not.toBeInTheDocument();
+    expect(
+      within(mappingSection).getByText(
+        "Bazı kolonlar sistem tarafından tanınır ancak standart içe aktarmada kullanılmaz. Bu kolonlar “İçe Aktarılamaz” olarak gösterilir."
+      )
+    ).toBeInTheDocument();
     expect(within(generalNoteRow).getAllByText("Açıklama")[0].tagName).toBe("TD");
+    expect(within(generalNoteRow).getByText("Tam eşleşti")).toBeInTheDocument();
     expect(within(generalNoteRow).queryByText("Sistem bilgisi — şu an içe aktarılmaz")).not.toBeInTheDocument();
+
+    let firstInfoBadge: HTMLElement | null = null;
 
     for (const header of ["Sıra No", "Telefon 1 Durumu", "Arama 2 Sonucu"]) {
       const row = getMappingRowByHeader(mappingSection, header);
 
-      expect(within(row).getByText("Sistem bilgisi — şu an içe aktarılmaz")).toBeInTheDocument();
-      expect(within(row).getByText("Güvenli şekilde yok sayıldı")).toBeInTheDocument();
-      expect(within(row).queryByText("Eşleştirme gerekli")).not.toBeInTheDocument();
+      expect(within(row).getByText("İçe Aktarılamaz")).toBeInTheDocument();
+      expect(within(row).queryByText("İçe Aktarılamaz i")).not.toBeInTheDocument();
+
+      const infoBadge = within(row).getByRole("img", {
+        name: systemInfoTooltipText
+      });
+      firstInfoBadge ??= infoBadge;
+
+      expect(infoBadge).toBeInTheDocument();
+      expect(infoBadge).toHaveTextContent("i");
+      expect(infoBadge).toHaveStyle({
+        backgroundColor: "#f7f1e8",
+        borderRadius: "999px",
+        cursor: "help",
+        display: "inline-flex",
+        height: "13px",
+        userSelect: "none",
+        width: "13px"
+      });
+      expect(within(row).getByText("İçe aktarılmayacak")).toBeInTheDocument();
+      expect(within(row).queryByText("Elle eşleştirme gerekli")).not.toBeInTheDocument();
+      expect(within(row).queryByText("Güvenli şekilde yok sayıldı")).not.toBeInTheDocument();
       expect(within(row).queryByText("ignored / 100%")).not.toBeInTheDocument();
     }
 
-    expect(within(getMappingRowByHeader(mappingSection, "Dış Excel Notu")).getByText("Eşleştirme gerekli")).toBeInTheDocument();
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+
+    await user.hover(firstInfoBadge as HTMLElement);
+
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(systemInfoTooltipText);
+
+    await user.unhover(firstInfoBadge as HTMLElement);
+
+    await waitFor(() => expect(screen.queryByRole("tooltip")).not.toBeInTheDocument());
+
+    expect(within(getMappingRowByHeader(mappingSection, "Dış Excel Notu")).getByText("Elle eşleştirme gerekli")).toBeInTheDocument();
+  });
+
+  it("shows friendly status labels instead of technical match scores", async () => {
+    const worksheet = createWorksheet(
+      ["Ad Soyad", "Sınıf", "Sınıf", "Tekrar Arancak mı", "Dış Excel Notu"],
+      [["Ayşe Yılmaz", "11", "YKS", "Evet", "Harici not"]]
+    );
+    await uploadWorksheet(worksheet);
+
+    const mappingSection = getSectionByHeading("Kolon Eşleştirme");
+
+    expect(within(getMappingRowByHeader(mappingSection, "Ad Soyad")).getByText("Tam eşleşti")).toBeInTheDocument();
+    expect(within(getMappingRowByHeader(mappingSection, "Tekrar Arancak mı")).getByText("Eşleşti")).toBeInTheDocument();
+
+    const classRows = getMappingRowsByHeader(mappingSection, "Sınıf");
+
+    expect(classRows).toHaveLength(2);
+    expect(within(classRows[0]).getByText("Eşleşti")).toBeInTheDocument();
+    expect(within(classRows[1]).getByText("Eşleşti")).toBeInTheDocument();
+
+    expect(within(getMappingRowByHeader(mappingSection, "Dış Excel Notu")).getByText("Elle eşleştirme gerekli")).toBeInTheDocument();
+    expect(within(mappingSection).queryByText(/matched \//)).not.toBeInTheDocument();
+    expect(within(mappingSection).queryByText(/auto_fixed \//)).not.toBeInTheDocument();
+    expect(within(mappingSection).queryByText(/mapping_required \//)).not.toBeInTheDocument();
   });
 
   it("disables duplicate CRM field choices across automatic and manual mappings", async () => {
