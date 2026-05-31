@@ -11,23 +11,23 @@ type ProgressItem = {
 const mainCards: ProgressItem[] = [
   {
     title: "Dar Pilot Hazırlığı",
-    percent: 97,
+    percent: 98,
     description:
-      "Ana akış pilot için güçlü hale geldi. Kalan başlıklar daha çok güvenli tekrar import ve sonraki ürün kararları.",
+      "Ana akış pilot için çok güçlü hale geldi. Import/export uyumu ve mapping ekranı daha anlaşılır hale getirildi.",
     tone: "#16a34a"
   },
   {
     title: "Genel MVP Hazırlığı",
-    percent: 86,
+    percent: 87,
     description:
-      "Ana kullanım akışı güçlü. Detaylı export ve manuel veli eşleştirme toparlandı; bazı düzeltme araçları planlanıyor.",
+      "Ana kullanım akışı güçlü. Detaylı exporttan geri import denemeleri daha güvenli ve okunabilir ilerliyor.",
     tone: "#2563eb"
   },
   {
     title: "Tam Ürün Genişliği",
-    percent: 64,
+    percent: 65,
     description:
-      "Dar pilot güçlü, fakat tam ürün için rapor, model genişletme ve gelişmiş yönetim işleri devam edecek.",
+      "Dar pilot güçlü, fakat tam ürün için gelişmiş rapor, model genişletme ve yönetim işleri devam edecek.",
     tone: "#9333ea"
   }
 ];
@@ -35,8 +35,8 @@ const mainCards: ProgressItem[] = [
 const detailCards: ProgressItem[] = [
   {
     title: "Import Ekranı",
-    percent: 97,
-    description: "Hata, uyarı, bilgi, ön izleme ve manuel eşleştirme akışı daha güvenilir hale getirildi.",
+    percent: 98,
+    description: "Mapping, uyarı, ön izleme ve sistem kolonları daha okunabilir ve kontrollü hale getirildi.",
     tone: "#0891b2"
   },
   {
@@ -47,14 +47,14 @@ const detailCards: ProgressItem[] = [
   },
   {
     title: "Export / Rapor Uyumu",
-    percent: 78,
-    description: "Detaylı export Telefon 3-10 uyumunu aldı; gelişmiş rapor kararları sonraki fazda ele alınacak.",
+    percent: 82,
+    description: "Detaylı export Telefon 3-10 uyumunu aldı; export kolonları import ekranında daha doğru tanınıyor.",
     tone: "#d97706"
   },
   {
     title: "Pilot Kapanış Kararları",
-    percent: 96,
-    description: "Kalan maddelerin pilot sonrası backlog olarak izleneceği netleştirildi.",
+    percent: 97,
+    description: "Kalan maddelerin pilot sonrası backlog olarak izleneceği daha net hale geldi.",
     tone: "#4f46e5"
   }
 ];
@@ -69,7 +69,11 @@ const completedItems = [
   "Detaylı Excel export Telefon 3-10 + Durumu kolonlarını destekleyecek hale getirildi.",
   "Telefon 3-only, Telefon 7-only ve invalid Telefon 3 değerleri exportta doğru kolonlarında kalıyor.",
   "Veli Adı manuel olarak Veli Ad Soyad seçildiğinde import artık bu güncel eşleştirmeyi kullanıyor.",
-  "Detaylı exportta Veli Ad Soyad alanının dolu gelmesi doğrulandı."
+  "Detaylı exportta Veli Ad Soyad alanının dolu gelmesi doğrulandı.",
+  "Detaylı Excel Export kolonları import mapping ekranında doğru tanınır hale getirildi.",
+  "Genel Açıklama kolonu artık Açıklama alanıyla doğru eşleşiyor.",
+  "Sistem, rapor ve metadata kolonları sade şekilde İçe Aktarılamaz olarak gösteriliyor.",
+  "İçe aktarılmayacak sistem kolonları varsayılan görünür, istenirse gizlenip tekrar gösterilebilir."
 ];
 
 const decisionItems = [
@@ -185,9 +189,9 @@ export function ProgressPage() {
         <h2>Şu An Neredeyiz?</h2>
         <p>
           Dar pilot için ana akış oldukça güçlü hale geldi. Telefon 1-10 import, aday kartı, görüşme kaydı,
-          detaylı export ve manuel Veli Ad Soyad eşleştirme akışı test edildi. Kalan başlıklar pilotu durduran
-          temel hatalar değil; daha güvenli tekrar import, küçük kaynak bilgisi gösterimleri ve ilerideki veri
-          modeli genişletmeleri için takip edilecek kararlardır.
+          detaylı export ve manuel Veli Ad Soyad eşleştirme akışı test edildi. Detaylı exporttan gelen kolonlar
+          import ekranında daha doğru tanınıyor; kullanılmayacak sistem bilgileri sade şekilde ayrılıyor. Kalan
+          başlıklar pilotu durduran temel hatalar değil; daha güvenli tekrar import ve ilerideki ürün kararlarıdır.
         </p>
       </section>
 
@@ -222,14 +226,14 @@ export function ProgressPage() {
         <div style={pageStyles.updateBody}>
           <div style={pageStyles.updateItem}>
             <span style={{ color: "#166534", fontSize: "0.78rem", fontWeight: 700 }}>Tarih/saat</span>
-            <strong>30.05.2026 00:17</strong>
+            <strong>31.05.2026 23:57</strong>
           </div>
           <div style={pageStyles.updateItem}>
             <span style={{ color: "#166534", fontSize: "0.78rem", fontWeight: 700 }}>Not</span>
             <p style={{ margin: 0 }}>
-              Telefon 3-10 detaylı Excel export uyumluluğu tamamlandı. Veli Adı manuel olarak Veli Ad Soyad
-              seçildiğinde import artık güncel mapping ile yazıyor ve detaylı exportta Veli Ad Soyad dolu
-              görünüyor. Son güvenli commit: a448f65.
+              Detaylı Excel Export kolonları import mapping ekranında doğru tanınıyor. Teknik matched/ignored dili
+              sadeleştirildi; sistem, rapor ve metadata kolonları İçe Aktarılamaz olarak gösteriliyor ve istenirse
+              gizlenip tekrar gösterilebiliyor. Son güvenli commit: 649689a.
             </p>
           </div>
         </div>
