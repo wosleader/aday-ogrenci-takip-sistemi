@@ -621,11 +621,15 @@ export function ImportPage() {
                           ? COLUMN_DEFINITIONS.find((definition) => definition.field === match.target_field)
                               ?.label
                           : match.status === "ignored"
-                            ? "Yok sayıldı"
+                            ? match.note?.startsWith("Sistem bilgisi")
+                              ? match.note
+                              : "Yok sayıldı"
                             : "Eşleştirme gerekli"}
                       </td>
                       <td>
-                        {match.status} / {Math.round(match.confidence * 100)}%
+                        {match.status === "ignored" && match.note?.startsWith("Sistem bilgisi")
+                          ? "Güvenli şekilde yok sayıldı"
+                          : `${match.status} / ${Math.round(match.confidence * 100)}%`}
                       </td>
                       <td>
                         <select

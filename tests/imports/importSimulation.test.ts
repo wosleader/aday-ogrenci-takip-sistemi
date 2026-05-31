@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { BASE_EXPORT_HEADERS } from "../../src/features/exports/services/exportMapper";
 import { simulateImport } from "../../src/features/imports/services/importSimulation";
 import type { ParsedWorksheet } from "../../src/features/imports/services/types";
 
@@ -208,5 +209,47 @@ describe("simulateImport", () => {
     expect(summary.duplicate_phone_warnings).toHaveLength(1);
     expect(summary.duplicate_phone_warnings[0].phone_number).toBe("05321234567");
     expect(summary.duplicate_phone_warnings[0].row_numbers).toEqual([2, 3]);
+  });
+
+  it("imports real detailed export fields while excluding system info columns from mapping requirements", () => {
+    const headers = [
+      ...BASE_EXPORT_HEADERS,
+      "Arama 1 Tarihi",
+      "Arama 1 Sonucu",
+      "Arama 1 Telefon",
+      "Arama 1 Açıklaması",
+      "Arama 1 Tekrar Arama Tarihi",
+      "Arama 2 Tarihi",
+      "Dış Excel Notu"
+    ];
+    const row = headers.map((header) => {
+      const values: Record<string, string> = {
+        "Öğrenci Ad Soyad": "Ayşe Yılmaz",
+        "Veli Ad Soyad": "Ahmet Veli",
+        "Telefon 1": "0555 111 1111",
+        "Telefon 3": "0555 333 3333",
+        "Sınıf": "11",
+        "Öğrenci Grubu": "YKS",
+        Kampanya: "Pilot",
+        "Genel Açıklama": "Export notu",
+        "Tekrar Aranacak mı?": "Evet",
+        "Tekrar Arama Tarihi": "2026-06-01"
+      };
+
+      return values[header] ?? "";
+    });
+    const summary = simulateImport(worksheet(headers, [row]));
+
+    expect(summary.readable_rows).toBe(1);
+    expect(summary.preview_rows[0]).toMatchObject({
+      student_full_name: "Ayşe Yılmaz",
+      guardian_full_name: "Ahmet Veli",
+      campaign_name: "Pilot",
+      general_note: "Export notu"
+    });
+    expect(summary.preview_rows[0].phones.map((phone) => phone.reference_label)).toContain("Telefon 3");
+    expect(summary.mapping_required_columns.map((match) => match.source_header)).toEqual(["Dış Excel Notu"]);
+    expect(summary.logs.some((log) => log.message.includes("Telefon 1 Durumu eşleştirilemedi"))).toBe(false);
+    expect(summary.logs.some((log) => log.message.includes("Arama 1 Tarihi eşleştirilemedi"))).toBe(false);
   });
 });

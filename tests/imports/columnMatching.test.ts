@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { BASE_EXPORT_HEADERS } from "../../src/features/exports/services/exportMapper";
 import { COLUMN_DEFINITIONS } from "../../src/features/imports/services/columnDefinitions";
 import { matchColumns, normalizeColumnHeader } from "../../src/features/imports/services/columnMatching";
 
@@ -75,5 +76,79 @@ describe("column matching", () => {
     expect(matches[0].target_field).toBe("phone_3");
     expect(matches[1].target_field).toBe("phone_4");
     expect(matches[2].target_field).toBe("phone_10");
+  });
+
+  it("matches Genel Açıklama as the real Açıklama import field", () => {
+    const { matches } = matchColumns(["Genel Açıklama"]);
+
+    expect(matches[0]).toMatchObject({
+      status: "matched",
+      target_field: "general_note"
+    });
+  });
+
+  it("recognizes detailed export headers while keeping importable columns matched", () => {
+    const { matches } = matchColumns([...BASE_EXPORT_HEADERS]);
+    const byHeader = new Map(matches.map((match) => [match.source_header, match]));
+
+    expect(byHeader.get("Öğrenci Ad Soyad")).toMatchObject({ status: "matched", target_field: "student_full_name" });
+    expect(byHeader.get("Veli Ad Soyad")).toMatchObject({ status: "matched", target_field: "guardian_full_name" });
+    expect(byHeader.get("Telefon 1")).toMatchObject({ status: "matched", target_field: "phone_1" });
+    expect(byHeader.get("Telefon 10")).toMatchObject({ status: "matched", target_field: "phone_10" });
+    expect(byHeader.get("Sınıf")).toMatchObject({ status: "matched", target_field: "current_class" });
+    expect(byHeader.get("Öğrenci Grubu")).toMatchObject({ status: "matched", target_field: "student_group" });
+    expect(byHeader.get("Kampanya")).toMatchObject({ status: "matched", target_field: "campaign_name" });
+    expect(byHeader.get("Genel Açıklama")).toMatchObject({ status: "matched", target_field: "general_note" });
+    expect(byHeader.get("Tekrar Aranacak mı?")).toMatchObject({ status: "matched", target_field: "should_call_again" });
+    expect(byHeader.get("Tekrar Arama Tarihi")).toMatchObject({ status: "matched", target_field: "reminder_date" });
+
+    for (const header of [
+      "Sıra No",
+      "Telefon 1 Durumu",
+      "Telefon 10 Durumu",
+      "Kategori",
+      "Son Arama Sonucu",
+      "Son Görüşülen Telefon",
+      "Son Görüşme Tarihi",
+      "Tekrar Arama Saati",
+      "Randevu Durumu",
+      "Randevu Tarihi",
+      "Kayıt Durumu",
+      "Mükerrer Telefon Uyarısı",
+      "Kaynak Excel Satırı",
+      "Oluşturulma Tarihi",
+      "Güncellenme Tarihi"
+    ]) {
+      expect(byHeader.get(header)).toMatchObject({
+        status: "ignored",
+        note: "Sistem bilgisi — şu an içe aktarılmaz"
+      });
+    }
+  });
+
+  it("recognizes dynamic call history export columns without ignoring unknown columns", () => {
+    const { matches } = matchColumns([
+      "Arama 1 Tarihi",
+      "Arama 1 Sonucu",
+      "Arama 1 Telefon",
+      "Arama 1 Açıklaması",
+      "Arama 1 Tekrar Arama Tarihi",
+      "Arama 3 Tarihi",
+      "Dış Excel Notu"
+    ]);
+
+    expect(matches.slice(0, 6).map((match) => match.status)).toEqual([
+      "ignored",
+      "ignored",
+      "ignored",
+      "ignored",
+      "ignored",
+      "ignored"
+    ]);
+    expect(matches.slice(0, 6).every((match) => match.note === "Sistem bilgisi — şu an içe aktarılmaz")).toBe(true);
+    expect(matches[6]).toMatchObject({
+      source_header: "Dış Excel Notu",
+      status: "mapping_required"
+    });
   });
 });

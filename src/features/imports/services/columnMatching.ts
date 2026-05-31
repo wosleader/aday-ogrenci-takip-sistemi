@@ -7,6 +7,30 @@ const FIRST_DUPLICATE_HEADER_TARGETS: Record<string, ImportFieldKey[]> = {
   sinif: ["current_class", "student_group"]
 };
 
+const SYSTEM_EXPORT_INFO_HEADERS = new Set([
+  "sira no",
+  "kategori",
+  "son arama sonucu",
+  "son gorusulen telefon",
+  "son gorusme tarihi",
+  "tekrar arama saati",
+  "randevu durumu",
+  "randevu tarihi",
+  "kayit durumu",
+  "mukerrer telefon uyarisi",
+  "kaynak excel satiri",
+  "olusturulma tarihi",
+  "guncellenme tarihi"
+]);
+
+function isSystemExportInfoHeader(normalizedHeader: string): boolean {
+  return (
+    SYSTEM_EXPORT_INFO_HEADERS.has(normalizedHeader) ||
+    /^telefon (10|[1-9]) durumu$/.test(normalizedHeader) ||
+    /^arama \d+ (tarihi|sonucu|telefon|aciklamasi|tekrar arama tarihi)$/.test(normalizedHeader)
+  );
+}
+
 export function normalizeColumnHeader(header: string): string {
   return normalizeText(header).replace(/\s+/g, " ").trim();
 }
@@ -102,6 +126,19 @@ export function matchColumns(
         status: "ignored",
         confidence: 1,
         note: "Başlık boş olduğu için yok sayıldı."
+      };
+    }
+
+    if (isSystemExportInfoHeader(normalizedHeader)) {
+      return {
+        source_index: sourceIndex,
+        source_column_letter,
+        source_column_number,
+        source_header: sourceHeader,
+        normalized_header: normalizedHeader,
+        status: "ignored",
+        confidence: 1,
+        note: "Sistem bilgisi — şu an içe aktarılmaz"
       };
     }
 

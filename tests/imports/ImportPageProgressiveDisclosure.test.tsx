@@ -406,6 +406,31 @@ describe("ImportPage progressive disclosure", () => {
     expect(within(phoneSelect).queryByRole("option", { name: "2. Telefon" })).not.toBeInTheDocument();
   });
 
+  it("shows system export info columns as safe non-imported fields", async () => {
+    const worksheet = createWorksheet(
+      ["Ad Soyad", "Genel Açıklama", "Sıra No", "Telefon 1 Durumu", "Arama 2 Sonucu", "Dış Excel Notu"],
+      [["Ayşe Yılmaz", "Export notu", "1", "Aktif", "Görüşüldü", "Harici not"]]
+    );
+    await uploadWorksheet(worksheet);
+
+    const mappingSection = getSectionByHeading("Kolon Eşleştirme");
+    const generalNoteRow = getMappingRowByHeader(mappingSection, "Genel Açıklama");
+
+    expect(within(generalNoteRow).getAllByText("Açıklama")[0].tagName).toBe("TD");
+    expect(within(generalNoteRow).queryByText("Sistem bilgisi — şu an içe aktarılmaz")).not.toBeInTheDocument();
+
+    for (const header of ["Sıra No", "Telefon 1 Durumu", "Arama 2 Sonucu"]) {
+      const row = getMappingRowByHeader(mappingSection, header);
+
+      expect(within(row).getByText("Sistem bilgisi — şu an içe aktarılmaz")).toBeInTheDocument();
+      expect(within(row).getByText("Güvenli şekilde yok sayıldı")).toBeInTheDocument();
+      expect(within(row).queryByText("Eşleştirme gerekli")).not.toBeInTheDocument();
+      expect(within(row).queryByText("ignored / 100%")).not.toBeInTheDocument();
+    }
+
+    expect(within(getMappingRowByHeader(mappingSection, "Dış Excel Notu")).getByText("Eşleştirme gerekli")).toBeInTheDocument();
+  });
+
   it("disables duplicate CRM field choices across automatic and manual mappings", async () => {
     const worksheet = createWorksheet(
       ["Ad Soyad", "Aday Adı", "Telefon", "Cep 2"],

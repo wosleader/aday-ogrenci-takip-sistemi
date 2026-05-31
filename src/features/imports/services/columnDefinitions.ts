@@ -96,7 +96,7 @@ export const COLUMN_DEFINITIONS: ColumnDefinition[] = [
   {
     field: "general_note",
     label: "Açıklama",
-    aliases: ["aciklama", "aciklama 2026", "not", "genel not"]
+    aliases: ["aciklama", "genel aciklama", "aciklama 2026", "not", "genel not"]
   },
   {
     field: "reminder_date",
