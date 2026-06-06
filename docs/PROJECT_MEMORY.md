@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence Kapanis | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Phone-Level Outcome Read Model Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,11 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
-- FILE_MAP: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
-- DECISIONS: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
-- Son sprint-close çalıştırıldı: Sprint 9.3G-5
+- PROJECT_MEMORY: Phone-Level Outcome Read Model Pilot
+- FILE_MAP: Phone-Level Outcome Read Model Pilot
+- DECISIONS: Phone-Level Outcome Read Model Pilot
+- Son implementation commit: 5677377 feat: show latest phone call outcomes
+- Son docs closure hedefi: docs: close phone outcome read model checkpoint
 
 ## 1. Proje Amacı
 
@@ -80,6 +81,8 @@ Kısa özet:
 - Sağ drawer kişi kartıdır.
 - Kaydet ve sonrakine geç arama akışının merkezidir.
 - Telefon 1/2, son görüşülen numara, yanlış numara davranışları korunur.
+- Telefon 1/2 ve Telefon 3+ kartlarında son telefon bazlı görüşme sonucu read-only olarak gösterilir.
+- Telefon bazlı son sonuç `call_logs` üzerinden türetilir; `PhoneRecord` mutate edilmez ve `phone_status` anlamı değişmez.
 - Açıklama/not, `call_logs` ve reminder akışları korunur.
 - Sınıf / Şube filtresi pilot öncesi polish olarak eklendi.
 - Sınıf seviyesi ve şube seviyesi filtrelenebilir.

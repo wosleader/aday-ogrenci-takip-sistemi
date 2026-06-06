@@ -4,9 +4,10 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 34ec8d5 feat: persist multi-phone import records
-- Sprint 9.3G-5 code tarafı tamamlandı ve pushlandı.
-- Bu docs closure tamamlanınca yeni docs commit beklenecek.
+- Son güvenli HEAD/origin: 5677377 feat: show latest phone call outcomes
+- Phone-Level Outcome Read Model Pilot implementation tamamlandı ve pushlandı.
+- Working tree implementation sonrası clean olmalıdır; bu docs closure tamamlanınca Strategy AI onayı sonrası yeni docs commit beklenecek.
+- Bu docs closure için önerilen commit: docs: close phone outcome read model checkpoint
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -52,21 +53,21 @@ Temel alanlar:
 
 ## 4. Güncel Sprint Durumu
 
-Sprint 9.3G-5 — Multi-Phone Import Writer / Persistence code tarafı tamamlandı ve pushlandı.
+Phone-Level Outcome Read Model Pilot code tarafı tamamlandı ve pushlandı.
 
 Özet:
 
-- 9.3G-4 ile Telefon 3-10 mapping/simulation hazırlandı.
-- 9.3G-5 ile Telefon 3-10 gerçek import writer/persistence tamamlandı.
-- `importWriter.ts`, `row.phones[]` varsa Telefon 1-10 dahil tüm simulation phone listesinden `PhoneRecord` üretir.
-- `row.phones[]` yoksa veya boşsa eski `phone_1` / `phone_2` fallback davranışı korunur.
-- Telefon 1/2 backward compatibility korundu.
-- `phone_label`, `reference_label`, `priority`, `source_column`, `original_phone_value` ve `is_valid` metadata'sı korunur.
-- Invalid non-empty phones DB'ye `is_valid:false` / `is_wrong:false` olarak yazılır.
-- `search_text` tüm `row.phones[]` normalized phone değerlerini kapsar; sadece Telefon 3+ numarası olan öğrenci telefon aramasıyla bulunabilir.
-- `ImportPage.tsx`, import simulation/mapping/types, schema/storage, export/report/backup, students/calls/reminders, Ad/Soyad, Anne/Baba ve Mahalle değişmedi.
-- Test/build daha önce geçti: 42 test files / 240 tests.
-- Bu docs closure tamamlanınca `docs/CHECKPOINT_SPRINT_9_3G_5.md` resmi kapanış checkpoint'i olacaktır.
+- Sağ kart Telefon 1/2 ve Telefon 3+ phone card'larında read-only `Son sonuç` göstergesi eklendi.
+- Veri kaynağı mevcut `call_logs` kayıtlarıdır.
+- Telefon sonucu eşleştirme önceliği: `contacted_phone_id`, `phone_snapshot.phone_id`, `phone_id`, normalized phone number fallback.
+- Schema migration yapılmadı.
+- `PhoneRecord` mutate edilmedi ve `phone_status` semantiği değiştirilmedi.
+- Import/export/backup davranışı değişmedi.
+- Yeni call result değeri eklenmedi.
+- Communication history delete/edit davranışı eklenmedi.
+- Sağ kart ✓ / x davranışı şimdilik korunur; sadeleştirme ayrı discovery konusudur.
+- Test/build geçti: `npm.cmd test -- --run` PASS, 43 test file / 276 tests; `npm.cmd run build` PASS, yalnızca Vite chunk size warning.
+- Bu docs closure tamamlanınca `docs/CHECKPOINT_PHONE_LEVEL_OUTCOME_READ_MODEL.md` resmi kapanış checkpoint'i olacaktır.
 
 ## 5. Çoklu Telefon Roadmap Durumu
 
@@ -84,10 +85,11 @@ Tamamlananlar:
 - Sprint 9.3G-2: Import UI progressive disclosure
 - Sprint 9.3G-4: Multi-phone import mapping/simulation
 - Sprint 9.3G-5: Multi-phone import writer/persistence
+- Phone-Level Outcome Read Model Pilot: latest phone call outcomes read-only from `call_logs`
 
 Sıradaki muhtemel aşamalar:
 
-- Sprint 9.3G-5 docs-only commit/push
+- Phone-Level Outcome Read Model Pilot docs-only review/commit after Strategy AI approval
 - Obsidian/Graphify update değerlendirmesi
 - Localhost manuel QA / dar pilot readiness kontrolü
 - Dar pilot öncesi kırıcı bug/risk değerlendirmesi
@@ -99,7 +101,7 @@ Not:
 Büyük çoklu telefon roadmap'i ayrı kalır: Excel'den çoklu telefon import, sağ kişi kartında dinamik/aşamalı telefon gösterimi, `+N numara daha göster`, import/export ve backup/restore güvence işleri ayrı sprintlerde ele alınacaktır.
 
 Not:
-9.3G-5 ile Telefon 3-10 gerçek import writer/persistence tamamlandı. Export/report/backup uyumu henüz yapılmadı; dar pilot öncesi manuel QA ve kırıcı risk kontrolü gerekir. Graphify pasif yardımcı analiz aracıdır, resmi kayıt değildir. Obsidian vault repo dışıdır; resmi kayıt repo docs dosyalarıdır. Terminal/Git source of truth.
+Phone-Level Outcome Read Model Pilot ile sağ kartta telefon bazlı son sonuç göstergesi read-only olarak tamamlandı. Kaynak `call_logs` olduğu için tam geçmiş düzenleme/silme, phone-level persistence ve outcome export/import hâlâ ayrı ürün kararlarıdır. Graphify pasif yardımcı analiz aracıdır, resmi kayıt değildir. Obsidian vault repo dışıdır; resmi kayıt repo docs dosyalarıdır. Terminal/Git source of truth.
 
 Not:
 Akıllı Operasyon Yardımcıları gelecekte park edilmiş fazdır. İlk yaklaşım dış AI değil; Telefon Kalitesi, Arama Öncelik, Hatırlatma Öneri, Veri Kalitesi ve Yönetici Özet gibi offline / rule-based / testable helper fikirleri olmalıdır. Dış AI/LLM ancak KVKK, gizlilik, offline-first ve maliyet discovery sonrasında ele alınır.
@@ -166,14 +168,14 @@ Bu projeye yeni başlayan AI önce şunları yapmalı:
 ## 10. Şu Anki En Güvenli Sonraki Adım
 
 Şu anki en güvenli sıradaki iş:
-Sprint 9.3G-5 docs-only commit/push.
+Phone-Level Outcome Read Model Pilot docs-only closure review ve Strategy AI onayı sonrası docs commit/push.
 
 Bunun ardından:
-Obsidian/Graphify update değerlendirmesi yapılabilir. Sonra localhost manuel QA / dar pilot readiness kontrolü ve dar pilot öncesi kırıcı bug/risk değerlendirmesi yapılmalıdır. Dar pilot sonrasında AD/SOYAD + Anne/Baba + Mahalle data model discovery/implementation düşünülebilir. Export/report/backup uyumu discovery daha sonra ayrı ele alınmalıdır.
+Obsidian/Graphify update değerlendirmesi yapılabilir. Sonra localhost manuel QA / dar pilot readiness kontrolü ve dar pilot öncesi kırıcı bug/risk değerlendirmesi yapılmalıdır. Dar pilot sonrasında Phone Action Simplification Discovery, communication history delete/correction, AD/SOYAD + Anne/Baba + Mahalle data model discovery/implementation ve gerekirse phone-level outcome persistence/export discovery ayrı ele alınmalıdır.
 
-Yeni kod işi başlatmadan önce Sprint 9.3G-5 docs-only kapanış commit/push edildiği doğrulanmalıdır.
+Yeni kod işi başlatmadan önce Phone-Level Outcome Read Model Pilot docs-only kapanış commit/push edildiği doğrulanmalıdır.
 
-Telefon 3-10 mapping/simulation ve gerçek import writer/persistence tamamlandı. Export/report/backup uyumu henüz yapılmadı. AD/SOYAD, Anne/Baba ve Mahalle henüz yapılmadı. Telefon 3+ status aksiyonları da henüz yapılmadı. Bu konular ayrı discovery olmadan uygulanmamalıdır.
+Telefon 3-10 mapping/simulation, gerçek import writer/persistence ve sağ kart latest phone outcome read model tamamlandı. AD/SOYAD, Anne/Baba ve Mahalle henüz yapılmadı. Communication history delete/correction, Phone Action Simplification ve phone-level outcome persistence/export ayrı discovery olmadan uygulanmamalıdır.
 
 ## 11. Kaynak Dosyalar
 

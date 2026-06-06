@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Phone-Level Outcome Read Model Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -32,10 +32,10 @@ Son doğrulandı: Sprint 8.2
 
 ## 3. Students / Candidate List
 
-Son doğrulandı: Sprint 9.3F-1 Phone 3+ Call Save Selection
+Son doğrulandı: Phone-Level Outcome Read Model Pilot
 
 - `src/features/students/StudentsPage.tsx`
-  Aday Listesi, filtreler, sağ drawer, görüşme akışı, kompakt/açılır-kapanır kısayol yardım barı, call history UI ve sağ kişi kartı telefon alanını içerir. Sprint 9.3D-1 itibarıyla call history `phone_context_label` / `phone_context_number` display alanlarını gösterir. Sprint 9.3E-2 itibarıyla Telefon 1 / Telefon 2 aksiyonlu kartlarını korur, Telefon 3+ için readonly görünüm sunar, `+N numara daha göster` / `Daha az göster` interaction'ını yönetir ve `visible_phones` / `phones` / `hidden_phone_count` alanlarını tüketir. Sprint 9.3F-1 itibarıyla Telefon 3+ için call save selection, selected call phone state, `saveCallAndGoNext` içinde `contacted_phone_id` hesaplaması ve legacy Telefon 1/2 fallback davranışını taşır.
+  Aday Listesi, filtreler, sağ drawer, görüşme akışı, kompakt/açılır-kapanır kısayol yardım barı, call history UI ve sağ kişi kartı telefon alanını içerir. Sprint 9.3D-1 itibarıyla call history `phone_context_label` / `phone_context_number` display alanlarını gösterir. Sprint 9.3E-2 itibarıyla Telefon 1 / Telefon 2 aksiyonlu kartlarını korur, Telefon 3+ için readonly görünüm sunar, `+N numara daha göster` / `Daha az göster` interaction'ını yönetir ve `visible_phones` / `phones` / `hidden_phone_count` alanlarını tüketir. Sprint 9.3F-1 itibarıyla Telefon 3+ için call save selection, selected call phone state, `saveCallAndGoNext` içinde `contacted_phone_id` hesaplaması ve legacy Telefon 1/2 fallback davranışını taşır. Phone-Level Outcome Read Model Pilot itibarıyla Telefon 1/2 ve Telefon 3+ kartlarında `call_logs` kaynaklı read-only `Son sonuç` göstergesini render eder; schema, import/export ve `phone_status` semantiğini değiştirmez.
 - `src/features/students/services/studentListReader.ts`
   Aday liste satırlarını okuma, filtreleme, Sınıf/Şube helper’ları ve `StudentListRow` read model üretimi. Legacy `phone_1` / `phone_2` / `phone_count` alanlarını korur; Sprint 9.3E-1 itibarıyla sağ kişi kartı çoklu telefon hazırlığı için `phones`, `visible_phones` ve `hidden_phone_count` alanlarını taşır.
 - `src/features/students/services/studentPhoneStatus.ts`
@@ -47,7 +47,7 @@ Son doğrulandı: Sprint 9.3F-1 Phone 3+ Call Save Selection
 
 ## 4. Calls / Call Workflow
 
-Son doğrulandı: Sprint 9.3F-1 Phone 3+ Call Save Selection
+Son doğrulandı: Phone-Level Outcome Read Model Pilot
 
 - `src/features/calls/CallPage.tsx`
   Eski/yardımcı call route sayfası; ana operasyon Aday Listesi + sağ drawer üzerinden yürür.
@@ -58,7 +58,7 @@ Son doğrulandı: Sprint 9.3F-1 Phone 3+ Call Save Selection
 - `src/features/calls/services/callLogPhoneContext.ts`
   Call log telefon bağlamı display/fallback helper’ları; `phone_snapshot` varsa Telefon N / ilişki etiketi label’ı üretir, eski kayıtlarda güvenli fallback döner.
 - `src/features/calls/services/callHistoryReader.ts`
-  Sağ drawer iletişim geçmişi için call history read model üretir; Sprint 9.3C itibarıyla phone snapshot-first context display alanlarını ve legacy fallback'i taşır.
+  Sağ drawer iletişim geçmişi için call history read model üretir; Sprint 9.3C itibarıyla phone snapshot-first context display alanlarını ve legacy fallback'i taşır. Phone-Level Outcome Read Model Pilot itibarıyla `phone_id`, `phone_snapshot.phone_id` ve `contacted_phone_id` alanlarını read model'e taşır; sağ kart telefon bazlı son sonuç lookup'ı bu alanları kullanır.
 
 ## 5. Reminders
 
@@ -177,7 +177,7 @@ Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
 - `tests/students/StudentsPageMultiPhone.test.tsx`
   Sağ kişi kartında 5 telefonlu aday için Telefon 3+ readonly görünümü, expand/collapse davranışı, `hidden_phone_count` sıfır durumu, telefonsuz aday fallback'i ve Telefon 3+ için aksiyon butonu gösterilmemesini test eder.
 - `tests/students/StudentsPagePhoneSelection.test.tsx`
-  Telefon 3+ seçimini, seçili Telefon 3+'ün call log context'e gitmesini, seçili aday değişince selected phone state reset davranışını ve Telefon 3+ status aksiyonlarının olmamasını test eder.
+  Telefon 3+ seçimini, seçili Telefon 3+'ün call log context'e gitmesini, seçili aday değişince selected phone state reset davranışını ve Telefon 3+ status aksiyonlarının olmamasını test eder. Phone-Level Outcome Read Model Pilot itibarıyla call log olmayan telefonda `Son sonuç: Yok`, Telefon 1/2 ve Telefon 3+ için son call result label'ı ve aynı telefonda çoklu call log varsa en güncel sonucun gösterilmesini doğrular.
 - `tests/reminders/*`
   Reminder alarm, dismissed store, popup view model ve reminder settings.
 - `tests/reminders/reminderPhoneContext.test.ts`
