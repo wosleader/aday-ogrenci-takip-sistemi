@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AppOutletContext } from "../../src/app/AppLayout";
@@ -168,5 +169,33 @@ describe("StudentsPage call history phone context", () => {
     renderStudentsPage();
 
     expect(await screen.findByText("Telefon seçilmedi")).toBeInTheDocument();
+  });
+
+  it("requires confirmation before soft deleting a call history item from the drawer", async () => {
+    const user = userEvent.setup();
+    await seedCallHistoryWithPhoneContext();
+
+    renderStudentsPage();
+
+    expect(await screen.findByText("Telefon 3 · Öğrenci: 0555 123 4567")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "İletişim kaydını sil" }));
+
+    expect(screen.getByRole("dialog", { name: "İletişim kaydı silinsin mi?" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "İptal" }));
+
+    expect(screen.queryByRole("dialog", { name: "İletişim kaydı silinsin mi?" })).not.toBeInTheDocument();
+    expect(screen.getByText("Telefon 3 · Öğrenci: 0555 123 4567")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "İletişim kaydını sil" }));
+    await user.click(screen.getByRole("button", { name: "Sil" }));
+
+    await waitFor(() => {
+      expect(screen.queryByText("Telefon 3 · Öğrenci: 0555 123 4567")).not.toBeInTheDocument();
+    });
+
+    const callLog = await db.call_logs.where("uuid").equals("call-history-with-phone-context").first();
+    expect(callLog?.deleted_at).toBeTruthy();
   });
 });

@@ -6,6 +6,7 @@ import type { AppOutletContext } from "../../app/AppLayout";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/EmptyState";
 import { CALL_RESULTS, LIFE_CYCLE_STATUSES, type CallResult } from "../../domain/constants/statuses";
+import { softDeleteCallLogAndRecomputeStudentSummary } from "../calls/services/callLogDeletion";
 import { readCallHistoryForStudent, type CallHistoryItem } from "../calls/services/callHistoryReader";
 import { writeCallLog } from "../calls/services/callLogWriter";
 import { validateCallSave } from "../calls/services/callSaveValidation";
@@ -716,6 +717,7 @@ export function StudentsPage() {
   const [selectedCallPhoneId, setSelectedCallPhoneId] = useState<number | null>(null);
   const [isStudentActionsOpen, setIsStudentActionsOpen] = useState(false);
   const [studentDeleteCandidate, setStudentDeleteCandidate] = useState<StudentListRow | null>(null);
+  const [callLogDeleteCandidate, setCallLogDeleteCandidate] = useState<CallHistoryItem | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
@@ -724,6 +726,7 @@ export function StudentsPage() {
   const [reminderDate, setReminderDate] = useState("");
   const [reminderTime, setReminderTime] = useState("11:00");
   const [isSavingCall, setIsSavingCall] = useState(false);
+  const [isDeletingCallLog, setIsDeletingCallLog] = useState(false);
   const [operationToast, setOperationToast] = useState<OperationToast | null>(null);
   const [allowAppointmentWithoutNote, setAllowAppointmentWithoutNote] = useState(false);
   const [pastAppointmentConfirmCount, setPastAppointmentConfirmCount] = useState(0);
@@ -890,6 +893,7 @@ export function StudentsPage() {
     setReminderTime(toTimeInputValue(selectedRow.next_reminder_at));
     setIsExtraPhonesExpanded(false);
     setSelectedCallPhoneId(null);
+    setCallLogDeleteCandidate(null);
     shouldScrollPhoneListAfterCollapseRef.current = false;
   }, [selectedRow?.student_id]);
 
@@ -1116,6 +1120,29 @@ export function StudentsPage() {
       const message = error instanceof Error ? error.message : "Aday silinemedi.";
       setActionMessage(message);
       showOperationToast(message, "error");
+    }
+  }
+
+  async function confirmDeleteCallLog(historyItem: CallHistoryItem) {
+    if (isDeletingCallLog) {
+      return;
+    }
+
+    setIsDeletingCallLog(true);
+    setActionMessage(null);
+
+    try {
+      await softDeleteCallLogAndRecomputeStudentSummary(historyItem.call_log_id);
+      setCallLogDeleteCandidate(null);
+      const message = "İletişim kaydı silindi. Son görüşme bilgisi kalan kayıtlara göre güncellendi.";
+      setActionMessage(message);
+      showOperationToast(message, "success");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "İletişim kaydı silinemedi.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
+    } finally {
+      setIsDeletingCallLog(false);
     }
   }
 
@@ -1435,6 +1462,35 @@ export function StudentsPage() {
                 type="button"
               >
                 Sil
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : null}
+      {callLogDeleteCandidate ? (
+        <section
+          aria-labelledby="call-log-delete-title"
+          aria-modal="true"
+          className="delete-confirm-backdrop"
+          role="dialog"
+        >
+          <div className="delete-confirm-modal">
+            <h2 id="call-log-delete-title">İletişim kaydı silinsin mi?</h2>
+            <p>
+              Bu iletişim kaydı silindi olarak işaretlenecek. İşlem öğrenci son görüşme bilgisini kalan kayıtlara göre
+              günceller.
+            </p>
+            <div className="delete-confirm-actions">
+              <button disabled={isDeletingCallLog} onClick={() => setCallLogDeleteCandidate(null)} type="button">
+                İptal
+              </button>
+              <button
+                className="danger"
+                disabled={isDeletingCallLog}
+                onClick={() => void confirmDeleteCallLog(callLogDeleteCandidate)}
+                type="button"
+              >
+                {isDeletingCallLog ? "Siliniyor..." : "Sil"}
               </button>
             </div>
           </div>
@@ -1925,8 +1981,34 @@ export function StudentsPage() {
                   <div className="tl-item" key={historyItem.call_log_id}>
                     <div className="tl-dot" />
                     <div>
-                      <div className="tl-date">
-                        {formatShortDateTime(historyItem.call_time)} · {historyItem.call_result_label}
+                      <div
+                        className="tl-date"
+                        style={{ alignItems: "center", display: "flex", gap: 6, justifyContent: "space-between" }}
+                      >
+                        <span>
+                          {formatShortDateTime(historyItem.call_time)} · {historyItem.call_result_label}
+                        </span>
+                        <button
+                          aria-label="İletişim kaydını sil"
+                          onClick={() => setCallLogDeleteCandidate(historyItem)}
+                          style={{
+                            alignItems: "center",
+                            background: "transparent",
+                            border: "0",
+                            color: "#9f4338",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            height: 20,
+                            justifyContent: "center",
+                            opacity: 0.72,
+                            padding: 0,
+                            width: 20
+                          }}
+                          title="İletişim kaydını sil"
+                          type="button"
+                        >
+                          <Trash2 aria-hidden="true" size={12} />
+                        </button>
                       </div>
                       <div className="tl-text">
                         {formatCallHistoryPhoneContext(
