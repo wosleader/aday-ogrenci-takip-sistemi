@@ -6,7 +6,7 @@ import type { AppOutletContext } from "../../app/AppLayout";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/EmptyState";
 import { CALL_RESULTS, LIFE_CYCLE_STATUSES, type CallResult } from "../../domain/constants/statuses";
-import { readCallHistoryForStudent } from "../calls/services/callHistoryReader";
+import { readCallHistoryForStudent, type CallHistoryItem } from "../calls/services/callHistoryReader";
 import { writeCallLog } from "../calls/services/callLogWriter";
 import { validateCallSave } from "../calls/services/callSaveValidation";
 import { saveFilteredExportSnapshot } from "../exports/services/exportSelection";
@@ -272,6 +272,7 @@ type PhoneCardProps = {
   label: string;
   phoneId?: number | null;
   value?: string | null;
+  latestOutcomeLabel?: string | null;
   isContacted: boolean;
   isWrong: boolean;
   isReadOnly?: boolean;
@@ -302,6 +303,58 @@ const SHORTCUT_HELP_GROUPS: ShortcutHelpGroup[] = [
   },
   { title: "Kaydet", itemIds: ["save_call"] }
 ];
+
+type PhoneOutcomeLookup = {
+  byPhoneId: Map<number, string>;
+  byNormalizedNumber: Map<string, string>;
+};
+
+function normalizePhoneOutcomeNumber(value?: string | null): string {
+  return value?.replace(/\D/g, "") ?? "";
+}
+
+function createLatestPhoneOutcomeLookup(callHistory: CallHistoryItem[]): PhoneOutcomeLookup {
+  const byPhoneId = new Map<number, string>();
+  const byNormalizedNumber = new Map<string, string>();
+  const newestFirst = [...callHistory].sort(
+    (left, right) => right.call_time.localeCompare(left.call_time) || right.call_log_id - left.call_log_id
+  );
+
+  for (const historyItem of newestFirst) {
+    const outcomeLabel = historyItem.call_result_label;
+    const phoneId =
+      historyItem.contacted_phone_id ?? historyItem.phone_snapshot_phone_id ?? historyItem.phone_id ?? null;
+
+    if (phoneId != null && !byPhoneId.has(phoneId)) {
+      byPhoneId.set(phoneId, outcomeLabel);
+    }
+
+    const normalizedNumber = normalizePhoneOutcomeNumber(historyItem.phone_context_number);
+    if (normalizedNumber && !byNormalizedNumber.has(normalizedNumber)) {
+      byNormalizedNumber.set(normalizedNumber, outcomeLabel);
+    }
+  }
+
+  return { byPhoneId, byNormalizedNumber };
+}
+
+function getLatestPhoneOutcomeLabel(
+  lookup: PhoneOutcomeLookup,
+  phoneId?: number | null,
+  phoneNumber?: string | null
+): string | null {
+  if (phoneId != null) {
+    const outcomeById = lookup.byPhoneId.get(phoneId);
+
+    if (outcomeById) {
+      return outcomeById;
+    }
+  }
+
+  const normalizedNumber = normalizePhoneOutcomeNumber(phoneNumber);
+
+  return normalizedNumber ? lookup.byNormalizedNumber.get(normalizedNumber) ?? null : null;
+}
 
 function readShortcutHelpExpandedPreference(): boolean {
   try {
@@ -347,6 +400,7 @@ function PhoneCard({
   label,
   phoneId,
   value,
+  latestOutcomeLabel,
   isContacted,
   isWrong,
   isReadOnly = false,
@@ -512,6 +566,9 @@ function PhoneCard({
             "Telefon yok"
           )}
         </strong>
+        {value ? (
+          <small style={{ color: "#64748b" }}>Son sonuç: {latestOutcomeLabel?.trim() || "Yok"}</small>
+        ) : null}
         {displayStatusText ? <small>{displayStatusText}</small> : null}
       </div>
       {!isReadOnly && onContacted && onInvalid ? (
@@ -753,6 +810,10 @@ export function StudentsPage() {
     () => (selectedRow ? readCallHistoryForStudent(selectedRow.student_id) : Promise.resolve([])),
     [selectedRow?.student_id],
     []
+  );
+  const latestPhoneOutcomeLookup = useMemo(
+    () => createLatestPhoneOutcomeLookup(callHistory ?? []),
+    [callHistory]
   );
   const reminderPopup = useMemo(
     () =>
@@ -1730,6 +1791,11 @@ export function StudentsPage() {
                 label="Telefon 1"
                 phoneId={selectedRow.phone_1_id}
                 value={selectedRow.phone_1}
+                latestOutcomeLabel={getLatestPhoneOutcomeLabel(
+                  latestPhoneOutcomeLookup,
+                  selectedRow.phone_1_id,
+                  selectedRow.phone_1
+                )}
                 isContacted={selectedRow.phone_1_is_contacted}
                 isWrong={selectedRow.phone_1_is_wrong}
                 onContacted={(phoneId) => {
@@ -1742,6 +1808,11 @@ export function StudentsPage() {
                 label="Telefon 2"
                 phoneId={selectedRow.phone_2_id}
                 value={selectedRow.phone_2}
+                latestOutcomeLabel={getLatestPhoneOutcomeLabel(
+                  latestPhoneOutcomeLookup,
+                  selectedRow.phone_2_id,
+                  selectedRow.phone_2
+                )}
                 isContacted={selectedRow.phone_2_is_contacted}
                 isWrong={selectedRow.phone_2_is_wrong}
                 onContacted={(phoneId) => {
@@ -1756,6 +1827,11 @@ export function StudentsPage() {
                   label={phone.display_label}
                   phoneId={phone.id}
                   value={phone.phone_number}
+                  latestOutcomeLabel={getLatestPhoneOutcomeLabel(
+                    latestPhoneOutcomeLookup,
+                    phone.id,
+                    phone.phone_number
+                  )}
                   isContacted={phone.phone_status === "contacted"}
                   isWrong={phone.phone_status === "invalid" || phone.is_wrong || !phone.is_valid}
                   isReadOnly

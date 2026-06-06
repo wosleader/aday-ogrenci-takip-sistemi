@@ -142,6 +142,51 @@ function getDrawerPhoneCard(label: string): HTMLElement {
   return labelElement!.closest(".drawer-phone-card") as HTMLElement;
 }
 
+async function getPhoneId(normalizedPhoneNumber: string): Promise<number> {
+  const phone = await db.phones.where("normalized_phone_number").equals(normalizedPhoneNumber).first();
+
+  expect(phone?.id).toBeDefined();
+
+  return phone!.id!;
+}
+
+async function addCallLogForPhone(
+  studentId: number,
+  phoneId: number,
+  phoneNumber: string,
+  phoneLabel: string,
+  callResult: "not_reached" | "reached" | "call_later" | "appointment",
+  callTime: string
+) {
+  await db.call_logs.add({
+    uuid: crypto.randomUUID(),
+    student_id: studentId,
+    guardian_id: null,
+    phone_id: phoneId,
+    phone_snapshot: {
+      phone_id: phoneId,
+      reference_label: phoneLabel,
+      relation_label: "Telefon",
+      phone_number: phoneNumber
+    },
+    contacted_phone_id: phoneId,
+    contacted_phone_number: phoneNumber,
+    contacted_phone_label: phoneLabel,
+    call_time: callTime,
+    call_result: callResult,
+    note: null,
+    reminder_at: null,
+    next_action: null,
+    created_by: "agent",
+    created_reminder_id: null,
+    created_appointment_id: null,
+    sync_status: "local",
+    created_at: callTime,
+    updated_at: callTime,
+    deleted_at: null
+  });
+}
+
 function mockClipboard(writeText = vi.fn().mockResolvedValue(undefined)) {
   Object.defineProperty(navigator, "clipboard", {
     configurable: true,
@@ -247,6 +292,78 @@ describe("StudentsPage phone selection", () => {
       expect(
         within(getDrawerPhoneCard("Telefon 3 · Öğrenci")).getByText("Yanlış numara / kullanılmıyor")
       ).toBeInTheDocument();
+    });
+  });
+
+  it("shows an empty latest outcome state when a phone has no call log", async () => {
+    await seedStudentWithPhones("MELIS KAYA", "empty-outcome");
+
+    renderStudentsPage();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    const phone3Card = getDrawerPhoneCard("Telefon 3 · Öğrenci");
+
+    expect(within(phone1Card).getByText("Son sonuç: Yok")).toBeInTheDocument();
+    expect(within(phone3Card).getByText("Son sonuç: Yok")).toBeInTheDocument();
+  });
+
+  it("shows the latest call outcome for Telefon 1, Telefon 2, and Telefon 3+ cards", async () => {
+    const studentId = await seedStudentWithPhones("MELIS KAYA", "phone-outcomes");
+    const phone1Id = await getPhoneId("05321000001");
+    const phone2Id = await getPhoneId("05321000002");
+    const phone3Id = await getPhoneId("05321000003");
+
+    await addCallLogForPhone(
+      studentId,
+      phone1Id,
+      "0532 100 0001",
+      "Telefon 1",
+      "not_reached",
+      "2026-05-10T09:00:00.000Z"
+    );
+    await addCallLogForPhone(
+      studentId,
+      phone1Id,
+      "0532 100 0001",
+      "Telefon 1",
+      "reached",
+      "2026-05-10T11:00:00.000Z"
+    );
+    await addCallLogForPhone(
+      studentId,
+      phone2Id,
+      "0532 100 0002",
+      "Telefon 2",
+      "call_later",
+      "2026-05-10T10:00:00.000Z"
+    );
+    await addCallLogForPhone(
+      studentId,
+      phone3Id,
+      "0532 100 0003",
+      "Telefon 3",
+      "reached",
+      "2026-05-10T08:00:00.000Z"
+    );
+    await addCallLogForPhone(
+      studentId,
+      phone3Id,
+      "0532 100 0003",
+      "Telefon 3",
+      "appointment",
+      "2026-05-10T12:00:00.000Z"
+    );
+
+    renderStudentsPage();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    const phone2Card = getDrawerPhoneCard("Telefon 2");
+    const phone3Card = getDrawerPhoneCard("Telefon 3 · Öğrenci");
+
+    await waitFor(() => {
+      expect(within(phone1Card).getByText("Son sonuç: Görüşüldü")).toBeInTheDocument();
+      expect(within(phone2Card).getByText("Son sonuç: Sonra Aranacak")).toBeInTheDocument();
+      expect(within(phone3Card).getByText("Son sonuç: Randevu Verildi")).toBeInTheDocument();
     });
   });
 

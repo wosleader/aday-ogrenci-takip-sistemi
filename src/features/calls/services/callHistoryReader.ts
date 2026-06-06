@@ -6,6 +6,9 @@ import { createPhoneSnapshotDisplayLabel } from "./callLogPhoneContext";
 export type CallHistoryItem = {
   call_log_id: number;
   student_id: number;
+  phone_id?: number | null;
+  phone_snapshot_phone_id?: number | null;
+  contacted_phone_id?: number | null;
   call_time: string;
   call_result: string;
   call_result_label: string;
@@ -36,6 +39,9 @@ export async function readCallHistoryForStudent(
       return {
         call_log_id: log.id!,
         student_id: log.student_id,
+        phone_id: log.phone_id ?? null,
+        phone_snapshot_phone_id: log.phone_snapshot?.phone_id ?? null,
+        contacted_phone_id: log.contacted_phone_id ?? null,
         call_time: log.call_time,
         call_result: log.call_result,
         call_result_label: CALL_RESULTS[log.call_result] ?? log.call_result,
