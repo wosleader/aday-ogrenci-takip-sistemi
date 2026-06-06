@@ -4,10 +4,10 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 5677377 feat: show latest phone call outcomes
-- Phone-Level Outcome Read Model Pilot implementation tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: a9e891c feat: soft delete communication history
+- Communication History Soft Delete + Student Summary Recompute Pilot implementation tamamlandı ve pushlandı.
 - Working tree implementation sonrası clean olmalıdır; bu docs closure tamamlanınca Strategy AI onayı sonrası yeni docs commit beklenecek.
-- Bu docs closure için önerilen commit: docs: close phone outcome read model checkpoint
+- Bu docs closure için önerilen commit: docs: close communication history soft delete checkpoint
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -200,3 +200,13 @@ Telefon 3-10 mapping/simulation, gerçek import writer/persistence ve sağ kart 
 - .prompts/feature-plan.md
 - .prompts/feature-apply.md
 - .prompts/sprint-close.md
+
+## Latest Handoff Update - Communication History Soft Delete
+
+- Current safe HEAD/origin: `a9e891c feat: soft delete communication history`.
+- Communication History Soft Delete + Student Summary Recompute Pilot implementation is complete and pushed.
+- Working tree should be clean after implementation; this docs-only closure is pending Strategy AI approval before docs commit/push.
+- Suggested docs commit: `docs: close communication history soft delete checkpoint`.
+- Implementation behavior: call history entries are soft-deleted via `call_logs.deleted_at` / `updated_at`; student latest communication summary is recomputed from remaining active `call_logs`.
+- Reminder/appointment-linked call logs are blocked from deletion in this MVP; no cascade delete/detach is performed.
+- No schema migration, import/export format change, backup/restore behavior change, PhoneRecord mutation, edit/correction, or undo behavior was added.

@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Phone-Level Outcome Read Model Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Communication History Soft Delete + Student Summary Recompute Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -297,3 +297,16 @@ Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
   Onaylanan planı uygulamak için standart prompt.
 - `.prompts/sprint-close.md`
   Sprint kapanış kontrol ve dokümantasyon tutarlılığı promptu.
+
+## Latest File Map Addendum - Communication History Soft Delete
+
+Son dogrulandi: Communication History Soft Delete + Student Summary Recompute Pilot
+
+- `src/features/calls/services/callLogDeletion.ts`
+  Iletisim gecmisi kayitlari icin soft delete servisi. `call_logs.deleted_at` / `updated_at` set eder, hard delete kullanmaz, reminder/appointment baglantili kayitlari bloklar ve ogrenci son gorusme ozetini kalan aktif `call_logs` kayitlarindan yeniden hesaplar. `PhoneRecord` mutate etmez.
+- `src/features/students/StudentsPage.tsx`
+  Sag drawer iletisim gecmisi satirlarinda kucuk silme aksiyonunu ve onay modalini render eder. Basarili soft delete sonrasi mevcut live query/read model akisi ile history ve telefon karti `Son sonuc` guncellenir.
+- `tests/calls/callLogDeletion.test.ts`
+  Soft delete, student summary recompute, tum aktif loglar silinince safe clear, reminder/appointment bloklama, PhoneRecord degismeme ve snapshot fallback davranislarini test eder.
+- `tests/students/StudentsPageCallHistory.test.tsx`
+  Iletisim gecmisi UI'da delete button, confirmation required, cancel ve confirm sonrasi kaydin gorunur history'den kalkmasi davranislarini test eder.

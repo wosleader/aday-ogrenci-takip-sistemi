@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Phone-Level Outcome Read Model Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Communication History Soft Delete + Student Summary Recompute Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,11 +6,11 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Phone-Level Outcome Read Model Pilot
-- FILE_MAP: Phone-Level Outcome Read Model Pilot
-- DECISIONS: Phone-Level Outcome Read Model Pilot
-- Son implementation commit: 5677377 feat: show latest phone call outcomes
-- Son docs closure hedefi: docs: close phone outcome read model checkpoint
+- PROJECT_MEMORY: Communication History Soft Delete + Student Summary Recompute Pilot
+- FILE_MAP: Communication History Soft Delete + Student Summary Recompute Pilot
+- DECISIONS: Communication History Soft Delete + Student Summary Recompute Pilot
+- Son implementation commit: a9e891c feat: soft delete communication history
+- Son docs closure hedefi: docs: close communication history soft delete checkpoint
 
 ## 1. Proje Amacı
 
@@ -347,3 +347,16 @@ Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 
 “Önce `docs/PROJECT_MEMORY.md`, `docs/FILE_MAP.md` ve `docs/DECISIONS.md` oku. Sadece bu işle ilgili checkpoint gerekiyorsa oku. Kod yazmadan önce plan çıkar. Onay almadan dosya değiştirme, paket kurma, commit/push yapma.”
+
+## Latest Checkpoint Closure - Communication History Soft Delete
+
+- Implementation commit: `a9e891c feat: soft delete communication history`.
+- Communication history entries can be deleted safely with soft delete; hard delete is not used.
+- Soft delete sets `call_logs.deleted_at` and `call_logs.updated_at`.
+- Deleted call logs no longer appear in communication history; phone-card `Son sonuc` falls back through the existing active `call_logs` read model.
+- After soft delete, student summary is recomputed from remaining non-deleted `call_logs`: `last_call_result`, `last_contacted_at`, `last_contacted_phone_id`.
+- If no active call logs remain, `last_call_result` becomes `not_called`, `last_contacted_at` becomes `null`, and `last_contacted_phone_id` becomes `null`.
+- `PhoneRecord` is not mutated: `phone_status`, `is_wrong`, and `is_valid` remain unchanged.
+- Call logs with `created_reminder_id` or `created_appointment_id` are blocked from deletion in this MVP; no reminder/appointment cascade delete is performed.
+- No schema migration, import/export format change, backup/restore behavior change, edit/correction feature, or undo feature was added.
+- Manual localhost QA passed after implementation.
