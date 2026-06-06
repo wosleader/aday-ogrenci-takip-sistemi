@@ -304,6 +304,10 @@ const SHORTCUT_HELP_GROUPS: ShortcutHelpGroup[] = [
   { title: "Kaydet", itemIds: ["save_call"] }
 ];
 
+const CALL_PHONE_ACTION_LABEL = "Bu görüşmede kullanılacak telefon";
+const CALL_PHONE_ACTION_SELECTED_LABEL = "Bu görüşmede kullanılacak telefon seçili";
+const WRONG_PHONE_ACTION_LABEL = "Yanlış / kullanılmayacak numara";
+
 type PhoneOutcomeLookup = {
   byPhoneId: Map<number, string>;
   byNormalizedNumber: Map<string, string>;
@@ -574,21 +578,21 @@ function PhoneCard({
       {!isReadOnly && onContacted && onInvalid ? (
         <div className="phone-actions">
           <button
-            aria-label="Son görüşülen numara olarak işaretle"
+            aria-label={isContacted ? CALL_PHONE_ACTION_SELECTED_LABEL : CALL_PHONE_ACTION_LABEL}
             className={isContacted ? "active" : ""}
             disabled={!phoneId || isWrong}
             onClick={() => phoneId && onContacted(phoneId)}
-            title="Son görüşülen / iletişim kurulan numara"
+            title={isContacted ? CALL_PHONE_ACTION_SELECTED_LABEL : CALL_PHONE_ACTION_LABEL}
             type="button"
           >
             <Check aria-hidden="true" size={14} />
           </button>
           <button
-            aria-label="Yanlış numara veya kullanılmıyor olarak işaretle"
+            aria-label={WRONG_PHONE_ACTION_LABEL}
             className={isWrong ? "active invalid" : ""}
             disabled={!phoneId}
             onClick={() => phoneId && onInvalid(phoneId)}
-            title="Yanlış numara / kullanılmıyor"
+            title={WRONG_PHONE_ACTION_LABEL}
             type="button"
           >
             x
@@ -598,22 +602,22 @@ function PhoneCard({
       {isReadOnly && onSelectForCall && onInvalid ? (
         <div className="phone-actions">
           <button
-            aria-label={isEffectiveContacted ? "Görüşmede kullanılacak" : "Bu numarayla görüşüldü"}
+            aria-label={isEffectiveContacted ? CALL_PHONE_ACTION_SELECTED_LABEL : CALL_PHONE_ACTION_LABEL}
             aria-pressed={isEffectiveContacted}
             className={isEffectiveContacted ? "active" : ""}
             disabled={!phoneId || isWrong}
             onClick={() => phoneId && onSelectForCall(phoneId)}
-            title={isEffectiveContacted ? "Görüşmede kullanılacak" : "Bu numarayla görüşüldü"}
+            title={isEffectiveContacted ? CALL_PHONE_ACTION_SELECTED_LABEL : CALL_PHONE_ACTION_LABEL}
             type="button"
           >
             <Check aria-hidden="true" size={14} />
           </button>
           <button
-            aria-label="Yanlış numara veya kullanılmıyor olarak işaretle"
+            aria-label={WRONG_PHONE_ACTION_LABEL}
             className={isWrong ? "active invalid" : ""}
             disabled={!phoneId}
             onClick={() => phoneId && onInvalid(phoneId)}
-            title="Yanlış numara / kullanılmıyor"
+            title={WRONG_PHONE_ACTION_LABEL}
             type="button"
           >
             x
