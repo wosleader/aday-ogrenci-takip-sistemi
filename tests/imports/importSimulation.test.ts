@@ -93,6 +93,31 @@ describe("simulateImport", () => {
     expect(summary.preview_rows[0].student_full_name).toBe("Ayşe Yılmaz");
   });
 
+  it("keeps Mahalle and Ilce optional while carrying values into preview rows", () => {
+    const summary = simulateImport(
+      worksheet(
+        ["AD", "SOYAD", "Mahalle", "İlçe", "Telefon"],
+        [
+          ["Ayşe", "Yılmaz", "Atatürk", "Kadıköy", "5321234567"],
+          ["Mehmet", "Kaya", "", "", "5327654321"]
+        ]
+      )
+    );
+
+    expect(summary.readable_rows).toBe(2);
+    expect(summary.skipped_rows).toBe(0);
+    expect(summary.preview_rows[0]).toMatchObject({
+      student_full_name: "Ayşe Yılmaz",
+      neighborhood: "Atatürk",
+      district: "Kadıköy"
+    });
+    expect(summary.preview_rows[1]).toMatchObject({
+      student_full_name: "Mehmet Kaya"
+    });
+    expect(summary.preview_rows[1].neighborhood).toBeUndefined();
+    expect(summary.preview_rows[1].district).toBeUndefined();
+  });
+
   it("separates missing primary phone from fully missing phone records", () => {
     const summary = simulateImport(
       worksheet(

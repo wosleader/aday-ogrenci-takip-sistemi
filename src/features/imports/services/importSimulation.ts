@@ -469,6 +469,8 @@ export function simulateImport(
       student_last_name: resolvedStudentName.student_last_name,
       student_full_name: studentFullName,
       guardian_full_name: getTextCell(row, fieldIndex, "guardian_full_name") || undefined,
+      neighborhood: getTextCell(row, fieldIndex, "neighborhood") || undefined,
+      district: getTextCell(row, fieldIndex, "district") || undefined,
       phone_1: primaryPhone.normalized_phone_number || undefined,
       phone_2: secondaryPhone?.normalized_phone_number || undefined,
       phones,

@@ -1842,6 +1842,11 @@ export function StudentsPage() {
                   <span className={`status ${statusClass(selectedRow)}`}>{statusLabel(selectedRow)}</span>
                 </div>
                 <div className="drawer-campaign">{selectedRow.campaign_name || "Diğer"}</div>
+                {selectedRow.neighborhood || selectedRow.district ? (
+                  <div className="drawer-campaign">
+                    Mahalle / İlçe: {[selectedRow.neighborhood, selectedRow.district].filter(Boolean).join(" / ")}
+                  </div>
+                ) : null}
               </div>
             </div>
 

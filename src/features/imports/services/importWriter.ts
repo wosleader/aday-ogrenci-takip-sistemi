@@ -236,6 +236,8 @@ export async function writeImportToDatabase(
           ]),
           current_class: row.current_class ?? null,
           student_group: row.student_group ?? "11. Sınıf YKS Hazırlık",
+          neighborhood: row.neighborhood ?? null,
+          district: row.district ?? null,
           category: "YKS",
           campaign_id: campaign.id ?? null,
           lifecycle_status: "candidate",

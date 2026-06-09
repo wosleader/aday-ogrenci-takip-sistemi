@@ -7,6 +7,8 @@ export type StudentRecord = BaseEntity & {
   search_text: string;
   current_class?: string | null;
   student_group: string;
+  neighborhood?: string | null;
+  district?: string | null;
   category: StudentCategory;
   campaign_id?: number | null;
   lifecycle_status: LifecycleStatus;

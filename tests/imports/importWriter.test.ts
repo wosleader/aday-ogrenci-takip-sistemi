@@ -57,6 +57,28 @@ describe("writeImportToDatabase", () => {
     }
   });
 
+  it("persists Mahalle and Ilce on imported student records without using general note", async () => {
+    const database = await createDatabase();
+    const parsedWorksheet = worksheet(
+      ["Ad Soyad", "Mahalle", "İlçe", "Telefon"],
+      [["Ayşe Yılmaz", "Atatürk", "Kadıköy", "5321234567"]]
+    );
+
+    try {
+      const summary = simulateImport(parsedWorksheet);
+      const result = await writeImportToDatabase(parsedWorksheet, summary, { database });
+      const [student] = await database.students.toArray();
+
+      expect(result.created_students).toBe(1);
+      expect(student.neighborhood).toBe("Atatürk");
+      expect(student.district).toBe("Kadıköy");
+      expect(student.general_note).toBeNull();
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
   it("imports a row when phone 1 is empty but phone 2 exists", async () => {
     const database = await createDatabase();
     const parsedWorksheet = worksheet(

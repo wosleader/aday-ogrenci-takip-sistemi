@@ -109,6 +109,18 @@ describe("column matching", () => {
     });
   });
 
+  it("matches Mahalle and Ilce location aliases without colliding with parent fields", () => {
+    const { matches } = matchColumns(["Mahalle", "mah", "İlçe", "Ilce", "ilçe adı", "Anne adı", "Baba Adı"]);
+
+    expect(matches[0]).toMatchObject({ status: "matched", target_field: "neighborhood" });
+    expect(matches[1]).toMatchObject({ status: "matched", target_field: "neighborhood" });
+    expect(matches[2]).toMatchObject({ status: "matched", target_field: "district" });
+    expect(matches[3]).toMatchObject({ status: "matched", target_field: "district" });
+    expect(matches[4]).toMatchObject({ status: "matched", target_field: "district" });
+    expect(matches[5]).toMatchObject({ status: "mapping_required" });
+    expect(matches[6]).toMatchObject({ status: "mapping_required" });
+  });
+
   it("recognizes detailed export headers while keeping importable columns matched", () => {
     const { matches } = matchColumns([...BASE_EXPORT_HEADERS]);
     const byHeader = new Map(matches.map((match) => [match.source_header, match]));

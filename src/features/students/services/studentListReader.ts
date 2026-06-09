@@ -37,6 +37,8 @@ export type StudentListRow = {
   normalized_student_name: string;
   current_class?: string | null;
   student_group: string;
+  neighborhood?: string | null;
+  district?: string | null;
   category: string;
   campaign_id?: number | null;
   campaign_name?: string | null;
@@ -597,6 +599,8 @@ function mapStudentToRow(
     normalized_student_name: student.normalized_student_name,
     current_class: student.current_class ?? null,
     student_group: student.student_group,
+    neighborhood: student.neighborhood ?? null,
+    district: student.district ?? null,
     category: student.category,
     campaign_id: student.campaign_id ?? null,
     campaign_name: campaign?.name ?? null,

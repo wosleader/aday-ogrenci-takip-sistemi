@@ -117,6 +117,23 @@ describe("AD/SOYAD import composition", () => {
     ).toBe(false);
   });
 
+  it("keeps AD/SOYAD composition and Telefon 1-10 slot fidelity with Mahalle and Ilce present", () => {
+    const summary = simulateImport(
+      worksheet(
+        ["AD", "SOYAD", "Mahalle", "İlçe", "Telefon", "Telefon 10"],
+        [["Ayşe", "Yılmaz", "Atatürk", "Kadıköy", "5321234567", "5320000010"]]
+      )
+    );
+
+    expect(summary.readable_rows).toBe(1);
+    expect(summary.preview_rows[0]).toMatchObject({
+      student_full_name: "Ayşe Yılmaz",
+      neighborhood: "Atatürk",
+      district: "Kadıköy"
+    });
+    expect(summary.preview_rows[0].phones.map((phone) => phone.reference_label)).toEqual(["Telefon 1", "Telefon 10"]);
+  });
+
   it("keeps full-name field when full-name and AD/SOYAD columns are both present", () => {
     const summary = simulateImport(
       worksheet(

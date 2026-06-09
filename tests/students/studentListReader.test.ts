@@ -136,6 +136,28 @@ function callLog(studentId: number, overrides: Partial<CallLogRecord> = {}): Cal
 }
 
 describe("studentListReader", () => {
+  it("carries optional Mahalle and Ilce fields into student list rows", async () => {
+    const database = await createDatabase();
+
+    try {
+      await database.students.add(
+        student({
+          student_full_name: "Ayse Yilmaz",
+          neighborhood: "Ataturk",
+          district: "Kadikoy"
+        })
+      );
+
+      const [row] = await readStudentListRows(database);
+
+      expect(row.neighborhood).toBe("Ataturk");
+      expect(row.district).toBe("Kadikoy");
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
   it("normalizes common combined class and section labels", () => {
     expect(normalizeClassSectionLabel("9A")).toBe("9-A");
     expect(normalizeClassSectionLabel("9-A")).toBe("9-A");
