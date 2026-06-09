@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { BASE_EXPORT_HEADERS } from "../../src/features/exports/services/exportMapper";
 import { COLUMN_DEFINITIONS } from "../../src/features/imports/services/columnDefinitions";
 import { matchColumns, normalizeColumnHeader } from "../../src/features/imports/services/columnMatching";
@@ -45,12 +46,33 @@ describe("column matching", () => {
     expect(matches[0].target_field).toBe("student_full_name");
   });
 
+  it("matches student AD/SOYAD columns without treating guardian or parent names as student name", () => {
+    const { matches } = matchColumns([
+      "AD",
+      "SOYAD",
+      "Öğrenci Adı",
+      "Öğrenci Soyadı",
+      "Veli Adı",
+      "Anne adı",
+      "Baba Adı"
+    ]);
+
+    expect(matches[0]).toMatchObject({ status: "matched", target_field: "student_first_name" });
+    expect(matches[1]).toMatchObject({ status: "matched", target_field: "student_last_name" });
+    expect(matches[2]).toMatchObject({ status: "matched", target_field: "student_first_name" });
+    expect(matches[3]).toMatchObject({ status: "matched", target_field: "student_last_name" });
+    expect(matches[4]).toMatchObject({ status: "mapping_required" });
+    expect(matches[5]).toMatchObject({ status: "mapping_required" });
+    expect(matches[6]).toMatchObject({ status: "mapping_required" });
+  });
+
   it("maps duplicate Sınıf columns to current class and student group", () => {
     const { matches } = matchColumns(["Sınıf", "Sınıf"]);
 
     expect(matches[0].target_field).toBe("current_class");
     expect(matches[1].target_field).toBe("student_group");
   });
+
   it("includes Telefon 3-10 as import mapping definitions", () => {
     const phoneFields = COLUMN_DEFINITIONS.filter((definition) => definition.field.startsWith("phone_")).map(
       (definition) => definition.field

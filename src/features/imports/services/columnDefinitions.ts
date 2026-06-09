@@ -28,6 +28,16 @@ export const COLUMN_DEFINITIONS: ColumnDefinition[] = [
     aliases: ["ad soyad", "ogrenci ad soyad", "ogrenci adi soyadi", "ad soyadi"]
   },
   {
+    field: "student_first_name",
+    label: "Ad",
+    aliases: ["ad", "ogrenci adi"]
+  },
+  {
+    field: "student_last_name",
+    label: "Soyad",
+    aliases: ["soyad", "ogrenci soyadi"]
+  },
+  {
     field: "guardian_full_name",
     label: "Veli Ad Soyad",
     aliases: ["veli ad soyad", "veli adi soyadi", "veli ad soyadi"]

@@ -14,6 +14,8 @@ export type ImportFieldKey =
   | "current_class"
   | "student_group"
   | "student_full_name"
+  | "student_first_name"
+  | "student_last_name"
   | "guardian_full_name"
   | ImportPhoneFieldKey
   | "last_call_result"
@@ -88,6 +90,8 @@ export type SimulatedImportRow = {
   row_number: number;
   current_class?: string;
   student_group?: string;
+  student_first_name?: string;
+  student_last_name?: string;
   student_full_name: string;
   guardian_full_name?: string;
   phone_1?: string;

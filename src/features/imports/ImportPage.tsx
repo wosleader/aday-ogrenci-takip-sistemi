@@ -1011,7 +1011,9 @@ function isPriorityColumnMatch(
     match.status === "manual" ||
     match.status === "auto_fixed" ||
     Boolean(manualMapping) ||
-    match.target_field === "student_full_name"
+    match.target_field === "student_full_name" ||
+    match.target_field === "student_first_name" ||
+    match.target_field === "student_last_name"
   );
 }
 

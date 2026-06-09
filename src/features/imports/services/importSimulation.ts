@@ -37,6 +37,13 @@ const PHONE_IMPORT_FIELDS: ImportPhoneFieldKey[] = [
   "phone_10"
 ];
 
+const FULL_NAME_OVERRIDES_SPLIT_NAME_MESSAGE =
+  "Tam ad alanı bulunduğu için Ad/Soyad alanları birleştirme için kullanılmadı.";
+const FIRST_NAME_ONLY_MESSAGE =
+  "Soyad alanı bulunamadı; öğrenci adı yalnızca Ad alanından oluşturuldu.";
+const LAST_NAME_ONLY_MESSAGE =
+  "Soyad alanı tek başına öğrenci adı oluşturmak için yeterli değil.";
+
 function stringifyCell(value: unknown): string {
   if (value == null) {
     return "";
@@ -96,6 +103,64 @@ function getTextCell(
   field: ImportFieldKey
 ): string {
   return stringifyCell(getCell(row, fieldIndex, field));
+}
+
+function hasSplitStudentNameSource(fieldIndex: Map<ImportFieldKey, number>): boolean {
+  return fieldIndex.has("student_first_name") || fieldIndex.has("student_last_name");
+}
+
+function hasUsableStudentNameMapping(fieldIndex: Map<ImportFieldKey, number>): boolean {
+  return fieldIndex.has("student_full_name") || fieldIndex.has("student_first_name");
+}
+
+function composeStudentNameParts(firstName: string, lastName: string): string {
+  return [firstName, lastName].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+}
+
+function resolveStudentFullName(row: unknown[], fieldIndex: Map<ImportFieldKey, number>) {
+  const fullName = getTextCell(row, fieldIndex, "student_full_name");
+  const firstName = getTextCell(row, fieldIndex, "student_first_name");
+  const lastName = getTextCell(row, fieldIndex, "student_last_name");
+
+  if (fieldIndex.has("student_full_name")) {
+    return {
+      student_full_name: fullName,
+      student_first_name: firstName || undefined,
+      student_last_name: lastName || undefined
+    };
+  }
+
+  if (firstName && lastName) {
+    return {
+      student_full_name: composeStudentNameParts(firstName, lastName),
+      student_first_name: firstName,
+      student_last_name: lastName
+    };
+  }
+
+  if (firstName) {
+    return {
+      student_full_name: firstName,
+      student_first_name: firstName,
+      student_last_name: undefined,
+      warning: FIRST_NAME_ONLY_MESSAGE
+    };
+  }
+
+  if (lastName) {
+    return {
+      student_full_name: "",
+      student_first_name: undefined,
+      student_last_name: lastName,
+      error: LAST_NAME_ONLY_MESSAGE
+    };
+  }
+
+  return {
+    student_full_name: "",
+    student_first_name: undefined,
+    student_last_name: undefined
+  };
 }
 
 function collectImportPhones(
@@ -208,6 +273,16 @@ export function simulateImport(
 
   const mappingRequiredColumns = matches.filter((match) => match.status === "mapping_required");
 
+  if (fieldIndex.has("student_full_name") && hasSplitStudentNameSource(fieldIndex)) {
+    simulationLogs.push({
+      field_name: "Ad Soyad",
+      severity: "warning",
+      message: FULL_NAME_OVERRIDES_SPLIT_NAME_MESSAGE,
+      suggested_action: "Tam ad alanı kullanılacak; Ad ve Soyad kolonlarını ayrıca düzenlemeniz gerekmez.",
+      auto_fixed: false
+    });
+  }
+
   for (const match of mappingRequiredColumns) {
     simulationLogs.push({
       column_name: match.source_header,
@@ -221,6 +296,10 @@ export function simulateImport(
   }
 
   for (const requiredField of REQUIRED_IMPORT_FIELDS) {
+    if (requiredField === "student_full_name" && hasUsableStudentNameMapping(fieldIndex)) {
+      continue;
+    }
+
     if (!fieldIndex.has(requiredField)) {
       const fieldLabel = getImportFieldLabel(requiredField);
       simulationLogs.push({
@@ -260,21 +339,34 @@ export function simulateImport(
       return;
     }
 
-    const missingFields = REQUIRED_IMPORT_FIELDS.filter((field) => !getTextCell(row, fieldIndex, field));
+    const resolvedStudentName = resolveStudentFullName(row, fieldIndex);
+    const missingFields = REQUIRED_IMPORT_FIELDS.filter((field) => {
+      if (field === "student_full_name") {
+        return !resolvedStudentName.student_full_name;
+      }
+
+      return !getTextCell(row, fieldIndex, field);
+    });
 
     if (missingFields.length > 0) {
       skippedRows += 1;
 
       for (const field of missingFields) {
         const fieldLabel = getImportFieldLabel(field);
-        const message = `Satır ${rowNumber} içe aktarılmayacak: ${fieldLabel} alanı boş.`;
+        const message =
+          field === "student_full_name" && resolvedStudentName.error
+            ? `Satır ${rowNumber} içe aktarılmayacak: ${resolvedStudentName.error}`
+            : `Satır ${rowNumber} içe aktarılmayacak: ${fieldLabel} alanı boş.`;
         missingRequiredFields.push({ row_number: rowNumber, field, message });
         detailedLogs.push({
           row_number: rowNumber,
           field_name: fieldLabel,
           severity: "error",
           message,
-          suggested_action: `${fieldLabel} alanını Excel'de doldurun veya doğru kolonu eşleştirin.`,
+          suggested_action:
+            field === "student_full_name" && resolvedStudentName.error
+              ? "Ad alanını da eşleştirin veya tam Ad Soyad alanını kullanın."
+              : `${fieldLabel} alanını Excel'de doldurun veya doğru kolonu eşleştirin.`,
           auto_fixed: false
         });
       }
@@ -282,7 +374,18 @@ export function simulateImport(
       return;
     }
 
-    const studentFullName = getTextCell(row, fieldIndex, "student_full_name");
+    if (resolvedStudentName.warning) {
+      simulationLogs.push({
+        row_number: rowNumber,
+        field_name: "Ad Soyad",
+        severity: "warning",
+        message: resolvedStudentName.warning,
+        suggested_action: "Soyad bilgisi varsa Excel'de Soyad kolonunu eşleştirebilirsiniz.",
+        auto_fixed: false
+      });
+    }
+
+    const studentFullName = resolvedStudentName.student_full_name;
     const phones = collectImportPhones(row, fieldIndex, fieldMatchIndex);
     const primaryPhone = normalizePhone(getTextCell(row, fieldIndex, "phone_1"));
     const secondaryPhoneRaw = getTextCell(row, fieldIndex, "phone_2");
@@ -362,6 +465,8 @@ export function simulateImport(
       row_number: rowNumber,
       current_class: getTextCell(row, fieldIndex, "current_class") || undefined,
       student_group: getTextCell(row, fieldIndex, "student_group") || undefined,
+      student_first_name: resolvedStudentName.student_first_name,
+      student_last_name: resolvedStudentName.student_last_name,
       student_full_name: studentFullName,
       guardian_full_name: getTextCell(row, fieldIndex, "guardian_full_name") || undefined,
       phone_1: primaryPhone.normalized_phone_number || undefined,
