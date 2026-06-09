@@ -310,3 +310,20 @@ Son dogrulandi: Communication History Soft Delete + Student Summary Recompute Pi
   Soft delete, student summary recompute, tum aktif loglar silinince safe clear, reminder/appointment bloklama, PhoneRecord degismeme ve snapshot fallback davranislarini test eder.
 - `tests/students/StudentsPageCallHistory.test.tsx`
   Iletisim gecmisi UI'da delete button, confirmation required, cancel ve confirm sonrasi kaydin gorunur history'den kalkmasi davranislarini test eder.
+
+## Latest File Map Addendum - Import AD/SOYAD Composition
+
+Son dogrulandi: Import AD/SOYAD Composition Pilot
+
+- `src/features/imports/services/types.ts`
+  Import/simulation-only `student_first_name` ve `student_last_name` alanlarini tanimlar. Bunlar `StudentRecord` kalici model alanlari degildir.
+- `src/features/imports/services/columnDefinitions.ts`
+  `AD`, `SOYAD`, `Ogrenci Adi`, `Ogrenci Soyadi` aliaslarini import mapping hedeflerine baglar. Veli/Anne/Baba adlari student AD/SOYAD olarak otomatik eslesmez.
+- `src/features/imports/services/importSimulation.ts`
+  Full-name column kazanir; full-name yoksa `AD + SOYAD` mevcut `student_full_name` sonucuna compose edilir. Only AD warning ile kabul edilir; only SOYAD bloklanir.
+- `src/features/imports/ImportPage.tsx`
+  AD/SOYAD mapping satirlarini import review'da oncelikli gorunur tutar. Runtime/import writer davranisini degistirmez.
+- `tests/imports/columnMatching.test.ts`
+  AD/SOYAD aliaslarini ve Veli/Anne/Baba guvenlik eslesmeme davranisini test eder.
+- `tests/imports/importNameComposition.test.ts`
+  AD/SOYAD composition, full-name wins, only AD warning, only SOYAD block, missing-name fallback, writer persistence ve Telefon 1-10 slot fidelity regression testlerini icerir.

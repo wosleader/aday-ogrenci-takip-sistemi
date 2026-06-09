@@ -360,3 +360,16 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - Call logs with `created_reminder_id` or `created_appointment_id` are blocked from deletion in this MVP; no reminder/appointment cascade delete is performed.
 - No schema migration, import/export format change, backup/restore behavior change, edit/correction feature, or undo feature was added.
 - Manual localhost QA passed after implementation.
+
+## Latest Checkpoint Closure - Import AD/SOYAD Composition
+
+- Implementation commit: `ee7b12f feat: compose student names from ad soyad import`.
+- Import now supports student name composition from separate `AD` and `SOYAD` columns.
+- `student_first_name` and `student_last_name` are import/simulation-only fields; persistent student model remains `student_full_name`.
+- No DB/schema migration, export/report change, backup/restore change, guardian model change, Anne/Baba implementation, or Mahalle/Ilce implementation was added.
+- Full-name column wins over `AD` / `SOYAD` and emits a warning when split columns are also present.
+- Only `AD` imports with a warning; only `SOYAD` is blocked because surname alone is not a safe student name.
+- `Veli Adi`, `Anne adi`, and `Baba Adi` are not treated as student `AD` / `SOYAD`.
+- Telefon 1-10 slot fidelity remains preserved.
+- Test/build passed: `npm.cmd test -- --run` PASS, 45 test files / 294 tests; `npm.cmd run build` PASS with known Vite chunk-size warning.
+- Manual localhost QA passed for QA-1 through QA-7 AD/SOYAD composition scenarios.

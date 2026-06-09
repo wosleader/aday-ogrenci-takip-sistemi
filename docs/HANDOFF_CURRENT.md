@@ -210,3 +210,20 @@ Telefon 3-10 mapping/simulation, gerçek import writer/persistence ve sağ kart 
 - Implementation behavior: call history entries are soft-deleted via `call_logs.deleted_at` / `updated_at`; student latest communication summary is recomputed from remaining active `call_logs`.
 - Reminder/appointment-linked call logs are blocked from deletion in this MVP; no cascade delete/detach is performed.
 - No schema migration, import/export format change, backup/restore behavior change, PhoneRecord mutation, edit/correction, or undo behavior was added.
+
+## Latest Handoff Update - Import AD/SOYAD Composition
+
+- Current safe HEAD/origin: `ee7b12f feat: compose student names from ad soyad import`.
+- Import AD/SOYAD Composition Pilot implementation is complete and pushed.
+- Working tree should be clean after implementation; this docs-only closure is pending Strategy AI approval before docs commit/push.
+- Suggested docs commit: `docs: close import ad soyad composition checkpoint`.
+- Implementation behavior: Excel import can compose `AD` + `SOYAD` into existing `student_full_name` without adding persistent first/last name fields.
+- `student_first_name` and `student_last_name` are import/simulation-only fields; writer persists composed `student_full_name` only.
+- Full-name column wins over `AD/SOYAD` and emits warning: `Tam ad alanı bulunduğu için Ad/Soyad alanları birleştirme için kullanılmadı.`
+- Only `AD` imports with warning: `Soyad alanı bulunamadı; öğrenci adı yalnızca Ad alanından oluşturuldu.`
+- Only `SOYAD` is blocked with: `Soyad alanı tek başına öğrenci adı oluşturmak için yeterli değil.`
+- `Veli Adi`, `Anne adi`, and `Baba Adi` are not treated as student AD/SOYAD; Anne/Baba guardian import remains a later discovery.
+- No schema migration, export/report format change, backup/restore behavior change, Mahalle/Ilce implementation, or guardian model change was added.
+- Telefon 1-10 slot fidelity remains preserved.
+- Test/build passed: `npm.cmd test -- --run` PASS, 45 test files / 294 tests; `npm.cmd run build` PASS with known Vite chunk-size warning.
+- Manual localhost QA QA-1 through QA-7 passed.
