@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Parent/Location Import Product Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Mahalle/Ilce Import Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -84,3 +84,15 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Parent/Location Import Decision] Export, search, backup, and restore impact for Mahalle/Ilce must be accepted before implementation. No export/report/backup/schema behavior should be changed incidentally.
 - [Parent/Location Import Decision] AD/SOYAD composition and Telefon 1-10 mapping/import/export behavior are protected and must remain unchanged in parent/location follow-up work.
 - [Parent/Location Import Decision] `dev-server.log` is a local untracked runtime file. It must not be staged, committed, deleted, or treated as product documentation.
+
+## Latest Decisions - Mahalle / Ilce Import Pilot
+
+- [Mahalle/Ilce Import Pilot] Mahalle and Ilce are supported as optional student location fields: `neighborhood` and `district`.
+- [Mahalle/Ilce Import Pilot] Location fields are stored directly on `StudentRecord` as optional non-indexed fields. Dexie schema version was not changed and `src/db/schema.ts` / `src/db/db.ts` remain unchanged.
+- [Mahalle/Ilce Import Pilot] Mahalle/Ilce must not be stored in `general_note`.
+- [Mahalle/Ilce Import Pilot] Empty Mahalle/Ilce, only Mahalle, and only Ilce are all allowed and do not block import.
+- [Mahalle/Ilce Import Pilot] The student drawer may show a small read-only `Mahalle / Ilce` line when location data exists.
+- [Mahalle/Ilce Import Pilot] AD/SOYAD composition, Telefon 1-10 slot fidelity, and Veli/Anne/Baba student-name safety behavior remain unchanged.
+- [Mahalle/Ilce Import Pilot] Anne/Baba import and guardian/contact model changes remain deferred.
+- [Mahalle/Ilce Import Pilot] Export expansion, report expansion, search/filter expansion, backup/restore behavior changes, province/address hierarchy, and indexed location fields remain out of scope.
+- [Mahalle/Ilce Import Pilot] Do not immediately start Anne/Baba implementation. The next recommended step is `DISCOVERY — Agent Context / Repo Hygiene Standardization`.

@@ -4,11 +4,10 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 92dfb4e docs: close import ad soyad composition checkpoint
-- Import AD/SOYAD Composition docs closure tamamlandı ve pushlandı.
-- Anne/Baba/Mahalle/İlçe import discovery tamamlandı; sonuç `NEEDS HUMAN DECISION`.
-- Bu docs-only decision checkpoint tamamlanınca Strategy AI onayı sonrası yeni docs commit beklenecek.
-- Bu docs closure için önerilen commit: docs: record parent location import decision
+- Son güvenli HEAD/origin: 70705af feat: import student location fields
+- Mahalle/İlçe Import Pilot implementation tamamlandı ve pushlandı.
+- Bu docs-only closure tamamlanınca Strategy AI onayı sonrası yeni docs commit beklenecek.
+- Bu docs closure için önerilen commit: docs: close student location import checkpoint
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -90,7 +89,7 @@ Tamamlananlar:
 
 Sıradaki muhtemel aşamalar:
 
-- Parent / Location Import Product Decision docs-only review/commit after Strategy AI approval
+- Mahalle/Ilce Import Pilot docs-only review/commit after Strategy AI approval
 - Obsidian/Graphify update değerlendirmesi
 - Localhost manuel QA / dar pilot readiness kontrolü
 - Dar pilot öncesi kırıcı bug/risk değerlendirmesi
@@ -169,14 +168,14 @@ Bu projeye yeni başlayan AI önce şunları yapmalı:
 ## 10. Şu Anki En Güvenli Sonraki Adım
 
 Şu anki en güvenli sıradaki iş:
-Parent / Location Import Product Decision docs-only closure review ve Strategy AI onayı sonrası docs commit/push.
+Mahalle/İlçe Import Pilot docs-only closure review ve Strategy AI onayı sonrası docs commit/push.
 
 Bunun ardından:
-Mahalle/İlçe import için ayrı ve küçük bir implementation/discovery sprinti değerlendirilebilir. Anne/Baba aynı sprintte ele alınmamalı; önce guardian/contact model kararı verilmelidir. Obsidian/Graphify update değerlendirmesi ayrıca yapılabilir.
+Anne/Baba implementasyonu hemen başlatılmamalıdır. Önce `DISCOVERY — Agent Context / Repo Hygiene Standardization` yapılmalı; repo hygiene/risk scan, agent instruction standardization ve context export/prompt-pack stratejisi değerlendirilmelidir.
 
-Yeni kod işi başlatmadan önce Parent / Location Import Product Decision docs-only kapanış commit/push edildiği doğrulanmalıdır.
+Yeni kod işi başlatmadan önce Mahalle/İlçe Import Pilot docs-only kapanış commit/push edildiği doğrulanmalıdır.
 
-Telefon 3-10 mapping/simulation, gerçek import writer/persistence, sağ kart latest phone outcome read model ve AD/SOYAD composition tamamlandı. Anne/Baba implementasyonu ertelendi; Mahalle/İlçe ancak ayrı karar ve dar kapsamla ele alınmalıdır. Communication history delete/correction, Phone Action Simplification ve phone-level outcome persistence/export ayrı discovery olmadan uygulanmamalıdır.
+Telefon 3-10 mapping/simulation, gerçek import writer/persistence, sağ kart latest phone outcome read model, AD/SOYAD composition ve Mahalle/İlçe import pilot tamamlandı. Anne/Baba implementasyonu ertelendi ve guardian/contact model kararı gerektirir. Communication history delete/correction, Phone Action Simplification ve phone-level outcome persistence/export ayrı discovery olmadan uygulanmamalıdır.
 
 ## 11. Kaynak Dosyalar
 
@@ -196,6 +195,7 @@ Telefon 3-10 mapping/simulation, gerçek import writer/persistence, sağ kart la
 - docs/CHECKPOINT_SPRINT_9_3G_4.md
 - docs/CHECKPOINT_SPRINT_9_3G_5.md
 - docs/CHECKPOINT_PARENT_LOCATION_IMPORT_DECISION.md
+- docs/CHECKPOINT_IMPORT_STUDENT_LOCATION_FIELDS.md
 - docs/MULTI_PHONE_ARCHITECTURE_PLAN.md
 - docs/PILOT_FINDINGS.md
 - .prompts/codex-start.md
@@ -243,3 +243,24 @@ Telefon 3-10 mapping/simulation, gerçek import writer/persistence, sağ kart la
 - AD/SOYAD composition and Telefon 1-10 mapping/import/export behavior must remain untouched.
 - `dev-server.log` may appear as an untracked local runtime file; do not stage, commit, delete, or document it as a product artifact.
 - Suggested docs commit after approval: `docs: record parent location import decision`.
+
+## Latest Handoff Update - Mahalle / Ilce Import Pilot
+
+- Current safe HEAD/origin: `70705af feat: import student location fields`.
+- Mahalle/Ilce Import Pilot implementation is complete and pushed.
+- This docs-only closure is pending Strategy AI approval before docs commit/push.
+- Suggested docs commit after approval: `docs: close student location import checkpoint`.
+- Import supports optional `Mahalle` -> `neighborhood` and `Ilce` / `Ilce` -> `district`.
+- `StudentRecord` now has optional non-indexed `neighborhood` and `district` fields.
+- Dexie schema version did not change; `src/db/schema.ts` and `src/db/db.ts` were not changed.
+- Mahalle/Ilce is not stored in `general_note`.
+- Import simulation preview carries location values; writer persists them on student records.
+- Student list/read model carries location values; the right drawer shows `Mahalle / Ilce` as a small read-only line when data exists.
+- Empty Mahalle/Ilce, only Mahalle, and only Ilce are allowed and do not block import.
+- AD/SOYAD composition, Telefon 1-10 slot fidelity, and Veli/Anne/Baba student-name safety behavior remain unchanged.
+- Anne/Baba guardian/contact model remains deferred.
+- Export/report/search/filter/backup/restore behavior was not expanded.
+- Test/build passed: `npm.cmd test -- --run` PASS, 45 test files / 299 tests; `npm.cmd run build` PASS with known Vite chunk-size warning.
+- Manual QA QA-1 through QA-8 and console/runtime checks passed.
+- Next recommended step: do not start Anne/Baba implementation. Run `DISCOVERY — Agent Context / Repo Hygiene Standardization` first.
+- `dev-server.log` may appear as an untracked local runtime file; do not stage, commit, delete, or document it as a product artifact.

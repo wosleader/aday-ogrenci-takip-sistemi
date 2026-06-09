@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Parent/Location Import Product Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Mahalle/Ilce Import Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,11 +6,11 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Parent/Location Import Product Decision
-- FILE_MAP: Parent/Location Import Product Decision
-- DECISIONS: Parent/Location Import Product Decision
-- Son implementation commit: ee7b12f feat: compose student names from ad soyad import
-- Son docs closure hedefi: docs: record parent location import decision
+- PROJECT_MEMORY: Mahalle/Ilce Import Pilot
+- FILE_MAP: Mahalle/Ilce Import Pilot
+- DECISIONS: Mahalle/Ilce Import Pilot
+- Son implementation commit: 70705af feat: import student location fields
+- Son docs closure hedefi: docs: close student location import checkpoint
 
 ## 1. Proje Amacı
 
@@ -385,3 +385,21 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - AD/SOYAD composition and Telefon 1-10 mapping/import/export behavior must remain untouched in any parent/location follow-up.
 - `dev-server.log` is an untracked local runtime file and must not be staged, committed, deleted, or documented as a product artifact.
 - New checkpoint: `docs/CHECKPOINT_PARENT_LOCATION_IMPORT_DECISION.md`.
+
+## Latest Checkpoint Closure - Mahalle / Ilce Import Pilot
+
+- Implementation commit: `70705af feat: import student location fields`.
+- Previous decision checkpoint: `1d2f28f docs: record parent location import decision`.
+- Import now supports optional student location fields: `Mahalle` -> `neighborhood`, `Ilce` / `Ilce` -> `district`.
+- `StudentRecord` has optional non-indexed `neighborhood?: string | null` and `district?: string | null` fields.
+- Dexie schema version was not changed; `src/db/schema.ts` and `src/db/db.ts` were not changed.
+- Mahalle/Ilce is not stored in `general_note`.
+- Import simulation preview carries Mahalle/Ilce values and writer persists them on the student record.
+- Student list/read model carries Mahalle/Ilce and the right drawer shows a small read-only `Mahalle / Ilce` line when location data exists.
+- Empty Mahalle/Ilce does not block import; only Mahalle or only Ilce is allowed.
+- AD/SOYAD composition, Telefon 1-10 slot fidelity, and Veli/Anne/Baba student-name safety behavior remain unchanged.
+- Anne/Baba guardian/contact model remains deferred.
+- Export/report/search/filter/backup/restore behavior was not expanded in this sprint.
+- Test/build passed: `npm.cmd test -- --run` PASS, 45 test files / 299 tests; `npm.cmd run build` PASS with known Vite chunk-size warning.
+- Manual QA passed for QA-1 through QA-8 Mahalle/Ilce scenarios and console/runtime checks.
+- New checkpoint: `docs/CHECKPOINT_IMPORT_STUDENT_LOCATION_FIELDS.md`.

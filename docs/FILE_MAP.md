@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Parent/Location Import Product Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Mahalle/Ilce Import Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -275,6 +275,8 @@ Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
   Sprint 9.3G-5 Multi-Phone Import Writer / Persistence kapanış checkpoint'i; Telefon 3-10 gerçek DB writer/persistence davranışını, metadata/search_text/invalid/dedupe/primary kararlarını, test/build sonucunu ve export/report/backup kapsam dışı notunu içerir.
 - `docs/CHECKPOINT_PARENT_LOCATION_IMPORT_DECISION.md`
   Anne/Baba/Mahalle/İlçe import discovery sonrası alınan product/technical decision checkpoint'i. Anne/Baba'nın sonraki küçük import slice'a dahil edilmeyeceğini, Anne/Baba'nın öğrenci adı veya Veli override kaynağı olmayacağını, Mahalle/İlçe'nin ayrı ve daha küçük aday olarak ele alınacağını ve `general_note` hack'i yapılmayacağını kaydeder.
+- `docs/CHECKPOINT_IMPORT_STUDENT_LOCATION_FIELDS.md`
+  Mahalle/Ilce Import Pilot kapanis checkpoint'i. `neighborhood` / `district` opsiyonel ogrenci alanlarini, schema version degismemesini, import preview/writer/read model/UI davranisini, test/build sonucunu ve Anne/Baba/export/search/backup kapsam disi kararlarini kaydeder.
 - `docs/PILOT_RELEASE_CANDIDATE_REVIEW.md`
   Pilot kullanıma aday sürüm değerlendirmesi, test/build özeti, kapatılan pilot bulguları ve pilot başlatma kararı.
 - `docs/PILOT_V1_RELEASE_NOTES.md`
@@ -348,3 +350,34 @@ Son dogrulandi: Parent/Location Import Product Decision
   Detayli export kolonlari burada uretilir. Mahalle/Ilce veya Anne/Baba export etkisi ayrica kabul edilmeden degistirilmemelidir.
 - `docs/CHECKPOINT_PARENT_LOCATION_IMPORT_DECISION.md`
   Anne/Baba'nin ertelenmesi, Mahalle/Ilce'nin daha kucuk aday olarak ayrilmasi, no note-prefix hack karari ve sonraki implementation sinirlari icin resmi checkpoint.
+
+## Latest File Map Addendum - Mahalle / Ilce Import Pilot
+
+Son dogrulandi: Mahalle/Ilce Import Pilot
+
+- `src/domain/models/student.ts`
+  `StudentRecord` optional non-indexed `neighborhood?: string | null` ve `district?: string | null` alanlarini tasir. Dexie store index tanimi degismedi.
+- `src/features/imports/services/types.ts`
+  Import field key ve simulated row tipleri `neighborhood` / `district` alanlarini tasir.
+- `src/features/imports/services/columnDefinitions.ts`
+  `Mahalle`, `mah`, `mahalle adi`, `Ilce`, `ilce`, `ilce adi` gibi lokasyon aliaslarini import hedeflerine baglar.
+- `src/features/imports/services/importSimulation.ts`
+  Mahalle/Ilce degerlerini optional olarak preview/simulated row icine tasir; bos lokasyon import'u bloklamaz.
+- `src/features/imports/services/importWriter.ts`
+  Mahalle/Ilce degerlerini ogrenci kaydina persist eder; `general_note` icine yazmaz.
+- `src/features/students/services/studentListReader.ts`
+  Student list/read model Mahalle/Ilce alanlarini sag kart tarafina tasir; search/filter genisletmesi yapmaz.
+- `src/features/students/StudentsPage.tsx`
+  Sag drawer'da veri varsa kucuk read-only `Mahalle / Ilce` satirini gosterir.
+- `tests/imports/columnMatching.test.ts`
+  Mahalle/Ilce alias matching ve Anne/Baba guvenlik davranisini test eder.
+- `tests/imports/importSimulation.test.ts`
+  Mahalle/Ilce preview, optional bos alan ve import blocking regression davranislarini test eder.
+- `tests/imports/importNameComposition.test.ts`
+  AD/SOYAD composition ve Telefon 1-10 slot fidelity'nin Mahalle/Ilce ile korunmasini test eder.
+- `tests/imports/importWriter.test.ts`
+  Mahalle/Ilce persistence ve `general_note` kullanilmamasi davranisini test eder.
+- `tests/students/studentListReader.test.ts`
+  Student list read model'in lokasyon alanlarini tasidigini test eder.
+- `docs/CHECKPOINT_IMPORT_STUDENT_LOCATION_FIELDS.md`
+  Mahalle/Ilce Import Pilot resmi kapanis checkpoint'i.
