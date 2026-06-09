@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Communication History Soft Delete + Student Summary Recompute Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Parent/Location Import Product Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -273,6 +273,8 @@ Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
   Sprint 9.3G-4 Multi-Phone Import Mapping / Simulation kapanış checkpoint'i; Telefon 3-10 mapping key'lerini, `phones[]` simulation modelini, `phone_1` / `phone_2` compatibility kararını ve import writer/persistence kapsam dışı notunu içerir.
 - `docs/CHECKPOINT_SPRINT_9_3G_5.md`
   Sprint 9.3G-5 Multi-Phone Import Writer / Persistence kapanış checkpoint'i; Telefon 3-10 gerçek DB writer/persistence davranışını, metadata/search_text/invalid/dedupe/primary kararlarını, test/build sonucunu ve export/report/backup kapsam dışı notunu içerir.
+- `docs/CHECKPOINT_PARENT_LOCATION_IMPORT_DECISION.md`
+  Anne/Baba/Mahalle/İlçe import discovery sonrası alınan product/technical decision checkpoint'i. Anne/Baba'nın sonraki küçük import slice'a dahil edilmeyeceğini, Anne/Baba'nın öğrenci adı veya Veli override kaynağı olmayacağını, Mahalle/İlçe'nin ayrı ve daha küçük aday olarak ele alınacağını ve `general_note` hack'i yapılmayacağını kaydeder.
 - `docs/PILOT_RELEASE_CANDIDATE_REVIEW.md`
   Pilot kullanıma aday sürüm değerlendirmesi, test/build özeti, kapatılan pilot bulguları ve pilot başlatma kararı.
 - `docs/PILOT_V1_RELEASE_NOTES.md`
@@ -327,3 +329,22 @@ Son dogrulandi: Import AD/SOYAD Composition Pilot
   AD/SOYAD aliaslarini ve Veli/Anne/Baba guvenlik eslesmeme davranisini test eder.
 - `tests/imports/importNameComposition.test.ts`
   AD/SOYAD composition, full-name wins, only AD warning, only SOYAD block, missing-name fallback, writer persistence ve Telefon 1-10 slot fidelity regression testlerini icerir.
+
+## Latest File Map Addendum - Parent / Location Import Decision
+
+Son dogrulandi: Parent/Location Import Product Decision
+
+- `src/domain/models/student.ts`
+  Discovery icin kritik model kaynagi. Kalici ogrenci modelinde `student_full_name` vardir; persistent `student_first_name` / `student_last_name`, Anne/Baba, Mahalle/Ilce, district/neighborhood/address alanlari yoktur.
+- `src/domain/models/guardian.ts`
+  Guardian kayitlari `guardian_full_name`, optional `relation_type` ve `note` tasir. Mevcut import/list/export akisi pratikte birincil `Veli Ad Soyad` varsayimina dayanir; Anne/Baba icin ileride guardian/contact model karari gerekir.
+- `src/features/imports/services/columnDefinitions.ts`
+  AD/SOYAD aliaslari ve mevcut import target listesi burada tanimlidir. Anne/Baba/Mahalle/Ilce icin yeni mapping kararindan once bu dosyada yeni hedef eklenmemelidir.
+- `src/features/imports/services/importSimulation.ts`
+  AD/SOYAD composition ve required name davranisi burada yurutulur. Anne/Baba ogrenci adi kaynagi olmayacak sekilde korunmalidir.
+- `src/features/imports/services/importWriter.ts`
+  Kalici import yazimi burada yapilir. Parent/location decision uygulanmadan Anne/Baba veya Mahalle/Ilce persistence eklenmemelidir.
+- `src/features/exports/services/exportMapper.ts`
+  Detayli export kolonlari burada uretilir. Mahalle/Ilce veya Anne/Baba export etkisi ayrica kabul edilmeden degistirilmemelidir.
+- `docs/CHECKPOINT_PARENT_LOCATION_IMPORT_DECISION.md`
+  Anne/Baba'nin ertelenmesi, Mahalle/Ilce'nin daha kucuk aday olarak ayrilmasi, no note-prefix hack karari ve sonraki implementation sinirlari icin resmi checkpoint.

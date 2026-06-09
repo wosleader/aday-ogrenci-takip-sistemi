@@ -4,10 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: a9e891c feat: soft delete communication history
-- Communication History Soft Delete + Student Summary Recompute Pilot implementation tamamlandı ve pushlandı.
-- Working tree implementation sonrası clean olmalıdır; bu docs closure tamamlanınca Strategy AI onayı sonrası yeni docs commit beklenecek.
-- Bu docs closure için önerilen commit: docs: close communication history soft delete checkpoint
+- Son güvenli HEAD/origin: 92dfb4e docs: close import ad soyad composition checkpoint
+- Import AD/SOYAD Composition docs closure tamamlandı ve pushlandı.
+- Anne/Baba/Mahalle/İlçe import discovery tamamlandı; sonuç `NEEDS HUMAN DECISION`.
+- Bu docs-only decision checkpoint tamamlanınca Strategy AI onayı sonrası yeni docs commit beklenecek.
+- Bu docs closure için önerilen commit: docs: record parent location import decision
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -89,7 +90,7 @@ Tamamlananlar:
 
 Sıradaki muhtemel aşamalar:
 
-- Phone-Level Outcome Read Model Pilot docs-only review/commit after Strategy AI approval
+- Parent / Location Import Product Decision docs-only review/commit after Strategy AI approval
 - Obsidian/Graphify update değerlendirmesi
 - Localhost manuel QA / dar pilot readiness kontrolü
 - Dar pilot öncesi kırıcı bug/risk değerlendirmesi
@@ -168,14 +169,14 @@ Bu projeye yeni başlayan AI önce şunları yapmalı:
 ## 10. Şu Anki En Güvenli Sonraki Adım
 
 Şu anki en güvenli sıradaki iş:
-Phone-Level Outcome Read Model Pilot docs-only closure review ve Strategy AI onayı sonrası docs commit/push.
+Parent / Location Import Product Decision docs-only closure review ve Strategy AI onayı sonrası docs commit/push.
 
 Bunun ardından:
-Obsidian/Graphify update değerlendirmesi yapılabilir. Sonra localhost manuel QA / dar pilot readiness kontrolü ve dar pilot öncesi kırıcı bug/risk değerlendirmesi yapılmalıdır. Dar pilot sonrasında Phone Action Simplification Discovery, communication history delete/correction, AD/SOYAD + Anne/Baba + Mahalle data model discovery/implementation ve gerekirse phone-level outcome persistence/export discovery ayrı ele alınmalıdır.
+Mahalle/İlçe import için ayrı ve küçük bir implementation/discovery sprinti değerlendirilebilir. Anne/Baba aynı sprintte ele alınmamalı; önce guardian/contact model kararı verilmelidir. Obsidian/Graphify update değerlendirmesi ayrıca yapılabilir.
 
-Yeni kod işi başlatmadan önce Phone-Level Outcome Read Model Pilot docs-only kapanış commit/push edildiği doğrulanmalıdır.
+Yeni kod işi başlatmadan önce Parent / Location Import Product Decision docs-only kapanış commit/push edildiği doğrulanmalıdır.
 
-Telefon 3-10 mapping/simulation, gerçek import writer/persistence ve sağ kart latest phone outcome read model tamamlandı. AD/SOYAD, Anne/Baba ve Mahalle henüz yapılmadı. Communication history delete/correction, Phone Action Simplification ve phone-level outcome persistence/export ayrı discovery olmadan uygulanmamalıdır.
+Telefon 3-10 mapping/simulation, gerçek import writer/persistence, sağ kart latest phone outcome read model ve AD/SOYAD composition tamamlandı. Anne/Baba implementasyonu ertelendi; Mahalle/İlçe ancak ayrı karar ve dar kapsamla ele alınmalıdır. Communication history delete/correction, Phone Action Simplification ve phone-level outcome persistence/export ayrı discovery olmadan uygulanmamalıdır.
 
 ## 11. Kaynak Dosyalar
 
@@ -194,6 +195,7 @@ Telefon 3-10 mapping/simulation, gerçek import writer/persistence ve sağ kart 
 - docs/CHECKPOINT_SPRINT_9_3G_2.md
 - docs/CHECKPOINT_SPRINT_9_3G_4.md
 - docs/CHECKPOINT_SPRINT_9_3G_5.md
+- docs/CHECKPOINT_PARENT_LOCATION_IMPORT_DECISION.md
 - docs/MULTI_PHONE_ARCHITECTURE_PLAN.md
 - docs/PILOT_FINDINGS.md
 - .prompts/codex-start.md
@@ -227,3 +229,17 @@ Telefon 3-10 mapping/simulation, gerçek import writer/persistence ve sağ kart 
 - Telefon 1-10 slot fidelity remains preserved.
 - Test/build passed: `npm.cmd test -- --run` PASS, 45 test files / 294 tests; `npm.cmd run build` PASS with known Vite chunk-size warning.
 - Manual localhost QA QA-1 through QA-7 passed.
+
+## Latest Handoff Update - Parent / Location Import Decision
+
+- Current safe HEAD/origin: `92dfb4e docs: close import ad soyad composition checkpoint`.
+- Anne/Baba/Mahalle/İlçe import discovery is complete and concluded `NEEDS HUMAN DECISION`.
+- No code, test, schema, import writer, export, backup/restore, or runtime behavior changed during discovery.
+- This docs-only decision checkpoint records that Anne/Baba will not be included in the next small import slice.
+- Anne/Baba must not be used as a student name source and must not overwrite `Veli Ad Soyad`.
+- Anne/Baba requires a later guardian/contact model decision.
+- Mahalle/İlçe is the accepted smaller next candidate, but it should use explicit optional student fields if implemented; it must not be stored in `general_note` as a note-prefix hack.
+- Export/search/backup/restore impact for Mahalle/İlçe must be decided before implementation.
+- AD/SOYAD composition and Telefon 1-10 mapping/import/export behavior must remain untouched.
+- `dev-server.log` may appear as an untracked local runtime file; do not stage, commit, delete, or document it as a product artifact.
+- Suggested docs commit after approval: `docs: record parent location import decision`.

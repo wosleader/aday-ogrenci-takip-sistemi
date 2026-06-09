@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Communication History Soft Delete + Student Summary Recompute Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Parent/Location Import Product Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -74,3 +74,13 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Import AD/SOYAD Composition Pilot] If only `AD` is present, import may create `student_full_name` from `AD` with warning: `Soyad alanı bulunamadı; öğrenci adı yalnızca Ad alanından oluşturuldu.`
 - [Import AD/SOYAD Composition Pilot] If only `SOYAD` is present, the row is blocked with: `Soyad alanı tek başına öğrenci adı oluşturmak için yeterli değil.`
 - [Import AD/SOYAD Composition Pilot] `Veli Adi`, `Anne adi`, and `Baba Adi` are not student name aliases. Anne/Baba guardian import, Mahalle/Ilce support, export/report changes, backup/restore changes, and schema changes remain out of scope.
+
+## Latest Decisions - Parent / Location Import
+
+- [Parent/Location Import Decision] Anne/Baba import will not be included in the next small import slice. It requires a later guardian/contact model decision before implementation.
+- [Parent/Location Import Decision] Anne/Baba fields must never be used to compose `student_full_name`, and must not overwrite the existing `Veli Ad Soyad` / `guardian_full_name` behavior.
+- [Parent/Location Import Decision] If Anne/Baba is implemented later, it should be modeled as related guardian/contact data with an explicit relation decision, not as a shortcut into the current primary Veli field.
+- [Parent/Location Import Decision] Mahalle/Ilce is the accepted smaller next candidate, but must not be stored in `general_note` as a hack. If implemented, it likely needs explicit optional student fields.
+- [Parent/Location Import Decision] Export, search, backup, and restore impact for Mahalle/Ilce must be accepted before implementation. No export/report/backup/schema behavior should be changed incidentally.
+- [Parent/Location Import Decision] AD/SOYAD composition and Telefon 1-10 mapping/import/export behavior are protected and must remain unchanged in parent/location follow-up work.
+- [Parent/Location Import Decision] `dev-server.log` is a local untracked runtime file. It must not be staged, committed, deleted, or treated as product documentation.

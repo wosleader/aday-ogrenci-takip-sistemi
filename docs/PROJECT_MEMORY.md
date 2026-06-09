@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Communication History Soft Delete + Student Summary Recompute Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Parent/Location Import Product Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,11 +6,11 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Communication History Soft Delete + Student Summary Recompute Pilot
-- FILE_MAP: Communication History Soft Delete + Student Summary Recompute Pilot
-- DECISIONS: Communication History Soft Delete + Student Summary Recompute Pilot
-- Son implementation commit: a9e891c feat: soft delete communication history
-- Son docs closure hedefi: docs: close communication history soft delete checkpoint
+- PROJECT_MEMORY: Parent/Location Import Product Decision
+- FILE_MAP: Parent/Location Import Product Decision
+- DECISIONS: Parent/Location Import Product Decision
+- Son implementation commit: ee7b12f feat: compose student names from ad soyad import
+- Son docs closure hedefi: docs: record parent location import decision
 
 ## 1. Proje Amacı
 
@@ -314,6 +314,7 @@ Roadmap kararları:
 - Import UI progressive disclosure değişecekse: `docs/CHECKPOINT_SPRINT_9_3G_2.md`
 - Multi-phone import mapping/simulation değişecekse: `docs/CHECKPOINT_SPRINT_9_3G_4.md`
 - Multi-phone import writer/persistence değişecekse: `docs/CHECKPOINT_SPRINT_9_3G_5.md`
+- Anne/Baba/Mahalle/İlçe import modeli veya Mahalle/İlçe sonraki slice değişecekse: `docs/CHECKPOINT_PARENT_LOCATION_IMPORT_DECISION.md`
 - Çok eski sprint bağlamı gerekiyorsa ilgili eski checkpoint okunur; tüm checkpoint’ler gereksiz yere okutulmaz.
 
 ## 14. Güncel Çalışma Bilgisi
@@ -339,8 +340,8 @@ Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 - Son import UI progressive disclosure commit’i: `0c40524 feat: collapse long import review lists`
 - Son multi-phone import simulation commit’i: `2e1bbff feat: add multi-phone import simulation`
 - Son multi-phone import writer commit’i: `34ec8d5 feat: persist multi-phone import records`
-- Son bilinen dokümantasyon commit’i: `194cb07 docs: record pilot feedback UI polish findings`
-- Sonraki zorunlu aşama: Sprint 9.3G-5 docs-only commit/push. Sonra Obsidian/Graphify update değerlendirmesi, localhost manuel QA / dar pilot readiness kontrolü ve kırıcı bug/risk değerlendirmesi yapılmalı; dar pilot sonrası AD/SOYAD + Anne/Baba + Mahalle data model discovery/implementation ve Export/report/backup uyumu discovery ele alınmalıdır.
+- Son bilinen dokümantasyon commit’i: `92dfb4e docs: close import ad soyad composition checkpoint`
+- Sonraki zorunlu aşama: Parent / Location Import Product Decision docs-only commit/push. Sonra Mahalle/İlçe import için ayrı ve küçük implementation/discovery değerlendirilebilir; Anne/Baba aynı sprintte ele alınmamalı ve önce guardian/contact model kararı verilmelidir.
 
 ## 15. Codex Standart Başlangıç Talimatı
 
@@ -373,3 +374,14 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - Telefon 1-10 slot fidelity remains preserved.
 - Test/build passed: `npm.cmd test -- --run` PASS, 45 test files / 294 tests; `npm.cmd run build` PASS with known Vite chunk-size warning.
 - Manual localhost QA passed for QA-1 through QA-7 AD/SOYAD composition scenarios.
+
+## Latest Product Decision - Parent / Location Import
+
+- Base commit for the decision checkpoint: `92dfb4e docs: close import ad soyad composition checkpoint`.
+- Anne/Baba/Mahalle/Ilce import discovery concluded `NEEDS HUMAN DECISION`; no code, schema, test, import writer, export, or backup change was made during discovery.
+- Anne/Baba will not be implemented in the next small import slice. Anne/Baba must not be used as a student name source and must not overwrite `Veli Ad Soyad`.
+- Anne/Baba requires a later guardian/contact model decision because current UI, export, and list readers still assume a primary/single `guardian_full_name` for "Veli".
+- Mahalle/Ilce is the smaller next implementation candidate, but it should not be stored in `general_note` as a note-prefix hack. If implemented, it likely needs explicit optional student fields and an accepted decision for export/search/backup/restore impact.
+- AD/SOYAD composition and Telefon 1-10 mapping/import/export behavior must remain untouched in any parent/location follow-up.
+- `dev-server.log` is an untracked local runtime file and must not be staged, committed, deleted, or documented as a product artifact.
+- New checkpoint: `docs/CHECKPOINT_PARENT_LOCATION_IMPORT_DECISION.md`.
