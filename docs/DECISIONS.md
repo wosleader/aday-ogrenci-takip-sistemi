@@ -96,3 +96,12 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Mahalle/Ilce Import Pilot] Anne/Baba import and guardian/contact model changes remain deferred.
 - [Mahalle/Ilce Import Pilot] Export expansion, report expansion, search/filter expansion, backup/restore behavior changes, province/address hierarchy, and indexed location fields remain out of scope.
 - [Mahalle/Ilce Import Pilot] Do not immediately start Anne/Baba implementation. The next recommended step is `DISCOVERY — Agent Context / Repo Hygiene Standardization`.
+
+## Latest Decisions - Playwright Import E2E Smoke Pilot
+
+- [Playwright Import E2E Smoke Pilot] Browser-level automated QA is introduced as a narrow pilot, not as the full import regression matrix.
+- [Playwright Import E2E Smoke Pilot] The first scope is one real-browser import smoke flow only: runtime-generated Excel upload, AD/SOYAD composition, Mahalle/Ilce, phone import, manual `Veli Adi` -> `Veli Ad Soyad` mapping, completing import, selecting the imported student, and checking right drawer values.
+- [Playwright Import E2E Smoke Pilot] Runtime `.xlsx` fixtures are generated with the existing `xlsx` dependency. Binary Excel fixture files are not committed for the first pilot.
+- [Playwright Import E2E Smoke Pilot] `test-results/` is generated test output and must stay ignored. `dev-server.log` remains a local untracked runtime file and must not be staged.
+- [Playwright Import E2E Smoke Pilot] Full Telefon 1-10 E2E, Telefon 10-only, empty/partial Mahalle/Ilce, Anne/Baba safety, export E2E, backup/restore E2E, CI integration, and broad `data-testid` coverage are deferred to later phases.
+- [Playwright Import E2E Smoke Pilot] Recommended next automated QA phase is `Phase 2 - Import Regression Matrix`.

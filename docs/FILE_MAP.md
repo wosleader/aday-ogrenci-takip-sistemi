@@ -377,6 +377,25 @@ Son dogrulandi: Mahalle/Ilce Import Pilot
   AD/SOYAD composition ve Telefon 1-10 slot fidelity'nin Mahalle/Ilce ile korunmasini test eder.
 - `tests/imports/importWriter.test.ts`
   Mahalle/Ilce persistence ve `general_note` kullanilmamasi davranisini test eder.
+
+## Latest File Map Addendum - Playwright Import E2E Smoke Pilot
+
+Son dogrulandi: Playwright Import E2E Smoke Pilot
+
+- `package.json`
+  `qa:import:e2e` script'ini tasir. Bu script ilk browser-level import smoke testini calistirir.
+- `package-lock.json`
+  `@playwright/test` dev dependency lock bilgisini tasir.
+- `playwright.config.ts`
+  Chromium-only Playwright config'i. Vite dev server'i `127.0.0.1:5173` uzerinden baslatir, failure durumunda trace/screenshot saklar ve download kabul eder.
+- `e2e/import-smoke.spec.ts`
+  Ilk dar browser-level import smoke testi. Runtime Excel upload, AD/SOYAD composition, Mahalle/Ilce, Telefon, manuel `Veli Adi` -> `Veli Ad Soyad` mapping, import tamamlama, Aday Listesi navigasyonu, right drawer dogrulamalari ve console/page error guard davranisini test eder.
+- `e2e/helpers/importFixtures.ts`
+  Smoke test icin temporary `.xlsx` workbook uretir. Mevcut `xlsx` dependency kullanilir; binary fixture dosyasi commit edilmez.
+- `.gitignore`
+  Playwright runtime output'u olan `test-results/` klasorunu ignore eder.
+- `docs/CHECKPOINT_PLAYWRIGHT_IMPORT_E2E_SMOKE.md`
+  Playwright Import E2E Smoke Pilot resmi kapanis checkpoint'i.
 - `tests/students/studentListReader.test.ts`
   Student list read model'in lokasyon alanlarini tasidigini test eder.
 - `docs/CHECKPOINT_IMPORT_STUDENT_LOCATION_FIELDS.md`

@@ -403,3 +403,18 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - Test/build passed: `npm.cmd test -- --run` PASS, 45 test files / 299 tests; `npm.cmd run build` PASS with known Vite chunk-size warning.
 - Manual QA passed for QA-1 through QA-8 Mahalle/Ilce scenarios and console/runtime checks.
 - New checkpoint: `docs/CHECKPOINT_IMPORT_STUDENT_LOCATION_FIELDS.md`.
+
+## Latest Checkpoint Closure - Playwright Import E2E Smoke Pilot
+
+- Implementation commit: `6a02ef4 feat: add import e2e smoke test`.
+- Previous checkpoint: `9ef99c2 docs: close student location import checkpoint`.
+- First browser-level automated QA pilot was added with Playwright.
+- New npm script: `qa:import:e2e`, run with `npm.cmd run qa:import:e2e`.
+- The first E2E smoke test is `e2e/import-smoke.spec.ts`; it uses Chromium through `playwright.config.ts`.
+- The smoke test generates a temporary `.xlsx` at runtime through `e2e/helpers/importFixtures.ts` using the existing `xlsx` dependency. Binary Excel fixtures are not committed.
+- Covered smoke flow: upload Excel in the real browser UI, AD/SOYAD composition, Mahalle/Ilce import, phone import, manual `Veli Adi` -> `Veli Ad Soyad` mapping, completing import, opening Aday Listesi, selecting the imported student, checking right drawer values, and guarding against page/console errors.
+- This is not the full import regression matrix. Telefon 1-10 full slot fidelity, Telefon 10-only, empty/partial Mahalle/Ilce, Anne/Baba safety, export E2E, backup/restore E2E, CI integration, and broad `data-testid` coverage remain out of scope.
+- Validation passed: `npm.cmd run qa:import:e2e` PASS, 1 test; `npm.cmd test -- --run` PASS, 45 test files / 299 tests; `npm.cmd run build` PASS with known Vite chunk-size warning.
+- `test-results/` is ignored and must not be committed. `dev-server.log` remains local/untracked and must not be staged.
+- Chromium may need a one-time local install on a new machine: `npx.cmd playwright install chromium`.
+- New checkpoint: `docs/CHECKPOINT_PLAYWRIGHT_IMPORT_E2E_SMOKE.md`.

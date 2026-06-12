@@ -260,6 +260,19 @@ Telefon 3-10 mapping/simulation, gerçek import writer/persistence, sağ kart la
 - AD/SOYAD composition, Telefon 1-10 slot fidelity, and Veli/Anne/Baba student-name safety behavior remain unchanged.
 - Anne/Baba guardian/contact model remains deferred.
 - Export/report/search/filter/backup/restore behavior was not expanded.
+
+## Latest Handoff Update - Playwright Import E2E Smoke Pilot
+
+- Current safe HEAD/origin: `6a02ef4 feat: add import e2e smoke test`.
+- First Playwright browser-level import QA smoke pilot is complete and pushed.
+- This docs-only closure is pending Strategy AI approval before docs commit/push.
+- Suggested docs commit after approval: `docs: close import e2e smoke checkpoint`.
+- New script: `npm.cmd run qa:import:e2e`.
+- The smoke test covers one narrow real-browser import flow: runtime-generated Excel upload, AD/SOYAD composition, Mahalle/Ilce, phone import, manual `Veli Adi` -> `Veli Ad Soyad` mapping, completing import, opening Aday Listesi, selecting the imported student, checking right drawer values, and console/page error guard.
+- This is not the full import regression matrix. Telefon 1-10 full slot fidelity, Telefon 10-only, empty/partial Mahalle/Ilce, Anne/Baba safety, export E2E, backup/restore E2E, CI integration, and broad selector/test-id coverage remain later phases.
+- Validation passed: `npm.cmd run qa:import:e2e` PASS, 1 test; `npm.cmd test -- --run` PASS, 45 test files / 299 tests; `npm.cmd run build` PASS with known Vite chunk-size warning.
+- On a new machine Chromium may need one-time install: `npx.cmd playwright install chromium`.
+- `test-results/` is ignored. `dev-server.log` may appear as an untracked local runtime file; do not stage, commit, delete, or treat it as product documentation.
 - Test/build passed: `npm.cmd test -- --run` PASS, 45 test files / 299 tests; `npm.cmd run build` PASS with known Vite chunk-size warning.
 - Manual QA QA-1 through QA-8 and console/runtime checks passed.
 - Next recommended step: do not start Anne/Baba implementation. Run `DISCOVERY — Agent Context / Repo Hygiene Standardization` first.
