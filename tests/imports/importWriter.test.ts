@@ -51,6 +51,34 @@ describe("writeImportToDatabase", () => {
       expect(await database.guardians.count()).toBe(1);
       expect(await database.phones.count()).toBe(1);
       expect((await database.students.toArray())[0].campaign_id).toBeDefined();
+      expect((await database.guardians.toArray())[0].relation_type).toBe("guardian");
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("writes Veli, Anne and Baba as separate guardian relations without assigning generic phones to parents", async () => {
+    const database = await createDatabase();
+    const parsedWorksheet = worksheet(
+      ["Ad Soyad", "Veli Ad Soyad", "Anne Adı", "Baba Adı", "Telefon"],
+      [["Ayşe Yılmaz", "Zeynep Yılmaz", "Fatma Yılmaz", "Mehmet Yılmaz", "5321234567"]]
+    );
+
+    try {
+      const summary = simulateImport(parsedWorksheet);
+      const result = await writeImportToDatabase(parsedWorksheet, summary, { database });
+      const guardians = await database.guardians.orderBy("id").toArray();
+      const [phone] = await database.phones.toArray();
+
+      expect(result.created_guardians).toBe(3);
+      expect(guardians.map((guardian) => [guardian.relation_type, guardian.guardian_full_name])).toEqual([
+        ["guardian", "Zeynep Yılmaz"],
+        ["mother", "Fatma Yılmaz"],
+        ["father", "Mehmet Yılmaz"]
+      ]);
+      expect(phone.guardian_id).toBe(guardians[0].id);
+      expect(guardians.filter((guardian) => guardian.guardian_full_name === "Fatma Yılmaz")).toHaveLength(1);
     } finally {
       database.close();
       await database.delete();

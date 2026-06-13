@@ -1,6 +1,7 @@
 import type { AppDatabase } from "../../../db/db";
 import { db } from "../../../db/db";
 import type { CampaignRecord } from "../../../domain/models/campaign";
+import type { GuardianRelationType } from "../../../domain/models/guardian";
 import { createSearchText, normalizeText } from "../../../utils/normalizeText";
 import { normalizePhone } from "../../../utils/normalizePhone";
 import { nowIso } from "../../../utils/dateTime";
@@ -69,6 +70,19 @@ type WritableImportPhone = {
   is_valid: boolean;
   is_primary: boolean;
 };
+
+type ImportGuardian = {
+  full_name: string;
+  relation_type: GuardianRelationType;
+};
+
+function getImportGuardians(row: SimulatedImportRow): ImportGuardian[] {
+  return [
+    row.guardian_full_name ? { full_name: row.guardian_full_name, relation_type: "guardian" as const } : null,
+    row.mother_full_name ? { full_name: row.mother_full_name, relation_type: "mother" as const } : null,
+    row.father_full_name ? { full_name: row.father_full_name, relation_type: "father" as const } : null
+  ].filter((guardian): guardian is ImportGuardian => guardian !== null);
+}
 
 function getLegacyPhoneLabel(phone: Pick<SimulatedImportPhone, "field" | "reference_label">): string {
   if (phone.field === "phone_1") {
@@ -230,6 +244,8 @@ export async function writeImportToDatabase(
           search_text: createSearchText([
             row.student_full_name,
             row.guardian_full_name,
+            row.mother_full_name,
+            row.father_full_name,
             ...getSearchPhones(row),
             row.current_class,
             row.student_group
@@ -258,19 +274,24 @@ export async function writeImportToDatabase(
 
         let guardianId: number | null = null;
 
-        if (row.guardian_full_name) {
-          guardianId = await database.guardians.add({
+        for (const guardian of getImportGuardians(row)) {
+          const createdGuardianId = await database.guardians.add({
             uuid: createUuid(),
             student_id: studentId,
-            guardian_full_name: row.guardian_full_name,
-            normalized_guardian_name: normalizeText(row.guardian_full_name),
-            relation_type: null,
+            guardian_full_name: guardian.full_name,
+            normalized_guardian_name: normalizeText(guardian.full_name),
+            relation_type: guardian.relation_type,
             note: null,
             sync_status: "local",
             created_at: rowTimestamp,
             updated_at: rowTimestamp,
             deleted_at: null
           });
+
+          if (guardian.relation_type === "guardian") {
+            guardianId = createdGuardianId;
+          }
+
           createdGuardians += 1;
         }
 

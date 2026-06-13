@@ -46,8 +46,38 @@ describe("AD/SOYAD import composition", () => {
     expect(matches[2]).toMatchObject({ status: "matched", target_field: "student_first_name" });
     expect(matches[3]).toMatchObject({ status: "matched", target_field: "student_last_name" });
     expect(matches[4]).toMatchObject({ status: "mapping_required" });
-    expect(matches[5]).toMatchObject({ status: "mapping_required" });
-    expect(matches[6]).toMatchObject({ status: "mapping_required" });
+    expect(matches[5]).toMatchObject({ status: "matched", target_field: "mother_full_name" });
+    expect(matches[6]).toMatchObject({ status: "matched", target_field: "father_full_name" });
+  });
+
+  it("carries Anne and Baba names without using them as student name sources", () => {
+    const summary = simulateImport(
+      worksheet(
+        ["AD", "SOYAD", "Anne Adı", "Baba Ad Soyad", "Telefon"],
+        [["Ayşe", "Yılmaz", "Fatma Yılmaz", "Mehmet Yılmaz", "5321234567"]]
+      )
+    );
+
+    expect(summary.readable_rows).toBe(1);
+    expect(summary.preview_rows[0]).toMatchObject({
+      student_full_name: "Ayşe Yılmaz",
+      mother_full_name: "Fatma Yılmaz",
+      father_full_name: "Mehmet Yılmaz"
+    });
+  });
+
+  it("blocks rows that contain only Veli, Anne and Baba names", () => {
+    const summary = simulateImport(
+      worksheet(
+        ["Veli Ad Soyad", "Anne Adı", "Baba Adı", "Telefon"],
+        [["Ayşe Veli", "Fatma Yılmaz", "Mehmet Yılmaz", "5321234567"]]
+      )
+    );
+
+    expect(summary.readable_rows).toBe(0);
+    expect(summary.skipped_rows).toBe(1);
+    expect(summary.preview_rows).toHaveLength(0);
+    expect(summary.logs.some((log) => log.message.includes("Ad Soyad zorunlu alanı"))).toBe(true);
   });
 
   it("composes student full name from AD and SOYAD when full-name column is absent", () => {

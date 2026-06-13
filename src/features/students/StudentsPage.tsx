@@ -1836,9 +1836,12 @@ export function StudentsPage() {
                 </div>
               </div>
               <div className="contact-card">
-                <div className="veli-label">Veli</div>
                 <div className="veli-row">
-                  <div className="veli-name">{selectedRow.guardian_full_name || "-"}</div>
+                  <div className="veli-name">
+                    {selectedRow.guardian_full_name ? <div>Veli Ad Soyad: {selectedRow.guardian_full_name}</div> : null}
+                    {selectedRow.mother_full_name ? <div>Anne Adı: {selectedRow.mother_full_name}</div> : null}
+                    {selectedRow.father_full_name ? <div>Baba Adı: {selectedRow.father_full_name}</div> : null}
+                  </div>
                   <span className={`status ${statusClass(selectedRow)}`}>{statusLabel(selectedRow)}</span>
                 </div>
                 <div className="drawer-campaign">{selectedRow.campaign_name || "Diğer"}</div>

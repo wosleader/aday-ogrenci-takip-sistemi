@@ -109,6 +109,8 @@ async function seedStudentWithPhones(phoneCount: number, fullName = "MELIS KAYA"
       }))
     );
   }
+
+  return studentId;
 }
 
 async function seedStudentWithSinglePhone(fullName: string, uuidPrefix: string, phoneNumber: string) {
@@ -263,6 +265,58 @@ describe("StudentsPage right card multi-phone display", () => {
     expect(screen.queryByText("Telefon 5 · Yakın")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "+2 numara daha göster" })).toBeInTheDocument();
     expect(scrollIntoViewMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows only non-empty Veli, Anne and Baba rows in the right drawer", async () => {
+    const studentId = await seedStudentWithPhones(1);
+    await db.guardians.bulkAdd([
+      {
+        uuid: "mother-multi-phone",
+        student_id: studentId,
+        guardian_full_name: "FATMA KAYA",
+        normalized_guardian_name: normalizeText("FATMA KAYA"),
+        relation_type: "mother",
+        note: null,
+        created_at: now,
+        updated_at: now,
+        sync_status: "local"
+      },
+      {
+        uuid: "father-multi-phone",
+        student_id: studentId,
+        guardian_full_name: "MEHMET KAYA",
+        normalized_guardian_name: normalizeText("MEHMET KAYA"),
+        relation_type: "father",
+        note: null,
+        created_at: now,
+        updated_at: now,
+        sync_status: "local"
+      }
+    ]);
+
+    renderStudentsPage();
+    expect(await screen.findAllByText("MELIS KAYA")).toHaveLength(2);
+
+    const contactCard = getStudentDrawer().querySelector(".contact-card");
+    expect(contactCard).not.toBeNull();
+    expect(within(contactCard as HTMLElement).getByText("Veli Ad Soyad: AYLIN KAYA")).toBeInTheDocument();
+    expect(within(contactCard as HTMLElement).getByText("Anne Adı: FATMA KAYA")).toBeInTheDocument();
+    expect(within(contactCard as HTMLElement).getByText("Baba Adı: MEHMET KAYA")).toBeInTheDocument();
+    expect(within(contactCard as HTMLElement).queryByText(/ilişki bilinmiyor/i)).not.toBeInTheDocument();
+    expect(within(contactCard as HTMLElement).queryByText(/telefon yok/i)).not.toBeInTheDocument();
+  });
+
+  it("hides empty Anne and Baba rows in the right drawer", async () => {
+    await seedStudentWithPhones(1);
+
+    renderStudentsPage();
+    expect(await screen.findAllByText("MELIS KAYA")).toHaveLength(2);
+
+    const contactCard = getStudentDrawer().querySelector(".contact-card");
+    expect(contactCard).not.toBeNull();
+    expect(within(contactCard as HTMLElement).getByText("Veli Ad Soyad: AYLIN KAYA")).toBeInTheDocument();
+    expect(within(contactCard as HTMLElement).queryByText(/Anne Adı:/)).not.toBeInTheDocument();
+    expect(within(contactCard as HTMLElement).queryByText(/Baba Adı:/)).not.toBeInTheDocument();
   });
 
   it("does not show an expand button when there are no hidden phones", async () => {

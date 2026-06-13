@@ -17,6 +17,8 @@ export type ImportFieldKey =
   | "student_first_name"
   | "student_last_name"
   | "guardian_full_name"
+  | "mother_full_name"
+  | "father_full_name"
   | "neighborhood"
   | "district"
   | ImportPhoneFieldKey
@@ -96,6 +98,8 @@ export type SimulatedImportRow = {
   student_last_name?: string;
   student_full_name: string;
   guardian_full_name?: string;
+  mother_full_name?: string;
+  father_full_name?: string;
   neighborhood?: string;
   district?: string;
   phone_1?: string;

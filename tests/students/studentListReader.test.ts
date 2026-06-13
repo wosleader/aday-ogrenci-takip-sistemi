@@ -158,6 +158,32 @@ describe("studentListReader", () => {
     }
   });
 
+  it("separates legacy Veli, Anne and Baba guardian records", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      await database.guardians.bulkAdd([
+        guardian(studentId, { guardian_full_name: "Zeynep Yilmaz", relation_type: null }),
+        guardian(studentId, { guardian_full_name: "Fatma Yilmaz", relation_type: "mother" }),
+        guardian(studentId, { guardian_full_name: "Mehmet Yilmaz", relation_type: "father" })
+      ]);
+
+      const [row] = await readStudentListRows(database);
+
+      expect(row).toMatchObject({
+        guardian_full_name: "Zeynep Yilmaz",
+        mother_full_name: "Fatma Yilmaz",
+        father_full_name: "Mehmet Yilmaz"
+      });
+      expect(filterStudentListRows([row], "Fatma Yilmaz")).toHaveLength(1);
+      expect(filterStudentListRows([row], "Mehmet Yilmaz")).toHaveLength(1);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
   it("normalizes common combined class and section labels", () => {
     expect(normalizeClassSectionLabel("9A")).toBe("9-A");
     expect(normalizeClassSectionLabel("9-A")).toBe("9-A");

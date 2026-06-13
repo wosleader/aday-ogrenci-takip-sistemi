@@ -44,6 +44,8 @@ export type StudentListRow = {
   campaign_name?: string | null;
   guardian_id?: number | null;
   guardian_full_name?: string | null;
+  mother_full_name?: string | null;
+  father_full_name?: string | null;
   phone_1_id?: number | null;
   phone_1?: string | null;
   phone_1_status: "active" | "contacted" | "invalid";
@@ -484,8 +486,17 @@ export function filterRowsByStudentGroup(
   return rows.filter((row) => getStudentGroupFilterKey(row.current_class, row.student_group) === studentGroupFilter);
 }
 
-function pickGuardian(guardians: GuardianRecord[]): GuardianRecord | undefined {
-  return [...guardians].sort(byCreatedAt)[0];
+function pickGuardianByRelation(
+  guardians: GuardianRecord[],
+  relationType: "guardian" | "mother" | "father"
+): GuardianRecord | undefined {
+  return [...guardians]
+    .sort(byCreatedAt)
+    .find((guardian) =>
+      relationType === "guardian"
+        ? guardian.relation_type == null || guardian.relation_type === "guardian"
+        : guardian.relation_type === relationType
+    );
 }
 
 function pickNextPendingReminder(reminders: ReminderRecord[]): ReminderRecord | undefined {
@@ -583,7 +594,9 @@ function mapStudentToRow(
   const pendingReminder = pickNextPendingReminder(remindersByStudent.get(student.id) ?? []);
   const callLogs = callLogsByStudent.get(student.id) ?? [];
   const callLogNoteInfo = pickLatestCallNote(callLogs);
-  const guardian = pickGuardian(guardians);
+  const guardian = pickGuardianByRelation(guardians, "guardian");
+  const mother = pickGuardianByRelation(guardians, "mother");
+  const father = pickGuardianByRelation(guardians, "father");
   const phoneRows = createStudentListPhoneRows(phones);
   const visiblePhones = phoneRows.slice(0, 3);
   const { phone_1: phone1, phone_2: phone2 } = pickPhoneSlots(phones);
@@ -606,6 +619,8 @@ function mapStudentToRow(
     campaign_name: campaign?.name ?? null,
     guardian_id: guardian?.id ?? null,
     guardian_full_name: guardian?.guardian_full_name ?? null,
+    mother_full_name: mother?.guardian_full_name ?? null,
+    father_full_name: father?.guardian_full_name ?? null,
     phone_1_id: phone1?.id ?? null,
     phone_1: phone1?.phone_number ?? null,
     phone_1_status: phone1Status,
@@ -642,6 +657,8 @@ function mapStudentToRow(
       student.search_text,
       student.student_full_name,
       guardian?.guardian_full_name,
+      mother?.guardian_full_name,
+      father?.guardian_full_name,
       phone1?.phone_number,
       phone2?.phone_number,
       student.general_note,
