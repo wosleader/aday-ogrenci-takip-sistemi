@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Guardian Parent Names Import Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Explicit Guardian Phone Relations Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,11 +6,11 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Guardian Parent Names Import Pilot
-- FILE_MAP: Guardian Parent Names Import Pilot
-- DECISIONS: Guardian Parent Names Import Pilot
-- Son implementation commit: a83c235 feat: import guardian parent names
-- Son docs closure hedefi: docs: close guardian parent names checkpoint
+- PROJECT_MEMORY: Explicit Guardian Phone Relations Pilot
+- FILE_MAP: Explicit Guardian Phone Relations Pilot
+- DECISIONS: Explicit Guardian Phone Relations Pilot
+- Son implementation commit: 8f744dd feat: import explicit guardian phone relations
+- Son docs closure hedefi: docs: close explicit guardian phone relations checkpoint
 
 ## 1. Proje Amacı
 
@@ -82,7 +82,10 @@ Kısa özet:
 - Anne/Baba names-only import tamamlandı. `mother_full_name` / `father_full_name` simulation alanları mevcut `guardians` tablosuna `mother` / `father` ilişkileriyle yazılır.
 - Reader Veli/Anne/Baba kayıtlarını relation type ile ayırır; legacy `relation_type: null` Veli olarak kalır.
 - Sağ kart yalnızca dolu `Veli Ad Soyad`, `Anne Adı`, `Baba Adı` satırlarını kompakt gösterir.
-- Parent-phone relation, export genişletmesi, explicit backup roundtrip ve no-phone ayarı henüz uygulanmadı.
+- Explicit Anne/Baba phone relation import tamamlandı. Açık `ANNE TEL` / `BABA TEL` kolonları relation metadata taşır; generic telefon kolonlarından Anne/Baba ilişkisi çıkarılmaz.
+- Parent phone slotları Excel kolon sırası ve sonraki uygun Telefon N kuralıyla atanır; Telefon 1-10 slot fidelity korunur.
+- Anne/Baba adı varsa explicit parent phone doğru mother/father guardian kaydına bağlanır. İsim yoksa sahte guardian oluşturulmaz; relation label korunur ve `guardian_id: null` kullanılır.
+- Export genişletmesi, explicit backup/restore roundtrip, no-phone ayarı ve source-column UI henüz uygulanmadı.
 
 ## 7. Aday Listesi / Arama Operasyonu
 

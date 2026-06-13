@@ -475,3 +475,26 @@ Son dogrulandi: Anne/Baba Names-Only Import and Drawer Pilot
   Drawer'da dolu parent satirlarini ve bos satirlarin gizlenmesini test eder.
 - `docs/CHECKPOINT_GUARDIAN_PARENT_NAMES_IMPORT.md`
   Names-only implementation kapsami, validation sonucu, kalan riskler ve sonraki explicit parent-phone dilimi icin resmi kapanis kaydi.
+
+## Latest File Map Addendum - Explicit Guardian Phone Relations Pilot
+
+Son dogrulandi: Explicit Anne/Baba Phone Relation Pilot
+
+- `src/features/imports/services/types.ts`
+  Import-only `mother_phone` / `father_phone` hedeflerini ve simulated phone relation metadata tiplerini tasir.
+- `src/features/imports/services/columnDefinitions.ts`
+  Explicit Anne/Baba phone aliaslarini tanir. Generic GSM/Tel/Telefon aliaslari generic telefon slotlari olarak kalir.
+- `src/features/imports/services/importSimulation.ts`
+  Telefon kaynaklarini Excel kolon sirasinda isler, explicit slotlari ve sonraki uygun Telefon N allocator kuralini uygular, Anne/Baba relation label ve source-column bilgisini tasir.
+- `src/features/imports/services/importWriter.ts`
+  Relation-labeled parent phone'u mevcut mother/father guardian kaydina baglar; parent adi yoksa sahte guardian olusturmadan `guardian_id: null` ile relation label'i korur.
+- `tests/imports/columnMatching.test.ts`
+  Explicit parent aliaslari ile generic phone alias ayrimini kilitler.
+- `tests/imports/importNameComposition.test.ts`
+  Parent phone alanlarinin ogrenci adi kaynagi olmadigini dogrular.
+- `tests/imports/importSimulation.test.ts`
+  Relation metadata, slot allocation ve parent-name-absent simulation davranisini test eder.
+- `tests/imports/importWriter.test.ts`
+  Guardian linking, relation labels, source columns, slot order ve fake guardian olusturmama davranisini test eder.
+- `docs/CHECKPOINT_EXPLICIT_GUARDIAN_PHONE_RELATIONS.md`
+  Explicit parent-phone implementation kapsami, validation, riskler ve sonraki export/backup dilimi icin resmi kapanis kaydi.

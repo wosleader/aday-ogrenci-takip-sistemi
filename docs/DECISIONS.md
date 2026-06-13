@@ -141,3 +141,14 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Guardian Parent Names Import Pilot] Sağ drawer yalnızca dolu `Veli Ad Soyad`, `Anne Adı`, `Baba Adı` satırlarını gösterir; boş veya teknik relation/no-phone metni göstermez.
 - [Guardian Parent Names Import Pilot] Schema, export, backup/restore, no-phone import setting, source-column display ve Playwright senaryoları değiştirilmedi.
 - [Guardian Parent Names Import Pilot] Sonraki önerilen kod dilimi explicit ANNE TEL/BABA TEL phone relation'dır; Telefon 1-10 slot fidelity korunmalı ve generic kolonlardan parent ilişkisi çıkarılmamalıdır.
+
+## Latest Decisions - Explicit Guardian Phone Relations Pilot
+
+- [Explicit Guardian Phone Relations Pilot] Yalnizca acik Anne/Baba telefon kolonlari parent relation metadata uretebilir. `ANNE TEL`, `Anne GSM`, `BABA TEL`, `Baba GSM` gibi aliaslar desteklenir; generic `GSM`, `GSM2`, `Tel1`, `Telefon 1` Anne/Baba olarak yorumlanmaz.
+- [Explicit Guardian Phone Relations Pilot] Parent relation kolonu ozel bir Telefon slotu zorlamaz. Excel kolon sirasi ve sonraki uygun Telefon N allocator kurali uygulanir; existing Telefon 1-10 fidelity korunur.
+- [Explicit Guardian Phone Relations Pilot] Anne/Baba adi varsa explicit phone ilgili mother/father guardian kaydina baglanir. Ad yoksa fake guardian olusturulmaz; relation label saklanir ve `guardian_id: null` kullanilir.
+- [Explicit Guardian Phone Relations Pilot] Anne/Baba/Veli isimleri ve parent phone alanlari ogrenci adi composition kaynagi degildir. No-student-name guvenlik kurali korunur.
+- [Explicit Guardian Phone Relations Pilot] Mevcut `guardians` ve `phones` tablolari kullanilir; yeni table veya schema version eklenmez.
+- [Explicit Guardian Phone Relations Pilot] Export, backup/restore, no-phone import setting, broad source-column UI ve yeni Playwright senaryolari bu dilimin disindadir.
+- [Explicit Guardian Phone Relations Pilot] Riskli `No1/No2/Numara N` alias ailesi false-positive riski nedeniyle ertelenmistir.
+- [Explicit Guardian Phone Relations Pilot] Sonraki onerilen dilim export ve backup/restore garantileridir; export Telefon 1-10 slot fidelity'yi bozmamali ve Full System Backup, Excel exporttan ayri restore kaynagi olarak kalmalidir.
