@@ -191,6 +191,61 @@ describe("simulateImport", () => {
     ]);
   });
 
+  it("carries explicit parent phones with relation labels and allocates slots in Excel order", () => {
+    const summary = simulateImport(
+      worksheet(
+        ["AD", "SOYAD", "GSM", "BABA TEL", "GSM2", "GSM3", "ANNE TEL", "GSM4"],
+        [["Ayse", "Yilmaz", "5320000001", "5320000002", "5320000003", "5320000004", "5320000005", "5320000006"]]
+      )
+    );
+
+    expect(summary.readable_rows).toBe(1);
+    expect(summary.preview_rows[0].phone_1).toBe("05320000001");
+    expect(summary.preview_rows[0].phone_2).toBe("05320000002");
+    expect(summary.preview_rows[0].phones).toEqual([
+      expect.objectContaining({
+        source_field: "phone_1",
+        reference_label: "Telefon 1",
+        relation_label: null,
+        source_column: "GSM",
+        priority: 1
+      }),
+      expect.objectContaining({
+        source_field: "father_phone",
+        reference_label: "Telefon 2",
+        relation_label: "Baba",
+        source_column: "BABA TEL",
+        priority: 2
+      }),
+      expect.objectContaining({ source_field: "phone_2", reference_label: "Telefon 3", priority: 3 }),
+      expect.objectContaining({ source_field: "phone_3", reference_label: "Telefon 4", priority: 4 }),
+      expect.objectContaining({
+        source_field: "mother_phone",
+        reference_label: "Telefon 5",
+        relation_label: "Anne",
+        source_column: "ANNE TEL",
+        priority: 5
+      }),
+      expect.objectContaining({ source_field: "phone_4", reference_label: "Telefon 6", priority: 6 })
+    ]);
+  });
+
+  it("keeps explicit parent phones safe when parent names are absent", () => {
+    const summary = simulateImport(
+      worksheet(
+        ["AD", "SOYAD", "ANNE TEL", "BABA TEL"],
+        [["Ayse", "Yilmaz", "5320000001", "5320000002"]]
+      )
+    );
+
+    expect(summary.readable_rows).toBe(1);
+    expect(summary.preview_rows[0].student_full_name).toBe("Ayse Yilmaz");
+    expect(summary.preview_rows[0].phones).toEqual([
+      expect.objectContaining({ relation_label: "Anne", reference_label: "Telefon 1" }),
+      expect.objectContaining({ relation_label: "Baba", reference_label: "Telefon 2" })
+    ]);
+  });
+
   it("skips empty phone cells and de-duplicates phones within the same row", () => {
     const summary = simulateImport(
       worksheet(

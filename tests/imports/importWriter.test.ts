@@ -85,6 +85,110 @@ describe("writeImportToDatabase", () => {
     }
   });
 
+  it("links explicit Anne and Baba phones to the correct guardians while preserving slot order", async () => {
+    const database = await createDatabase();
+    const parsedWorksheet = worksheet(
+      [
+        "Ad Soyad",
+        "Veli Ad Soyad",
+        "Anne Adı",
+        "Baba Adı",
+        "GSM",
+        "BABA TEL",
+        "GSM2",
+        "GSM3",
+        "ANNE TEL",
+        "GSM4"
+      ],
+      [[
+        "Ayse Yilmaz",
+        "Zeynep Yilmaz",
+        "Fatma Yilmaz",
+        "Mehmet Yilmaz",
+        "5320000001",
+        "5320000002",
+        "5320000003",
+        "5320000004",
+        "5320000005",
+        "5320000006"
+      ]]
+    );
+
+    try {
+      const summary = simulateImport(parsedWorksheet);
+      const result = await writeImportToDatabase(parsedWorksheet, summary, { database });
+      const guardians = await database.guardians.toArray();
+      const guardianIds = new Map(guardians.map((guardian) => [guardian.relation_type, guardian.id]));
+      const phones = (await database.phones.toArray()).sort(
+        (left, right) => (left.priority ?? 0) - (right.priority ?? 0)
+      );
+
+      expect(result.created_guardians).toBe(3);
+      expect(result.created_phones).toBe(6);
+      expect(phones.map((phone) => phone.reference_label)).toEqual([
+        "Telefon 1",
+        "Telefon 2",
+        "Telefon 3",
+        "Telefon 4",
+        "Telefon 5",
+        "Telefon 6"
+      ]);
+      expect(phones.map((phone) => phone.source_column)).toEqual([
+        "GSM",
+        "BABA TEL",
+        "GSM2",
+        "GSM3",
+        "ANNE TEL",
+        "GSM4"
+      ]);
+      expect(phones[0]).toMatchObject({ relation_label: null, guardian_id: guardianIds.get("guardian") });
+      expect(phones[1]).toMatchObject({ relation_label: "Baba", guardian_id: guardianIds.get("father") });
+      expect(phones[2]).toMatchObject({ relation_label: null, guardian_id: guardianIds.get("guardian") });
+      expect(phones[3]).toMatchObject({ relation_label: null, guardian_id: guardianIds.get("guardian") });
+      expect(phones[4]).toMatchObject({ relation_label: "Anne", guardian_id: guardianIds.get("mother") });
+      expect(phones[5]).toMatchObject({ relation_label: null, guardian_id: guardianIds.get("guardian") });
+
+      const [row] = await readStudentListRows(database);
+      expect(row.phones.map((phone) => phone.display_label)).toEqual([
+        "Telefon 1",
+        "Telefon 2 · Baba",
+        "Telefon 3",
+        "Telefon 4",
+        "Telefon 5 · Anne",
+        "Telefon 6"
+      ]);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("keeps explicit parent phone relation labels without inventing guardian names", async () => {
+    const database = await createDatabase();
+    const parsedWorksheet = worksheet(
+      ["Ad Soyad", "ANNE TEL", "BABA TEL"],
+      [["Ayse Yilmaz", "5320000001", "5320000002"]]
+    );
+
+    try {
+      const summary = simulateImport(parsedWorksheet);
+      const result = await writeImportToDatabase(parsedWorksheet, summary, { database });
+      const phones = (await database.phones.toArray()).sort(
+        (left, right) => (left.priority ?? 0) - (right.priority ?? 0)
+      );
+
+      expect(result.created_guardians).toBe(0);
+      expect(await database.guardians.count()).toBe(0);
+      expect(phones).toEqual([
+        expect.objectContaining({ relation_label: "Anne", guardian_id: null, reference_label: "Telefon 1" }),
+        expect.objectContaining({ relation_label: "Baba", guardian_id: null, reference_label: "Telefon 2" })
+      ]);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
   it("persists Mahalle and Ilce on imported student records without using general note", async () => {
     const database = await createDatabase();
     const parsedWorksheet = worksheet(

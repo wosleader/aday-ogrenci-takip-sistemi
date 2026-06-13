@@ -93,11 +93,31 @@ describe("column matching", () => {
   });
 
   it("matches multi-phone GSM and Telefon aliases", () => {
-    const { matches } = matchColumns(["GSM3", "GSM 4", "Telefon 10"]);
+    const { matches } = matchColumns(["GSM", "GSM2", "Tel3", "GSM 4", "Telefon 10"]);
 
-    expect(matches[0].target_field).toBe("phone_3");
-    expect(matches[1].target_field).toBe("phone_4");
-    expect(matches[2].target_field).toBe("phone_10");
+    expect(matches[0].target_field).toBe("phone_1");
+    expect(matches[1].target_field).toBe("phone_2");
+    expect(matches[2].target_field).toBe("phone_3");
+    expect(matches[3].target_field).toBe("phone_4");
+    expect(matches[4].target_field).toBe("phone_10");
+  });
+
+  it("matches only explicit Anne and Baba phone aliases as parent phones", () => {
+    const { matches } = matchColumns([
+      "ANNE TEL",
+      "Anne GSM",
+      "BABA TEL",
+      "Baba GSM",
+      "GSM2",
+      "Tel1"
+    ]);
+
+    expect(matches[0]).toMatchObject({ status: "matched", target_field: "mother_phone" });
+    expect(matches[1]).toMatchObject({ status: "matched", target_field: "mother_phone" });
+    expect(matches[2]).toMatchObject({ status: "matched", target_field: "father_phone" });
+    expect(matches[3]).toMatchObject({ status: "matched", target_field: "father_phone" });
+    expect(matches[4]).toMatchObject({ status: "matched", target_field: "phone_2" });
+    expect(matches[5]).toMatchObject({ status: "matched", target_field: "phone_1" });
   });
 
   it("matches Genel Açıklama as the real Açıklama import field", () => {

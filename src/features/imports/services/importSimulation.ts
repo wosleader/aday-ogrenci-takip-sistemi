@@ -9,6 +9,7 @@ import type {
   DuplicatePhoneWarning,
   ImportEngineLog,
   ImportFieldKey,
+  ImportParentPhoneFieldKey,
   ImportPhoneFieldKey,
   ImportSimulationOptions,
   ImportSimulationSummary,
@@ -36,6 +37,9 @@ const PHONE_IMPORT_FIELDS: ImportPhoneFieldKey[] = [
   "phone_9",
   "phone_10"
 ];
+
+const PARENT_PHONE_FIELDS: ImportParentPhoneFieldKey[] = ["mother_phone", "father_phone"];
+const PHONE_SOURCE_FIELDS = new Set<ImportFieldKey>([...PHONE_IMPORT_FIELDS, ...PARENT_PHONE_FIELDS]);
 
 const FULL_NAME_OVERRIDES_SPLIT_NAME_MESSAGE =
   "Tam ad alanı bulunduğu için Ad/Soyad alanları birleştirme için kullanılmadı.";
@@ -78,18 +82,6 @@ function createFieldIndex(matches: ColumnMatch[]): Map<ImportFieldKey, number> {
   }
 
   return fieldIndex;
-}
-
-function createFieldMatchIndex(matches: ColumnMatch[]): Map<ImportFieldKey, ColumnMatch> {
-  const fieldMatchIndex = new Map<ImportFieldKey, ColumnMatch>();
-
-  for (const match of matches) {
-    if (match.target_field && !fieldMatchIndex.has(match.target_field)) {
-      fieldMatchIndex.set(match.target_field, match);
-    }
-  }
-
-  return fieldMatchIndex;
 }
 
 function getCell(row: unknown[], fieldIndex: Map<ImportFieldKey, number>, field: ImportFieldKey) {
@@ -165,14 +157,53 @@ function resolveStudentFullName(row: unknown[], fieldIndex: Map<ImportFieldKey, 
 
 function collectImportPhones(
   row: unknown[],
-  fieldIndex: Map<ImportFieldKey, number>,
-  fieldMatchIndex: Map<ImportFieldKey, ColumnMatch>
+  matches: ColumnMatch[]
 ): SimulatedImportPhone[] {
   const phones: SimulatedImportPhone[] = [];
   const seenPhoneNumbers = new Set<string>();
+  const occupiedSlots = new Set<number>();
+  let nextSlot = 1;
+  const phoneMatches = matches
+    .filter(
+      (match): match is ColumnMatch & { target_field: ImportPhoneFieldKey | ImportParentPhoneFieldKey } =>
+        Boolean(match.target_field && PHONE_SOURCE_FIELDS.has(match.target_field))
+    )
+    .sort((left, right) => left.source_index - right.source_index);
 
-  PHONE_IMPORT_FIELDS.forEach((field, index) => {
-    const rawValue = getTextCell(row, fieldIndex, field);
+  function preferredSlot(field: ImportPhoneFieldKey | ImportParentPhoneFieldKey): number | null {
+    if (!field.startsWith("phone_")) {
+      return null;
+    }
+
+    const slot = Number(field.slice("phone_".length));
+    return Number.isInteger(slot) && slot >= 1 && slot <= 10 ? slot : null;
+  }
+
+  function allocateSlot(preferred: number | null): number | null {
+    if (preferred != null && preferred >= nextSlot && !occupiedSlots.has(preferred)) {
+      nextSlot = preferred + 1;
+      return preferred;
+    }
+
+    for (let slot = nextSlot; slot <= 10; slot += 1) {
+      if (!occupiedSlots.has(slot)) {
+        nextSlot = slot + 1;
+        return slot;
+      }
+    }
+
+    for (let slot = 1; slot <= 10; slot += 1) {
+      if (!occupiedSlots.has(slot)) {
+        return slot;
+      }
+    }
+
+    return null;
+  }
+
+  phoneMatches.forEach((match) => {
+    const sourceField = match.target_field;
+    const rawValue = stringifyCell(row[match.source_index]);
 
     if (!rawValue) {
       return;
@@ -184,20 +215,29 @@ function collectImportPhones(
       return;
     }
 
-    const match = fieldMatchIndex.get(field);
+    const slot = allocateSlot(preferredSlot(sourceField));
+    if (slot == null) {
+      return;
+    }
+
+    const field = `phone_${slot}` as ImportPhoneFieldKey;
     seenPhoneNumbers.add(normalizedPhone.normalized_phone_number);
+    occupiedSlots.add(slot);
 
     phones.push({
       field,
-      source_index: match?.source_index ?? -1,
-      source_header: match?.source_header ?? "",
-      source_column_letter: match?.source_column_letter ?? "",
+      source_field: sourceField,
+      source_index: match.source_index,
+      source_header: match.source_header,
+      source_column_letter: match.source_column_letter,
       raw_value: rawValue,
       phone_number: normalizedPhone.phone_number,
       normalized_phone_number: normalizedPhone.normalized_phone_number,
       reference_label: getImportFieldLabel(field),
-      source_column: match?.source_header || getImportFieldLabel(field),
-      priority: index + 1,
+      relation_label:
+        sourceField === "mother_phone" ? "Anne" : sourceField === "father_phone" ? "Baba" : null,
+      source_column: match.source_header || getImportFieldLabel(field),
+      priority: slot,
       is_valid: normalizedPhone.is_valid
     });
   });
@@ -250,7 +290,6 @@ export function simulateImport(
   const effectiveOptions = { ...DEFAULT_SIMULATION_OPTIONS, ...options };
   const { matches, logs } = matchColumns(worksheet.headers, effectiveOptions.manualMappings);
   const fieldIndex = createFieldIndex(matches);
-  const fieldMatchIndex = createFieldMatchIndex(matches);
   const simulationLogs: ImportEngineLog[] = [
     {
       severity: "info",
@@ -386,12 +425,11 @@ export function simulateImport(
     }
 
     const studentFullName = resolvedStudentName.student_full_name;
-    const phones = collectImportPhones(row, fieldIndex, fieldMatchIndex);
-    const primaryPhone = normalizePhone(getTextCell(row, fieldIndex, "phone_1"));
-    const secondaryPhoneRaw = getTextCell(row, fieldIndex, "phone_2");
-    const secondaryPhone = secondaryPhoneRaw ? normalizePhone(secondaryPhoneRaw) : undefined;
+    const phones = collectImportPhones(row, matches);
+    const primaryPhone = phones.find((phone) => phone.priority === 1);
+    const secondaryPhone = phones.find((phone) => phone.priority === 2);
 
-    if (!primaryPhone.normalized_phone_number) {
+    if (!primaryPhone?.normalized_phone_number) {
       emptyPhoneCount += 1;
       if (phones.length > 0) {
         phone1EmptyWithAlternativeCount += 1;
@@ -473,7 +511,7 @@ export function simulateImport(
       father_full_name: getTextCell(row, fieldIndex, "father_full_name") || undefined,
       neighborhood: getTextCell(row, fieldIndex, "neighborhood") || undefined,
       district: getTextCell(row, fieldIndex, "district") || undefined,
-      phone_1: primaryPhone.normalized_phone_number || undefined,
+      phone_1: primaryPhone?.normalized_phone_number || undefined,
       phone_2: secondaryPhone?.normalized_phone_number || undefined,
       phones,
       last_call_result: getTextCell(row, fieldIndex, "last_call_result") || undefined,

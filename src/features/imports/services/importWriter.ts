@@ -2,6 +2,7 @@ import type { AppDatabase } from "../../../db/db";
 import { db } from "../../../db/db";
 import type { CampaignRecord } from "../../../domain/models/campaign";
 import type { GuardianRelationType } from "../../../domain/models/guardian";
+import type { PhoneRelationLabel } from "../../../domain/models/phone";
 import { createSearchText, normalizeText } from "../../../utils/normalizeText";
 import { normalizePhone } from "../../../utils/normalizePhone";
 import { nowIso } from "../../../utils/dateTime";
@@ -64,7 +65,7 @@ type WritableImportPhone = {
   original_phone_value: string;
   phone_label: string;
   reference_label: string;
-  relation_label: null;
+  relation_label: PhoneRelationLabel | null;
   source_column: string | null;
   priority: number;
   is_valid: boolean;
@@ -114,7 +115,7 @@ function uniquePhones(row: SimulatedImportRow): WritableImportPhone[] {
           original_phone_value: phone.raw_value,
           phone_label: getLegacyPhoneLabel(phone),
           reference_label: getLegacyPhoneLabel(phone),
-          relation_label: null,
+          relation_label: phone.relation_label ?? null,
           source_column: phone.source_column || null,
           priority: phone.priority,
           is_valid: phone.is_valid,
@@ -272,7 +273,7 @@ export async function writeImportToDatabase(
           throw new Error("Test transaction rollback hatası.");
         }
 
-        let guardianId: number | null = null;
+        const guardianIds = new Map<GuardianRelationType, number>();
 
         for (const guardian of getImportGuardians(row)) {
           const createdGuardianId = await database.guardians.add({
@@ -288,18 +289,23 @@ export async function writeImportToDatabase(
             deleted_at: null
           });
 
-          if (guardian.relation_type === "guardian") {
-            guardianId = createdGuardianId;
-          }
+          guardianIds.set(guardian.relation_type, createdGuardianId);
 
           createdGuardians += 1;
         }
 
         for (const phone of uniquePhones(row)) {
+          const linkedGuardianId =
+            phone.relation_label === "Anne"
+              ? guardianIds.get("mother") ?? null
+              : phone.relation_label === "Baba"
+                ? guardianIds.get("father") ?? null
+                : guardianIds.get("guardian") ?? null;
+
           await database.phones.add({
             uuid: createUuid(),
             student_id: studentId,
-            guardian_id: guardianId,
+            guardian_id: linkedGuardianId,
             phone_number: phone.phone_number,
             normalized_phone_number: phone.normalized_phone_number,
             original_phone_value: phone.original_phone_value,

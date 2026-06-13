@@ -53,6 +53,16 @@ export const COLUMN_DEFINITIONS: ColumnDefinition[] = [
     aliases: ["baba adi", "baba ad soyad", "baba adi soyadi"]
   },
   {
+    field: "mother_phone",
+    label: "Anne Telefonu",
+    aliases: ["anne tel", "anne telefon", "anne gsm", "anne cep"]
+  },
+  {
+    field: "father_phone",
+    label: "Baba Telefonu",
+    aliases: ["baba tel", "baba telefon", "baba gsm", "baba cep"]
+  },
+  {
     field: "neighborhood",
     label: "Mahalle",
     aliases: ["mahalle", "mah", "mahalle adi"]
@@ -65,52 +75,75 @@ export const COLUMN_DEFINITIONS: ColumnDefinition[] = [
   {
     field: "phone_1",
     label: "Telefon 1",
-    aliases: ["telefon", "telefon 1", "tel", "cep telefonu"]
+    aliases: [
+      "telefon",
+      "telefon 1",
+      "telefon1",
+      "tel",
+      "tel 1",
+      "tel1",
+      "gsm",
+      "gsm 1",
+      "gsm1",
+      "cep",
+      "cep tel",
+      "cep telefonu"
+    ]
   },
   {
     field: "phone_2",
     label: "Telefon 2",
-    aliases: ["2 telefon", "telefon 2", "ikinci telefon", "2 tel"]
+    aliases: [
+      "2 telefon",
+      "telefon 2",
+      "telefon2",
+      "ikinci telefon",
+      "2 tel",
+      "tel 2",
+      "tel2",
+      "gsm 2",
+      "gsm2"
+    ]
   },
   {
     field: "phone_3",
     label: "Telefon 3",
-    aliases: ["telefon 3", "gsm3", "gsm 3", "tel 3", "phone 3"]
+    aliases: ["telefon 3", "telefon3", "gsm3", "gsm 3", "tel 3", "tel3", "phone 3"]
   },
   {
     field: "phone_4",
     label: "Telefon 4",
-    aliases: ["telefon 4", "gsm4", "gsm 4", "tel 4", "phone 4"]
+    aliases: ["telefon 4", "telefon4", "gsm4", "gsm 4", "tel 4", "tel4", "phone 4"]
   },
   {
     field: "phone_5",
     label: "Telefon 5",
-    aliases: ["telefon 5", "gsm5", "gsm 5", "tel 5", "phone 5"]
+    aliases: ["telefon 5", "telefon5", "gsm5", "gsm 5", "tel 5", "tel5", "phone 5"]
   },
   {
     field: "phone_6",
     label: "Telefon 6",
-    aliases: ["telefon 6", "gsm6", "gsm 6", "tel 6", "phone 6"]
+    aliases: ["telefon 6", "telefon6", "gsm6", "gsm 6", "tel 6", "tel6", "phone 6"]
   },
   {
     field: "phone_7",
     label: "Telefon 7",
-    aliases: ["telefon 7", "gsm7", "gsm 7", "tel 7", "phone 7"]
+    aliases: ["telefon 7", "telefon7", "gsm7", "gsm 7", "tel 7", "tel7", "phone 7"]
   },
   {
     field: "phone_8",
     label: "Telefon 8",
-    aliases: ["telefon 8", "gsm8", "gsm 8", "tel 8", "phone 8"]
+    aliases: ["telefon 8", "telefon8", "gsm8", "gsm 8", "tel 8", "tel8", "phone 8"]
   },
   {
     field: "phone_9",
     label: "Telefon 9",
-    aliases: ["telefon 9", "gsm9", "gsm 9", "tel 9", "phone 9"]
+    aliases: ["telefon 9", "telefon9", "gsm9", "gsm 9", "tel 9", "tel9", "phone 9"]
   },
   {
     field: "phone_10",
     label: "Telefon 10",
-    aliases: ["telefon 10", "gsm10", "gsm 10", "tel 10", "phone 10"]
+    aliases: ["telefon 10", "telefon10", "gsm10", "gsm 10", "tel 10", "tel10", "phone 10"]
   },
   {
     field: "last_call_result",

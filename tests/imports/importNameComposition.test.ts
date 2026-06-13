@@ -66,11 +66,11 @@ describe("AD/SOYAD import composition", () => {
     });
   });
 
-  it("blocks rows that contain only Veli, Anne and Baba names", () => {
+  it("blocks rows that contain only Veli, Anne and Baba names or parent phones", () => {
     const summary = simulateImport(
       worksheet(
-        ["Veli Ad Soyad", "Anne Adı", "Baba Adı", "Telefon"],
-        [["Ayşe Veli", "Fatma Yılmaz", "Mehmet Yılmaz", "5321234567"]]
+        ["Veli Ad Soyad", "Anne Adı", "Baba Adı", "ANNE TEL", "BABA TEL"],
+        [["Ayşe Veli", "Fatma Yılmaz", "Mehmet Yılmaz", "5321234567", "5327654321"]]
       )
     );
 

@@ -1,3 +1,5 @@
+import type { PhoneRelationLabel } from "../../../domain/models/phone";
+
 export type ImportPhoneFieldKey =
   | "phone_1"
   | "phone_2"
@@ -10,6 +12,8 @@ export type ImportPhoneFieldKey =
   | "phone_9"
   | "phone_10";
 
+export type ImportParentPhoneFieldKey = "mother_phone" | "father_phone";
+
 export type ImportFieldKey =
   | "current_class"
   | "student_group"
@@ -19,6 +23,7 @@ export type ImportFieldKey =
   | "guardian_full_name"
   | "mother_full_name"
   | "father_full_name"
+  | ImportParentPhoneFieldKey
   | "neighborhood"
   | "district"
   | ImportPhoneFieldKey
@@ -77,6 +82,7 @@ export type HeaderDetectionResult = {
 
 export type SimulatedImportPhone = {
   field: ImportPhoneFieldKey;
+  source_field: ImportPhoneFieldKey | ImportParentPhoneFieldKey;
   source_index: number;
   source_header: string;
   source_column_letter: string;
@@ -84,7 +90,7 @@ export type SimulatedImportPhone = {
   phone_number: string;
   normalized_phone_number: string;
   reference_label: string;
-  relation_label?: string;
+  relation_label?: PhoneRelationLabel | null;
   source_column: string;
   priority: number;
   is_valid: boolean;
