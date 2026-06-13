@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Detailed Export Guardian Names | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Backup Restore Guardian Roundtrip Guarantee | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -515,3 +515,14 @@ Son doğrulandı: Detailed Export Guardian Names
   Guardian kolon sırasını, eksik Anne/Baba hücrelerini, Telefon 1-10 slot fidelity'yi ve ayrı Anne/Baba telefonu kolonlarının üretilmediğini doğrular.
 - `docs/CHECKPOINT_DETAILED_EXPORT_GUARDIAN_NAMES.md`
   Detailed export guardian-name diliminin kapsam, karar, validation, risk ve sonraki backup/restore test-first adımını kaydeder.
+
+## Latest File Map Addendum - Backup Restore Guardian Roundtrip Guarantee
+
+Son doğrulandı: Backup/Restore Guardian Roundtrip Guarantee
+
+- `src/db/backup.ts`
+  Full System Backup için `guardians` ve `phones` dahil mevcut tabloları ham kayıtlarıyla snapshot'a alır ve restore eder. Bu dilimde değiştirilmedi; yeni roundtrip testi mevcut davranışın gerekli relation metadata'yı zaten koruduğunu doğruladı.
+- `tests/settings/backupRestore.test.ts`
+  Bir öğrenci, Veli/Anne/Baba/legacy Veli guardian kayıtları ve bağlı/bağlantısız relation-aware telefonlarla kaynak DB oluşturur. Snapshot'ı hedef DB'ye restore ederek guardian relation türlerini ve telefon `guardian_id`, `relation_label`, `source_column`, `reference_label`, `priority` alanlarını doğrular.
+- `docs/CHECKPOINT_BACKUP_RESTORE_GUARDIAN_ROUNDTRIP.md`
+  Test-only backup/restore garanti diliminin davranış, validation, kapsam dışı alanlar, kalan riskler ve sonraki summary export discovery kararını kaydeder.

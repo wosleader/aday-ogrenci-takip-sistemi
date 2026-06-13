@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 9b030a8 feat: export guardian parent names
-- Detailed Export Guardian Names implementation tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: c6876de test: guarantee guardian backup restore roundtrip
+- Backup/Restore Guardian Roundtrip Guarantee test dilimi tamamlandı ve pushlandı.
 - Tracked working tree başlangıçta temizdir. `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Bu docs-only closure tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: close detailed export guardian names checkpoint
+- Önerilen docs commit: docs: close backup restore guardian roundtrip checkpoint
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -54,17 +54,17 @@ Temel alanlar:
 
 ## 4. Güncel Sprint Durumu
 
-Detailed Export Guardian Names tamamlandı.
+Backup/Restore Guardian Roundtrip Guarantee tamamlandı.
 
 Özet:
 
-- Detaylı Excel Export artık relation-aware `Veli Ad Soyad`, `Anne Adı` ve `Baba Adı` kolonlarını taşır.
-- `guardian` ve legacy `null` Veli, `mother` Anne, `father` Baba kabul edilir; ilk oluşturulan guardian körlemesine Veli sayılmaz.
-- Anne/Baba kolonları `Veli Ad Soyad` kolonunun hemen arkasındadır; eksik değerler boş hücre olur.
-- Telefon 1-10 slot fidelity ve parent phone relation metadata davranışı değişmedi; ayrı Anne/Baba telefonu kolonları eklenmedi.
-- Summary export, backup/restore, import, schema, UI ve Playwright kapsamı değiştirilmedi.
-- Validation: odak export testleri 3 dosya / 24 test PASS; OOM-safe full test 45 dosya / 315 test PASS; build PASS.
-- Sonraki önerilen dilim backup/restore guardian roundtrip garantisidir; test-first başlanmalıdır.
+- Full System Backup/restore guardian ve relation-aware phone kayıtlarını kayıpsız koruduğu test-first olarak doğrulandı.
+- Veli, Anne, Baba ve legacy null Veli relation kayıtları restore sonrasında korunur; sahte/fazla guardian oluşmaz.
+- Telefon `guardian_id`, `relation_label`, `source_column`, `reference_label` ve `priority` metadata'sı korunur.
+- `guardian_id: null` ve relation label taşıyan parent telefon restore sonrasında aynı şekilde kalır.
+- Dilim test-only tamamlandı; `src/db/backup.ts`, schema, import, export, UI ve Playwright değiştirilmedi.
+- Validation: odak backup testi 1 dosya / 8 test PASS; OOM-safe full test 45 dosya / 316 test PASS; build PASS.
+- Sonraki önerilen konu summary export phone compatibility için implementation öncesi ürün kararı/discovery'dir.
 
 ### Önceki Uygulama Durumu
 
@@ -319,4 +319,17 @@ Telefon 3-10 mapping/simulation, gerçek import writer/persistence, sağ kart la
 - Summary export, backup/restore, import, schema, UI and Playwright were not changed.
 - Validation passed: focused export tests 3 files / 24 tests; OOM-safe full suite 45 files / 315 tests; build PASS with known Vite chunk-size warning.
 - Next recommended slice: backup/restore guardian roundtrip guarantee, starting as a test-only change.
+- `dev-server.log` remains local runtime output and must not be staged, committed, deleted, or treated as a project artifact.
+
+## Latest Handoff Update - Backup Restore Guardian Roundtrip Guarantee
+
+- Current safe HEAD/origin: `c6876de test: guarantee guardian backup restore roundtrip`.
+- Previous checkpoint: `b48ce74 docs: close detailed export guardian names checkpoint`.
+- Test-only guardian backup/restore guarantee is complete and pushed; this docs-only closure awaits Strategy AI approval before docs commit/push.
+- Suggested docs commit after approval: `docs: close backup restore guardian roundtrip checkpoint`.
+- Existing Full System Backup preserves Veli, Anne, Baba and legacy null-relation guardian records without creating fake records.
+- Relation-aware phones preserve `guardian_id`, `relation_label`, `source_column`, `reference_label` and `priority`, including a relation-labeled phone with `guardian_id: null`.
+- `src/db/backup.ts` required no change. Schema, import, export, UI, E2E and package behavior remain unchanged.
+- Validation passed: focused backup/restore test 1 file / 8 tests; OOM-safe full suite 45 files / 316 tests; build PASS with known Vite chunk-size warning.
+- Next recommended step: summary export phone compatibility discovery/product decision before implementation.
 - `dev-server.log` remains local runtime output and must not be staged, committed, deleted, or treated as a project artifact.

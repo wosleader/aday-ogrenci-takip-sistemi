@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Detailed Export Guardian Names | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Backup Restore Guardian Roundtrip Guarantee | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -162,3 +162,12 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Detailed Export Guardian Names] Summary export, backup/restore, import, schema, sağ drawer/UI ve Playwright bu dilimde değiştirilmemiştir. `Veli Bilgisi` UI grup etiketi ayrı karardır.
 - [Detailed Export Guardian Names] Sonraki önerilen dilim Full System Backup guardian/phone relation roundtrip garantisidir. Önce `tests/settings/backupRestore.test.ts` ile test-first ilerlenir; gerçek açık bulunmadıkça `src/db/backup.ts` değiştirilmez.
 - [Detailed Export Guardian Names] Summary export Telefon 1-10 genişletmesi ayrıdır. Lossless/compact kapsamı ve Telefon 3-10 durum kolonları hakkında açık insan kararı olmadan summary export değiştirilmez.
+
+## Latest Decisions - Backup Restore Guardian Roundtrip Guarantee
+
+- [Backup Restore Guardian Roundtrip Guarantee] Full System Backup mevcut `guardians` ve `phones` tablolarını ham kayıtlarıyla saklayıp restore ettiği için guardian ve relation-aware phone metadata'sını kayıpsız korur.
+- [Backup Restore Guardian Roundtrip Guarantee] Veli `guardian`, Anne `mother`, Baba `father` ve legacy `relation_type: null` kayıtları açık roundtrip testiyle korunur. Restore sahte veya fazla guardian oluşturmaz.
+- [Backup Restore Guardian Roundtrip Guarantee] Telefon `guardian_id`, `relation_label`, `source_column`, `reference_label` ve `priority` alanları restore sonrasında korunur. `guardian_id: null` relation-labeled parent phone geçerli ve test edilen bir durumdur.
+- [Backup Restore Guardian Roundtrip Guarantee] Bu güvence test-only sağlanmıştır. `src/db/backup.ts`, schema/version, import, export, UI, E2E ve package davranışı değiştirilmemiştir.
+- [Backup Restore Guardian Roundtrip Guarantee] Gelecekte guardian/phone tablo şekli veya backup formatı değişirse roundtrip testi birlikte güncellenmelidir.
+- [Backup Restore Guardian Roundtrip Guarantee] Sonraki önerilen konu summary export phone compatibility'dir; Telefon 1-10 kapsamı, status kolonları ve compact/lossless ürün kararı açıklaşmadan implementation başlatılmaz.

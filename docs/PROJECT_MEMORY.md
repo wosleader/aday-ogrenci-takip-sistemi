@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Detailed Export Guardian Names | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Backup Restore Guardian Roundtrip Guarantee | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,11 +6,11 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Detailed Export Guardian Names
-- FILE_MAP: Detailed Export Guardian Names
-- DECISIONS: Detailed Export Guardian Names
-- Son implementation commit: 9b030a8 feat: export guardian parent names
-- Son docs closure hedefi: docs: close detailed export guardian names checkpoint
+- PROJECT_MEMORY: Backup Restore Guardian Roundtrip Guarantee
+- FILE_MAP: Backup Restore Guardian Roundtrip Guarantee
+- DECISIONS: Backup Restore Guardian Roundtrip Guarantee
+- Son test commit: c6876de test: guarantee guardian backup restore roundtrip
+- Son docs closure hedefi: docs: close backup restore guardian roundtrip checkpoint
 
 ## 1. Proje Amacı
 
@@ -85,7 +85,7 @@ Kısa özet:
 - Explicit Anne/Baba phone relation import tamamlandı. Açık `ANNE TEL` / `BABA TEL` kolonları relation metadata taşır; generic telefon kolonlarından Anne/Baba ilişkisi çıkarılmaz.
 - Parent phone slotları Excel kolon sırası ve sonraki uygun Telefon N kuralıyla atanır; Telefon 1-10 slot fidelity korunur.
 - Anne/Baba adı varsa explicit parent phone doğru mother/father guardian kaydına bağlanır. İsim yoksa sahte guardian oluşturulmaz; relation label korunur ve `guardian_id: null` kullanılır.
-- Detaylı export Veli/Anne/Baba adlarını relation-aware olarak taşır. Explicit backup/restore roundtrip, summary export genişletmesi, no-phone ayarı ve source-column UI henüz uygulanmadı.
+- Detaylı export Veli/Anne/Baba adlarını relation-aware olarak taşır. Tam Sistem Yedeği guardian ve parent-phone relation metadata roundtrip davranışı explicit test ile garanti altındadır. Summary export genişletmesi, no-phone ayarı ve source-column UI henüz uygulanmadı.
 
 ## 7. Aday Listesi / Arama Operasyonu
 
@@ -136,6 +136,10 @@ Kısa özet:
 - Restore için `GERİ YÜKLE` yazı doğrulaması gerekir.
 - Yanlış JSON, Excel export dosyası, eksik tablo, yeni `backup_version` kullanıcı dostu hata verir.
 - Ana UI’da JSON yedek dili gösterilmez.
+- Full System Backup guardian kayıtlarını ve telefon relation metadata'sını ham tablo kayıtlarıyla kayıpsız korur.
+- Roundtrip testi `guardian`, `mother`, `father`, legacy `relation_type: null`, bağlı ve `guardian_id: null` parent telefon senaryolarını doğrular.
+- Telefon `guardian_id`, `relation_label`, `source_column`, `reference_label` ve `priority` alanları restore sonrasında korunur.
+- Bu garanti için backup implementation veya schema değişikliği gerekmedi; gelecek tablo/model değişiklikleri aynı testi güncel tutmalıdır.
 
 ## 11. Test / Pilot Durumu
 
