@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Guardian Contact Model Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Guardian Parent Names Import Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,11 +6,11 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Guardian Contact Model Decision
-- FILE_MAP: Guardian Contact Model Decision
-- DECISIONS: Guardian Contact Model Decision
-- Son güvenli HEAD/origin: 5727050 docs: close import e2e regression checkpoint
-- Son docs karar hedefi: docs: record guardian contact model decisions
+- PROJECT_MEMORY: Guardian Parent Names Import Pilot
+- FILE_MAP: Guardian Parent Names Import Pilot
+- DECISIONS: Guardian Parent Names Import Pilot
+- Son implementation commit: a83c235 feat: import guardian parent names
+- Son docs closure hedefi: docs: close guardian parent names checkpoint
 
 ## 1. Proje Amacı
 
@@ -79,6 +79,10 @@ Kısa özet:
 - İlk Anne/Baba uygulaması names-only olacaktır; explicit parent phones, export ve telefonsuz import ayarı ayrı dilimlerdir.
 - Generic telefon başlıklarından Anne/Baba ilişkisi tahmin edilmez. Yalnızca açık Anne/Baba telefon kolonları ileride relation label taşıyabilir.
 - `Telefonsuz adayları içe aktar` ayarı ileride session-only ve varsayılan kapalı olarak ele alınacaktır.
+- Anne/Baba names-only import tamamlandı. `mother_full_name` / `father_full_name` simulation alanları mevcut `guardians` tablosuna `mother` / `father` ilişkileriyle yazılır.
+- Reader Veli/Anne/Baba kayıtlarını relation type ile ayırır; legacy `relation_type: null` Veli olarak kalır.
+- Sağ kart yalnızca dolu `Veli Ad Soyad`, `Anne Adı`, `Baba Adı` satırlarını kompakt gösterir.
+- Parent-phone relation, export genişletmesi, explicit backup roundtrip ve no-phone ayarı henüz uygulanmadı.
 
 ## 7. Aday Listesi / Arama Operasyonu
 

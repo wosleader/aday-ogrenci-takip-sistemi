@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Guardian Contact Model Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Guardian Parent Names Import Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -130,3 +130,14 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Guardian Contact Model Decision] Detaylı export ve Özet Görüşme Raporu ileride Anne Adı/Baba Adı ile Telefon 1-10'u taşıyacak şekilde genişletilecektir. İlişki durumu veya bilinmeyen ilişki kolonları eklenmeyecektir.
 - [Guardian Contact Model Decision] Tam Sistem Yedeği eksiksiz restore kaynağıdır. Mevcut `guardians` ve `phones` tabloları yeniden kullanılacak; ileride açık backup/restore roundtrip testi eklenecektir.
 - [Guardian Contact Model Decision] `Telefonsuz adayları içe aktar` ayarı ilk sürümde import oturumuna özel ve varsayılan kapalı olacaktır. Ayar kapalıyken telefonsuz aday bloklanır; açıkken warning ile içe alınabilir. Öğrenci adı olmayan satır her durumda bloklanır.
+
+## Latest Decisions - Guardian Parent Names Import Pilot
+
+- [Guardian Parent Names Import Pilot] Anne/Baba names-only import tamamlandı. Kalıcı kaynak mevcut `guardians` tablosudur; `StudentRecord` üzerine duplicate parent alanları ve yeni tablo eklenmedi.
+- [Guardian Parent Names Import Pilot] Import mapping `mother_full_name` ve `father_full_name` hedeflerini taşır. Anne/Baba/Veli alanları öğrenci adı composition kaynağı değildir; öğrenci adı olmayan satır parent bilgileriyle oluşturulmaz.
+- [Guardian Parent Names Import Pilot] Writer Veli, Anne ve Baba için `guardian`, `mother`, `father` relation kayıtlarını ayrı oluşturur. İsim eşitliğine göre relation merge veya tahmin yapılmaz.
+- [Guardian Parent Names Import Pilot] Generic telefonlar Anne/Baba kayıtlarına atanmaz. Explicit ANNE TEL/BABA TEL mapping ve doğru parent `guardian_id` bağlantısı sonraki dilimdir.
+- [Guardian Parent Names Import Pilot] Student reader relation-aware çalışır ve legacy `relation_type: null` kayıtlarını Veli kabul eder.
+- [Guardian Parent Names Import Pilot] Sağ drawer yalnızca dolu `Veli Ad Soyad`, `Anne Adı`, `Baba Adı` satırlarını gösterir; boş veya teknik relation/no-phone metni göstermez.
+- [Guardian Parent Names Import Pilot] Schema, export, backup/restore, no-phone import setting, source-column display ve Playwright senaryoları değiştirilmedi.
+- [Guardian Parent Names Import Pilot] Sonraki önerilen kod dilimi explicit ANNE TEL/BABA TEL phone relation'dır; Telefon 1-10 slot fidelity korunmalı ve generic kolonlardan parent ilişkisi çıkarılmamalıdır.

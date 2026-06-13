@@ -444,3 +444,34 @@ Son dogrulandi: Anne/Baba Guardian/Contact Model uygulama oncesi karar checkpoin
   Mevcut `guardians` ve `phones` tablolarini zaten tam sistem yedegine dahil eder. Kod degisikligi gerekmese bile gelecek dilimde relation metadata roundtrip testi gerekir.
 - `docs/CHECKPOINT_GUARDIAN_CONTACT_MODEL_DECISION.md`
   Guardian modeli, UI dili, mapping, parent phone slot kurali, export, backup, no-phone ayari ve implementation slicing kararlarinin resmi kaydi.
+
+## Latest File Map Addendum - Guardian Parent Names Import Pilot
+
+Son dogrulandi: Anne/Baba Names-Only Import and Drawer Pilot
+
+- `src/domain/models/guardian.ts`
+  `GuardianRelationType` ile `guardian`, `mother`, `father` iliski anahtarlarini tanimlar. Legacy `null` kayitlar reader tarafinda Veli kabul edilir.
+- `src/features/imports/services/types.ts`
+  Import/simulation-only `mother_full_name` ve `father_full_name` alanlarini tasir; `StudentRecord` uzerinde duplicate parent alani olusturmaz.
+- `src/features/imports/services/columnDefinitions.ts`
+  Anne Adi / Anne Ad Soyad / Anne Adi Soyadi ve Baba karsiliklarini ayri import hedeflerine baglar. Parent phone aliaslari bu dilimde yoktur.
+- `src/features/imports/services/importSimulation.ts`
+  Anne/Baba isimlerini simulated row ve preview'a tasir; bunlari ogrenci adi composition kaynagi yapmaz.
+- `src/features/imports/services/importWriter.ts`
+  Veli, Anne ve Baba icin mevcut `guardians` tablosunda ayri relation kayitlari olusturur. Generic telefonlari mother/father kayitlarina baglamaz.
+- `src/features/students/services/studentListReader.ts`
+  Ilk guardian'i otomatik Veli saymak yerine relation type'a gore Veli/Anne/Baba alanlarini ayirir; legacy `null` Veli uyumlulugunu korur.
+- `src/features/students/StudentsPage.tsx`
+  Sag drawer contact kartinda yalnizca dolu `Veli Ad Soyad`, `Anne Adi`, `Baba Adi` satirlarini kompakt gosterir.
+- `tests/imports/columnMatching.test.ts`
+  Parent-name alias matching ve student-name target ayrimini test eder.
+- `tests/imports/importNameComposition.test.ts`
+  Parent isimlerinin simulation'da tasinmasini ve ogrenci adi olmayan satiri olusturmamasini test eder.
+- `tests/imports/importWriter.test.ts`
+  Veli/Anne/Baba relation persistence ve generic telefonun parent'a atanmamasi davranisini test eder.
+- `tests/students/studentListReader.test.ts`
+  Relation-aware reader ile legacy null Veli davranisini test eder.
+- `tests/students/StudentsPageMultiPhone.test.tsx`
+  Drawer'da dolu parent satirlarini ve bos satirlarin gizlenmesini test eder.
+- `docs/CHECKPOINT_GUARDIAN_PARENT_NAMES_IMPORT.md`
+  Names-only implementation kapsami, validation sonucu, kalan riskler ve sonraki explicit parent-phone dilimi icin resmi kapanis kaydi.
