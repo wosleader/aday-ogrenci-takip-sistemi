@@ -77,8 +77,17 @@ function groupByStudentId<T extends { student_id: number }>(records: T[]): Map<n
   return grouped;
 }
 
-function pickGuardian(guardians: GuardianRecord[]): GuardianRecord | undefined {
-  return [...guardians].sort(byCreatedAt)[0];
+function pickGuardianByRelation(
+  guardians: GuardianRecord[],
+  relationType: "guardian" | "mother" | "father"
+): GuardianRecord | undefined {
+  return [...guardians]
+    .sort(byCreatedAt)
+    .find((guardian) =>
+      relationType === "guardian"
+        ? guardian.relation_type == null || guardian.relation_type === "guardian"
+        : guardian.relation_type === relationType
+    );
 }
 
 function pickPendingReminder(reminders: ReminderRecord[]): ReminderRecord | undefined {
@@ -146,6 +155,7 @@ export async function readDetailedExportData(options: ExportDataReaderOptions = 
 
   return {
     bundles: activeStudents.map((student) => {
+      const guardiansForStudent = guardiansByStudent.get(student.id) ?? [];
       const phonesForStudent = phonesByStudent.get(student.id) ?? [];
       const sortedPhonesForExport = [...phonesForStudent].sort(byPhoneExportOrder);
       const callLogsForStudent = [...(callLogsByStudent.get(student.id) ?? [])].sort(
@@ -154,7 +164,9 @@ export async function readDetailedExportData(options: ExportDataReaderOptions = 
 
       return {
         student,
-        guardian: pickGuardian(guardiansByStudent.get(student.id) ?? []) ?? null,
+        guardian: pickGuardianByRelation(guardiansForStudent, "guardian") ?? null,
+        mother: pickGuardianByRelation(guardiansForStudent, "mother") ?? null,
+        father: pickGuardianByRelation(guardiansForStudent, "father") ?? null,
         campaign: student.campaign_id ? campaignsById.get(student.campaign_id) ?? null : null,
         pending_reminder: pickPendingReminder(remindersByStudent.get(student.id) ?? []) ?? null,
         appointment: [...(appointmentsByStudent.get(student.id) ?? [])].sort(byCreatedAt)[0] ?? null,

@@ -25,6 +25,8 @@ export type ExportPhoneSlots = {
 export type ExportStudentBundle = ExportPhoneSlots & {
   student: StudentRecord & { id: number };
   guardian?: GuardianRecord | null;
+  mother?: GuardianRecord | null;
+  father?: GuardianRecord | null;
   campaign?: CampaignRecord | null;
   pending_reminder?: ReminderRecord | null;
   appointment?: AppointmentRecord | null;

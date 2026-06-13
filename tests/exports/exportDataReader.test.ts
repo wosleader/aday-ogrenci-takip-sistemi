@@ -112,6 +112,99 @@ describe("exportDataReader", () => {
     }
   });
 
+  it("reads Veli, Anne and Baba guardians by relation instead of creation order", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student("Ayşe Yılmaz"));
+      await database.guardians.bulkAdd([
+        {
+          uuid: crypto.randomUUID(),
+          student_id: studentId,
+          guardian_full_name: "Fatma Yılmaz",
+          normalized_guardian_name: "fatma yilmaz",
+          relation_type: "mother",
+          sync_status: "local",
+          created_at: "2026-05-08T09:00:00",
+          updated_at: timestamp,
+          deleted_at: null
+        },
+        {
+          uuid: crypto.randomUUID(),
+          student_id: studentId,
+          guardian_full_name: "Mehmet Yılmaz",
+          normalized_guardian_name: "mehmet yilmaz",
+          relation_type: "father",
+          sync_status: "local",
+          created_at: "2026-05-08T09:01:00",
+          updated_at: timestamp,
+          deleted_at: null
+        },
+        {
+          uuid: crypto.randomUUID(),
+          student_id: studentId,
+          guardian_full_name: "Zeynep Yılmaz",
+          normalized_guardian_name: "zeynep yilmaz",
+          relation_type: "guardian",
+          sync_status: "local",
+          created_at: "2026-05-08T09:02:00",
+          updated_at: timestamp,
+          deleted_at: null
+        }
+      ]);
+
+      const bundle = (await readDetailedExportData({ database })).bundles[0];
+
+      expect(bundle.guardian?.guardian_full_name).toBe("Zeynep Yılmaz");
+      expect(bundle.mother?.guardian_full_name).toBe("Fatma Yılmaz");
+      expect(bundle.father?.guardian_full_name).toBe("Mehmet Yılmaz");
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("treats a legacy null relation guardian as Veli", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student("Ayşe Yılmaz"));
+      await database.guardians.bulkAdd([
+        {
+          uuid: crypto.randomUUID(),
+          student_id: studentId,
+          guardian_full_name: "Fatma Yılmaz",
+          normalized_guardian_name: "fatma yilmaz",
+          relation_type: "mother",
+          sync_status: "local",
+          created_at: timestamp,
+          updated_at: timestamp,
+          deleted_at: null
+        },
+        {
+          uuid: crypto.randomUUID(),
+          student_id: studentId,
+          guardian_full_name: "Legacy Veli",
+          normalized_guardian_name: "legacy veli",
+          relation_type: null,
+          sync_status: "local",
+          created_at: "2026-05-08T09:01:00",
+          updated_at: timestamp,
+          deleted_at: null
+        }
+      ]);
+
+      const bundle = (await readDetailedExportData({ database })).bundles[0];
+
+      expect(bundle.guardian?.guardian_full_name).toBe("Legacy Veli");
+      expect(bundle.mother?.guardian_full_name).toBe("Fatma Yılmaz");
+      expect(bundle.father).toBeNull();
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
   it("filters export data by selected student ids", async () => {
     const database = await createDatabase();
 

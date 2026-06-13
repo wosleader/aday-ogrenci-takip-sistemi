@@ -137,6 +137,30 @@ function dataset(callLogs: Array<CallLogRecord & { id: number }> = []): ExportDa
           updated_at: timestamp,
           deleted_at: null
         },
+        mother: {
+          id: 2,
+          uuid: "guardian-2",
+          student_id: 1,
+          guardian_full_name: "Emine Yılmaz",
+          normalized_guardian_name: "emine yilmaz",
+          relation_type: "mother",
+          sync_status: "local",
+          created_at: timestamp,
+          updated_at: timestamp,
+          deleted_at: null
+        },
+        father: {
+          id: 3,
+          uuid: "guardian-3",
+          student_id: 1,
+          guardian_full_name: "Ahmet Yılmaz",
+          normalized_guardian_name: "ahmet yilmaz",
+          relation_type: "father",
+          sync_status: "local",
+          created_at: timestamp,
+          updated_at: timestamp,
+          deleted_at: null
+        },
         campaign: {
           id: 1,
           uuid: "campaign-1",
@@ -173,6 +197,33 @@ describe("exportMapper", () => {
     const sheet = createDetailedExportSheet(dataset());
 
     expect(sheet.headers.slice(0, BASE_EXPORT_HEADERS.length)).toEqual([...BASE_EXPORT_HEADERS]);
+  });
+
+  it("adds Anne and Baba names immediately after Veli in detailed export", () => {
+    const sheet = createDetailedExportSheet(dataset());
+    const guardianIndex = sheet.headers.indexOf("Veli Ad Soyad");
+
+    expect(sheet.headers.slice(guardianIndex, guardianIndex + 5)).toEqual([
+      "Veli Ad Soyad",
+      "Anne Adı",
+      "Baba Adı",
+      "Telefon 1",
+      "Telefon 1 Durumu"
+    ]);
+    expect(cellByHeader(sheet, "Veli Ad Soyad")).toBe("Fatma Yılmaz");
+    expect(cellByHeader(sheet, "Anne Adı")).toBe("Emine Yılmaz");
+    expect(cellByHeader(sheet, "Baba Adı")).toBe("Ahmet Yılmaz");
+  });
+
+  it("leaves missing Anne and Baba name cells blank", () => {
+    const data = dataset();
+    data.bundles[0].mother = null;
+    data.bundles[0].father = null;
+
+    const sheet = createDetailedExportSheet(data);
+
+    expect(cellByHeader(sheet, "Anne Adı")).toBe("");
+    expect(cellByHeader(sheet, "Baba Adı")).toBe("");
   });
 
   it("adds Telefon 3-10 detailed headers immediately after Telefon 2 Durumu", () => {
@@ -248,7 +299,9 @@ describe("exportMapper", () => {
 
   it("maps Telefon 1-10 records into their detailed export columns", () => {
     const data = dataset();
-    const phones = Array.from({ length: 10 }, (_, index) => phoneForSlot(index + 1));
+    const phones = Array.from({ length: 10 }, (_, index) =>
+      phoneForSlot(index + 1, index === 4 ? { guardian_id: 2, relation_label: "Anne" } : {})
+    );
     data.bundles[0].phone_1 = phones[0];
     data.bundles[0].phone_2 = phones[1];
     data.bundles[0].phones = phones;
@@ -258,6 +311,8 @@ describe("exportMapper", () => {
     for (const exportPhone of phones) {
       expect(cellByHeader(sheet, exportPhone.reference_label ?? "")).toBe(exportPhone.phone_number);
     }
+    expect(sheet.headers).not.toContain("Anne Telefonu");
+    expect(sheet.headers).not.toContain("Baba Telefonu");
   });
 
   it("exports invalid, wrong and duplicate extra phones with the expected detailed statuses", () => {
