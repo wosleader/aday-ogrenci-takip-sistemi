@@ -400,3 +400,20 @@ Son dogrulandi: Playwright Import E2E Smoke Pilot
   Student list read model'in lokasyon alanlarini tasidigini test eder.
 - `docs/CHECKPOINT_IMPORT_STUDENT_LOCATION_FIELDS.md`
   Mahalle/Ilce Import Pilot resmi kapanis checkpoint'i.
+
+## Latest File Map Addendum - Playwright Import Regression Matrix Phase 2A
+
+Son dogrulandi: Playwright Import Regression Matrix Phase 2A
+
+- `e2e/import-regression.spec.ts`
+  Telefon 1-10 degerlerinin browser import akisi boyunca korunmasini, bos Mahalle/Ilce'nin importu engellememesini ve Anne/Baba alanlarinin ogrenci adi olusturmamasini kapsayan uc regression senaryosunu tasir.
+- `e2e/helpers/importFixtures.ts`
+  Smoke ve regression testleri icin ortak runtime `.xlsx` workbook ureticisini tasir. Dosyalar Playwright output dizininde uretilir; binary fixture commit edilmez.
+- `e2e/import-smoke.spec.ts`
+  Ilk mutlu yol browser smoke testi olarak korunur ve Phase 2A regression spec ile ayni komut altinda calisir.
+- `package.json`
+  `qa:import:e2e` script'i smoke ve regression spec dosyalarini birlikte calistirir.
+- `playwright.config.ts`
+  Chromium/Vite ayarlarina ek olarak import E2E testlerini stabil tutmak icin `workers: 1` kullanir.
+- `docs/CHECKPOINT_PLAYWRIGHT_IMPORT_REGRESSION_PHASE_2A.md`
+  Playwright Import Regression Matrix Phase 2A resmi kapanis checkpoint'i.

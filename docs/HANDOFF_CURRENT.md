@@ -277,3 +277,17 @@ Telefon 3-10 mapping/simulation, gerçek import writer/persistence, sağ kart la
 - Manual QA QA-1 through QA-8 and console/runtime checks passed.
 - Next recommended step: do not start Anne/Baba implementation. Run `DISCOVERY — Agent Context / Repo Hygiene Standardization` first.
 - `dev-server.log` may appear as an untracked local runtime file; do not stage, commit, delete, or document it as a product artifact.
+
+## Latest Handoff Update - Playwright Import Regression Matrix Phase 2A
+
+- Current implementation HEAD/origin: `0980cdb feat: add import e2e regression matrix`.
+- Previous checkpoint: `90f70e3 docs: close import e2e smoke checkpoint`.
+- Phase 2A implementation is complete and pushed; this docs-only closure awaits Strategy AI approval before docs commit/push.
+- Suggested docs commit after approval: `docs: close import e2e regression checkpoint`.
+- `npm.cmd run qa:import:e2e` now runs the original smoke test plus `e2e/import-regression.spec.ts` with one Playwright worker.
+- Regression coverage now includes Telefon 1-10 preservation, empty Mahalle/Ilce acceptance without an empty drawer line, and Anne/Baba fields not creating a student name.
+- Validation passed: Playwright 4/4, Vitest 45 files / 299 tests, and production build PASS; only the known Vite chunk-size warning remains.
+- No production `src/`, schema, export, backup, or restore behavior changed.
+- `test-results/` stays ignored. `dev-server.log` is local runtime output and must not be staged, committed, deleted, or treated as a project artifact.
+- On a new machine Chromium may require: `npx.cmd playwright install chromium`.
+- Later Phase 2B candidates are Telefon 10-only, only-Mahalle/only-Ilce, invalid/duplicate phones, duplicate import warning flow, and minimal selector hardening only if flakiness appears.

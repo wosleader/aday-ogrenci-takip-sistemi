@@ -418,3 +418,17 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - `test-results/` is ignored and must not be committed. `dev-server.log` remains local/untracked and must not be staged.
 - Chromium may need a one-time local install on a new machine: `npx.cmd playwright install chromium`.
 - New checkpoint: `docs/CHECKPOINT_PLAYWRIGHT_IMPORT_E2E_SMOKE.md`.
+
+## Latest Checkpoint Closure - Playwright Import Regression Matrix Phase 2A
+
+- Implementation commit: `0980cdb feat: add import e2e regression matrix`.
+- Previous checkpoint: `90f70e3 docs: close import e2e smoke checkpoint`.
+- The existing `npm.cmd run qa:import:e2e` command now runs the original smoke test and `e2e/import-regression.spec.ts`.
+- Phase 2A adds three browser-level import regression scenarios: Telefon 1-10 values are preserved through import and right-drawer display, empty Mahalle/Ilce does not block import or render an empty location line, and Anne/Baba fields cannot create a student name when the required student name is missing.
+- Runtime `.xlsx` files continue to be generated under Playwright output paths through the shared `e2e/helpers/importFixtures.ts` helper; binary fixtures are not committed.
+- Playwright import E2E runs with one worker for local stability.
+- Validation passed: `npm.cmd run qa:import:e2e` PASS, 4/4 Playwright tests; `npm.cmd test -- --run` PASS, 45 test files / 299 tests; `npm.cmd run build` PASS with known Vite chunk-size warning.
+- No production `src/` behavior, schema, export, backup, or restore behavior changed.
+- Telefon 10-only, only-Mahalle, only-Ilce, invalid/duplicate phone, duplicate import warning, export E2E, backup/restore E2E, CI integration, and broad `data-testid` coverage remain later candidates.
+- `test-results/` remains ignored. `dev-server.log` remains local/untracked and must not be staged or committed.
+- New checkpoint: `docs/CHECKPOINT_PLAYWRIGHT_IMPORT_REGRESSION_PHASE_2A.md`.

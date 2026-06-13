@@ -105,3 +105,13 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Playwright Import E2E Smoke Pilot] `test-results/` is generated test output and must stay ignored. `dev-server.log` remains a local untracked runtime file and must not be staged.
 - [Playwright Import E2E Smoke Pilot] Full Telefon 1-10 E2E, Telefon 10-only, empty/partial Mahalle/Ilce, Anne/Baba safety, export E2E, backup/restore E2E, CI integration, and broad `data-testid` coverage are deferred to later phases.
 - [Playwright Import E2E Smoke Pilot] Recommended next automated QA phase is `Phase 2 - Import Regression Matrix`.
+
+## Latest Decisions - Playwright Import Regression Matrix Phase 2A
+
+- [Playwright Import Regression Matrix Phase 2A] The original import smoke test remains intact; regression coverage is kept in the separate `e2e/import-regression.spec.ts` file.
+- [Playwright Import Regression Matrix Phase 2A] The existing `qa:import:e2e` command is the single local import browser-QA command and runs both smoke and regression specs.
+- [Playwright Import Regression Matrix Phase 2A] The first regression matrix is deliberately limited to three high-value scenarios: Telefon 1-10 preservation, empty Mahalle/Ilce acceptance with no empty drawer line, and Anne/Baba student-name safety.
+- [Playwright Import Regression Matrix Phase 2A] Runtime Excel generation remains the fixture strategy. Binary `.xlsx` files are not committed.
+- [Playwright Import Regression Matrix Phase 2A] Import E2E uses one Playwright worker for stability. Broad selector instrumentation and CI integration are deferred until real flakiness or pipeline need appears.
+- [Playwright Import Regression Matrix Phase 2A] This automated QA expansion does not authorize production import logic, schema, export, backup, restore, or UI behavior changes.
+- [Playwright Import Regression Matrix Phase 2A] Telefon 10-only, only-Mahalle, only-Ilce, invalid/duplicate phone, duplicate import warning, export E2E, and backup/restore E2E remain later candidates.
