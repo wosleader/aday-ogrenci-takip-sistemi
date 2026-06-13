@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Mahalle/Ilce Import Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Guardian Contact Model Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,11 +6,11 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Mahalle/Ilce Import Pilot
-- FILE_MAP: Mahalle/Ilce Import Pilot
-- DECISIONS: Mahalle/Ilce Import Pilot
-- Son implementation commit: 70705af feat: import student location fields
-- Son docs closure hedefi: docs: close student location import checkpoint
+- PROJECT_MEMORY: Guardian Contact Model Decision
+- FILE_MAP: Guardian Contact Model Decision
+- DECISIONS: Guardian Contact Model Decision
+- Son güvenli HEAD/origin: 5727050 docs: close import e2e regression checkpoint
+- Son docs karar hedefi: docs: record guardian contact model decisions
 
 ## 1. Proje Amacı
 
@@ -74,6 +74,11 @@ Kısa özet:
 - Sınıf ve Şube/Grup ayrı kolonlarda verilirse ayrı kolon daha güvenilir kabul edilir.
 - Tek birleşik sınıf değeri varsa yaygın yazımlar parse edilmeye çalışılır.
 - Çelişkide ayrı Şube/Grup kolonu esas alınır; mümkünse import log uyarısı yazılır.
+- Anne/Baba/Veli bilgileri mevcut `guardians` tablosunda ilişki türüyle tutulacaktır: `guardian`, `mother`, `father`; legacy `null` Veli kabul edilir.
+- Anne Adı, Baba Adı ve Veli Ad Soyad öğrenci adı kaynağı değildir.
+- İlk Anne/Baba uygulaması names-only olacaktır; explicit parent phones, export ve telefonsuz import ayarı ayrı dilimlerdir.
+- Generic telefon başlıklarından Anne/Baba ilişkisi tahmin edilmez. Yalnızca açık Anne/Baba telefon kolonları ileride relation label taşıyabilir.
+- `Telefonsuz adayları içe aktar` ayarı ileride session-only ve varsayılan kapalı olarak ele alınacaktır.
 
 ## 7. Aday Listesi / Arama Operasyonu
 

@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Mahalle/Ilce Import Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Guardian Contact Model Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -115,3 +115,18 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Playwright Import Regression Matrix Phase 2A] Import E2E uses one Playwright worker for stability. Broad selector instrumentation and CI integration are deferred until real flakiness or pipeline need appears.
 - [Playwright Import Regression Matrix Phase 2A] This automated QA expansion does not authorize production import logic, schema, export, backup, restore, or UI behavior changes.
 - [Playwright Import Regression Matrix Phase 2A] Telefon 10-only, only-Mahalle, only-Ilce, invalid/duplicate phone, duplicate import warning, export E2E, and backup/restore E2E remain later candidates.
+
+## Latest Decisions - Guardian Contact Model
+
+- [Guardian Contact Model Decision] Anne/Baba/Veli bilgileri için mevcut `guardians` tablosu kullanılacaktır. Yeni `guardian_contacts` tablosu veya `StudentRecord` üzerinde tekrar eden parent alanları oluşturulmayacaktır.
+- [Guardian Contact Model Decision] İlişki anahtarları `guardian` = Veli, `mother` = Anne ve `father` = Baba olarak standartlaştırılacaktır. Legacy `relation_type: null` kayıtları geriye uyumluluk için Veli kabul edilecektir.
+- [Guardian Contact Model Decision] Aynı ad Veli ve Anne/Baba kolonlarında bulunsa bile yalnızca isim benzerliğine göre birleştirme veya ilişki tahmini yapılmayacaktır; kaynak kolon semantiği korunacaktır.
+- [Guardian Contact Model Decision] Anne Adı, Baba Adı ve Veli Ad Soyad hiçbir koşulda öğrenci adı kaynağı değildir. Öğrenci adı yalnızca onaylı öğrenci adı kolonlarından oluşturulur; öğrenci adı olmayan satır parent bilgileriyle öğrenci oluşturamaz.
+- [Guardian Contact Model Decision] İlk kod dilimi yalnızca Anne/Baba isimlerini kapsayacaktır: import mapping, simulation, guardian persistence, reader ayrıştırması ve sağ kartta yalnızca dolu Veli/Anne/Baba satırları. Parent phone relation, export ve backup değişiklikleri bu dilime dahil değildir.
+- [Guardian Contact Model Decision] UI'da `ilişki bilinmiyor`, `unknown relation`, `ilişkilendirilmiş telefon yok` veya `telefon yok` gibi teknik/boş durum metinleri gösterilmeyecektir.
+- [Guardian Contact Model Decision] Generic `GSM`, `Tel1`, `Telefon 3` gibi telefon kolonları Anne/Baba olarak yorumlanamaz. Yalnızca açık `ANNE TEL` / `BABA TEL` benzeri kolonlar ileride ilişki etiketi taşıyabilir.
+- [Guardian Contact Model Decision] Numaralı telefon kolonları ilan edilen slotu korur. Numarasız ve ilişki belirten telefon kolonları Excel kolon sırasına göre sonraki boş Telefon N slotuna yerleşir; Anne/Baba telefonları Telefon 1/2'ye sıkıştırılmaz.
+- [Guardian Contact Model Decision] `No`, telefon aliası değildir. `No1/No2/Numara N` ailesi öğrenci numarasıyla karışabileceği için ancak dar eşleştirme ve açık testlerle değerlendirilecektir.
+- [Guardian Contact Model Decision] Detaylı export ve Özet Görüşme Raporu ileride Anne Adı/Baba Adı ile Telefon 1-10'u taşıyacak şekilde genişletilecektir. İlişki durumu veya bilinmeyen ilişki kolonları eklenmeyecektir.
+- [Guardian Contact Model Decision] Tam Sistem Yedeği eksiksiz restore kaynağıdır. Mevcut `guardians` ve `phones` tabloları yeniden kullanılacak; ileride açık backup/restore roundtrip testi eklenecektir.
+- [Guardian Contact Model Decision] `Telefonsuz adayları içe aktar` ayarı ilk sürümde import oturumuna özel ve varsayılan kapalı olacaktır. Ayar kapalıyken telefonsuz aday bloklanır; açıkken warning ile içe alınabilir. Öğrenci adı olmayan satır her durumda bloklanır.

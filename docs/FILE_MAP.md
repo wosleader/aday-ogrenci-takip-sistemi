@@ -417,3 +417,30 @@ Son dogrulandi: Playwright Import Regression Matrix Phase 2A
   Chromium/Vite ayarlarina ek olarak import E2E testlerini stabil tutmak icin `workers: 1` kullanir.
 - `docs/CHECKPOINT_PLAYWRIGHT_IMPORT_REGRESSION_PHASE_2A.md`
   Playwright Import Regression Matrix Phase 2A resmi kapanis checkpoint'i.
+
+## Latest File Map Addendum - Guardian Contact Model Decision
+
+Son dogrulandi: Anne/Baba Guardian/Contact Model uygulama oncesi karar checkpoint'i
+
+- `src/domain/models/guardian.ts`
+  Mevcut `GuardianRecord`, `student_id`, `guardian_full_name` ve optional `relation_type` alanlariyla Veli/Anne/Baba isim modelinin temelidir. Karar: yeni guardian table acilmadan `guardian`, `mother`, `father` semantigi kullanilacak; legacy `null` Veli sayilacak.
+- `src/domain/models/phone.ts`
+  `guardian_id`, `relation_label`, `source_column`, `reference_label` ve `priority` alanlari explicit Anne/Baba telefonlarini ileride temsil edebilir. Generic telefon kolonlarindan parent iliskisi tahmin edilmeyecek.
+- `src/features/imports/services/columnDefinitions.ts`
+  Gelecek names-only diliminde Anne/Baba isim aliaslari burada tanimlanacak. Telefon alias genisletmeleri ve riskli `No1/No2/Numara N` ailesi kontrollu testlerle ayri ele alinacak.
+- `src/features/imports/services/importSimulation.ts`
+  Gelecek dilimde Anne/Baba isimlerini simulation row'a tasiyacak ve student-name safety kuralini koruyacak. No-phone session setting daha sonraki ayri dilimdir.
+- `src/features/imports/services/importWriter.ts`
+  Bugun tek Veli kaydi olusturup telefonlari bu guardian'a baglar. Gelecek names-only dilimde mother/father guardian kayitlari ayrica olusturulacak; parent phone baglama bu dilime dahil olmayacak.
+- `src/features/students/services/studentListReader.ts`
+  Bugun ilk guardian kaydini Veli olarak secer. Gelecek names-only dilimde Veli/Anne/Baba kayitlarini relation type ile ayirmasi gerekir.
+- `src/features/students/StudentsPage.tsx`
+  Sag kartta yalnizca dolu `Veli Ad Soyad`, `Anne Adi`, `Baba Adi` satirlari gosterilecek; teknik unknown/no-phone placeholder metinleri eklenmeyecek.
+- `src/features/exports/services/exportDataReader.ts`
+  Bugun ogrenci basina ilk guardian'i alir. Anne/Baba export diliminde relation-aware bundle gerekir.
+- `src/features/exports/services/exportMapper.ts`
+  Gelecek export diliminde detayli ve ozet export Anne/Baba adlari ile Telefon 1-10'u kayipsiz tasiyacak. Parent telefonlari Telefon 1/2'ye kaydirilmayacak.
+- `src/db/backup.ts`
+  Mevcut `guardians` ve `phones` tablolarini zaten tam sistem yedegine dahil eder. Kod degisikligi gerekmese bile gelecek dilimde relation metadata roundtrip testi gerekir.
+- `docs/CHECKPOINT_GUARDIAN_CONTACT_MODEL_DECISION.md`
+  Guardian modeli, UI dili, mapping, parent phone slot kurali, export, backup, no-phone ayari ve implementation slicing kararlarinin resmi kaydi.

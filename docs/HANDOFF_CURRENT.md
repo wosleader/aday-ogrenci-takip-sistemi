@@ -4,10 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 70705af feat: import student location fields
-- Mahalle/İlçe Import Pilot implementation tamamlandı ve pushlandı.
-- Bu docs-only closure tamamlanınca Strategy AI onayı sonrası yeni docs commit beklenecek.
-- Bu docs closure için önerilen commit: docs: close student location import checkpoint
+- Son güvenli HEAD/origin: 5727050 docs: close import e2e regression checkpoint
+- Anne/Baba Guardian/Contact Model discovery tamamlandı; bu çalışma docs-only insan/ürün karar checkpoint'idir.
+- Tracked working tree başlangıçta temizdir. `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
+- Bu docs-only karar kaydı tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
+- Önerilen docs commit: docs: record guardian contact model decisions
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -52,6 +53,20 @@ Temel alanlar:
 - Domain logic ve UI ayrımı
 
 ## 4. Güncel Sprint Durumu
+
+Anne/Baba Guardian/Contact Model için uygulama öncesi karar yönü netleştirildi.
+
+Özet:
+
+- Yeni tablo açılmayacak; mevcut `guardians` tablosu kullanılacak.
+- `guardian` = Veli, `mother` = Anne, `father` = Baba; legacy `relation_type: null` = Veli kabul edilecek.
+- Anne/Baba/Veli öğrenci adı kaynağı olmayacak.
+- İlk önerilen kod dilimi Anne/Baba isimleriyle sınırlı olacak; parent phones, export, backup guarantee ve telefonsuz import ayarı ayrı dilimlerde ele alınacak.
+- Sağ kart yalnızca dolu `Veli Ad Soyad`, `Anne Adı`, `Baba Adı` satırlarını gösterecek.
+- Explicit parent-phone kolonları ileride relation label alabilecek; generic telefon kolonlarından ilişki tahmini yapılmayacak.
+- Karar ayrıntıları `docs/CHECKPOINT_GUARDIAN_CONTACT_MODEL_DECISION.md` içinde tutulacaktır.
+
+### Önceki Uygulama Durumu
 
 Phone-Level Outcome Read Model Pilot code tarafı tamamlandı ve pushlandı.
 
