@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Guardian Parent Names Import Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Detailed Export Guardian Names | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -152,3 +152,13 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Explicit Guardian Phone Relations Pilot] Export, backup/restore, no-phone import setting, broad source-column UI ve yeni Playwright senaryolari bu dilimin disindadir.
 - [Explicit Guardian Phone Relations Pilot] Riskli `No1/No2/Numara N` alias ailesi false-positive riski nedeniyle ertelenmistir.
 - [Explicit Guardian Phone Relations Pilot] Sonraki onerilen dilim export ve backup/restore garantileridir; export Telefon 1-10 slot fidelity'yi bozmamali ve Full System Backup, Excel exporttan ayri restore kaynagi olarak kalmalidir.
+
+## Latest Decisions - Detailed Export Guardian Names
+
+- [Detailed Export Guardian Names] Detaylı Excel Export relation-aware `Veli Ad Soyad`, `Anne Adı` ve `Baba Adı` kolonlarını taşır. Anne/Baba kolonları Veli kolonunun hemen arkasında yer alır; mevcut `Veli Ad Soyad` adı değiştirilmez.
+- [Detailed Export Guardian Names] `relation_type: guardian` ve legacy `relation_type: null` Veli, `mother` Anne, `father` Baba kabul edilir. Export ilk oluşturulan guardian kaydını körlemesine Veli saymaz.
+- [Detailed Export Guardian Names] Aynı relation türünde birden fazla aktif kayıt varsa kararlı seçim `created_at`, ardından `id` sırasındaki ilk kayıtla yapılır. Eksik Anne/Baba değerleri boş hücre olarak export edilir.
+- [Detailed Export Guardian Names] Telefon 1-10 slot fidelity korunur. Parent relation telefonları mevcut Telefon N slotlarında kalır; `Anne Telefonu` veya `Baba Telefonu` gibi ayrı kolonlar eklenmez.
+- [Detailed Export Guardian Names] Summary export, backup/restore, import, schema, sağ drawer/UI ve Playwright bu dilimde değiştirilmemiştir. `Veli Bilgisi` UI grup etiketi ayrı karardır.
+- [Detailed Export Guardian Names] Sonraki önerilen dilim Full System Backup guardian/phone relation roundtrip garantisidir. Önce `tests/settings/backupRestore.test.ts` ile test-first ilerlenir; gerçek açık bulunmadıkça `src/db/backup.ts` değiştirilmez.
+- [Detailed Export Guardian Names] Summary export Telefon 1-10 genişletmesi ayrıdır. Lossless/compact kapsamı ve Telefon 3-10 durum kolonları hakkında açık insan kararı olmadan summary export değiştirilmez.

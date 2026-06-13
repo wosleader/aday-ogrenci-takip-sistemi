@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Explicit Guardian Phone Relations Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Detailed Export Guardian Names | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,11 +6,11 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Explicit Guardian Phone Relations Pilot
-- FILE_MAP: Explicit Guardian Phone Relations Pilot
-- DECISIONS: Explicit Guardian Phone Relations Pilot
-- Son implementation commit: 8f744dd feat: import explicit guardian phone relations
-- Son docs closure hedefi: docs: close explicit guardian phone relations checkpoint
+- PROJECT_MEMORY: Detailed Export Guardian Names
+- FILE_MAP: Detailed Export Guardian Names
+- DECISIONS: Detailed Export Guardian Names
+- Son implementation commit: 9b030a8 feat: export guardian parent names
+- Son docs closure hedefi: docs: close detailed export guardian names checkpoint
 
 ## 1. Proje Amacı
 
@@ -85,7 +85,7 @@ Kısa özet:
 - Explicit Anne/Baba phone relation import tamamlandı. Açık `ANNE TEL` / `BABA TEL` kolonları relation metadata taşır; generic telefon kolonlarından Anne/Baba ilişkisi çıkarılmaz.
 - Parent phone slotları Excel kolon sırası ve sonraki uygun Telefon N kuralıyla atanır; Telefon 1-10 slot fidelity korunur.
 - Anne/Baba adı varsa explicit parent phone doğru mother/father guardian kaydına bağlanır. İsim yoksa sahte guardian oluşturulmaz; relation label korunur ve `guardian_id: null` kullanılır.
-- Export genişletmesi, explicit backup/restore roundtrip, no-phone ayarı ve source-column UI henüz uygulanmadı.
+- Detaylı export Veli/Anne/Baba adlarını relation-aware olarak taşır. Explicit backup/restore roundtrip, summary export genişletmesi, no-phone ayarı ve source-column UI henüz uygulanmadı.
 
 ## 7. Aday Listesi / Arama Operasyonu
 
@@ -112,6 +112,10 @@ Kısa özet:
 ## 9. Export Kararları
 
 - Detaylı Excel Export korunur.
+- Detaylı export `Veli Ad Soyad`, `Anne Adı`, `Baba Adı` kolonlarını bu sırayla taşır; Anne/Baba kolonları Veli kolonunun hemen arkasındadır.
+- Export guardian seçimi relation-aware çalışır: `guardian` ve legacy `null` Veli, `mother` Anne, `father` Baba kabul edilir.
+- Aynı relation türünde birden fazla aktif kayıt varsa `created_at`, ardından `id` sırasındaki ilk kayıt kullanılır; eksik Anne/Baba hücreleri boş kalır.
+- Telefon 1-10 slot fidelity korunur. Parent relation telefonları mevcut Telefon N slotlarında kalır; ayrı Anne Telefonu/Baba Telefonu kolonları üretilmez.
 - Özet Görüşme Raporu eklendi.
 - Özet rapor adı: Özet Görüşme Raporu (Fazla Detay İçermez)
 - Özet raporda Kampanya ve Tekrar Arama Tarihi yoktur.

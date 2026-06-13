@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Mahalle/Ilce Import Pilot | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Detailed Export Guardian Names | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -498,3 +498,20 @@ Son dogrulandi: Explicit Anne/Baba Phone Relation Pilot
   Guardian linking, relation labels, source columns, slot order ve fake guardian olusturmama davranisini test eder.
 - `docs/CHECKPOINT_EXPLICIT_GUARDIAN_PHONE_RELATIONS.md`
   Explicit parent-phone implementation kapsami, validation, riskler ve sonraki export/backup dilimi icin resmi kapanis kaydi.
+
+## Latest File Map Addendum - Detailed Export Guardian Names
+
+Son doğrulandı: Detailed Export Guardian Names
+
+- `src/features/exports/services/exportTypes.ts`
+  Detailed export bundle içinde relation-aware `guardian`, `mother` ve `father` guardian kayıtlarını taşır.
+- `src/features/exports/services/exportDataReader.ts`
+  Aktif guardian kayıtlarını relation type ile ayırır. `guardian` ve legacy `null` Veli, `mother` Anne, `father` Baba kabul edilir. Aynı relation türünde seçim `created_at`, ardından `id` sırasıyla deterministiktir.
+- `src/features/exports/services/exportMapper.ts`
+  Yalnızca detaylı export için `Veli Ad Soyad`, `Anne Adı`, `Baba Adı` kolonlarını üretir. Telefon 1-10 slot mapper'ı değişmeden kalır; summary export genişletilmez.
+- `tests/exports/exportDataReader.test.ts`
+  Relation-aware Veli/Anne/Baba seçimini, yanlış ilk guardian regresyonunu ve legacy null Veli uyumluluğunu doğrular.
+- `tests/exports/exportMapper.test.ts`
+  Guardian kolon sırasını, eksik Anne/Baba hücrelerini, Telefon 1-10 slot fidelity'yi ve ayrı Anne/Baba telefonu kolonlarının üretilmediğini doğrular.
+- `docs/CHECKPOINT_DETAILED_EXPORT_GUARDIAN_NAMES.md`
+  Detailed export guardian-name diliminin kapsam, karar, validation, risk ve sonraki backup/restore test-first adımını kaydeder.
