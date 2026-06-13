@@ -184,4 +184,204 @@ describe("backup and restore hardening", () => {
       await targetDatabase.delete();
     }
   });
+
+  it("preserves guardian relations and relation-aware phone metadata across backup restore", async () => {
+    const sourceDatabase = await createDatabase();
+    const targetDatabase = await createDatabase();
+
+    try {
+      const studentId = await sourceDatabase.students.add(student("Ayşe Yılmaz"));
+      const guardianId = await sourceDatabase.guardians.add({
+        uuid: crypto.randomUUID(),
+        student_id: studentId,
+        guardian_full_name: "Zeynep Yılmaz",
+        normalized_guardian_name: "zeynep yilmaz",
+        relation_type: "guardian",
+        sync_status: "local",
+        created_at: timestamp,
+        updated_at: timestamp,
+        deleted_at: null
+      });
+      const motherId = await sourceDatabase.guardians.add({
+        uuid: crypto.randomUUID(),
+        student_id: studentId,
+        guardian_full_name: "Fatma Yılmaz",
+        normalized_guardian_name: "fatma yilmaz",
+        relation_type: "mother",
+        sync_status: "local",
+        created_at: timestamp,
+        updated_at: timestamp,
+        deleted_at: null
+      });
+      const fatherId = await sourceDatabase.guardians.add({
+        uuid: crypto.randomUUID(),
+        student_id: studentId,
+        guardian_full_name: "Mehmet Yılmaz",
+        normalized_guardian_name: "mehmet yilmaz",
+        relation_type: "father",
+        sync_status: "local",
+        created_at: timestamp,
+        updated_at: timestamp,
+        deleted_at: null
+      });
+      await sourceDatabase.guardians.add({
+        uuid: crypto.randomUUID(),
+        student_id: studentId,
+        guardian_full_name: "Legacy Veli",
+        normalized_guardian_name: "legacy veli",
+        relation_type: null,
+        sync_status: "local",
+        created_at: timestamp,
+        updated_at: timestamp,
+        deleted_at: null
+      });
+
+      await sourceDatabase.phones.bulkAdd([
+        {
+          uuid: crypto.randomUUID(),
+          student_id: studentId,
+          guardian_id: guardianId,
+          phone_number: "05320000001",
+          normalized_phone_number: "05320000001",
+          original_phone_value: "0532 000 00 01",
+          phone_label: "Telefon 1",
+          reference_label: "Telefon 1",
+          relation_label: "Veli",
+          source_column: "GSM",
+          priority: 1,
+          phone_status: "active",
+          is_valid: true,
+          is_wrong: false,
+          is_primary: true,
+          sync_status: "local",
+          created_at: timestamp,
+          updated_at: timestamp,
+          deleted_at: null
+        },
+        {
+          uuid: crypto.randomUUID(),
+          student_id: studentId,
+          guardian_id: motherId,
+          phone_number: "05320000002",
+          normalized_phone_number: "05320000002",
+          original_phone_value: "0532 000 00 02",
+          phone_label: "Anne Telefon",
+          reference_label: "Telefon 2",
+          relation_label: "Anne",
+          source_column: "ANNE TEL",
+          priority: 2,
+          phone_status: "active",
+          is_valid: true,
+          is_wrong: false,
+          is_primary: false,
+          sync_status: "local",
+          created_at: timestamp,
+          updated_at: timestamp,
+          deleted_at: null
+        },
+        {
+          uuid: crypto.randomUUID(),
+          student_id: studentId,
+          guardian_id: fatherId,
+          phone_number: "05320000003",
+          normalized_phone_number: "05320000003",
+          original_phone_value: "0532 000 00 03",
+          phone_label: "Baba Telefon",
+          reference_label: "Telefon 3",
+          relation_label: "Baba",
+          source_column: "BABA TEL",
+          priority: 3,
+          phone_status: "active",
+          is_valid: true,
+          is_wrong: false,
+          is_primary: false,
+          sync_status: "local",
+          created_at: timestamp,
+          updated_at: timestamp,
+          deleted_at: null
+        },
+        {
+          uuid: crypto.randomUUID(),
+          student_id: studentId,
+          guardian_id: null,
+          phone_number: "05320000004",
+          normalized_phone_number: "05320000004",
+          original_phone_value: "0532 000 00 04",
+          phone_label: "Anne Telefon",
+          reference_label: "Telefon 4",
+          relation_label: "Anne",
+          source_column: "ANNE GSM",
+          priority: 4,
+          phone_status: "active",
+          is_valid: true,
+          is_wrong: false,
+          is_primary: false,
+          sync_status: "local",
+          created_at: timestamp,
+          updated_at: timestamp,
+          deleted_at: null
+        }
+      ]);
+
+      const snapshot = await createBackupSnapshot(sourceDatabase);
+      await restoreSystemBackup(snapshot, RESTORE_SYSTEM_BACKUP_CONFIRMATION, { database: targetDatabase });
+
+      const restoredGuardians = await targetDatabase.guardians.orderBy("id").toArray();
+      const restoredPhones = await targetDatabase.phones.orderBy("id").toArray();
+
+      expect(restoredGuardians).toHaveLength(4);
+      expect(
+        restoredGuardians.map(({ guardian_full_name, relation_type }) => ({ guardian_full_name, relation_type }))
+      ).toEqual([
+        { guardian_full_name: "Zeynep Yılmaz", relation_type: "guardian" },
+        { guardian_full_name: "Fatma Yılmaz", relation_type: "mother" },
+        { guardian_full_name: "Mehmet Yılmaz", relation_type: "father" },
+        { guardian_full_name: "Legacy Veli", relation_type: null }
+      ]);
+      expect(restoredPhones).toHaveLength(4);
+      expect(
+        restoredPhones.map(({ guardian_id, relation_label, source_column, reference_label, priority }) => ({
+          guardian_id,
+          relation_label,
+          source_column,
+          reference_label,
+          priority
+        }))
+      ).toEqual([
+        {
+          guardian_id: guardianId,
+          relation_label: "Veli",
+          source_column: "GSM",
+          reference_label: "Telefon 1",
+          priority: 1
+        },
+        {
+          guardian_id: motherId,
+          relation_label: "Anne",
+          source_column: "ANNE TEL",
+          reference_label: "Telefon 2",
+          priority: 2
+        },
+        {
+          guardian_id: fatherId,
+          relation_label: "Baba",
+          source_column: "BABA TEL",
+          reference_label: "Telefon 3",
+          priority: 3
+        },
+        {
+          guardian_id: null,
+          relation_label: "Anne",
+          source_column: "ANNE GSM",
+          reference_label: "Telefon 4",
+          priority: 4
+        }
+      ]);
+    } finally {
+      sourceDatabase.close();
+      targetDatabase.close();
+      await sourceDatabase.delete();
+      await targetDatabase.delete();
+    }
+  });
 });
