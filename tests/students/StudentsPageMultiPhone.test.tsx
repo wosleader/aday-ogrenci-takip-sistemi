@@ -17,6 +17,7 @@ const phoneSeeds = [
     phone_label: "Telefon 1",
     reference_label: "Telefon 1",
     relation_label: "Telefon",
+    source_column: "Telefon",
     priority: 1,
     is_primary: true
   },
@@ -26,6 +27,7 @@ const phoneSeeds = [
     phone_label: "Anne Telefon",
     reference_label: "Telefon 2",
     relation_label: "Anne",
+    source_column: "ANNE TEL",
     priority: 2,
     is_primary: false
   },
@@ -35,6 +37,7 @@ const phoneSeeds = [
     phone_label: "Öğrenci Telefon",
     reference_label: "Telefon 3",
     relation_label: "Öğrenci",
+    source_column: "Öğrenci Telefon",
     priority: 3,
     is_primary: false
   },
@@ -44,6 +47,7 @@ const phoneSeeds = [
     phone_label: "Veli Telefon",
     reference_label: "Telefon 4",
     relation_label: "Veli",
+    source_column: "Veli Telefon",
     priority: 4,
     is_primary: false
   },
@@ -53,6 +57,7 @@ const phoneSeeds = [
     phone_label: "Yakın Telefon",
     reference_label: "Telefon 5",
     relation_label: "Yakın",
+    source_column: "Yakın Telefon",
     priority: 5,
     is_primary: false
   }
@@ -98,6 +103,7 @@ async function seedStudentWithPhones(phoneCount: number, fullName = "MELIS KAYA"
         phone_label: phone.phone_label,
         reference_label: phone.reference_label,
         relation_label: phone.relation_label,
+        source_column: phone.source_column,
         priority: phone.priority,
         phone_status: "active",
         is_valid: true,
@@ -224,13 +230,29 @@ describe("StudentsPage right card multi-phone display", () => {
 
     renderStudentsPage();
 
-    expect(await screen.findByText("Telefon 3 · Öğrenci")).toBeInTheDocument();
+    expect(await screen.findAllByText("MELIS KAYA")).toHaveLength(2);
+    const drawer = getStudentDrawer();
+    const phone1Card = within(drawer).getByText("Telefon 1").closest(".drawer-phone-card");
+    const phone2Card = within(drawer).getByText("Telefon 2").closest(".drawer-phone-card");
+    expect(phone1Card).not.toBeNull();
+    expect(phone2Card).not.toBeNull();
+    expect(within(phone1Card as HTMLElement).queryByText(/telefonu$/i)).not.toBeInTheDocument();
+    expect(within(phone2Card as HTMLElement).getByText("Anne telefonu")).toHaveAttribute(
+      "title",
+      "Excel kaynağı: ANNE TEL"
+    );
+    expect(await screen.findByText("Telefon 3")).toBeInTheDocument();
+    expect(screen.getByText("Öğrenci telefonu")).toBeInTheDocument();
     expect(screen.getByText("0532 000 0003")).toBeInTheDocument();
-    expect(screen.queryByText("Telefon 4 · Veli")).not.toBeInTheDocument();
-    expect(screen.queryByText("Telefon 5 · Yakın")).not.toBeInTheDocument();
+    expect(screen.queryByText("Telefon 4")).not.toBeInTheDocument();
+    expect(screen.queryByText("Telefon 5")).not.toBeInTheDocument();
 
-    const readonlyCard = screen.getByText("Telefon 3 · Öğrenci").closest(".drawer-phone-card");
+    const readonlyCard = screen.getByText("Telefon 3").closest(".drawer-phone-card");
     expect(readonlyCard).not.toBeNull();
+    expect(within(readonlyCard as HTMLElement).getByText("Öğrenci telefonu")).toHaveAttribute(
+      "title",
+      "Excel kaynağı: Öğrenci Telefon"
+    );
     expect(
       within(readonlyCard as HTMLElement).queryByRole("button", {
         name: "Son görüşülen numara olarak işaretle"
@@ -250,9 +272,11 @@ describe("StudentsPage right card multi-phone display", () => {
 
     expect(scrollIntoViewMock).not.toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
 
-    expect(await screen.findByText("Telefon 4 · Veli")).toBeInTheDocument();
+    expect(await screen.findByText("Telefon 4")).toBeInTheDocument();
+    expect(screen.getByText("Veli telefonu")).toBeInTheDocument();
     expect(screen.getByText("0532 000 0004")).toBeInTheDocument();
-    expect(screen.getByText("Telefon 5 · Yakın")).toBeInTheDocument();
+    expect(screen.getByText("Telefon 5")).toBeInTheDocument();
+    expect(screen.getByText("Yakın telefonu")).toBeInTheDocument();
     expect(screen.getByText("0532 000 0005")).toBeInTheDocument();
     expect(screen.queryByText("Aktif numara")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Daha az göster" })).toBeInTheDocument();
@@ -261,8 +285,8 @@ describe("StudentsPage right card multi-phone display", () => {
 
     await user.click(screen.getByRole("button", { name: "Daha az göster" }));
 
-    expect(screen.queryByText("Telefon 4 · Veli")).not.toBeInTheDocument();
-    expect(screen.queryByText("Telefon 5 · Yakın")).not.toBeInTheDocument();
+    expect(screen.queryByText("Telefon 4")).not.toBeInTheDocument();
+    expect(screen.queryByText("Telefon 5")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "+2 numara daha göster" })).toBeInTheDocument();
     expect(scrollIntoViewMock).toHaveBeenCalledTimes(1);
   });
@@ -299,6 +323,7 @@ describe("StudentsPage right card multi-phone display", () => {
 
     const contactCard = getStudentDrawer().querySelector(".contact-card");
     expect(contactCard).not.toBeNull();
+    expect(within(contactCard as HTMLElement).getByText("Veli Bilgileri")).toBeInTheDocument();
     expect(within(contactCard as HTMLElement).getByText("Veli Ad Soyad: AYLIN KAYA")).toBeInTheDocument();
     expect(within(contactCard as HTMLElement).getByText("Anne Adı: FATMA KAYA")).toBeInTheDocument();
     expect(within(contactCard as HTMLElement).getByText("Baba Adı: MEHMET KAYA")).toBeInTheDocument();
@@ -314,6 +339,7 @@ describe("StudentsPage right card multi-phone display", () => {
 
     const contactCard = getStudentDrawer().querySelector(".contact-card");
     expect(contactCard).not.toBeNull();
+    expect(within(contactCard as HTMLElement).getByText("Veli Bilgileri")).toBeInTheDocument();
     expect(within(contactCard as HTMLElement).getByText("Veli Ad Soyad: AYLIN KAYA")).toBeInTheDocument();
     expect(within(contactCard as HTMLElement).queryByText(/Anne Adı:/)).not.toBeInTheDocument();
     expect(within(contactCard as HTMLElement).queryByText(/Baba Adı:/)).not.toBeInTheDocument();
@@ -324,7 +350,7 @@ describe("StudentsPage right card multi-phone display", () => {
 
     renderStudentsPage();
 
-    expect(await screen.findByText("Telefon 3 · Öğrenci")).toBeInTheDocument();
+    expect(await screen.findByText("Telefon 3")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /\+\d+ numara daha göster/ })).not.toBeInTheDocument();
   });
 

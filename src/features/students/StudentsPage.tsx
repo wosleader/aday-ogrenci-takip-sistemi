@@ -273,6 +273,8 @@ type PhoneCardProps = {
   label: string;
   phoneId?: number | null;
   value?: string | null;
+  relationLabel?: string | null;
+  sourceColumn?: string | null;
   latestOutcomeLabel?: string | null;
   isContacted: boolean;
   isWrong: boolean;
@@ -308,6 +310,37 @@ const SHORTCUT_HELP_GROUPS: ShortcutHelpGroup[] = [
 const CALL_PHONE_ACTION_LABEL = "Bu görüşmede kullanılacak telefon";
 const CALL_PHONE_ACTION_SELECTED_LABEL = "Bu görüşmede kullanılacak telefon seçili";
 const WRONG_PHONE_ACTION_LABEL = "Yanlış / kullanılmayacak numara";
+
+function getPhoneRelationText(relationLabel?: string | null): string | null {
+  switch (relationLabel?.trim().toLocaleLowerCase("tr-TR")) {
+    case "anne":
+      return "Anne telefonu";
+    case "baba":
+      return "Baba telefonu";
+    case "veli":
+      return "Veli telefonu";
+    case "öğrenci":
+    case "ogrenci":
+      return "Öğrenci telefonu";
+    case "yakın":
+    case "yakin":
+      return "Yakın telefonu";
+    default:
+      return null;
+  }
+}
+
+function findPhoneRow(
+  row: StudentListRow,
+  phoneId?: number | null,
+  phoneNumber?: string | null
+): StudentListPhoneRow | null {
+  return (
+    row.phones.find((phone) => phoneId != null && phone.id === phoneId) ??
+    row.phones.find((phone) => Boolean(phoneNumber) && phone.phone_number === phoneNumber) ??
+    null
+  );
+}
 
 type PhoneOutcomeLookup = {
   byPhoneId: Map<number, string>;
@@ -405,6 +438,8 @@ function PhoneCard({
   label,
   phoneId,
   value,
+  relationLabel,
+  sourceColumn,
   latestOutcomeLabel,
   isContacted,
   isWrong,
@@ -415,6 +450,7 @@ function PhoneCard({
   onInvalid,
   onSelectForCall
 }: PhoneCardProps) {
+  const relationText = getPhoneRelationText(relationLabel);
   const isEffectiveContacted = isContacted || isSelectedForCall;
   const effectiveStatusText = isSelectedForCall ? undefined : statusText;
   const displayStatusText =
@@ -508,7 +544,28 @@ function PhoneCard({
   return (
     <div className={`drawer-phone-card ${isEffectiveContacted ? "contacted" : ""} ${isWrong ? "invalid" : ""}`}>
       <div>
-        <span className="form-label">{label}</span>
+        <span className="form-label" style={{ alignItems: "center", display: "flex", gap: 6 }}>
+          <span>{label}</span>
+          {relationText ? (
+            <span
+              style={{
+                background: "#f4f1ea",
+                border: "1px solid #ddd6c8",
+                borderRadius: 999,
+                color: "#6f6658",
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: 0,
+                lineHeight: "16px",
+                padding: "0 6px",
+                textTransform: "none"
+              }}
+              title={sourceColumn?.trim() ? `Excel kaynağı: ${sourceColumn.trim()}` : undefined}
+            >
+              {relationText}
+            </span>
+          ) : null}
+        </span>
         <strong>
           {value ? (
             <span
@@ -813,6 +870,8 @@ export function StudentsPage() {
     () => (selectedRow ? getReadonlyDrawerPhones(selectedRow, isExtraPhonesExpanded) : []),
     [isExtraPhonesExpanded, selectedRow]
   );
+  const phone1Row = selectedRow ? findPhoneRow(selectedRow, selectedRow.phone_1_id, selectedRow.phone_1) : null;
+  const phone2Row = selectedRow ? findPhoneRow(selectedRow, selectedRow.phone_2_id, selectedRow.phone_2) : null;
   const callHistory = useLiveQuery(
     () => (selectedRow ? readCallHistoryForStudent(selectedRow.student_id) : Promise.resolve([])),
     [selectedRow?.student_id],
@@ -1836,6 +1895,7 @@ export function StudentsPage() {
                 </div>
               </div>
               <div className="contact-card">
+                <span className="form-label">Veli Bilgileri</span>
                 <div className="veli-row">
                   <div className="veli-name">
                     {selectedRow.guardian_full_name ? <div>Veli Ad Soyad: {selectedRow.guardian_full_name}</div> : null}
@@ -1859,6 +1919,8 @@ export function StudentsPage() {
                 label="Telefon 1"
                 phoneId={selectedRow.phone_1_id}
                 value={selectedRow.phone_1}
+                relationLabel={phone1Row?.relation_label}
+                sourceColumn={phone1Row?.source_column}
                 latestOutcomeLabel={getLatestPhoneOutcomeLabel(
                   latestPhoneOutcomeLookup,
                   selectedRow.phone_1_id,
@@ -1876,6 +1938,8 @@ export function StudentsPage() {
                 label="Telefon 2"
                 phoneId={selectedRow.phone_2_id}
                 value={selectedRow.phone_2}
+                relationLabel={phone2Row?.relation_label}
+                sourceColumn={phone2Row?.source_column}
                 latestOutcomeLabel={getLatestPhoneOutcomeLabel(
                   latestPhoneOutcomeLookup,
                   selectedRow.phone_2_id,
@@ -1892,9 +1956,11 @@ export function StudentsPage() {
               {readonlyDrawerPhones.map((phone) => (
                 <PhoneCard
                   key={phone.id ?? phone.normalized_phone_number}
-                  label={phone.display_label}
+                  label={phone.reference_label}
                   phoneId={phone.id}
                   value={phone.phone_number}
+                  relationLabel={phone.relation_label}
+                  sourceColumn={phone.source_column}
                   latestOutcomeLabel={getLatestPhoneOutcomeLabel(
                     latestPhoneOutcomeLookup,
                     phone.id,

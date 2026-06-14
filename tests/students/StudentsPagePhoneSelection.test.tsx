@@ -221,7 +221,7 @@ describe("StudentsPage phone selection", () => {
 
     renderStudentsPage();
 
-    const phone3Card = (await screen.findByText("Telefon 3 · Öğrenci")).closest(".drawer-phone-card");
+    const phone3Card = (await screen.findByText("Telefon 3")).closest(".drawer-phone-card");
     expect(phone3Card).not.toBeNull();
 
     await user.click(
@@ -259,7 +259,7 @@ describe("StudentsPage phone selection", () => {
     renderStudentsPage();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
-    const phone3Card = getDrawerPhoneCard("Telefon 3 · Öğrenci");
+    const phone3Card = getDrawerPhoneCard("Telefon 3");
 
     expect(within(phone1Card).queryByText("Aktif numara")).not.toBeInTheDocument();
     expect(within(phone3Card).queryByText("Aktif numara")).not.toBeInTheDocument();
@@ -271,27 +271,27 @@ describe("StudentsPage phone selection", () => {
     );
 
     expect(
-      within(getDrawerPhoneCard("Telefon 3 · Öğrenci")).getByText("Son görüşülen / iletişim kurulan numara")
+      within(getDrawerPhoneCard("Telefon 3")).getByText("Son görüşülen / iletişim kurulan numara")
     ).toBeInTheDocument();
 
     await user.click(
-      within(getDrawerPhoneCard("Telefon 3 · Öğrenci")).getByRole("button", {
+      within(getDrawerPhoneCard("Telefon 3")).getByRole("button", {
         name: "Bu görüşmede kullanılacak telefon seçili"
       })
     );
     await waitFor(() => {
-      expect(getDrawerPhoneCard("Telefon 3 · Öğrenci")).not.toHaveClass("contacted");
+      expect(getDrawerPhoneCard("Telefon 3")).not.toHaveClass("contacted");
     });
 
     await user.click(
-      within(getDrawerPhoneCard("Telefon 3 · Öğrenci")).getByRole("button", {
+      within(getDrawerPhoneCard("Telefon 3")).getByRole("button", {
         name: "Yanlış / kullanılmayacak numara"
       })
     );
 
     await waitFor(() => {
       expect(
-        within(getDrawerPhoneCard("Telefon 3 · Öğrenci")).getByText("Yanlış numara / kullanılmıyor")
+        within(getDrawerPhoneCard("Telefon 3")).getByText("Yanlış numara / kullanılmıyor")
       ).toBeInTheDocument();
     });
   });
@@ -302,7 +302,7 @@ describe("StudentsPage phone selection", () => {
     renderStudentsPage();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
-    const phone3Card = getDrawerPhoneCard("Telefon 3 · Öğrenci");
+    const phone3Card = getDrawerPhoneCard("Telefon 3");
 
     expect(within(phone1Card).getByText("Son sonuç: Yok")).toBeInTheDocument();
     expect(within(phone3Card).getByText("Son sonuç: Yok")).toBeInTheDocument();
@@ -359,7 +359,7 @@ describe("StudentsPage phone selection", () => {
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
     const phone2Card = getDrawerPhoneCard("Telefon 2");
-    const phone3Card = getDrawerPhoneCard("Telefon 3 · Öğrenci");
+    const phone3Card = getDrawerPhoneCard("Telefon 3");
 
     await waitFor(() => {
       expect(within(phone1Card).getByText("Son sonuç: Görüşüldü")).toBeInTheDocument();
@@ -380,7 +380,7 @@ describe("StudentsPage phone selection", () => {
 
     renderStudentsPage();
 
-    const phone3Card = await waitFor(() => getDrawerPhoneCard("Telefon 3 · Öğrenci"));
+    const phone3Card = await waitFor(() => getDrawerPhoneCard("Telefon 3"));
 
     expect(within(phone3Card).getByText("Geçersiz format")).toBeInTheDocument();
     expect(within(phone3Card).queryByText("Aktif numara")).not.toBeInTheDocument();
@@ -412,7 +412,7 @@ describe("StudentsPage phone selection", () => {
       expect(getDrawerPhoneCard("Telefon 1")).toHaveClass("contacted");
     });
 
-    const phone3Card = getDrawerPhoneCard("Telefon 3 · Öğrenci");
+    const phone3Card = getDrawerPhoneCard("Telefon 3");
 
     await user.click(
       within(phone3Card).getByRole("button", {
@@ -427,14 +427,14 @@ describe("StudentsPage phone selection", () => {
       expect(phone1?.phone_status).toBe("active");
       expect(phone3?.phone_status).toBe("contacted");
       expect(getDrawerPhoneCard("Telefon 1")).not.toHaveClass("contacted");
-      expect(getDrawerPhoneCard("Telefon 3 · Öğrenci")).toHaveClass("contacted");
+      expect(getDrawerPhoneCard("Telefon 3")).toHaveClass("contacted");
       expect(
-        within(getDrawerPhoneCard("Telefon 3 · Öğrenci")).getByText("Son görüşülen / iletişim kurulan numara")
+        within(getDrawerPhoneCard("Telefon 3")).getByText("Son görüşülen / iletişim kurulan numara")
       ).toBeInTheDocument();
     });
 
     await user.click(
-      within(getDrawerPhoneCard("Telefon 3 · Öğrenci")).getByRole("button", {
+      within(getDrawerPhoneCard("Telefon 3")).getByRole("button", {
         name: "Bu görüşmede kullanılacak telefon seçili"
       })
     );
@@ -443,9 +443,9 @@ describe("StudentsPage phone selection", () => {
       const phone3 = await db.phones.where("normalized_phone_number").equals("05321000003").first();
 
       expect(phone3?.phone_status).toBe("active");
-      expect(getDrawerPhoneCard("Telefon 3 · Öğrenci")).not.toHaveClass("contacted");
+      expect(getDrawerPhoneCard("Telefon 3")).not.toHaveClass("contacted");
       expect(
-        within(getDrawerPhoneCard("Telefon 3 · Öğrenci")).getByRole("button", {
+        within(getDrawerPhoneCard("Telefon 3")).getByRole("button", {
           name: "Bu görüşmede kullanılacak telefon"
         })
       ).toHaveAttribute("aria-pressed", "false");
@@ -458,7 +458,7 @@ describe("StudentsPage phone selection", () => {
 
     renderStudentsPage();
 
-    const phone3Card = (await screen.findByText("Telefon 3 · Öğrenci")).closest(".drawer-phone-card");
+    const phone3Card = (await screen.findByText("Telefon 3")).closest(".drawer-phone-card");
     expect(phone3Card).not.toBeNull();
 
     expect(
@@ -513,7 +513,7 @@ describe("StudentsPage phone selection", () => {
       "Kopyalandı"
     );
 
-    const phone3Card = getDrawerPhoneCard("Telefon 3 · Öğrenci");
+    const phone3Card = getDrawerPhoneCard("Telefon 3");
     const phone3Number = within(phone3Card).getByText("0532 100 0003");
     await user.click(phone3Number);
     expect(writeText).not.toHaveBeenCalledWith("0532 100 0003");
@@ -534,11 +534,11 @@ describe("StudentsPage phone selection", () => {
     expect(writeText).not.toHaveBeenCalled();
 
     await waitFor(() => {
-      expect(getDrawerPhoneCard("Telefon 3 · Öğrenci")).toHaveClass("contacted");
+      expect(getDrawerPhoneCard("Telefon 3")).toHaveClass("contacted");
     });
 
     await user.click(
-      within(getDrawerPhoneCard("Telefon 3 · Öğrenci")).getByRole("button", {
+      within(getDrawerPhoneCard("Telefon 3")).getByRole("button", {
         name: "Yanlış / kullanılmayacak numara"
       })
     );
@@ -646,7 +646,7 @@ describe("StudentsPage phone selection", () => {
 
     renderStudentsPage();
 
-    await screen.findByText("Telefon 3 · Öğrenci");
+    await screen.findByText("Telefon 3");
     await user.selectOptions(getCallResultSelect(), "reached");
     await user.click(screen.getByRole("button", { name: /Kaydet ve sonrakine geç/ }));
 
@@ -662,7 +662,7 @@ describe("StudentsPage phone selection", () => {
 
     renderStudentsPage();
 
-    const phone3Card = (await screen.findByText("Telefon 3 · Öğrenci")).closest(".drawer-phone-card");
+    const phone3Card = (await screen.findByText("Telefon 3")).closest(".drawer-phone-card");
     expect(phone3Card).not.toBeNull();
 
     await user.click(
