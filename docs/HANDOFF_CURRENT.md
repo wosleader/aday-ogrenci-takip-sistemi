@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 71c9072 feat: add no-phone import setting
-- No-Phone Candidate Import Setting implementation dilimi tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: ead391b feat: clarify guardian and phone labels
+- Guardian + Phone UI Clarity implementation dilimi tamamlandı ve pushlandı.
 - Tracked working tree başlangıçta temizdir. `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Bu docs-only closure tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: close no-phone import setting checkpoint
+- Önerilen docs commit: docs: close guardian phone UI clarity checkpoint
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -24,6 +24,23 @@
 - Bir önceki phone context persistence commit’i: 595979d feat: wire phone context persistence for calls and reminders
 - Working tree beklenen durumu: clean
 - GitHub/origin durumu: aktif branch `origin/sprint-9-2-multi-phone-architecture-plan` ile aynı son commit üzerinde görünür.
+
+## Latest Handoff Update - Guardian + Phone UI Clarity
+
+- Current safe HEAD/origin: `ead391b feat: clarify guardian and phone labels`.
+- Sağ kart contact bölüm başlığı `Veli Bilgileri` olarak kabul edilmiştir; `Veli / Anne / Baba Bilgileri` final metin değildir.
+- Dolu Veli/Anne/Baba ad satırları korunur.
+- Telefon slot başlıkları sabit `Telefon N` biçimindedir. Anlamlı ilişki ayrıca kompakt `Anne telefonu`, `Baba telefonu`, `Veli telefonu`, `Öğrenci telefonu` veya `Yakın telefonu` rozetiyle gösterilir.
+- Generic/bilinmeyen relation için rozet yoktur. `source_column` görünür ana metin değildir; mevcutsa yalnız tooltip'te `Excel kaynağı: ...` olarak sunulur.
+- Telefon status, `Son sonuç`, copy, +N / Daha az göster ve ✓ / x davranışları değişmemiştir.
+- Schema, reader, persistence, import, export, backup/restore ve telefon slot sırası değişmemiştir.
+- Validation: 3 focused dosya / 45 test PASS; OOM-safe full unit 45 dosya / 328 test PASS; build PASS; final başlık düzeltmesi 2 dosya / 21 test PASS.
+- Temiz browser profilinde aday verisi olmadığı için gerçek veri kartı görsel QA'sı yapılamadı; uygulama runtime hatası olmadan açıldı.
+- Tracked working tree docs görevi öncesinde temizdir; `dev-server.log` yerel untracked runtime çıktısı olarak kalabilir ve stage/commit edilmemelidir.
+- Sonraki ana görev immediate coding değildir: yeni-chat handoff/disiplin testi yapılmalıdır. Yeni chat önce latest HEAD, branch, working tree, Google Drive / Obsidian sync seviyesi ve çalışma kurallarını doğrulamalıdır.
+- Strategy vault ayrı katmandır ve `eefd4ed` seviyesine senkronlanmıştır; `ead391b` için küçük follow-up sync gerekebilir.
+- Reusable safety skeleton + task-specific customization kontrollü deneme olarak sürer; scope drift veya kontrol kaybında geri alınır.
+- `Reporting Area V2: Aday Pipeline Görselleştirme` deferred roadmap olarak kalır, aktif scope değildir.
 
 ## 2. Proje Özeti
 

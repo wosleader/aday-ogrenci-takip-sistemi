@@ -1,4 +1,4 @@
-<!-- Son guncelleme: No-Phone Import Setting | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Guardian + Phone UI Clarity | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -205,3 +205,14 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Reporting Area V2] Gelecekte Yeni data, Arandı, Ulaşıldı/Ulaşılamadı, Potansiyel, Randevu, Geldi/Gelmedi, Demo/seviye çalışması, Kayıt görüşmesi, Kayıt oldu ve Vazgeçti/Takipte aşamaları üzerinden dönüşüm hunisi ve süreç tıkanmaları gösterilebilir.
 - [Reporting Area V2] Yönetici görünümü takım/personel bazlı aday akışını ve data → randevu → gelen → kayıt dönüşüm oranlarını sunabilir.
 - [Reporting Area V2] Bu karar LMS, ERP veya öğrenci portalı kapsamı açmaz; yalnızca Aday Öğrenci Takip Sistemi'nin kayıt görüşmesi pipeline'ına özeldir.
+
+## Latest Decisions - Guardian + Phone UI Clarity
+
+- [Guardian + Phone UI Clarity] Sağ kart contact bölümünün final başlığı `Veli Bilgileri`dir. Daha uzun `Veli / Anne / Baba Bilgileri` başlığı kullanılmaz; Anne ve Baba ayrımı içerideki alan etiketleriyle yapılır.
+- [Guardian + Phone UI Clarity] Telefon slot kimliği birincildir ve `Telefon 1` ... `Telefon 10` biçiminde korunur. Relation bilgisi slot başlığının yerine geçmez.
+- [Guardian + Phone UI Clarity] Yalnız anlamlı relation değerleri kompakt ikincil rozet üretir: Anne, Baba, Veli, Öğrenci ve Yakın. Generic veya bilinmeyen relation için rozet ve `İlişki belirtilmedi` fallback'i gösterilmez.
+- [Guardian + Phone UI Clarity] Excel `source_column` teknik ana UI metni değildir. Mevcutsa yalnız ilişki rozeti tooltip'inde `Excel kaynağı: ...` olarak gösterilebilir.
+- [Guardian + Phone UI Clarity] Active/current, wrong/unused, invalid format, latest result, copy, expand/collapse ve ✓ / x davranışları değiştirilmez.
+- [Guardian + Phone UI Clarity] Bu UI dilimi schema, reader, persistence, import, export, backup/restore veya Telefon 1-10 slot/sıra mantığını değiştirmez.
+- [Context Layers] Google Drive / Obsidian strategy vault `eefd4ed` seviyesine ayrı olarak senkronlanmıştır; `ead391b` UI checkpoint'i için follow-up sync ayrı ve açık görev gerektirir.
+- [Workflow Trial] Sonraki ana adım yeni-chat handoff/disiplin testidir. Yeni chat kod işine başlamadan latest HEAD, branch, working tree, context sync seviyesi ve görev disiplinini doğrular. Reusable safety skeleton denemesi scope drift görülürse sonlandırılır.

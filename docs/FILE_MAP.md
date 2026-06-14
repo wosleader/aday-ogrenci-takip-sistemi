@@ -1,4 +1,4 @@
-<!-- Son guncelleme: No-Phone Import Setting | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Guardian + Phone UI Clarity | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -560,5 +560,20 @@ Son doğrulandı: No-Phone Candidate Import Setting
   Toggle açık veya kapalıyken yalnız Veli/Anne/Baba bilgilerinin öğrenci adı oluşturamadığını korur.
 - `tests/imports/importDuplicateGuard.test.ts`
   Duplicate guard fixture'ını yeni varsayılan OFF telefon politikasına uyumlu geçerli telefonlu kayıtla doğrular; duplicate algoritması değişmez.
+
+## Latest File Map Addendum - Guardian + Phone UI Clarity
+
+Son doğrulandı: `ead391b feat: clarify guardian and phone labels`
+
+- `src/features/students/StudentsPage.tsx`
+  Sağ kart contact alanında `Veli Bilgileri` başlığını gösterir. Telefon slot başlığını `Telefon N` olarak korur; anlamlı relation bilgisini ayrı kompakt rozet olarak sunar. Generic relation rozet üretmez. `source_column` yalnız mevcutsa tooltip metninde kullanılır. Telefon status, Son sonuç, copy, expand/collapse ve ✓ / x davranışları aynı kalır.
+- `tests/students/StudentsPageMultiPhone.test.tsx`
+  `Veli Bilgileri` başlığını, dolu Veli/Anne/Baba satırlarını, Telefon 1 generic etiketsiz davranışını, Telefon 2 ve Telefon 3+ relation rozetlerini, kaynak tooltip'ini ve expand/collapse regresyonunu doğrular.
+- `tests/students/StudentsPagePhoneSelection.test.tsx`
+  Telefon 3+ ana etiketinin slot-faithful `Telefon 3` olarak kalmasıyla mevcut selection, wrong/unused, invalid, Son sonuç, copy ve call-save davranışlarını doğrular.
+- `src/features/students/services/studentListReader.ts`
+  Bu dilimde değiştirilmedi. UI için gerekli `reference_label`, `relation_label`, `display_label` ve `source_column` alanlarını zaten taşıdığı için yeni query/read-model çalışması gerekmedi.
+- `docs/CHECKPOINT_GUARDIAN_PHONE_UI_CLARITY.md`
+  UI kararını, validation sonuçlarını, değişmeyen davranışları, manuel QA sınırını ve yeni-chat handoff önerisini kaydeder.
 - `docs/CHECKPOINT_NO_PHONE_IMPORT_SETTING.md`
   Ürün kararı, policy davranışı, validation, kapsam dışı alanlar, context sync notu ve sonraki aksiyonların resmi kapanış kaydıdır.

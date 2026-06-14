@@ -1,4 +1,4 @@
-<!-- Son guncelleme: No-Phone Import Setting | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Guardian + Phone UI Clarity | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,11 +6,11 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: No-Phone Import Setting
-- FILE_MAP: No-Phone Import Setting
-- DECISIONS: No-Phone Import Setting
-- Son implementation commit: 71c9072 feat: add no-phone import setting
-- Son docs closure hedefi: docs: close no-phone import setting checkpoint
+- PROJECT_MEMORY: Guardian + Phone UI Clarity
+- FILE_MAP: Guardian + Phone UI Clarity
+- DECISIONS: Guardian + Phone UI Clarity
+- Son implementation commit: ead391b feat: clarify guardian and phone labels
+- Son docs closure hedefi: docs: close guardian phone UI clarity checkpoint
 
 ## 1. Proje Amacı
 
@@ -505,3 +505,19 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - Amaç data → randevu → gelen → kayıt dönüşümünü, süreçteki tıkanmaları ve takım/personel bazlı aday akışını yönetici için okunur hale getirmektir.
 - Bu fikir yalnızca aday takip ve kayıt görüşmesi sürecimize özeldir; LMS, ERP veya öğrenci portalı projesi değildir.
 - Import/export/backup veri güvenliği ve mevcut rapor alanı oturmadan başlatılmayacak, mevcut önceliklerin önüne geçmeyecektir.
+
+## Latest Checkpoint Closure - Guardian + Phone UI Clarity
+
+- Safe implementation commit: `ead391b feat: clarify guardian and phone labels`.
+- Sağ öğrenci kartındaki contact alanının başlığı `Veli Bilgileri` olarak sabitlendi. Daha uzun `Veli / Anne / Baba Bilgileri` başlığı kullanılmadı.
+- Dolu Veli, Anne ve Baba adları mevcut ayrı satır etiketleriyle gösterilmeye devam eder.
+- Telefon slot başlıkları `Telefon 1`, `Telefon 2`, `Telefon 3` ... biçiminde sabit kalır; relation bilgisi slot adının yerine geçmez.
+- Anlamlı relation değerleri küçük ikincil rozetle gösterilir: `Anne telefonu`, `Baba telefonu`, `Veli telefonu`, `Öğrenci telefonu`, `Yakın telefonu`.
+- Generic veya bilinmeyen relation için ek rozet gösterilmez; `İlişki belirtilmedi` gibi gürültülü bir fallback eklenmez.
+- Excel `source_column` ana UI metni değildir. Mevcutsa yalnızca relation rozeti tooltip'inde `Excel kaynağı: ...` olarak sunulur.
+- Active/current, yanlış-kullanılmıyor, geçersiz format, `Son sonuç`, kopyalama, genişletme/daraltma ve ✓ / x davranışları korunmuştur.
+- Schema, import, export, backup/restore, reader, persistence ve Telefon 1-10 slot/sıra mantığı değişmemiştir.
+- Validation: focused 3 dosya / 45 test PASS; OOM-safe full unit 45 dosya / 328 test PASS; build PASS. Başlık düzeltmesi sonrası focused 2 dosya / 21 test PASS.
+- Temiz browser profilinde aday verisi bulunmadığı için gerçek veri kartı üzerinde görsel QA tamamlanamadı; uygulama hatasız açıldı. Veri içeren localhost profiliyle manuel kart kontrolü önerilir.
+- Google Drive / Obsidian strategy vault ayrı olarak `eefd4ed` seviyesine senkronlanmıştır; bu checkpoint sonrasında `ead391b` değişikliğini içeren küçük follow-up sync gerekebilir.
+- Sonraki ana aksiyon yeni-chat handoff/disiplin testidir; yeni oturum önce HEAD, branch, working tree, Drive/Obsidian sync durumu ve çalışma disiplinini doğrulamalıdır.
