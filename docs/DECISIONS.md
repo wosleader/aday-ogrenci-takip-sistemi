@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Adaptive Summary Export Columns | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: No-Phone Import Setting | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -181,8 +181,23 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Adaptive Summary Export Columns] Boş telefon slotlarının durum hücresi boş kalır; invalid non-empty telefon `Geçersiz format` olarak export edilir.
 - [Adaptive Summary Export Columns] In-memory doğrulama dolu opsiyonel verinin plandan çıkmasını, plan üstü/geçersiz slotları, eksik telefon durum header'ını ve row/header uzunluk farkını açıklayıcı hatayla engeller; eksik kolonları sessizce eklemez.
 - [Adaptive Summary Export Columns] Dış Excel tüketicileri dinamik kolonlar nedeniyle sabit indekslere değil header adlarına dayanmalıdır.
-- [Adaptive Summary Export Columns] Doğum Tarihi modelde olmadığı için eklenmemiştir. `Veli Bilgisi` UI etiketi ve telefonsuz aday import ayarı ayrı insan kararlarıdır.
+- [Adaptive Summary Export Columns] Doğum Tarihi modelde olmadığı için eklenmemiştir. `Veli Bilgisi` UI etiketi ayrı insan kararıdır; telefonsuz aday import ayarı daha sonra `71c9072` ile tamamlanmıştır.
 - [Workflow Trial] Gelecek Codex görevleri için yeniden kullanılabilir güvenlik iskeleti yalnızca deneme olarak kullanılabilir. Her prompt HEAD, scope, dosyalar, riskler, testler ve insan kararları için özelleştirilmelidir; scope drift veya kontrol kaybı doğurursa eski katı manuel prompt stiline dönülür.
+
+## Latest Decisions - No-Phone Import Setting
+
+- [No-Phone Import Setting] Kullanıcı etiketi `Telefonsuz adayları içe aktar` olarak sabitlenmiştir.
+- [No-Phone Import Setting] Varsayılan OFF'tur. İlk sürüm session-only'dir; localStorage/sessionStorage persistence yoktur ve yeni dosya, reset, tamamlanan import veya sayfa yenilemede OFF'a döner.
+- [No-Phone Import Setting] OFF iken en az bir geçerli kullanılabilir telefonu olmayan satır import edilmez. Valid explicit Anne/Baba telefonu ile valid Telefon 2/Telefon 10 gibi alternatif slotlar kullanılabilir telefon sayılır.
+- [No-Phone Import Setting] ON iken öğrenci adı bulunan gerçek no-phone satırı öğrenci olarak yazılabilir; PhoneRecord oluşturulmaz. Guardian kayıtları mevcut import kurallarıyla yazılabilir.
+- [No-Phone Import Setting] Invalid-only telefon satırları OFF ve ON modlarında bloklanır; no-phone izni geçersiz telefon verisine izin vermez.
+- [No-Phone Import Setting] Anne/Baba/Veli isimleri hiçbir modda öğrenci adı kaynağı değildir.
+- [No-Phone Import Setting] Simulation summary seçilen politikayı `allow_no_phone_candidates` olarak taşır. Writer bağımsız UI boolean kullanmaz ve summary-policy uyumunu backup/write öncesinde doğrular.
+- [No-Phone Import Setting] `no_usable_phone_count` ayrı sayaçtır; mevcut `empty_phone_count` yeniden tanımlanmamıştır.
+- [No-Phone Import Setting] Mevcut telefonsuz kayıtlar üzerinde retroaktif silme, gizleme veya cleanup yapılmaz.
+- [No-Phone Import Setting] Schema, export, backup/restore ve student screens bu dilimde değiştirilmemiştir.
+- [Context Layers] Repo docs source of truth'tür. Google Drive / Obsidian strategy shadow vault ayrı katmandır, eski `e6f580b` durumundan güncel `71c9072` durumuna göre geridedir ve yalnızca açık görevle senkronize edilir.
+- [Workflow Trial] Reusable safety skeleton + task-specific customization denemesi devam eder; scope drift veya kontrol kaybı görülürse daha katı manuel prompt stiline geri dönülür.
 
 ## Deferred Roadmap Decision - Reporting Area V2
 

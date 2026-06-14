@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Adaptive Summary Export Columns | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: No-Phone Import Setting | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -537,3 +537,28 @@ Son doğrulandı: Adaptive Summary Export Columns
   Telefon 1/2 uyumluluğu, Telefon 7-only ve Telefon 10-only slot fidelity, parent relation telefonları, adaptif guardian/location kolonları, invalid telefon durumu, boş slot durumu, telefon/status header çiftleri, row/header uzunluğu ve hatalı plan validation senaryolarını doğrular.
 - `docs/CHECKPOINT_ADAPTIVE_SUMMARY_EXPORT_COLUMNS.md`
   Adaptive summary kapsamını, kolon planını, header sırasını, veri güvenliği doğrulamasını, validation sonuçlarını, kalan riskleri ve sonraki insan kararı seçeneklerini kaydeder.
+
+## Latest File Map Addendum - No-Phone Import Setting
+
+Son doğrulandı: No-Phone Candidate Import Setting
+
+- `src/features/imports/ImportPage.tsx`
+  Session-only `Telefonsuz adayları içe aktar` checkbox'ını ve yardım metnini gösterir. Toggle değişince mevcut worksheet/current mappings ile simülasyonu yeniden üretir; yeni dosya, reset, tamamlanan import ve page refresh akışlarında ayarı OFF'a döndürür. Ayarı storage'a yazmaz.
+- `src/features/imports/services/types.ts`
+  `ImportSimulationOptions.allowNoPhoneCandidates`, summary policy snapshot `allow_no_phone_candidates` ve ayrı `no_usable_phone_count` alanlarını tanımlar.
+- `src/features/imports/services/importSimulation.ts`
+  Gerçek no-phone, invalid-only ve valid usable phone ayrımını yapar. Valid Anne/Baba telefonu ve valid alternatif Telefon N slotlarını kullanılabilir sayar; policy OFF iken no-phone satırı, her iki modda invalid-only satırı bloklar.
+- `src/features/imports/services/importWriter.ts`
+  Simulation summary policy snapshot'ını backup/write öncesinde savunmacı olarak doğrular. ON ile kabul edilen no-phone satırda öğrenci/guardian yazabilir fakat PhoneRecord oluşturmaz.
+- `tests/imports/ImportPageProgressiveDisclosure.test.tsx`
+  Toggle'ın varsayılan OFF durumunu, helper metnini, yeniden simülasyonu, güncel policy ile importu ve reset davranışını doğrular.
+- `tests/imports/importSimulation.test.ts`
+  OFF/ON no-phone davranışı, invalid-only bloklama, parent phone ve Telefon 10 gibi alternatif slotların kullanılabilir sayılması senaryolarını kapsar.
+- `tests/imports/importWriter.test.ts`
+  OFF'ta no-phone öğrenci yazılmamasını, ON'da PhoneRecord oluşturmadan öğrenci/guardian yazılmasını ve stale/tampered summary'nin backup öncesi reddedilmesini doğrular.
+- `tests/imports/importNameComposition.test.ts`
+  Toggle açık veya kapalıyken yalnız Veli/Anne/Baba bilgilerinin öğrenci adı oluşturamadığını korur.
+- `tests/imports/importDuplicateGuard.test.ts`
+  Duplicate guard fixture'ını yeni varsayılan OFF telefon politikasına uyumlu geçerli telefonlu kayıtla doğrular; duplicate algoritması değişmez.
+- `docs/CHECKPOINT_NO_PHONE_IMPORT_SETTING.md`
+  Ürün kararı, policy davranışı, validation, kapsam dışı alanlar, context sync notu ve sonraki aksiyonların resmi kapanış kaydıdır.

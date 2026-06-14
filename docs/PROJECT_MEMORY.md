@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Adaptive Summary Export Columns | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: No-Phone Import Setting | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,11 +6,11 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Adaptive Summary Export Columns
-- FILE_MAP: Adaptive Summary Export Columns
-- DECISIONS: Adaptive Summary Export Columns
-- Son implementation commit: 6347cfa feat: add adaptive summary export columns
-- Son docs closure hedefi: docs: close adaptive summary export checkpoint
+- PROJECT_MEMORY: No-Phone Import Setting
+- FILE_MAP: No-Phone Import Setting
+- DECISIONS: No-Phone Import Setting
+- Son implementation commit: 71c9072 feat: add no-phone import setting
+- Son docs closure hedefi: docs: close no-phone import setting checkpoint
 
 ## 1. Proje Amacı
 
@@ -78,7 +78,7 @@ Kısa özet:
 - Anne Adı, Baba Adı ve Veli Ad Soyad öğrenci adı kaynağı değildir.
 - İlk Anne/Baba uygulaması names-only olacaktır; explicit parent phones, export ve telefonsuz import ayarı ayrı dilimlerdir.
 - Generic telefon başlıklarından Anne/Baba ilişkisi tahmin edilmez. Yalnızca açık Anne/Baba telefon kolonları ileride relation label taşıyabilir.
-- `Telefonsuz adayları içe aktar` ayarı ileride session-only ve varsayılan kapalı olarak ele alınacaktır.
+- `Telefonsuz adayları içe aktar` ayarı tamamlandı; varsayılan kapalıdır, yalnızca mevcut import oturumunda geçerlidir ve kalıcı storage'a yazılmaz.
 - Anne/Baba names-only import tamamlandı. `mother_full_name` / `father_full_name` simulation alanları mevcut `guardians` tablosuna `mother` / `father` ilişkileriyle yazılır.
 - Reader Veli/Anne/Baba kayıtlarını relation type ile ayırır; legacy `relation_type: null` Veli olarak kalır.
 - Sağ kart yalnızca dolu `Veli Ad Soyad`, `Anne Adı`, `Baba Adı` satırlarını kompakt gösterir.
@@ -87,7 +87,7 @@ Kısa özet:
 - Anne/Baba adı varsa explicit parent phone doğru mother/father guardian kaydına bağlanır. İsim yoksa sahte guardian oluşturulmaz; relation label korunur ve `guardian_id: null` kullanılır.
 - Detaylı export Veli/Anne/Baba adlarını relation-aware olarak taşır. Tam Sistem Yedeği guardian ve parent-phone relation metadata roundtrip davranışı explicit test ile garanti altındadır.
 - Özet export artık dataset'e göre adaptiftir: Veli sabit kalır; Anne, Baba, Mahalle ve İlçe yalnızca en az bir dolu değer varsa eklenir. Telefon 1/2 sabittir; en yüksek kullanılan Telefon N slotuna kadar telefon/durum çiftleri üretilir ve slot fidelity korunur.
-- Telefonsuz aday ayarı, source-column UI ve `Veli Bilgisi` UI grup etiketi henüz uygulanmadı.
+- Source-column UI ve `Veli Bilgisi` UI grup etiketi henüz uygulanmadı.
 
 ## 7. Aday Listesi / Arama Operasyonu
 
@@ -473,6 +473,30 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - Validation passed: focused export 4 files / 34 tests; OOM-safe full suite 45 files / 321 tests; build PASS with known Vite chunk-size warning.
 - New checkpoint: `docs/CHECKPOINT_ADAPTIVE_SUMMARY_EXPORT_COLUMNS.md`.
 - Future Codex prompts may use a reusable safety skeleton only as a monitored trial; each prompt must remain task-specific and the trial must be abandoned if it causes scope drift or control loss.
+
+## Latest Checkpoint Closure - No-Phone Import Setting
+
+- Safe implementation commit: `71c9072 feat: add no-phone import setting`.
+- Import ekranında kullanıcı etiketi `Telefonsuz adayları içe aktar` olan session-only ayar bulunur.
+- Yardım metni: `Kapalıyken geçerli telefon numarası bulunmayan satırlar içe aktarılmaz. Anne veya Baba telefonu da telefon olarak kabul edilir. Bu ayar yalnızca mevcut içe aktarma işlemi için geçerlidir.`
+- Ayar varsayılan OFF'tur; localStorage/sessionStorage'a yazılmaz ve yeni dosya, reset, tamamlanan import veya sayfa yenilemede OFF'a döner.
+- OFF iken en az bir geçerli kullanılabilir telefonu bulunmayan satır import listesine girmez.
+- ON iken öğrenci adı bulunan gerçek no-phone satırı öğrenci olarak yazılabilir; PhoneRecord oluşturulmaz ve mevcut guardian alanları normal kurallarla yazılabilir.
+- Valid explicit Anne/Baba telefonu ile Telefon 2/Telefon 10 gibi alternatif slotlar kullanılabilir telefon sayılır.
+- Invalid-only telefon satırları OFF ve ON modlarında veri kalitesi hatasıyla bloklanır; temiz no-phone satırı sayılmaz.
+- Simulation özeti policy snapshot'ını `allow_no_phone_candidates` ile taşır; writer backup/write başlamadan önce summary-policy uyumunu doğrular.
+- `no_usable_phone_count`, geçerli kullanılabilir telefonu olmayan satırları ayrı sayar; legacy `empty_phone_count` yeniden tanımlanmamıştır.
+- Mevcut telefonsuz kayıtlar için silme, gizleme veya retroaktif cleanup yoktur.
+- Schema, export, backup/restore ve student screens değişmemiştir.
+- Validation: focused import 5 dosya / 83 test PASS; OOM-safe full unit 45 dosya / 328 test PASS; Playwright import E2E 4/4 PASS; build PASS; bilinen Vite chunk warning devam eder.
+- Resmi kapanış kaydı: `docs/CHECKPOINT_NO_PHONE_IMPORT_SETTING.md`.
+
+## Context Sync Note
+
+- Google Drive / Obsidian strategy shadow vault, eski `e6f580b` durumundan güncel `71c9072` repo docs durumuna göre geridedir ve senkronizasyon artık gecikmiştir.
+- Repo docs source of truth'tür; strategy vault ayrı bir katmandır ve açık görev olmadan Codex tarafından senkronize edilmez.
+- Bir sonraki önerilen aksiyon önce Drive/Obsidian strategy vault sync, ardından yeni ürün dilimi kararıdır.
+- Yeniden kullanılabilir güvenlik iskeleti + görev-özel özelleştirme yaklaşımı hâlâ kontrollü denemedir; scope drift veya kontrol kaybı görülürse geri alınır.
 
 ## Future Roadmap - Reporting Area V2
 

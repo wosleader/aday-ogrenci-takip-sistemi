@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 6347cfa feat: add adaptive summary export columns
-- Adaptive Summary Export Columns implementation dilimi tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: 71c9072 feat: add no-phone import setting
+- No-Phone Candidate Import Setting implementation dilimi tamamlandı ve pushlandı.
 - Tracked working tree başlangıçta temizdir. `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Bu docs-only closure tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: close adaptive summary export checkpoint
+- Önerilen docs commit: docs: close no-phone import setting checkpoint
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -54,19 +54,19 @@ Temel alanlar:
 
 ## 4. Güncel Sprint Durumu
 
-Adaptive Summary Export Columns tamamlandı.
+No-Phone Candidate Import Setting tamamlandı.
 
 Özet:
 
-- Özet export satırları bir kez canonical modele dönüştürülür; `SummaryColumnPlan` aynı satırlardan oluşturulur.
-- Veli sabittir; Anne, Baba, Mahalle ve İlçe dataset'te dolu değer varsa eklenir.
-- Telefon 1/2 sabittir; Telefon 3-10 için kullanılan en yüksek slota kadar telefon/durum çiftleri eklenir.
-- `phones[]` slot-faithful kaynak olarak kullanılır; Telefon 7-only ve Telefon 10-only kayıtlar kaydırılmaz.
-- Boş telefon durum hücreleri boş, invalid non-empty telefon durumu `Geçersiz format` olur.
-- Fail-fast validation opsiyonel veri kaybını, plan dışı slotu, eksik durum kolonunu ve satır/header uzunluk farkını engeller.
-- Detaylı export, import, backup/restore, schema ve UI değiştirilmedi.
-- Validation: focused export 4 dosya / 34 test PASS; OOM-safe full suite 45 dosya / 321 test PASS; build PASS.
-- Sonraki dilim insan kararıyla telefonsuz aday import ayarı veya küçük `Veli Bilgisi` UI polish olabilir.
+- Import ekranında `Telefonsuz adayları içe aktar` ayarı bulunur; varsayılan OFF ve session-only'dir.
+- Ayar storage'a yazılmaz; yeni dosya, reset, tamamlanan import ve sayfa yenilemede OFF'a döner.
+- OFF iken geçerli kullanılabilir telefonu olmayan satırlar import edilmez.
+- ON iken öğrenci adı bulunan gerçekten telefonsuz satırlar öğrenci olarak yazılabilir; PhoneRecord oluşturulmaz.
+- Geçerli Anne/Baba telefonu ile Telefon 2 veya Telefon 10 gibi alternatif slotlar kullanılabilir telefon sayılır.
+- Invalid-only telefon satırları her iki modda da veri kalitesi hatasıyla engellenir.
+- Simulation policy snapshot'ı `allow_no_phone_candidates` ile taşınır; writer backup/write öncesinde policy uyumunu doğrular.
+- Mevcut telefonsuz kayıtlar silinmez, gizlenmez veya geriye dönük temizlenmez.
+- Validation: focused import 5 dosya / 83 test PASS; OOM-safe full suite 45 dosya / 328 test PASS; Playwright import E2E 4/4 PASS; build PASS.
 
 ### Önceki Uygulama Durumu
 
@@ -335,7 +335,7 @@ Telefon 3-10 mapping/simulation, gerçek import writer/persistence, sağ kart la
 - Validation fails fast on omitted optional data, out-of-plan/out-of-range slots, missing status headers or mismatched row/header lengths.
 - Detailed export, import, backup/restore, schema, UI, Playwright and package files were not changed.
 - Validation passed: focused export 4 files / 34 tests; OOM-safe full suite 45 files / 321 tests; build PASS with known Vite chunk-size warning.
-- Next implementation requires a human choice between a session-only/default-off no-phone import setting and a small `Veli Bilgisi` UI polish.
+- The session-only/default-off no-phone import setting was completed in `71c9072`; `Veli Bilgisi` UI polish remains a separate optional decision.
 - Reusable Codex safety prompt skeleton is a monitored trial, not a permanent roadmap standard; revert to stricter manual prompts if it creates scope drift.
 - `dev-server.log` remains local runtime output and must not be staged, committed, deleted, or treated as a project artifact.
 
@@ -346,6 +346,29 @@ Telefon 3-10 mapping/simulation, gerçek import writer/persistence, sağ kart la
 - Bu fikir aktif scope değildir; adaptive summary export kapanışına yeni implementation işi eklemez.
 - Import/export/backup veri güvenliği ve mevcut raporlama alanı olgunlaşmadan başlanmamalıdır.
 - LMS/ERP/öğrenci portalı fikirlerinden ayrıdır ve yalnızca mevcut aday takip/kayıt görüşmesi sürecine özeldir.
+
+## Latest Handoff Update - No-Phone Import Setting
+
+- Current safe HEAD/origin: `71c9072 feat: add no-phone import setting`.
+- No-phone import setting implementation is complete and pushed; this docs-only closure awaits Strategy AI approval before docs commit/push.
+- Suggested docs commit after approval: `docs: close no-phone import setting checkpoint`.
+- User-facing setting: `Telefonsuz adayları içe aktar`.
+- Default is OFF. The setting is session-only, is not written to localStorage/sessionStorage and resets on new file, reset, completed import and page refresh.
+- OFF blocks rows without a valid usable phone. ON permits a true no-phone row with a student name and creates no PhoneRecord.
+- Valid explicit Anne/Baba phones and valid alternate Telefon N slots count as usable phones.
+- Invalid-only phone rows remain blocked in both modes.
+- Writer validates the simulation summary's `allow_no_phone_candidates` policy snapshot before backup/write.
+- Existing no-phone records are not deleted, hidden or retroactively cleaned.
+- Schema, export, backup/restore and student screens were not changed.
+- Validation passed: focused import 5 files / 83 tests; OOM-safe full suite 45 files / 328 tests; Playwright import E2E 4/4; build PASS with known Vite chunk-size warning.
+- `dev-server.log` remains local runtime output and must not be staged, committed, deleted or treated as a project artifact.
+
+## Next Recommended Actions
+
+1. Google Drive / Obsidian strategy shadow vault sync is overdue. It is behind repo docs from the old `e6f580b` state and should be synchronized to `71c9072` only when explicitly requested.
+2. After that sync, choose the next product slice through a separate decision/discovery task.
+
+Repo docs remain the source of truth. The Drive/Obsidian strategy vault is a separate context layer and must not be updated implicitly by Codex. Reporting Area V2 remains deferred roadmap only. The reusable safety skeleton plus task-specific customization remains a monitored trial and must be reverted if scope drift or control loss appears.
 
 ## Latest Handoff Update - Backup Restore Guardian Roundtrip Guarantee
 
