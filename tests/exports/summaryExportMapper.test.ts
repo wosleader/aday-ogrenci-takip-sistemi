@@ -3,11 +3,14 @@ import type { CallLogRecord } from "../../src/domain/models/callLog";
 import type { PhoneRecord } from "../../src/domain/models/phone";
 import type { StudentRecord } from "../../src/domain/models/student";
 import {
+  createSummaryCanonicalRows,
+  createSummaryColumnPlan,
   createSummaryConversationReportSheet,
   getSummaryCallResultLabel,
   getSummaryPhoneStatusLabel,
   SUMMARY_EXPORT_BASE_HEADERS,
-  SUMMARY_EXPORT_TRAILING_HEADERS
+  SUMMARY_EXPORT_TRAILING_HEADERS,
+  validateSummaryColumnPlan
 } from "../../src/features/exports/services/exportMapper";
 import type { ExportDataset } from "../../src/features/exports/services/exportTypes";
 
@@ -54,6 +57,22 @@ function phone(overrides: Partial<PhoneRecord> = {}): PhoneRecord {
     deleted_at: null,
     ...overrides
   };
+}
+
+function phoneForSlot(slot: number, overrides: Partial<PhoneRecord> = {}): PhoneRecord {
+  const phoneNumber = `05${slot.toString().padStart(2, "0")}0000000`;
+
+  return phone({
+    id: slot,
+    uuid: `phone-${slot}`,
+    phone_number: phoneNumber,
+    normalized_phone_number: phoneNumber,
+    phone_label: `Telefon ${slot}`,
+    reference_label: `Telefon ${slot}`,
+    priority: slot,
+    is_primary: slot === 1,
+    ...overrides
+  });
 }
 
 function callLog(id: number, callTime: string, overrides: Partial<CallLogRecord> = {}): CallLogRecord & { id: number } {
@@ -121,6 +140,14 @@ function dataset(callLogs: Array<CallLogRecord & { id: number }>): ExportDataset
   };
 }
 
+function cellByHeader(sheet: ReturnType<typeof createSummaryConversationReportSheet>, header: string): string | number {
+  const index = sheet.headers.indexOf(header);
+
+  expect(index).toBeGreaterThanOrEqual(0);
+
+  return sheet.rows[0][index];
+}
+
 describe("summaryExportMapper", () => {
   it("creates summary report columns in the expected order without campaign or reminder date", () => {
     const sheet = createSummaryConversationReportSheet(
@@ -140,28 +167,202 @@ describe("summaryExportMapper", () => {
     ]);
     expect(sheet.headers).not.toContain("Kampanya");
     expect(sheet.headers).not.toContain("Tekrar Arama Tarihi");
+    expect(cellByHeader(sheet, "Telefon 1")).toBe("05321234567");
+    expect(cellByHeader(sheet, "Telefon 1 Durumu")).toBe("Son görüşülen numara");
+    expect(cellByHeader(sheet, "Telefon 2")).toBe("05431234567");
+    expect(cellByHeader(sheet, "Telefon 2 Durumu")).toBe("Yanlış numara / kullanılmıyor");
   });
 
-  it("does not add Telefon 3-10 columns to the summary report", () => {
+  it("keeps Telefon 1/2 and expands through the highest slot without compressing Telefon 7", () => {
     const data = dataset([]);
-    data.bundles[0].phones = [
-      phone({ reference_label: "Telefon 1", priority: 1 }),
-      phone({
-        id: 3,
-        phone_number: "05553333333",
-        normalized_phone_number: "05553333333",
-        phone_label: "Telefon 3",
-        reference_label: "Telefon 3",
-        priority: 3,
-        is_primary: false
-      })
-    ];
+    const telefon7 = phoneForSlot(7, {
+      phone_number: "05557777777",
+      normalized_phone_number: "05557777777",
+      relation_label: "Anne",
+      guardian_id: 7
+    });
+    data.bundles[0].phone_1 = telefon7;
+    data.bundles[0].phone_2 = null;
+    data.bundles[0].phones = [telefon7];
 
     const sheet = createSummaryConversationReportSheet(data);
 
-    expect(sheet.headers).toEqual([...SUMMARY_EXPORT_BASE_HEADERS, ...SUMMARY_EXPORT_TRAILING_HEADERS]);
-    expect(sheet.headers).not.toContain("Telefon 3");
-    expect(sheet.headers).not.toContain("Telefon 3 Durumu");
+    for (let slot = 1; slot <= 7; slot += 1) {
+      expect(sheet.headers).toContain(`Telefon ${slot}`);
+      expect(sheet.headers).toContain(`Telefon ${slot} Durumu`);
+    }
+    expect(cellByHeader(sheet, "Telefon 1")).toBe("");
+    expect(cellByHeader(sheet, "Telefon 1 Durumu")).toBe("");
+    expect(cellByHeader(sheet, "Telefon 6")).toBe("");
+    expect(cellByHeader(sheet, "Telefon 7")).toBe("05557777777");
+    expect(sheet.headers).not.toContain("Telefon 8");
+    expect(sheet.headers).not.toContain("Anne Telefonu");
+  });
+
+  it("expands through Telefon 10 without exceeding the supported slot range", () => {
+    const data = dataset([]);
+    const telefon10 = phoneForSlot(10, {
+      phone_number: "05551010101",
+      normalized_phone_number: "05551010101"
+    });
+    data.bundles[0].phone_1 = null;
+    data.bundles[0].phone_2 = telefon10;
+    data.bundles[0].phones = [telefon10];
+
+    const sheet = createSummaryConversationReportSheet(data);
+
+    expect(cellByHeader(sheet, "Telefon 1")).toBe("");
+    expect(cellByHeader(sheet, "Telefon 2")).toBe("");
+    expect(cellByHeader(sheet, "Telefon 10")).toBe("05551010101");
+    expect(sheet.headers).not.toContain("Telefon 11");
+    for (let slot = 1; slot <= 10; slot += 1) {
+      expect(sheet.headers).toContain(`Telefon ${slot}`);
+      expect(sheet.headers).toContain(`Telefon ${slot} Durumu`);
+    }
+  });
+
+  it("adds adaptive guardian and location columns only when the dataset contains values", () => {
+    const emptySheet = createSummaryConversationReportSheet(dataset([]));
+
+    expect(emptySheet.headers).not.toContain("Anne Adı");
+    expect(emptySheet.headers).not.toContain("Baba Adı");
+    expect(emptySheet.headers).not.toContain("Mahalle");
+    expect(emptySheet.headers).not.toContain("İlçe");
+
+    const data = dataset([]);
+    data.bundles[0].mother = {
+      id: 2,
+      uuid: "mother-1",
+      student_id: 1,
+      guardian_full_name: "Emine Yılmaz",
+      normalized_guardian_name: "emine yilmaz",
+      relation_type: "mother",
+      sync_status: "local",
+      created_at: timestamp,
+      updated_at: timestamp,
+      deleted_at: null
+    };
+    data.bundles[0].father = {
+      id: 3,
+      uuid: "father-1",
+      student_id: 1,
+      guardian_full_name: "Ahmet Yılmaz",
+      normalized_guardian_name: "ahmet yilmaz",
+      relation_type: "father",
+      sync_status: "local",
+      created_at: timestamp,
+      updated_at: timestamp,
+      deleted_at: null
+    };
+    data.bundles[0].student.neighborhood = "Cumhuriyet";
+    data.bundles[0].student.district = "Osmangazi";
+
+    const sheet = createSummaryConversationReportSheet(data);
+    const guardianIndex = sheet.headers.indexOf("Veli Ad Soyad");
+
+    expect(sheet.headers.slice(guardianIndex, guardianIndex + 9)).toEqual([
+      "Veli Ad Soyad",
+      "Anne Adı",
+      "Baba Adı",
+      "Mahalle",
+      "İlçe",
+      "Telefon 1",
+      "Telefon 1 Durumu",
+      "Telefon 2",
+      "Telefon 2 Durumu"
+    ]);
+    expect(cellByHeader(sheet, "Anne Adı")).toBe("Emine Yılmaz");
+    expect(cellByHeader(sheet, "Baba Adı")).toBe("Ahmet Yılmaz");
+    expect(cellByHeader(sheet, "Mahalle")).toBe("Cumhuriyet");
+    expect(cellByHeader(sheet, "İlçe")).toBe("Osmangazi");
+  });
+
+  it("plans each adaptive guardian and location field independently", () => {
+    const data = dataset([]);
+    data.bundles[0].father = {
+      id: 3,
+      uuid: "father-1",
+      student_id: 1,
+      guardian_full_name: "Ahmet Yılmaz",
+      normalized_guardian_name: "ahmet yilmaz",
+      relation_type: "father",
+      sync_status: "local",
+      created_at: timestamp,
+      updated_at: timestamp,
+      deleted_at: null
+    };
+    data.bundles[0].student.district = "Osmangazi";
+
+    const plan = createSummaryColumnPlan(createSummaryCanonicalRows(data));
+    const sheet = createSummaryConversationReportSheet(data);
+
+    expect(plan).toMatchObject({
+      includeMother: false,
+      includeFather: true,
+      includeNeighborhood: false,
+      includeDistrict: true,
+      maxPhoneSlot: 2
+    });
+    expect(sheet.headers).not.toContain("Anne Adı");
+    expect(sheet.headers).toContain("Baba Adı");
+    expect(sheet.headers).not.toContain("Mahalle");
+    expect(sheet.headers).toContain("İlçe");
+  });
+
+  it("exports invalid phones with a status while leaving empty slot statuses blank", () => {
+    const data = dataset([]);
+    const invalidTelefon3 = phoneForSlot(3, {
+      phone_number: "12345",
+      normalized_phone_number: "12345",
+      is_valid: false
+    });
+    data.bundles[0].phone_1 = invalidTelefon3;
+    data.bundles[0].phone_2 = null;
+    data.bundles[0].phones = [invalidTelefon3];
+
+    const sheet = createSummaryConversationReportSheet(data);
+
+    expect(cellByHeader(sheet, "Telefon 1")).toBe("");
+    expect(cellByHeader(sheet, "Telefon 1 Durumu")).toBe("");
+    expect(cellByHeader(sheet, "Telefon 3")).toBe("12345");
+    expect(cellByHeader(sheet, "Telefon 3 Durumu")).toBe("Geçersiz format");
+  });
+
+  it("fails fast when a supplied summary plan would omit populated data", () => {
+    const data = dataset([]);
+    data.bundles[0].mother = {
+      id: 2,
+      uuid: "mother-1",
+      student_id: 1,
+      guardian_full_name: "Emine Yılmaz",
+      normalized_guardian_name: "emine yilmaz",
+      relation_type: "mother",
+      sync_status: "local",
+      created_at: timestamp,
+      updated_at: timestamp,
+      deleted_at: null
+    };
+    data.bundles[0].phones = [phoneForSlot(7)];
+    const rows = createSummaryCanonicalRows(data);
+
+    expect(() =>
+      validateSummaryColumnPlan(rows, {
+        includeMother: false,
+        includeFather: false,
+        includeNeighborhood: false,
+        includeDistrict: false,
+        maxPhoneSlot: 7
+      })
+    ).toThrow("Anne Adı");
+    expect(() =>
+      validateSummaryColumnPlan(rows, {
+        includeMother: true,
+        includeFather: false,
+        includeNeighborhood: false,
+        includeDistrict: false,
+        maxPhoneSlot: 2
+      })
+    ).toThrow("Telefon 7");
   });
 
   it("maps only filled call notes into chronological explanation columns", () => {
@@ -182,6 +383,7 @@ describe("summaryExportMapper", () => {
     expect(row[12]).toBe("10.05.2026 11:00");
     expect(row[13]).toBe("Randevu");
     expect(row[14]).toBe("11.05.2026 12:00");
+    expect(sheet.rows.every((exportRow) => exportRow.length === sheet.headers.length)).toBe(true);
   });
 
   it("calculates the last updated date with the expected priority", () => {
@@ -208,7 +410,8 @@ describe("summaryExportMapper", () => {
     expect(getSummaryPhoneStatusLabel(phone({ phone_status: "invalid", is_wrong: true }))).toBe(
       "Yanlış numara / kullanılmıyor"
     );
-    expect(getSummaryPhoneStatusLabel(null)).toBe("Belirtilmedi");
+    expect(getSummaryPhoneStatusLabel(phone({ is_valid: false }))).toBe("Geçersiz format");
+    expect(getSummaryPhoneStatusLabel(null)).toBe("");
     expect(getSummaryCallResultLabel("do_not_call")).toBe("Aranmayacak / ilgilenmiyor");
     expect(getSummaryCallResultLabel("wrong_number")).toBe("Yanlış numara");
     expect(getSummaryCallResultLabel(null)).toBe("Aranmadı");

@@ -105,7 +105,32 @@ const APPOINTMENT_LABELS: Record<string, string> = {
   registered: "Kayıt oldu"
 };
 
-const DETAILED_PHONE_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+const PHONE_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+
+export type SummaryColumnPlan = {
+  includeMother: boolean;
+  includeFather: boolean;
+  includeNeighborhood: boolean;
+  includeDistrict: boolean;
+  maxPhoneSlot: number;
+};
+
+export type SummaryCanonicalRow = {
+  sequence: number;
+  studentName: string;
+  guardianName: string;
+  motherName: string;
+  fatherName: string;
+  neighborhood: string;
+  district: string;
+  phoneSlots: ReadonlyMap<number, PhoneRecord>;
+  currentClass: string;
+  generalNote: string;
+  notes: Array<{ note: string; callTime: string }>;
+  lastCallResult: string;
+  lastCallTime: string;
+  lastUpdatedAt: string;
+};
 
 function pad(value: number): string {
   return value.toString().padStart(2, "0");
@@ -187,7 +212,11 @@ export function getPhoneStatusLabel(phone?: PhoneRecord | null): string {
 
 export function getSummaryPhoneStatusLabel(phone?: PhoneRecord | null): string {
   if (!phone) {
-    return "Belirtilmedi";
+    return "";
+  }
+
+  if (phone.is_valid === false) {
+    return "Geçersiz format";
   }
 
   if (phone.is_wrong || phone.phone_status === "invalid") {
@@ -235,10 +264,6 @@ function getChronologicalCallLogs(bundle: ExportStudentBundle): Array<CallLogRec
   );
 }
 
-function getFilledNoteCallLogs(bundle: ExportStudentBundle): Array<CallLogRecord & { id: number }> {
-  return getChronologicalCallLogs(bundle).filter((callLog) => callLog.note?.trim());
-}
-
 function createDynamicCallHeaders(maxCallLogCount: number): string[] {
   return Array.from({ length: maxCallLogCount }).flatMap((_, index) => {
     const callNumber = index + 1;
@@ -281,7 +306,7 @@ function getPhoneSlot(phone: PhoneRecord): number | null {
   return typeof priority === "number" && priority >= 1 && priority <= 10 && Number.isInteger(priority) ? priority : null;
 }
 
-function createDetailedPhoneSlotMap(bundle: ExportStudentBundle): Map<number, PhoneRecord> {
+function createPhoneSlotMap(bundle: ExportStudentBundle): Map<number, PhoneRecord> {
   const phoneSlots = new Map<number, PhoneRecord>();
   const seenNormalizedPhones = new Set<string>();
   const sourcePhones =
@@ -315,9 +340,9 @@ function createDetailedPhoneSlotMap(bundle: ExportStudentBundle): Map<number, Ph
 }
 
 function createDetailedPhoneCells(bundle: ExportStudentBundle): Array<string | number> {
-  const phoneSlots = createDetailedPhoneSlotMap(bundle);
+  const phoneSlots = createPhoneSlotMap(bundle);
 
-  return DETAILED_PHONE_SLOTS.flatMap((slot) => {
+  return PHONE_SLOTS.flatMap((slot) => {
     const phone = phoneSlots.get(slot);
 
     return [phone?.phone_number ?? "", phone ? getPhoneStatusLabel(phone) : ""];
@@ -382,44 +407,184 @@ function createSummaryNoteHeaders(maxNoteCount: number): string[] {
   });
 }
 
-function createSummaryBaseRow(bundle: ExportStudentBundle, index: number): Array<string | number> {
-  return [
-    index + 1,
-    bundle.student.student_full_name,
-    bundle.guardian?.guardian_full_name ?? "",
-    bundle.phone_1?.phone_number ?? "",
-    getSummaryPhoneStatusLabel(bundle.phone_1),
-    bundle.phone_2?.phone_number ?? "",
-    getSummaryPhoneStatusLabel(bundle.phone_2),
-    bundle.student.current_class ?? "",
-    bundle.student.general_note ?? ""
-  ];
-}
-
-function createSummaryNoteCells(bundle: ExportStudentBundle, maxNoteCount: number): Array<string | number> {
-  const noteCallLogs = getFilledNoteCallLogs(bundle);
-
+function createSummaryNoteCells(row: SummaryCanonicalRow, maxNoteCount: number): Array<string | number> {
   return Array.from({ length: maxNoteCount }).flatMap((_, index) => {
-    const callLog = noteCallLogs[index];
+    const note = row.notes[index];
 
-    if (!callLog) {
+    if (!note) {
       return ["", ""];
     }
 
-    return [callLog.note?.trim() ?? "", formatExportDateTime(callLog.call_time)];
+    return [note.note, formatExportDateTime(note.callTime)];
   });
 }
 
-function createSummaryTrailingCells(bundle: ExportStudentBundle): Array<string | number> {
-  const chronologicalCallLogs = getChronologicalCallLogs(bundle);
-  const lastCallLog = chronologicalCallLogs[chronologicalCallLogs.length - 1] ?? null;
-  const lastUpdatedAt = bundle.student.updated_at || lastCallLog?.call_time || bundle.student.created_at;
+function hasText(value: string): boolean {
+  return value.trim().length > 0;
+}
 
-  return [
-    getSummaryCallResultLabel(lastCallLog?.call_result ?? bundle.student.last_call_result),
-    formatExportDateTime(lastCallLog?.call_time),
-    formatExportDateTime(lastUpdatedAt)
+export function createSummaryCanonicalRows(dataset: ExportDataset): SummaryCanonicalRow[] {
+  return dataset.bundles.map((bundle, index) => {
+    const chronologicalCallLogs = getChronologicalCallLogs(bundle);
+    const lastCallLog = chronologicalCallLogs[chronologicalCallLogs.length - 1] ?? null;
+    const lastUpdatedAt = bundle.student.updated_at || lastCallLog?.call_time || bundle.student.created_at;
+
+    return {
+      sequence: index + 1,
+      studentName: bundle.student.student_full_name,
+      guardianName: bundle.guardian?.guardian_full_name ?? "",
+      motherName: bundle.mother?.guardian_full_name ?? "",
+      fatherName: bundle.father?.guardian_full_name ?? "",
+      neighborhood: bundle.student.neighborhood ?? "",
+      district: bundle.student.district ?? "",
+      phoneSlots: createPhoneSlotMap(bundle),
+      currentClass: bundle.student.current_class ?? "",
+      generalNote: bundle.student.general_note ?? "",
+      notes: chronologicalCallLogs.flatMap((callLog) => {
+        const note = callLog.note?.trim();
+
+        return note ? [{ note, callTime: callLog.call_time }] : [];
+      }),
+      lastCallResult: getSummaryCallResultLabel(lastCallLog?.call_result ?? bundle.student.last_call_result),
+      lastCallTime: formatExportDateTime(lastCallLog?.call_time),
+      lastUpdatedAt: formatExportDateTime(lastUpdatedAt)
+    };
+  });
+}
+
+export function createSummaryColumnPlan(rows: SummaryCanonicalRow[]): SummaryColumnPlan {
+  const highestPhoneSlot = Math.max(2, ...rows.flatMap((row) => [...row.phoneSlots.keys()]));
+
+  return {
+    includeMother: rows.some((row) => hasText(row.motherName)),
+    includeFather: rows.some((row) => hasText(row.fatherName)),
+    includeNeighborhood: rows.some((row) => hasText(row.neighborhood)),
+    includeDistrict: rows.some((row) => hasText(row.district)),
+    maxPhoneSlot: Math.min(10, highestPhoneSlot)
+  };
+}
+
+export function validateSummaryColumnPlan(rows: SummaryCanonicalRow[], plan: SummaryColumnPlan): void {
+  if (!Number.isInteger(plan.maxPhoneSlot) || plan.maxPhoneSlot < 2 || plan.maxPhoneSlot > 10) {
+    throw new Error(`Özet export telefon kolon planı 2-10 aralığında olmalı: ${plan.maxPhoneSlot}`);
+  }
+
+  const optionalFieldChecks = [
+    { included: plan.includeMother, label: "Anne Adı", getValue: (row: SummaryCanonicalRow) => row.motherName },
+    { included: plan.includeFather, label: "Baba Adı", getValue: (row: SummaryCanonicalRow) => row.fatherName },
+    {
+      included: plan.includeNeighborhood,
+      label: "Mahalle",
+      getValue: (row: SummaryCanonicalRow) => row.neighborhood
+    },
+    { included: plan.includeDistrict, label: "İlçe", getValue: (row: SummaryCanonicalRow) => row.district }
   ];
+
+  for (const check of optionalFieldChecks) {
+    if (!check.included && rows.some((row) => hasText(check.getValue(row)))) {
+      throw new Error(`Özet export kolon planı dolu ${check.label} verisini dışarıda bırakıyor.`);
+    }
+  }
+
+  for (const row of rows) {
+    for (const slot of row.phoneSlots.keys()) {
+      if (!Number.isInteger(slot) || slot < 1 || slot > 10) {
+        throw new Error(`Özet export geçersiz telefon slotu içeriyor: ${slot}`);
+      }
+
+      if (slot > plan.maxPhoneSlot) {
+        throw new Error(`Özet export kolon planı Telefon ${slot} verisini dışarıda bırakıyor.`);
+      }
+    }
+  }
+}
+
+function createSummaryAdaptiveHeaders(plan: SummaryColumnPlan): string[] {
+  const headers = ["Sıra No", "Öğrenci Ad Soyad", "Veli Ad Soyad"];
+
+  if (plan.includeMother) {
+    headers.push("Anne Adı");
+  }
+
+  if (plan.includeFather) {
+    headers.push("Baba Adı");
+  }
+
+  if (plan.includeNeighborhood) {
+    headers.push("Mahalle");
+  }
+
+  if (plan.includeDistrict) {
+    headers.push("İlçe");
+  }
+
+  for (let slot = 1; slot <= plan.maxPhoneSlot; slot += 1) {
+    headers.push(`Telefon ${slot}`, `Telefon ${slot} Durumu`);
+  }
+
+  headers.push("Sınıf", "Genel Açıklama");
+
+  return headers;
+}
+
+function createSummaryAdaptiveCells(row: SummaryCanonicalRow, plan: SummaryColumnPlan): Array<string | number> {
+  const cells: Array<string | number> = [row.sequence, row.studentName, row.guardianName];
+
+  if (plan.includeMother) {
+    cells.push(row.motherName);
+  }
+
+  if (plan.includeFather) {
+    cells.push(row.fatherName);
+  }
+
+  if (plan.includeNeighborhood) {
+    cells.push(row.neighborhood);
+  }
+
+  if (plan.includeDistrict) {
+    cells.push(row.district);
+  }
+
+  for (let slot = 1; slot <= plan.maxPhoneSlot; slot += 1) {
+    const phone = row.phoneSlots.get(slot);
+    cells.push(phone?.phone_number ?? "", getSummaryPhoneStatusLabel(phone));
+  }
+
+  cells.push(row.currentClass, row.generalNote);
+
+  return cells;
+}
+
+function validateSummarySheetShape(
+  headers: string[],
+  rows: Array<Array<string | number>>,
+  plan: SummaryColumnPlan
+): void {
+  for (let slot = 1; slot <= plan.maxPhoneSlot; slot += 1) {
+    const phoneHeader = `Telefon ${slot}`;
+    const statusHeader = `Telefon ${slot} Durumu`;
+
+    if (!headers.includes(phoneHeader) || !headers.includes(statusHeader)) {
+      throw new Error(`Özet export ${phoneHeader} ve durum kolonunu birlikte içermeli.`);
+    }
+  }
+
+  for (const header of headers) {
+    const phoneMatch = header.match(/^Telefon (10|[1-9])$/);
+
+    if (phoneMatch && !headers.includes(`${header} Durumu`)) {
+      throw new Error(`Özet export ${header} için durum kolonu içermiyor.`);
+    }
+  }
+
+  rows.forEach((row, index) => {
+    if (row.length !== headers.length) {
+      throw new Error(
+        `Özet export ${index + 1}. satır uzunluğu başlıklarla eşleşmiyor: ${row.length}/${headers.length}`
+      );
+    }
+  });
 }
 
 export function createDetailedExportSheet(dataset: ExportDataset): DetailedExportSheet {
@@ -441,18 +606,24 @@ export function createDetailedExportSheet(dataset: ExportDataset): DetailedExpor
 }
 
 export function createSummaryConversationReportSheet(dataset: ExportDataset): SummaryConversationReportSheet {
-  const maxNoteCount = Math.max(0, ...dataset.bundles.map((bundle) => getFilledNoteCallLogs(bundle).length));
+  const canonicalRows = createSummaryCanonicalRows(dataset);
+  const columnPlan = createSummaryColumnPlan(canonicalRows);
+  validateSummaryColumnPlan(canonicalRows, columnPlan);
+  const maxNoteCount = Math.max(0, ...canonicalRows.map((row) => row.notes.length));
   const headers = [
-    ...SUMMARY_EXPORT_BASE_HEADERS,
+    ...createSummaryAdaptiveHeaders(columnPlan),
     ...createSummaryNoteHeaders(maxNoteCount),
     ...SUMMARY_EXPORT_TRAILING_HEADERS
   ];
-  const rows = dataset.bundles.map((bundle, index) => [
-    ...createSummaryBaseRow(bundle, index),
-    ...createSummaryNoteCells(bundle, maxNoteCount),
-    ...createSummaryTrailingCells(bundle)
+  const rows = canonicalRows.map((row) => [
+    ...createSummaryAdaptiveCells(row, columnPlan),
+    ...createSummaryNoteCells(row, maxNoteCount),
+    row.lastCallResult,
+    row.lastCallTime,
+    row.lastUpdatedAt
   ]);
   const totalCallLogCount = dataset.bundles.reduce((total, bundle) => total + bundle.call_logs.length, 0);
+  validateSummarySheetShape(headers, rows, columnPlan);
 
   return {
     headers,
