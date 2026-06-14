@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Backup Restore Guardian Roundtrip Guarantee | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Adaptive Summary Export Columns | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -121,14 +121,14 @@ Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
 
 ## 8. Export
 
-Son doğrulandı: Sprint 9.1
+Son doğrulandı: Adaptive Summary Export Columns
 
 - `src/features/exports/ExportPage.tsx`
   Detaylı Excel Export ve Özet Görüşme Raporu üretir; Excel’in Tam Sistem Yedeği yerine geçmediğini kullanıcıya açıklar, export kapsam açıklamaları ve özet kart metinleri kullanıcı dostu hale getirilmiştir.
 - `src/features/exports/services/exportDataReader.ts`
   Export dataset okuma.
 - `src/features/exports/services/exportMapper.ts`
-  Detaylı export ve Özet Görüşme Raporu kolon/satır mapping.
+  Detaylı export ve Özet Görüşme Raporu kolon/satır mapping. Adaptive summary diliminde canonical summary rows, `SummaryColumnPlan`, slot-faithful `phones[]` mapping ve fail-fast plan/sheet doğrulaması burada uygulanır.
 - `src/features/exports/services/excelExporter.ts`
   Workbook, dosya adı ve download.
 - `src/features/exports/services/exportSelection.ts`
@@ -526,3 +526,14 @@ Son doğrulandı: Backup/Restore Guardian Roundtrip Guarantee
   Bir öğrenci, Veli/Anne/Baba/legacy Veli guardian kayıtları ve bağlı/bağlantısız relation-aware telefonlarla kaynak DB oluşturur. Snapshot'ı hedef DB'ye restore ederek guardian relation türlerini ve telefon `guardian_id`, `relation_label`, `source_column`, `reference_label`, `priority` alanlarını doğrular.
 - `docs/CHECKPOINT_BACKUP_RESTORE_GUARDIAN_ROUNDTRIP.md`
   Test-only backup/restore garanti diliminin davranış, validation, kapsam dışı alanlar, kalan riskler ve sonraki summary export discovery kararını kaydeder.
+
+## Latest File Map Addendum - Adaptive Summary Export Columns
+
+Son doğrulandı: Adaptive Summary Export Columns
+
+- `src/features/exports/services/exportMapper.ts`
+  Summary dataset'i bir kez canonical satırlara dönüştürür, aynı satırlardan `SummaryColumnPlan` üretir ve adaptif header/row değerlerini oluşturur. Veli sabit; Anne/Baba/Mahalle/İlçe koşulludur. Telefon kolonları slot-faithful `phones[]` üzerinden minimum 1-2, kullanılan en yüksek slot kadar ve en fazla 10 olacak şekilde üretilir. In-memory validation veri kaybı ve sheet shape tutarsızlığında fail-fast davranır.
+- `tests/exports/summaryExportMapper.test.ts`
+  Telefon 1/2 uyumluluğu, Telefon 7-only ve Telefon 10-only slot fidelity, parent relation telefonları, adaptif guardian/location kolonları, invalid telefon durumu, boş slot durumu, telefon/status header çiftleri, row/header uzunluğu ve hatalı plan validation senaryolarını doğrular.
+- `docs/CHECKPOINT_ADAPTIVE_SUMMARY_EXPORT_COLUMNS.md`
+  Adaptive summary kapsamını, kolon planını, header sırasını, veri güvenliği doğrulamasını, validation sonuçlarını, kalan riskleri ve sonraki insan kararı seçeneklerini kaydeder.

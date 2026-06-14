@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: c6876de test: guarantee guardian backup restore roundtrip
-- Backup/Restore Guardian Roundtrip Guarantee test dilimi tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: 6347cfa feat: add adaptive summary export columns
+- Adaptive Summary Export Columns implementation dilimi tamamlandı ve pushlandı.
 - Tracked working tree başlangıçta temizdir. `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Bu docs-only closure tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: close backup restore guardian roundtrip checkpoint
+- Önerilen docs commit: docs: close adaptive summary export checkpoint
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -54,17 +54,19 @@ Temel alanlar:
 
 ## 4. Güncel Sprint Durumu
 
-Backup/Restore Guardian Roundtrip Guarantee tamamlandı.
+Adaptive Summary Export Columns tamamlandı.
 
 Özet:
 
-- Full System Backup/restore guardian ve relation-aware phone kayıtlarını kayıpsız koruduğu test-first olarak doğrulandı.
-- Veli, Anne, Baba ve legacy null Veli relation kayıtları restore sonrasında korunur; sahte/fazla guardian oluşmaz.
-- Telefon `guardian_id`, `relation_label`, `source_column`, `reference_label` ve `priority` metadata'sı korunur.
-- `guardian_id: null` ve relation label taşıyan parent telefon restore sonrasında aynı şekilde kalır.
-- Dilim test-only tamamlandı; `src/db/backup.ts`, schema, import, export, UI ve Playwright değiştirilmedi.
-- Validation: odak backup testi 1 dosya / 8 test PASS; OOM-safe full test 45 dosya / 316 test PASS; build PASS.
-- Sonraki önerilen konu summary export phone compatibility için implementation öncesi ürün kararı/discovery'dir.
+- Özet export satırları bir kez canonical modele dönüştürülür; `SummaryColumnPlan` aynı satırlardan oluşturulur.
+- Veli sabittir; Anne, Baba, Mahalle ve İlçe dataset'te dolu değer varsa eklenir.
+- Telefon 1/2 sabittir; Telefon 3-10 için kullanılan en yüksek slota kadar telefon/durum çiftleri eklenir.
+- `phones[]` slot-faithful kaynak olarak kullanılır; Telefon 7-only ve Telefon 10-only kayıtlar kaydırılmaz.
+- Boş telefon durum hücreleri boş, invalid non-empty telefon durumu `Geçersiz format` olur.
+- Fail-fast validation opsiyonel veri kaybını, plan dışı slotu, eksik durum kolonunu ve satır/header uzunluk farkını engeller.
+- Detaylı export, import, backup/restore, schema ve UI değiştirilmedi.
+- Validation: focused export 4 dosya / 34 test PASS; OOM-safe full suite 45 dosya / 321 test PASS; build PASS.
+- Sonraki dilim insan kararıyla telefonsuz aday import ayarı veya küçük `Veli Bilgisi` UI polish olabilir.
 
 ### Önceki Uygulama Durumu
 
@@ -320,6 +322,30 @@ Telefon 3-10 mapping/simulation, gerçek import writer/persistence, sağ kart la
 - Validation passed: focused export tests 3 files / 24 tests; OOM-safe full suite 45 files / 315 tests; build PASS with known Vite chunk-size warning.
 - Next recommended slice: backup/restore guardian roundtrip guarantee, starting as a test-only change.
 - `dev-server.log` remains local runtime output and must not be staged, committed, deleted, or treated as a project artifact.
+
+## Latest Handoff Update - Adaptive Summary Export Columns
+
+- Current safe HEAD/origin: `6347cfa feat: add adaptive summary export columns`.
+- Previous checkpoint: `6924ec2 docs: close backup restore guardian roundtrip checkpoint`.
+- Adaptive summary export implementation is complete and pushed; this docs-only closure awaits Strategy AI approval before docs commit/push.
+- Suggested docs commit after approval: `docs: close adaptive summary export checkpoint`.
+- Veli remains fixed; Anne, Baba, Mahalle and İlçe are dataset-adaptive.
+- Telefon 1/2 remain fixed and the report expands through the highest used slot up to Telefon 10, always with matching status columns.
+- Slot-faithful `phones[]` prevents Telefon 7-only, Telefon 10-only and parent relation phones from moving into compatibility slots.
+- Validation fails fast on omitted optional data, out-of-plan/out-of-range slots, missing status headers or mismatched row/header lengths.
+- Detailed export, import, backup/restore, schema, UI, Playwright and package files were not changed.
+- Validation passed: focused export 4 files / 34 tests; OOM-safe full suite 45 files / 321 tests; build PASS with known Vite chunk-size warning.
+- Next implementation requires a human choice between a session-only/default-off no-phone import setting and a small `Veli Bilgisi` UI polish.
+- Reusable Codex safety prompt skeleton is a monitored trial, not a permanent roadmap standard; revert to stricter manual prompts if it creates scope drift.
+- `dev-server.log` remains local runtime output and must not be staged, committed, deleted, or treated as a project artifact.
+
+## Deferred Roadmap Idea - Reporting Area V2
+
+- `Reporting Area V2: Aday Pipeline Görselleştirme` gelecekte adayların Yeni data → arama/ulaşma → potansiyel → randevu → geldi/gelmedi → demo/seviye çalışması → kayıt görüşmesi → kayıt/takip/vazgeçti akışını görselleştirebilir.
+- Hedef dönüşüm oranlarını, süreç tıkanmalarını ve takım/personel bazlı aday akışını yönetim paneli seviyesinde okunur sunmaktır.
+- Bu fikir aktif scope değildir; adaptive summary export kapanışına yeni implementation işi eklemez.
+- Import/export/backup veri güvenliği ve mevcut raporlama alanı olgunlaşmadan başlanmamalıdır.
+- LMS/ERP/öğrenci portalı fikirlerinden ayrıdır ve yalnızca mevcut aday takip/kayıt görüşmesi sürecine özeldir.
 
 ## Latest Handoff Update - Backup Restore Guardian Roundtrip Guarantee
 

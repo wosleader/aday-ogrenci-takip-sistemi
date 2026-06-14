@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Backup Restore Guardian Roundtrip Guarantee | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Adaptive Summary Export Columns | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,11 +6,11 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Backup Restore Guardian Roundtrip Guarantee
-- FILE_MAP: Backup Restore Guardian Roundtrip Guarantee
-- DECISIONS: Backup Restore Guardian Roundtrip Guarantee
-- Son test commit: c6876de test: guarantee guardian backup restore roundtrip
-- Son docs closure hedefi: docs: close backup restore guardian roundtrip checkpoint
+- PROJECT_MEMORY: Adaptive Summary Export Columns
+- FILE_MAP: Adaptive Summary Export Columns
+- DECISIONS: Adaptive Summary Export Columns
+- Son implementation commit: 6347cfa feat: add adaptive summary export columns
+- Son docs closure hedefi: docs: close adaptive summary export checkpoint
 
 ## 1. Proje Amacı
 
@@ -85,7 +85,9 @@ Kısa özet:
 - Explicit Anne/Baba phone relation import tamamlandı. Açık `ANNE TEL` / `BABA TEL` kolonları relation metadata taşır; generic telefon kolonlarından Anne/Baba ilişkisi çıkarılmaz.
 - Parent phone slotları Excel kolon sırası ve sonraki uygun Telefon N kuralıyla atanır; Telefon 1-10 slot fidelity korunur.
 - Anne/Baba adı varsa explicit parent phone doğru mother/father guardian kaydına bağlanır. İsim yoksa sahte guardian oluşturulmaz; relation label korunur ve `guardian_id: null` kullanılır.
-- Detaylı export Veli/Anne/Baba adlarını relation-aware olarak taşır. Tam Sistem Yedeği guardian ve parent-phone relation metadata roundtrip davranışı explicit test ile garanti altındadır. Summary export genişletmesi, no-phone ayarı ve source-column UI henüz uygulanmadı.
+- Detaylı export Veli/Anne/Baba adlarını relation-aware olarak taşır. Tam Sistem Yedeği guardian ve parent-phone relation metadata roundtrip davranışı explicit test ile garanti altındadır.
+- Özet export artık dataset'e göre adaptiftir: Veli sabit kalır; Anne, Baba, Mahalle ve İlçe yalnızca en az bir dolu değer varsa eklenir. Telefon 1/2 sabittir; en yüksek kullanılan Telefon N slotuna kadar telefon/durum çiftleri üretilir ve slot fidelity korunur.
+- Telefonsuz aday ayarı, source-column UI ve `Veli Bilgisi` UI grup etiketi henüz uygulanmadı.
 
 ## 7. Aday Listesi / Arama Operasyonu
 
@@ -123,6 +125,10 @@ Kısa özet:
 - Açıklama N / Açıklama N Tarihi dinamik kolonları dolu notlardan üretilir.
 - Boş notlar kolon şişirmez.
 - Export snapshot filtrelenmiş `student_id` listesinden beslenir.
+- Özet export canonical satırları bir kez üretir ve aynı satırlardan `SummaryColumnPlan` çıkarır; ekstra DB sorgusu yapmaz.
+- Özet export `phones[]` üzerinden slot-faithful çalışır. Telefon 7-only ve Telefon 10-only değerler kendi slotlarında kalır; ayrı Anne/Baba telefonu kolonları oluşturulmaz.
+- Boş telefon slotlarının durum hücresi boştur; invalid non-empty telefon `Geçersiz format` olarak gösterilir.
+- Adaptif plan ve sheet shape doğrulaması, dolu opsiyonel alanların veya telefon slotlarının kaybolması halinde açıklayıcı hatayla fail-fast davranır.
 
 ## 10. Backup / Restore Kararları
 
@@ -452,3 +458,26 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - Telefon 10-only, only-Mahalle, only-Ilce, invalid/duplicate phone, duplicate import warning, export E2E, backup/restore E2E, CI integration, and broad `data-testid` coverage remain later candidates.
 - `test-results/` remains ignored. `dev-server.log` remains local/untracked and must not be staged or committed.
 - New checkpoint: `docs/CHECKPOINT_PLAYWRIGHT_IMPORT_REGRESSION_PHASE_2A.md`.
+
+## Latest Checkpoint Closure - Adaptive Summary Export Columns
+
+- Implementation commit: `6347cfa feat: add adaptive summary export columns`.
+- Previous checkpoint: `6924ec2 docs: close backup restore guardian roundtrip checkpoint`.
+- Summary export now derives adaptive columns from the actual exported canonical rows.
+- `Veli Ad Soyad` remains fixed; Anne, Baba, Mahalle and İlçe appear only when at least one exported row has a value.
+- Telefon 1/2 remain fixed; the report expands through the highest used Telefon N slot, up to Telefon 10, with a matching status column for every slot.
+- Summary phone mapping uses slot-faithful `phones[]`; Telefon 7-only, Telefon 10-only and parent relation phones are not compressed or shifted.
+- Empty phone status cells stay blank and invalid non-empty phones use `Geçersiz format`.
+- In-memory fail-fast validation protects optional data, slot range, phone/status header pairing and row/header shape.
+- Detailed export, import, backup/restore, schema, UI, E2E and package behavior were not changed.
+- Validation passed: focused export 4 files / 34 tests; OOM-safe full suite 45 files / 321 tests; build PASS with known Vite chunk-size warning.
+- New checkpoint: `docs/CHECKPOINT_ADAPTIVE_SUMMARY_EXPORT_COLUMNS.md`.
+- Future Codex prompts may use a reusable safety skeleton only as a monitored trial; each prompt must remain task-specific and the trial must be abandoned if it causes scope drift or control loss.
+
+## Future Roadmap - Reporting Area V2
+
+- `Reporting Area V2: Aday Pipeline Görselleştirme` fikri roadmap'e park edilmiştir; aktif implementation scope değildir.
+- Olası pipeline Yeni data, Arandı, Ulaşıldı/Ulaşılamadı, Potansiyel, Randevu verildi, Geldi/Gelmedi, Demo ders/seviye çalışması, Kayıt görüşmesi, Kayıt oldu ve Vazgeçti/Takipte aşamalarını içerebilir.
+- Amaç data → randevu → gelen → kayıt dönüşümünü, süreçteki tıkanmaları ve takım/personel bazlı aday akışını yönetici için okunur hale getirmektir.
+- Bu fikir yalnızca aday takip ve kayıt görüşmesi sürecimize özeldir; LMS, ERP veya öğrenci portalı projesi değildir.
+- Import/export/backup veri güvenliği ve mevcut rapor alanı oturmadan başlatılmayacak, mevcut önceliklerin önüne geçmeyecektir.

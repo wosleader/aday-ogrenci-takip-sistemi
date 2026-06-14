@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Backup Restore Guardian Roundtrip Guarantee | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Adaptive Summary Export Columns | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -171,3 +171,22 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Backup Restore Guardian Roundtrip Guarantee] Bu güvence test-only sağlanmıştır. `src/db/backup.ts`, schema/version, import, export, UI, E2E ve package davranışı değiştirilmemiştir.
 - [Backup Restore Guardian Roundtrip Guarantee] Gelecekte guardian/phone tablo şekli veya backup formatı değişirse roundtrip testi birlikte güncellenmelidir.
 - [Backup Restore Guardian Roundtrip Guarantee] Sonraki önerilen konu summary export phone compatibility'dir; Telefon 1-10 kapsamı, status kolonları ve compact/lossless ürün kararı açıklaşmadan implementation başlatılmaz.
+
+## Latest Decisions - Adaptive Summary Export Columns
+
+- [Adaptive Summary Export Columns] Özet export kolonları export edilen gerçek canonical satırlardan hesaplanır; kolon planı ve satır değerleri aynı veri kaynağını kullanır, ek DB sorgusu yapılmaz.
+- [Adaptive Summary Export Columns] `Veli Ad Soyad` sabittir. `Anne Adı`, `Baba Adı`, `Mahalle` ve `İlçe` yalnızca dataset'te en az bir dolu değer varsa eklenir.
+- [Adaptive Summary Export Columns] Telefon 1 ve Telefon 2 durum kolonlarıyla birlikte daima bulunur. En yüksek kullanılan Telefon N slotu 3-10 ise bütün Telefon 1-N çiftleri eklenir; üst sınır 10'dur.
+- [Adaptive Summary Export Columns] Summary phone kaynağı slot-faithful `phones[]` verisidir. Telefon 7-only, Telefon 10-only ve parent relation telefonları başka slotlara sıkıştırılmaz; ayrı Anne/Baba telefonu kolonları eklenmez.
+- [Adaptive Summary Export Columns] Boş telefon slotlarının durum hücresi boş kalır; invalid non-empty telefon `Geçersiz format` olarak export edilir.
+- [Adaptive Summary Export Columns] In-memory doğrulama dolu opsiyonel verinin plandan çıkmasını, plan üstü/geçersiz slotları, eksik telefon durum header'ını ve row/header uzunluk farkını açıklayıcı hatayla engeller; eksik kolonları sessizce eklemez.
+- [Adaptive Summary Export Columns] Dış Excel tüketicileri dinamik kolonlar nedeniyle sabit indekslere değil header adlarına dayanmalıdır.
+- [Adaptive Summary Export Columns] Doğum Tarihi modelde olmadığı için eklenmemiştir. `Veli Bilgisi` UI etiketi ve telefonsuz aday import ayarı ayrı insan kararlarıdır.
+- [Workflow Trial] Gelecek Codex görevleri için yeniden kullanılabilir güvenlik iskeleti yalnızca deneme olarak kullanılabilir. Her prompt HEAD, scope, dosyalar, riskler, testler ve insan kararları için özelleştirilmelidir; scope drift veya kontrol kaybı doğurursa eski katı manuel prompt stiline dönülür.
+
+## Deferred Roadmap Decision - Reporting Area V2
+
+- [Reporting Area V2] Aday pipeline görselleştirme fikri roadmap'e park edilmiştir; aktif scope değildir ve mevcut veri güvenliği, import, export ve backup önceliklerinin önüne geçmeyecektir.
+- [Reporting Area V2] Gelecekte Yeni data, Arandı, Ulaşıldı/Ulaşılamadı, Potansiyel, Randevu, Geldi/Gelmedi, Demo/seviye çalışması, Kayıt görüşmesi, Kayıt oldu ve Vazgeçti/Takipte aşamaları üzerinden dönüşüm hunisi ve süreç tıkanmaları gösterilebilir.
+- [Reporting Area V2] Yönetici görünümü takım/personel bazlı aday akışını ve data → randevu → gelen → kayıt dönüşüm oranlarını sunabilir.
+- [Reporting Area V2] Bu karar LMS, ERP veya öğrenci portalı kapsamı açmaz; yalnızca Aday Öğrenci Takip Sistemi'nin kayıt görüşmesi pipeline'ına özeldir.
