@@ -86,11 +86,79 @@ describe("simulateImport", () => {
 
   it("allows manual column mappings during simulation", () => {
     const summary = simulateImport(worksheet(["İsim"], [["Ayşe Yılmaz"]]), {
+      allowNoPhoneCandidates: true,
       manualMappings: { 0: "student_full_name" }
     });
 
     expect(summary.readable_rows).toBe(1);
     expect(summary.preview_rows[0].student_full_name).toBe("Ayşe Yılmaz");
+  });
+
+  it("blocks no-phone candidates by default and allows them only when enabled", () => {
+    const parsedWorksheet = worksheet(["Ad Soyad", "Telefon"], [["Arda Güneş", ""]]);
+    const blockedSummary = simulateImport(parsedWorksheet);
+    const allowedSummary = simulateImport(parsedWorksheet, { allowNoPhoneCandidates: true });
+
+    expect(blockedSummary.allow_no_phone_candidates).toBe(false);
+    expect(blockedSummary.readable_rows).toBe(0);
+    expect(blockedSummary.skipped_rows).toBe(1);
+    expect(blockedSummary.no_usable_phone_count).toBe(1);
+    expect(blockedSummary.simulated_rows).toHaveLength(0);
+    expect(
+      blockedSummary.detailed_logs.some((log) =>
+        log.message.includes("geçerli telefon numarası bulunamadı")
+      )
+    ).toBe(true);
+
+    expect(allowedSummary.allow_no_phone_candidates).toBe(true);
+    expect(allowedSummary.readable_rows).toBe(1);
+    expect(allowedSummary.skipped_rows).toBe(0);
+    expect(allowedSummary.simulated_rows[0]).toMatchObject({
+      student_full_name: "Arda Güneş",
+      phones: []
+    });
+  });
+
+  it("blocks invalid-only phone input in both no-phone modes", () => {
+    const parsedWorksheet = worksheet(["Ad Soyad", "Telefon"], [["Arda Güneş", "12345"]]);
+
+    for (const allowNoPhoneCandidates of [false, true]) {
+      const summary = simulateImport(parsedWorksheet, { allowNoPhoneCandidates });
+
+      expect(summary.readable_rows).toBe(0);
+      expect(summary.skipped_rows).toBe(1);
+      expect(summary.no_usable_phone_count).toBe(1);
+      expect(summary.simulated_rows).toHaveLength(0);
+      expect(
+        summary.detailed_logs.some((log) =>
+          log.message.includes("telefon bilgisi var ancak geçerli formatta değil")
+        )
+      ).toBe(true);
+    }
+  });
+
+  it("accepts valid parent and alternate-slot phones while no-phone import is disabled", () => {
+    const parentPhoneSummary = simulateImport(
+      worksheet(["Ad Soyad", "ANNE TEL"], [["Ayşe Yılmaz", "5320000001"]])
+    );
+    const alternatePhoneSummary = simulateImport(
+      worksheet(
+        ["Ad Soyad", "Telefon", "2. Telefon", "Telefon 10"],
+        [["Mehmet Kaya", "", "", "5320000010"]]
+      )
+    );
+
+    expect(parentPhoneSummary.readable_rows).toBe(1);
+    expect(parentPhoneSummary.preview_rows[0].phones[0]).toMatchObject({
+      relation_label: "Anne",
+      is_valid: true
+    });
+    expect(alternatePhoneSummary.readable_rows).toBe(1);
+    expect(alternatePhoneSummary.preview_rows[0].phones[0]).toMatchObject({
+      reference_label: "Telefon 10",
+      priority: 10,
+      is_valid: true
+    });
   });
 
   it("keeps Mahalle and Ilce optional while carrying values into preview rows", () => {

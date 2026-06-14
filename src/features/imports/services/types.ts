@@ -125,6 +125,7 @@ export type DuplicatePhoneWarning = {
 };
 
 export type ImportSimulationSummary = {
+  allow_no_phone_candidates: boolean;
   total_rows: number;
   readable_rows: number;
   skipped_rows: number;
@@ -137,6 +138,7 @@ export type ImportSimulationSummary = {
   }>;
   empty_row_count: number;
   empty_phone_count: number;
+  no_usable_phone_count: number;
   phone1_empty_with_alternative_count: number;
   both_phones_empty_count: number;
   duplicate_phone_warnings: DuplicatePhoneWarning[];
@@ -149,6 +151,7 @@ export type ImportSimulationSummary = {
 };
 
 export type ImportSimulationOptions = {
+  allowNoPhoneCandidates: boolean;
   defaultCampaignName: string;
   defaultReminderTime: string;
   callStartTime: string;

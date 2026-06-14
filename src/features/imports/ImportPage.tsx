@@ -188,6 +188,7 @@ export function ImportPage() {
   const [infoVisibleCount, setInfoVisibleCount] = useState(INITIAL_VISIBLE_IMPORT_MESSAGES);
   const [previewVisibleRowCount, setPreviewVisibleRowCount] = useState(INITIAL_VISIBLE_PREVIEW_ROWS);
   const [hideSystemExportColumns, setHideSystemExportColumns] = useState(false);
+  const [allowNoPhoneCandidates, setAllowNoPhoneCandidates] = useState(false);
 
   const columnMatches = useMemo(
     () => (worksheet ? matchColumns(worksheet.headers, manualMappings).matches : []),
@@ -238,6 +239,7 @@ export function ImportPage() {
       setSummary(restoredSummary);
       setManualMappings(storedState.manualMappings);
       setHeaderRowNumber(storedState.worksheet.detected_header_row_number);
+      setAllowNoPhoneCandidates(false);
     } catch {
       sessionStorage.removeItem(STORAGE_KEY);
     }
@@ -294,13 +296,18 @@ export function ImportPage() {
 
   function applySimulation(
     nextWorksheet: ParsedWorksheet,
-    nextManualMappings: Record<number, ImportFieldKey | "ignore" | ""> = manualMappings
+    nextManualMappings: Record<number, ImportFieldKey | "ignore" | ""> = manualMappings,
+    nextAllowNoPhoneCandidates = allowNoPhoneCandidates
   ) {
-    const simulation = simulateImport(nextWorksheet, { manualMappings: nextManualMappings });
+    const simulation = simulateImport(nextWorksheet, {
+      allowNoPhoneCandidates: nextAllowNoPhoneCandidates,
+      manualMappings: nextManualMappings
+    });
 
     setWorksheet(nextWorksheet);
     setSummary(simulation);
     setManualMappings(nextManualMappings);
+    setAllowNoPhoneCandidates(nextAllowNoPhoneCandidates);
     setHeaderRowNumber(nextWorksheet.detected_header_row_number);
     setImportResult(null);
     setDuplicateOverrideAccepted(false);
@@ -332,7 +339,7 @@ export function ImportPage() {
       const parsedWorksheet = await parseFirstWorksheet(buffer, file.name);
       parsedWorksheet.file_size = file.size;
       parsedWorksheet.file_last_modified = file.lastModified;
-      applySimulation(parsedWorksheet, {});
+      applySimulation(parsedWorksheet, {}, false);
     } catch (caughtError) {
       setWorksheet(null);
       setSummary(null);
@@ -368,6 +375,15 @@ export function ImportPage() {
     applySimulation(worksheet, manualMappings);
   }
 
+  function updateNoPhoneCandidateSetting(allow: boolean) {
+    if (!worksheet) {
+      setAllowNoPhoneCandidates(allow);
+      return;
+    }
+
+    applySimulation(worksheet, manualMappings, allow);
+  }
+
   function clearSimulation() {
     resetFileInput();
     sessionStorage.removeItem(STORAGE_KEY);
@@ -381,6 +397,7 @@ export function ImportPage() {
     setDuplicateOverrideAccepted(false);
     setIsDuplicateModalOpen(false);
     setHideSystemExportColumns(false);
+    setAllowNoPhoneCandidates(false);
     resetProgressiveDisclosure();
   }
 
@@ -395,6 +412,7 @@ export function ImportPage() {
     setDuplicateOverrideAccepted(false);
     setIsDuplicateModalOpen(false);
     setHideSystemExportColumns(false);
+    setAllowNoPhoneCandidates(false);
     resetProgressiveDisclosure();
   }
 
@@ -467,7 +485,10 @@ export function ImportPage() {
       return;
     }
 
-    const currentSummary = simulateImport(worksheet, { manualMappings });
+    const currentSummary = simulateImport(worksheet, {
+      allowNoPhoneCandidates,
+      manualMappings
+    });
 
     if (currentSummary.readable_rows === 0) {
       return;
@@ -649,11 +670,40 @@ export function ImportPage() {
         )
       ) : (
         <>
+          <section className="panel" aria-label="İçe aktarma ayarı">
+            <label
+              style={{
+                alignItems: "flex-start",
+                cursor: "pointer",
+                display: "inline-flex",
+                gap: 10
+              }}
+            >
+              <input
+                checked={allowNoPhoneCandidates}
+                onChange={(event) => updateNoPhoneCandidateSetting(event.currentTarget.checked)}
+                type="checkbox"
+              />
+              <span>
+                <strong>Telefonsuz adayları içe aktar</strong>
+                <span className="muted" style={{ display: "block", marginTop: 4 }}>
+                  Kapalıyken geçerli telefon numarası bulunmayan satırlar içe aktarılmaz. Anne veya
+                  Baba telefonu da telefon olarak kabul edilir. Bu ayar yalnızca mevcut içe aktarma
+                  işlemi için geçerlidir.
+                </span>
+              </span>
+            </label>
+          </section>
+
           <section className="summary-grid" aria-label="İçe aktarma ön kontrol özeti">
             <SummaryMetric label="Toplam satır" value={summary.total_rows} />
             <SummaryMetric label="Okunacak satır" value={summary.readable_rows} />
             <SummaryMetric label="İçe aktarılmayacak satır" value={summary.skipped_rows} />
             <SummaryMetric label="Telefon bilgisi eksik kayıt" value={summary.empty_phone_count ?? 0} />
+            <SummaryMetric
+              label="Geçerli telefonu olmayan kayıt"
+              value={summary.no_usable_phone_count ?? 0}
+            />
             <SummaryMetric
               label="Kampanyası Diğer yapılacak"
               value={summary.default_campaign_assigned_count}

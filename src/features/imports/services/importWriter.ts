@@ -164,6 +164,26 @@ function getSearchPhones(row: SimulatedImportRow): string[] {
   return [row.phone_1, row.phone_2].filter(Boolean) as string[];
 }
 
+function validateImportPolicy(summary: ImportSimulationSummary) {
+  for (const row of summary.simulated_rows) {
+    const phones = row.phones ?? [];
+    const hasUsablePhone = phones.some((phone) => phone.is_valid);
+    const hasInvalidPhone = phones.some((phone) => !phone.is_valid);
+
+    if (hasInvalidPhone && !hasUsablePhone) {
+      throw new Error(
+        `Satır ${row.row_number} yalnızca geçersiz telefon içeriyor; import özeti güvenli değil.`
+      );
+    }
+
+    if (!summary.allow_no_phone_candidates && !hasUsablePhone) {
+      throw new Error(
+        `Satır ${row.row_number} telefonsuz aday politikasına aykırı; import özeti güvenli değil.`
+      );
+    }
+  }
+}
+
 export async function writeImportToDatabase(
   worksheet: ParsedWorksheet,
   summary: ImportSimulationSummary,
@@ -171,6 +191,7 @@ export async function writeImportToDatabase(
 ): Promise<ImportWriteResult> {
   const database = options.database ?? db;
   const backupProvider = options.backupProvider ?? createPreImportBackup;
+  validateImportPolicy(summary);
   const backup = await backupProvider(database);
 
   if (!backup) {

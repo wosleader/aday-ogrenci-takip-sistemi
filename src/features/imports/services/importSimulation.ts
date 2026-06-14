@@ -19,6 +19,7 @@ import type {
 } from "./types";
 
 const DEFAULT_SIMULATION_OPTIONS: ImportSimulationOptions = {
+  allowNoPhoneCandidates: false,
   defaultCampaignName: "Diğer",
   defaultReminderTime: "11:00",
   callStartTime: "10:00",
@@ -245,6 +246,14 @@ function collectImportPhones(
   return phones;
 }
 
+function hasAnyPhoneInput(row: unknown[], matches: ColumnMatch[]): boolean {
+  return matches.some(
+    (match) =>
+      Boolean(match.target_field && PHONE_SOURCE_FIELDS.has(match.target_field)) &&
+      Boolean(stringifyCell(row[match.source_index]))
+  );
+}
+
 function collectDuplicatePhoneWarnings(
   rows: SimulatedImportRow[]
 ): DuplicatePhoneWarning[] {
@@ -304,6 +313,7 @@ export function simulateImport(
   let emptyRowCount = 0;
   let skippedRows = 0;
   let emptyPhoneCount = 0;
+  let noUsablePhoneCount = 0;
   let phone1EmptyWithAlternativeCount = 0;
   let bothPhonesEmptyCount = 0;
   let defaultCampaignAssignedCount = 0;
@@ -426,12 +436,14 @@ export function simulateImport(
 
     const studentFullName = resolvedStudentName.student_full_name;
     const phones = collectImportPhones(row, matches);
+    const anyPhoneInput = hasAnyPhoneInput(row, matches);
+    const hasUsablePhone = phones.some((phone) => phone.is_valid);
     const primaryPhone = phones.find((phone) => phone.priority === 1);
     const secondaryPhone = phones.find((phone) => phone.priority === 2);
 
     if (!primaryPhone?.normalized_phone_number) {
       emptyPhoneCount += 1;
-      if (phones.length > 0) {
+      if (hasUsablePhone) {
         phone1EmptyWithAlternativeCount += 1;
         detailedLogs.push({
           row_number: rowNumber,
@@ -442,18 +454,52 @@ export function simulateImport(
           suggested_action: "Telefon 1 zorunlu değilse işlem yapmanız gerekmez; isterseniz numarayı Telefon 1'e taşıyın.",
           auto_fixed: false
         });
-      } else {
+      } else if (!anyPhoneInput) {
         bothPhonesEmptyCount += 1;
+      }
+    }
+
+    if (!hasUsablePhone) {
+      noUsablePhoneCount += 1;
+
+      if (anyPhoneInput) {
+        skippedRows += 1;
         detailedLogs.push({
           row_number: rowNumber,
           column_name: "Telefon",
           field_name: "Telefon",
-          severity: "warning",
-          message: `Satır ${rowNumber}: Telefon 1 ve Telefon 2 boş. Bu kayıt kontrol edilmeli.`,
-          suggested_action: "Adaya ulaşılabilmesi için en az bir telefon bilgisi ekleyin.",
+          severity: "error",
+          message: `Satır ${rowNumber} içe aktarılmayacak: telefon bilgisi var ancak geçerli formatta değil.`,
+          suggested_action: "Telefon numarasını geçerli bir cep telefonu formatında düzeltin.",
           auto_fixed: false
         });
+        return;
       }
+
+      if (!effectiveOptions.allowNoPhoneCandidates) {
+        skippedRows += 1;
+        detailedLogs.push({
+          row_number: rowNumber,
+          column_name: "Telefon",
+          field_name: "Telefon",
+          severity: "error",
+          message: `Satır ${rowNumber} içe aktarılmayacak: geçerli telefon numarası bulunamadı.`,
+          suggested_action:
+            "Telefon ekleyin veya bu satırı almak için Telefonsuz adayları içe aktar ayarını açın.",
+          auto_fixed: false
+        });
+        return;
+      }
+
+      detailedLogs.push({
+        row_number: rowNumber,
+        column_name: "Telefon",
+        field_name: "Telefon",
+        severity: "warning",
+        message: `Satır ${rowNumber}: telefon numarası yok; açık import ayarı nedeniyle aday içe aktarılacak.`,
+        suggested_action: "Adaya daha sonra geçerli bir telefon numarası ekleyin.",
+        auto_fixed: false
+      });
     }
 
     let campaignName = getTextCell(row, fieldIndex, "campaign_name");
@@ -570,6 +616,7 @@ export function simulateImport(
   }
 
   return {
+    allow_no_phone_candidates: effectiveOptions.allowNoPhoneCandidates,
     total_rows: worksheet.rows.length,
     readable_rows: simulatedRows.length,
     skipped_rows: skippedRows,
@@ -578,6 +625,7 @@ export function simulateImport(
     missing_required_fields: missingRequiredFields,
     empty_row_count: emptyRowCount,
     empty_phone_count: emptyPhoneCount,
+    no_usable_phone_count: noUsablePhoneCount,
     phone1_empty_with_alternative_count: phone1EmptyWithAlternativeCount,
     both_phones_empty_count: bothPhonesEmptyCount,
     duplicate_phone_warnings: duplicatePhoneWarnings,

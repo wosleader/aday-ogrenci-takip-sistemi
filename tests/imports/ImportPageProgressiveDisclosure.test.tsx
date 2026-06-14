@@ -337,6 +337,7 @@ describe("ImportPage progressive disclosure", () => {
     const user = await uploadWorksheet(worksheet);
 
     expect(screen.getByRole("heading", { name: "Kolon Eşleştirme" })).toBeInTheDocument();
+    await user.click(screen.getByRole("checkbox", { name: /Telefonsuz adayları içe aktar/ }));
 
     await user.click(screen.getByRole("button", { name: "İçe Aktar" }));
 
@@ -368,6 +369,7 @@ describe("ImportPage progressive disclosure", () => {
     await user.upload(fileInput, new File(["mock"], "test-import.xlsx"));
 
     expect(await screen.findByRole("heading", { name: "Bu dosya daha önce içe aktarılmış olabilir" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /Telefonsuz adayları içe aktar/ })).not.toBeChecked();
     expect(screen.getByRole("button", { name: "Yine de içe aktar" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "İçe Aktarma Tamamlandı" })).not.toBeInTheDocument();
     expect(excelReaderMocks.parseFirstWorksheet).toHaveBeenCalledTimes(2);
@@ -571,6 +573,50 @@ describe("ImportPage progressive disclosure", () => {
 
     expect(await screen.findByRole("heading", { name: "Kolon Eşleştirme" })).toBeInTheDocument();
     expect(excelReaderMocks.parseFirstWorksheet).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps no-phone import off by default and recomputes the simulation when enabled", async () => {
+    const worksheet = createWorksheet(["Ad Soyad", "Telefon"], [["Arda Güneş", ""]]);
+    const user = await uploadWorksheet(worksheet);
+    const setting = screen.getByRole("checkbox", { name: /Telefonsuz adayları içe aktar/ });
+    const summarySection = screen.getByRole("region", { name: "İçe aktarma ön kontrol özeti" });
+
+    expect(setting).not.toBeChecked();
+    expect(within(summarySection).getByText("Okunacak satır").parentElement).toHaveTextContent("0");
+    expect(within(summarySection).getByText("İçe aktarılmayacak satır").parentElement).toHaveTextContent("1");
+    expect(
+      screen.getByText(
+        "Kapalıyken geçerli telefon numarası bulunmayan satırlar içe aktarılmaz. Anne veya Baba telefonu da telefon olarak kabul edilir. Bu ayar yalnızca mevcut içe aktarma işlemi için geçerlidir."
+      )
+    ).toBeInTheDocument();
+
+    await user.click(setting);
+
+    expect(setting).toBeChecked();
+    expect(within(summarySection).getByText("Okunacak satır").parentElement).toHaveTextContent("1");
+    expect(within(summarySection).getByText("İçe aktarılmayacak satır").parentElement).toHaveTextContent("0");
+
+    await user.click(screen.getByRole("button", { name: "İçe Aktar" }));
+    await waitFor(() => expect(importWriterMocks.writeImportToDatabase).toHaveBeenCalledTimes(1));
+
+    const [, currentSummary] = importWriterMocks.writeImportToDatabase.mock.calls[0];
+    expect(currentSummary.allow_no_phone_candidates).toBe(true);
+    expect(currentSummary.simulated_rows[0].student_full_name).toBe("Arda Güneş");
+  });
+
+  it("resets the no-phone setting after clearing the current import", async () => {
+    const worksheet = createWorksheet(["Ad Soyad", "Telefon"], [["Arda Güneş", ""]]);
+    const user = await uploadWorksheet(worksheet);
+
+    await user.click(screen.getByRole("checkbox", { name: /Telefonsuz adayları içe aktar/ }));
+    await user.click(screen.getByRole("button", { name: "Simülasyonu Temizle" }));
+
+    excelReaderMocks.parseFirstWorksheet.mockResolvedValueOnce(worksheet);
+    await user.upload(getFileInput(), new File(["mock"], "second-import.xlsx"));
+
+    expect(
+      await screen.findByRole("checkbox", { name: /Telefonsuz adayları içe aktar/ })
+    ).not.toBeChecked();
   });
 
   it("clears previous success state when a different file is selected after import", async () => {

@@ -67,17 +67,19 @@ describe("AD/SOYAD import composition", () => {
   });
 
   it("blocks rows that contain only Veli, Anne and Baba names or parent phones", () => {
-    const summary = simulateImport(
-      worksheet(
-        ["Veli Ad Soyad", "Anne Adı", "Baba Adı", "ANNE TEL", "BABA TEL"],
-        [["Ayşe Veli", "Fatma Yılmaz", "Mehmet Yılmaz", "5321234567", "5327654321"]]
-      )
+    const parsedWorksheet = worksheet(
+      ["Veli Ad Soyad", "Anne Adı", "Baba Adı", "ANNE TEL", "BABA TEL"],
+      [["Ayşe Veli", "Fatma Yılmaz", "Mehmet Yılmaz", "5321234567", "5327654321"]]
     );
 
-    expect(summary.readable_rows).toBe(0);
-    expect(summary.skipped_rows).toBe(1);
-    expect(summary.preview_rows).toHaveLength(0);
-    expect(summary.logs.some((log) => log.message.includes("Ad Soyad zorunlu alanı"))).toBe(true);
+    for (const allowNoPhoneCandidates of [false, true]) {
+      const summary = simulateImport(parsedWorksheet, { allowNoPhoneCandidates });
+
+      expect(summary.readable_rows).toBe(0);
+      expect(summary.skipped_rows).toBe(1);
+      expect(summary.preview_rows).toHaveLength(0);
+      expect(summary.logs.some((log) => log.message.includes("Ad Soyad zorunlu alanı"))).toBe(true);
+    }
   });
 
   it("composes student full name from AD and SOYAD when full-name column is absent", () => {

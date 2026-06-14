@@ -233,7 +233,7 @@ describe("writeImportToDatabase", () => {
     }
   });
 
-  it("imports a student without creating phone records when both phones are empty", async () => {
+  it("does not insert a no-phone student when the setting is off", async () => {
     const database = await createDatabase();
     const parsedWorksheet = worksheet(
       ["Ad Soyad", "Telefon", "2. Telefon"],
@@ -244,10 +244,59 @@ describe("writeImportToDatabase", () => {
       const summary = simulateImport(parsedWorksheet);
       const result = await writeImportToDatabase(parsedWorksheet, summary, { database });
 
+      expect(result.created_students).toBe(0);
+      expect(result.created_phones).toBe(0);
+      expect(await database.students.count()).toBe(0);
+      expect(await database.phones.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("imports a no-phone student without phone records when the setting is on", async () => {
+    const database = await createDatabase();
+    const parsedWorksheet = worksheet(
+      ["Ad Soyad", "Veli Ad Soyad", "Telefon"],
+      [["Ayşe Yılmaz", "Fatma Yılmaz", ""]]
+    );
+
+    try {
+      const summary = simulateImport(parsedWorksheet, { allowNoPhoneCandidates: true });
+      const result = await writeImportToDatabase(parsedWorksheet, summary, { database });
+
       expect(result.created_students).toBe(1);
+      expect(result.created_guardians).toBe(1);
       expect(result.created_phones).toBe(0);
       expect(await database.students.count()).toBe(1);
+      expect(await database.guardians.count()).toBe(1);
       expect(await database.phones.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("rejects a stale no-phone summary whose policy snapshot is off", async () => {
+    const database = await createDatabase();
+    const parsedWorksheet = worksheet(["Ad Soyad"], [["Ayşe Yılmaz"]]);
+    const allowedSummary = simulateImport(parsedWorksheet, { allowNoPhoneCandidates: true });
+    const staleSummary = { ...allowedSummary, allow_no_phone_candidates: false };
+    let backupCalled = false;
+
+    try {
+      await expect(
+        writeImportToDatabase(parsedWorksheet, staleSummary, {
+          database,
+          backupProvider: async () => {
+            backupCalled = true;
+            return createPreImportBackup(database);
+          }
+        })
+      ).rejects.toThrow("telefonsuz aday politikasına aykırı");
+
+      expect(backupCalled).toBe(false);
+      expect(await database.students.count()).toBe(0);
     } finally {
       database.close();
       await database.delete();
@@ -375,7 +424,7 @@ describe("writeImportToDatabase", () => {
     }
   });
 
-  it("persists invalid non-empty phone values from simulation metadata", async () => {
+  it("blocks invalid-only phone values in both no-phone modes", async () => {
     const database = await createDatabase();
     const parsedWorksheet = worksheet(
       ["Ad Soyad", "GSM3"],
@@ -383,25 +432,17 @@ describe("writeImportToDatabase", () => {
     );
 
     try {
-      const summary = simulateImport(parsedWorksheet);
-      expect(summary.preview_rows[0].phones[0]).toMatchObject({
-        reference_label: "Telefon 3",
-        normalized_phone_number: "12345",
-        is_valid: false
-      });
+      for (const allowNoPhoneCandidates of [false, true]) {
+        const summary = simulateImport(parsedWorksheet, { allowNoPhoneCandidates });
+        const result = await writeImportToDatabase(parsedWorksheet, summary, { database });
 
-      const result = await writeImportToDatabase(parsedWorksheet, summary, { database });
-      const phones = await database.phones.toArray();
+        expect(summary.simulated_rows).toHaveLength(0);
+        expect(result.created_students).toBe(0);
+        expect(result.created_phones).toBe(0);
+      }
 
-      expect(result.created_phones).toBe(1);
-      expect(phones[0]).toMatchObject({
-        normalized_phone_number: "12345",
-        original_phone_value: "12345",
-        phone_label: "Telefon 3",
-        reference_label: "Telefon 3",
-        is_valid: false,
-        is_wrong: false
-      });
+      expect(await database.students.count()).toBe(0);
+      expect(await database.phones.count()).toBe(0);
     } finally {
       database.close();
       await database.delete();
@@ -474,7 +515,7 @@ describe("writeImportToDatabase", () => {
 
   it("creates backup before writing import records", async () => {
     const database = await createDatabase();
-    const parsedWorksheet = worksheet(["Ad Soyad"], [["Ayşe Yılmaz"]]);
+    const parsedWorksheet = worksheet(["Ad Soyad", "Telefon"], [["Ayşe Yılmaz", "5321234567"]]);
     let backupCalled = false;
 
     try {

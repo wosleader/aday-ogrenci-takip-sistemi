@@ -12,11 +12,11 @@ function worksheet(): ParsedWorksheet {
     file_last_modified: 1710000000000,
     sheet_name: "Worksheet",
     ignored_sheet_names: [],
-    raw_rows: [["Ad Soyad"], ["Ayşe Yılmaz"]],
+    raw_rows: [["Ad Soyad", "Telefon"], ["Ayşe Yılmaz", "5321234567"]],
     detected_header_row_number: 1,
-    headers: ["Ad Soyad"],
-    rows: [["Ayşe Yılmaz"]],
-    preview_rows: [["Ayşe Yılmaz"]]
+    headers: ["Ad Soyad", "Telefon"],
+    rows: [["Ayşe Yılmaz", "5321234567"]],
+    preview_rows: [["Ayşe Yılmaz", "5321234567"]]
   };
 }
 
