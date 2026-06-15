@@ -1916,7 +1916,7 @@ export function StudentsPage() {
             <div className="drawer-body">
               <div ref={drawerPhoneListRef} aria-hidden="true" />
               <PhoneCard
-                label="Telefon 1"
+                label={phone1Row?.reference_label || "Telefon 1"}
                 phoneId={selectedRow.phone_1_id}
                 value={selectedRow.phone_1}
                 relationLabel={phone1Row?.relation_label}
@@ -1935,7 +1935,7 @@ export function StudentsPage() {
                 onInvalid={(phoneId) => void updatePhoneStatus("invalid", phoneId)}
               />
               <PhoneCard
-                label="Telefon 2"
+                label={phone2Row?.reference_label || "Telefon 2"}
                 phoneId={selectedRow.phone_2_id}
                 value={selectedRow.phone_2}
                 relationLabel={phone2Row?.relation_label}

@@ -91,7 +91,8 @@ export function createPhoneDisplayLabel(referenceLabel: string, relationLabel?: 
 }
 
 export function getPhoneReferenceLabel(
-  phone: Pick<PhoneRecord, "reference_label" | "phone_label">,
+  phone: Pick<PhoneRecord, "reference_label" | "phone_label"> &
+    Partial<Pick<PhoneRecord, "priority" | "source_column">>,
   fallbackIndex: number
 ): string {
   const explicitReference = phone.reference_label?.trim();
@@ -102,7 +103,20 @@ export function getPhoneReferenceLabel(
 
   const legacyNumber = extractReferenceNumber(phone.phone_label);
 
-  return createPhoneReferenceLabel(legacyNumber ?? fallbackIndex);
+  if (legacyNumber) {
+    return createPhoneReferenceLabel(legacyNumber);
+  }
+
+  const priority = phone.priority;
+
+  if (typeof priority === "number" && Number.isInteger(priority) && priority >= 1 && priority <= 10) {
+    return createPhoneReferenceLabel(priority);
+  }
+
+  const sourceColumn = phone.source_column?.trim();
+  const sourceSlot = sourceColumn?.match(/\b(?:telefon|phone|tel|gsm)\s*(10|[1-9])\b/i)?.[1];
+
+  return createPhoneReferenceLabel(sourceSlot ? Number(sourceSlot) : fallbackIndex);
 }
 
 export function getPhoneRelationLabel(phone: Pick<PhoneRecord, "relation_label" | "phone_label">): PhoneRelationLabel {

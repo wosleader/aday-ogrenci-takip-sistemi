@@ -160,6 +160,21 @@ async function seedStudentWithSinglePhone(fullName: string, uuidPrefix: string, 
   return studentId;
 }
 
+async function seedStudentWithSlotPhone(fullName: string, uuidPrefix: string, phoneNumber: string, slot: number) {
+  const studentId = await seedStudentWithSinglePhone(fullName, uuidPrefix, phoneNumber);
+  const phone = await db.phones.where("student_id").equals(studentId).first();
+
+  expect(phone?.id).toBeDefined();
+  await db.phones.update(phone!.id!, {
+    phone_label: `Telefon ${slot}`,
+    reference_label: `Telefon ${slot}`,
+    priority: slot,
+    source_column: `TELEFON ${slot}`
+  });
+
+  return { phoneId: phone!.id!, studentId };
+}
+
 function StudentsPageHost({ initialGlobalSearch = "" }: { initialGlobalSearch?: string }) {
   const [globalSearch, setGlobalSearch] = useState(initialGlobalSearch);
   const context: AppOutletContext = {
@@ -223,6 +238,38 @@ describe("StudentsPage right card multi-phone display", () => {
     window.localStorage.clear();
     await db.delete();
   });
+
+  it.each([
+    { fullName: "MINA CELIK", slot: 3, phoneNumber: "0530 000 0004" },
+    { fullName: "BORA DEMIR", slot: 10, phoneNumber: "0530 000 0005" }
+  ])(
+    "shows a Telefon $slot-only compatibility phone once with its canonical slot label",
+    async ({ fullName, slot, phoneNumber }) => {
+      const user = userEvent.setup();
+      const { phoneId } = await seedStudentWithSlotPhone(fullName, `slot-${slot}`, phoneNumber, slot);
+
+      renderStudentsPage();
+
+      expect(await screen.findAllByText(fullName)).toHaveLength(2);
+      const drawer = getStudentDrawer();
+      const canonicalLabel = `Telefon ${slot}`;
+      const phoneCard = within(drawer).getByText(canonicalLabel).closest(".drawer-phone-card");
+
+      expect(phoneCard).not.toBeNull();
+      expect(within(drawer).queryByText("Telefon 1")).not.toBeInTheDocument();
+      expect(within(drawer).getAllByText(phoneNumber)).toHaveLength(1);
+      expect(within(phoneCard as HTMLElement).queryByText(/telefonu$/i)).not.toBeInTheDocument();
+
+      await user.click(
+        within(phoneCard as HTMLElement).getByRole("button", {
+          name: "Bu görüşmede kullanılacak telefon"
+        })
+      );
+
+      expect((await db.phones.get(phoneId))?.phone_status).toBe("contacted");
+      expect(within(drawer).getAllByText(phoneNumber)).toHaveLength(1);
+    }
+  );
 
   it("shows the first extra phone and expands the remaining phones as readonly", async () => {
     const user = userEvent.setup();

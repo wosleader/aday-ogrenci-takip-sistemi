@@ -93,6 +93,22 @@ describe("phoneCompatibility", () => {
     expect(createPhoneDisplayLabel("Telefon 3", "Telefon")).toBe("Telefon 3");
   });
 
+  it("derives canonical slot labels from priority and source column before legacy fallback", () => {
+    const [priorityPhone] = createCompatibilityPhoneList([
+      phone({ phone_label: "", reference_label: "", priority: 3, source_column: null })
+    ]);
+    const [sourcePhone] = createCompatibilityPhoneList([
+      phone({ phone_label: "", reference_label: "", priority: null, source_column: "TELEFON 10" })
+    ]);
+    const [legacyPhone] = createCompatibilityPhoneList([
+      phone({ phone_label: "", reference_label: "", priority: null, source_column: null })
+    ]);
+
+    expect(priorityPhone.reference_label).toBe("Telefon 3");
+    expect(sourcePhone.reference_label).toBe("Telefon 10");
+    expect(legacyPhone.reference_label).toBe("Telefon 1");
+  });
+
   it("creates a phone snapshot with reference, relation and source column", () => {
     const snapshot = createPhoneSnapshot(
       phone({

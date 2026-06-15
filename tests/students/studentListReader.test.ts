@@ -367,6 +367,43 @@ describe("studentListReader", () => {
     }
   });
 
+  it.each([
+    { slot: 3, phoneNumber: "05320000003" },
+    { slot: 10, phoneNumber: "05320000010" }
+  ])("preserves Telefon $slot metadata while keeping the compatibility action target", async ({ slot, phoneNumber }) => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      await database.phones.add(
+        phone(studentId, {
+          phone_number: phoneNumber,
+          normalized_phone_number: phoneNumber,
+          phone_label: `Telefon ${slot}`,
+          reference_label: `Telefon ${slot}`,
+          priority: slot,
+          source_column: `TELEFON ${slot}`,
+          is_primary: true
+        })
+      );
+
+      const [row] = await readStudentListRows(database);
+
+      expect(row.phone_1).toBe(phoneNumber);
+      expect(row.phone_1_id).toBe(row.phones[0].id);
+      expect(row.phones).toHaveLength(1);
+      expect(row.phones[0]).toMatchObject({
+        phone_number: phoneNumber,
+        reference_label: `Telefon ${slot}`,
+        display_label: `Telefon ${slot}`,
+        source_column: `TELEFON ${slot}`
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
   it("marks rows without any phone as missing phone", async () => {
     const database = await createDatabase();
 
