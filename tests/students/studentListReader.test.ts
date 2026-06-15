@@ -278,6 +278,8 @@ describe("studentListReader", () => {
           priority: 3,
           is_primary: false,
           phone_status: "contacted",
+          call_outcome: "no_answer",
+          call_outcome_updated_at: "2026-05-08T10:00:00.000Z",
           source_column: "Öğrenci Telefon"
         }),
         phone(studentId, {
@@ -325,10 +327,19 @@ describe("studentListReader", () => {
         display_label: "Telefon 3 · Öğrenci",
         source_column: "Öğrenci Telefon",
         phone_status: "contacted",
+        call_outcome: "no_answer",
+        call_outcome_updated_at: "2026-05-08T10:00:00.000Z",
         is_primary: false,
         is_wrong: false,
         is_valid: true
       });
+      expect(row.phones[0]).toEqual(
+        expect.objectContaining({
+          phone_number: "05320000001",
+          call_outcome: null,
+          call_outcome_updated_at: null
+        })
+      );
       expect(row.phones[3]).toMatchObject({
         phone_number: "05320000004",
         display_label: "Telefon 4 · Veli",

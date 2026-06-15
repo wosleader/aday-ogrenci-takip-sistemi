@@ -27,6 +27,8 @@ function phone(overrides: Partial<PhoneRecord> = {}): PhoneRecord {
     is_valid: overrides.is_valid ?? true,
     is_wrong: overrides.is_wrong ?? false,
     is_primary: overrides.is_primary ?? false,
+    call_outcome: overrides.call_outcome ?? null,
+    call_outcome_updated_at: overrides.call_outcome_updated_at ?? null,
     note: overrides.note ?? null,
     sync_status: overrides.sync_status ?? "local",
     created_at: overrides.created_at ?? "2026-05-19T09:00:00.000Z",
@@ -137,5 +139,25 @@ describe("phoneCompatibility", () => {
 
     expect(phones).toHaveLength(1);
     expect(phones[0]).toEqual(expect.objectContaining({ id: 1, reference_label: "Telefon 1" }));
+  });
+
+  it("carries phone-level call outcome fields without changing phone_status", () => {
+    const [compatibilityPhone] = createCompatibilityPhoneList([
+      phone({
+        id: 9,
+        phone_status: "active",
+        call_outcome: "busy",
+        call_outcome_updated_at: "2026-05-20T12:00:00.000Z"
+      })
+    ]);
+
+    expect(compatibilityPhone).toEqual(
+      expect.objectContaining({
+        id: 9,
+        status: "active",
+        call_outcome: "busy",
+        call_outcome_updated_at: "2026-05-20T12:00:00.000Z"
+      })
+    );
   });
 });

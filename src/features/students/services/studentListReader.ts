@@ -3,7 +3,7 @@ import { db } from "../../../db/db";
 import type { CampaignRecord } from "../../../domain/models/campaign";
 import type { CallLogRecord } from "../../../domain/models/callLog";
 import type { GuardianRecord } from "../../../domain/models/guardian";
-import type { PhoneRecord, PhoneRelationLabel, PhoneStatus } from "../../../domain/models/phone";
+import type { PhoneCallOutcome, PhoneRecord, PhoneRelationLabel, PhoneStatus } from "../../../domain/models/phone";
 import type { ReminderRecord } from "../../../domain/models/reminder";
 import type { StudentRecord } from "../../../domain/models/student";
 import { createSearchText, normalizeText } from "../../../utils/normalizeText";
@@ -29,6 +29,8 @@ export type StudentListPhoneRow = {
   is_primary: boolean;
   is_wrong: boolean;
   is_valid: boolean;
+  call_outcome?: PhoneCallOutcome | null;
+  call_outcome_updated_at?: string | null;
 };
 
 export type StudentListRow = {
@@ -184,7 +186,9 @@ function createStudentListPhoneRows(phones: PhoneRecord[]): StudentListPhoneRow[
       phone_status: phone.status,
       is_primary: Boolean(sourcePhone?.is_primary),
       is_wrong: phone.is_wrong,
-      is_valid: sourcePhone?.is_valid ?? phone.status !== "invalid"
+      is_valid: sourcePhone?.is_valid ?? phone.status !== "invalid",
+      call_outcome: sourcePhone?.call_outcome ?? phone.call_outcome ?? null,
+      call_outcome_updated_at: sourcePhone?.call_outcome_updated_at ?? phone.call_outcome_updated_at ?? null
     };
   });
 }

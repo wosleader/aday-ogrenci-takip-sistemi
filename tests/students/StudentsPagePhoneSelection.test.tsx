@@ -306,6 +306,83 @@ describe("StudentsPage phone selection", () => {
 
     expect(within(phone1Card).getByText("Son sonuç: Yok")).toBeInTheDocument();
     expect(within(phone3Card).getByText("Son sonuç: Yok")).toBeInTheDocument();
+    expect(within(phone1Card).getByRole("combobox", { name: "Telefon 1 Telefon durumu" })).toHaveValue("not_called");
+
+    const phone1 = await db.phones.where("normalized_phone_number").equals("05321000001").first();
+    expect(phone1?.call_outcome).toBeUndefined();
+    expect(phone1?.call_outcome_updated_at).toBeUndefined();
+  });
+
+  it("persists phone-level outcomes from right-card dropdowns without changing call selection fields", async () => {
+    const user = userEvent.setup();
+    await seedStudentWithPhones("MELIS KAYA", "manual-phone-outcome");
+
+    renderStudentsPage();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    const phone2Card = getDrawerPhoneCard("Telefon 2");
+    const phone3Card = getDrawerPhoneCard("Telefon 3");
+
+    await user.selectOptions(within(phone1Card).getByRole("combobox", { name: "Telefon 1 Telefon durumu" }), "no_answer");
+    await waitFor(async () => {
+      const phone1 = await db.phones.where("normalized_phone_number").equals("05321000001").first();
+
+      expect(phone1?.call_outcome).toBe("no_answer");
+      expect(phone1?.call_outcome_updated_at).toBeTruthy();
+      expect(phone1?.phone_status).toBe("active");
+      expect(phone1?.is_wrong).toBe(false);
+      expect(phone1?.is_valid).toBe(true);
+    });
+    expect(within(phone1Card).getByText(/Güncellendi:/)).toBeInTheDocument();
+
+    await user.selectOptions(within(phone2Card).getByRole("combobox", { name: "Telefon 2 Telefon durumu" }), "busy");
+    await waitFor(async () => {
+      const phone2 = await db.phones.where("normalized_phone_number").equals("05321000002").first();
+
+      expect(phone2?.relation_label).toBe("Anne");
+      expect(phone2?.call_outcome).toBe("busy");
+    });
+
+    await user.selectOptions(within(phone3Card).getByRole("combobox", { name: "Telefon 3 Telefon durumu" }), "reached");
+    await waitFor(async () => {
+      const phone3 = await db.phones.where("normalized_phone_number").equals("05321000003").first();
+
+      expect(phone3?.reference_label).toBe("Telefon 3");
+      expect(phone3?.call_outcome).toBe("reached");
+      expect(phone3?.phone_status).toBe("active");
+    });
+
+    const student = (await db.students.toArray())[0];
+    expect(student.last_call_result).toBe("not_called");
+    expect(within(phone3Card).getByText("Son sonuç: Yok")).toBeInTheDocument();
+    expect(within(phone2Card).getByText("Anne telefonu")).toBeInTheDocument();
+  });
+
+  it("stores manual Aranmadı reset with a timestamp", async () => {
+    const user = userEvent.setup();
+    await seedStudentWithPhones("MELIS KAYA", "manual-reset");
+    const phone1Id = await getPhoneId("05321000001");
+    await db.phones.update(phone1Id, {
+      call_outcome: "reached",
+      call_outcome_updated_at: "2026-05-10T08:00:00.000Z"
+    });
+
+    renderStudentsPage();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    const outcomeSelect = within(phone1Card).getByRole("combobox", { name: "Telefon 1 Telefon durumu" });
+
+    expect(outcomeSelect).toHaveValue("reached");
+
+    await user.selectOptions(outcomeSelect, "not_called");
+
+    await waitFor(async () => {
+      const phone1 = await db.phones.get(phone1Id);
+
+      expect(phone1?.call_outcome).toBe("not_called");
+      expect(phone1?.call_outcome_updated_at).not.toBe("2026-05-10T08:00:00.000Z");
+      expect(phone1?.call_outcome_updated_at).toBeTruthy();
+    });
   });
 
   it("shows the latest call outcome for Telefon 1, Telefon 2, and Telefon 3+ cards", async () => {

@@ -1,4 +1,10 @@
-import type { PhoneRecord, PhoneRelationLabel, PhoneSnapshot, PhoneStatus } from "../../../domain/models/phone";
+import type {
+  PhoneCallOutcome,
+  PhoneRecord,
+  PhoneRelationLabel,
+  PhoneSnapshot,
+  PhoneStatus
+} from "../../../domain/models/phone";
 import { normalizePhone } from "../../../utils/normalizePhone";
 import { normalizeText } from "../../../utils/normalizeText";
 
@@ -19,6 +25,8 @@ export type MultiPhoneCompatibilityItem = {
   priority: number;
   status: PhoneStatus;
   is_wrong: boolean;
+  call_outcome?: PhoneCallOutcome | null;
+  call_outcome_updated_at?: string | null;
 };
 
 export type LegacyPhoneSlots = {
@@ -164,7 +172,9 @@ export function createPhonesFromLegacyFields(fields: LegacyPhoneFields): MultiPh
         source_column: legacyPhone.source_column,
         priority: legacyPhone.index,
         status: "active" as const,
-        is_wrong: false
+        is_wrong: false,
+        call_outcome: null,
+        call_outcome_updated_at: null
       }
     ];
   });
@@ -190,7 +200,9 @@ export function createCompatibilityPhoneList(phones: PhoneRecord[]): MultiPhoneC
         source_column: phone.source_column ?? null,
         priority: phone.priority ?? referenceNumber,
         status: phone.phone_status ?? (phone.is_wrong ? "invalid" : "active"),
-        is_wrong: Boolean(phone.is_wrong)
+        is_wrong: Boolean(phone.is_wrong),
+        call_outcome: phone.call_outcome ?? null,
+        call_outcome_updated_at: phone.call_outcome_updated_at ?? null
       };
     })
     .sort(comparePhones)

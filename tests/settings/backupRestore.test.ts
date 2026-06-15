@@ -253,6 +253,8 @@ describe("backup and restore hardening", () => {
           is_valid: true,
           is_wrong: false,
           is_primary: true,
+          call_outcome: "no_answer",
+          call_outcome_updated_at: "2026-05-08T12:00:00.000Z",
           sync_status: "local",
           created_at: timestamp,
           updated_at: timestamp,
@@ -274,6 +276,8 @@ describe("backup and restore hardening", () => {
           is_valid: true,
           is_wrong: false,
           is_primary: false,
+          call_outcome: "busy",
+          call_outcome_updated_at: "2026-05-08T13:00:00.000Z",
           sync_status: "local",
           created_at: timestamp,
           updated_at: timestamp,
@@ -340,12 +344,14 @@ describe("backup and restore hardening", () => {
       ]);
       expect(restoredPhones).toHaveLength(4);
       expect(
-        restoredPhones.map(({ guardian_id, relation_label, source_column, reference_label, priority }) => ({
+        restoredPhones.map(({ guardian_id, relation_label, source_column, reference_label, priority, call_outcome, call_outcome_updated_at }) => ({
           guardian_id,
           relation_label,
           source_column,
           reference_label,
-          priority
+          priority,
+          call_outcome,
+          call_outcome_updated_at
         }))
       ).toEqual([
         {
@@ -353,28 +359,36 @@ describe("backup and restore hardening", () => {
           relation_label: "Veli",
           source_column: "GSM",
           reference_label: "Telefon 1",
-          priority: 1
+          priority: 1,
+          call_outcome: "no_answer",
+          call_outcome_updated_at: "2026-05-08T12:00:00.000Z"
         },
         {
           guardian_id: motherId,
           relation_label: "Anne",
           source_column: "ANNE TEL",
           reference_label: "Telefon 2",
-          priority: 2
+          priority: 2,
+          call_outcome: "busy",
+          call_outcome_updated_at: "2026-05-08T13:00:00.000Z"
         },
         {
           guardian_id: fatherId,
           relation_label: "Baba",
           source_column: "BABA TEL",
           reference_label: "Telefon 3",
-          priority: 3
+          priority: 3,
+          call_outcome: undefined,
+          call_outcome_updated_at: undefined
         },
         {
           guardian_id: null,
           relation_label: "Anne",
           source_column: "ANNE GSM",
           reference_label: "Telefon 4",
-          priority: 4
+          priority: 4,
+          call_outcome: undefined,
+          call_outcome_updated_at: undefined
         }
       ]);
     } finally {

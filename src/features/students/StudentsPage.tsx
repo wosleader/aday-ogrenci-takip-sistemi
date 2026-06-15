@@ -6,6 +6,12 @@ import type { AppOutletContext } from "../../app/AppLayout";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/EmptyState";
 import { CALL_RESULTS, LIFE_CYCLE_STATUSES, type CallResult } from "../../domain/constants/statuses";
+import {
+  getPhoneCallOutcomeLabel,
+  PHONE_CALL_OUTCOME_OPTIONS,
+  PHONE_CALL_OUTCOME_LABELS,
+  type PhoneCallOutcome
+} from "../../domain/models/phone";
 import { softDeleteCallLogAndRecomputeStudentSummary } from "../calls/services/callLogDeletion";
 import { readCallHistoryForStudent, type CallHistoryItem } from "../calls/services/callHistoryReader";
 import { writeCallLog } from "../calls/services/callLogWriter";
@@ -50,6 +56,7 @@ import {
   type StudentListPhoneRow,
   type StudentListRow
 } from "./services/studentListReader";
+import { updatePhoneOutcome } from "./services/studentPhoneOutcome";
 import { markPhoneAsContacted, markPhoneAsInvalid } from "./services/studentPhoneStatus";
 
 const PAGE_SIZE = 100;
@@ -276,6 +283,8 @@ type PhoneCardProps = {
   relationLabel?: string | null;
   sourceColumn?: string | null;
   latestOutcomeLabel?: string | null;
+  callOutcome?: PhoneCallOutcome | null;
+  callOutcomeUpdatedAt?: string | null;
   isContacted: boolean;
   isWrong: boolean;
   isReadOnly?: boolean;
@@ -284,6 +293,7 @@ type PhoneCardProps = {
   onContacted?: (phoneId: number) => void;
   onInvalid?: (phoneId: number) => void;
   onSelectForCall?: (phoneId: number) => void;
+  onOutcomeChange?: (phoneId: number, outcome: PhoneCallOutcome) => void;
 };
 
 type OperationToast = {
@@ -441,6 +451,8 @@ function PhoneCard({
   relationLabel,
   sourceColumn,
   latestOutcomeLabel,
+  callOutcome,
+  callOutcomeUpdatedAt,
   isContacted,
   isWrong,
   isReadOnly = false,
@@ -448,7 +460,8 @@ function PhoneCard({
   isSelectedForCall = false,
   onContacted,
   onInvalid,
-  onSelectForCall
+  onSelectForCall,
+  onOutcomeChange
 }: PhoneCardProps) {
   const relationText = getPhoneRelationText(relationLabel);
   const isEffectiveContacted = isContacted || isSelectedForCall;
@@ -630,6 +643,45 @@ function PhoneCard({
         </strong>
         {value ? (
           <small style={{ color: "#64748b" }}>Son sonuç: {latestOutcomeLabel?.trim() || "Yok"}</small>
+        ) : null}
+        {value && phoneId && onOutcomeChange ? (
+          <label
+            style={{
+              alignItems: "center",
+              color: "#64748b",
+              display: "flex",
+              flexWrap: "wrap",
+              fontSize: 11,
+              gap: 6,
+              marginTop: 4
+            }}
+          >
+            <span style={{ fontWeight: 700 }}>Telefon durumu</span>
+            <select
+              aria-label={`${label} Telefon durumu`}
+              onChange={(event) => onOutcomeChange(phoneId, event.target.value as PhoneCallOutcome)}
+              style={{
+                background: "#fff",
+                border: "1px solid #d6d3cc",
+                borderRadius: 6,
+                boxSizing: "border-box",
+                color: "#374151",
+                fontSize: 11,
+                height: 26,
+                padding: "2px 8px"
+              }}
+              value={callOutcome ?? "not_called"}
+            >
+              {PHONE_CALL_OUTCOME_OPTIONS.map((outcome) => (
+                <option key={outcome} value={outcome}>
+                  {PHONE_CALL_OUTCOME_LABELS[outcome]}
+                </option>
+              ))}
+            </select>
+            {callOutcomeUpdatedAt ? (
+              <span style={{ color: "#94a3b8" }}>Güncellendi: {formatShortDateTime(callOutcomeUpdatedAt)}</span>
+            ) : null}
+          </label>
         ) : null}
         {displayStatusText ? <small>{displayStatusText}</small> : null}
       </div>
@@ -1162,6 +1214,20 @@ export function StudentsPage() {
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Telefon durumu güncellenemedi.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
+    }
+  }
+
+  async function handlePhoneOutcomeChange(phoneId: number, outcome: PhoneCallOutcome) {
+    try {
+      setActionMessage(null);
+      await updatePhoneOutcome(phoneId, outcome);
+      const message = `Telefon durumu ${getPhoneCallOutcomeLabel(outcome)} olarak kaydedildi.`;
+      setActionMessage(message);
+      showOperationToast(message, "success");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Telefon durumu kaydedilemedi.";
       setActionMessage(message);
       showOperationToast(message, "error");
     }
@@ -1926,6 +1992,8 @@ export function StudentsPage() {
                   selectedRow.phone_1_id,
                   selectedRow.phone_1
                 )}
+                callOutcome={phone1Row?.call_outcome}
+                callOutcomeUpdatedAt={phone1Row?.call_outcome_updated_at}
                 isContacted={selectedRow.phone_1_is_contacted}
                 isWrong={selectedRow.phone_1_is_wrong}
                 onContacted={(phoneId) => {
@@ -1933,6 +2001,7 @@ export function StudentsPage() {
                   void updatePhoneStatus("contacted", phoneId);
                 }}
                 onInvalid={(phoneId) => void updatePhoneStatus("invalid", phoneId)}
+                onOutcomeChange={(phoneId, outcome) => void handlePhoneOutcomeChange(phoneId, outcome)}
               />
               <PhoneCard
                 label={phone2Row?.reference_label || "Telefon 2"}
@@ -1945,6 +2014,8 @@ export function StudentsPage() {
                   selectedRow.phone_2_id,
                   selectedRow.phone_2
                 )}
+                callOutcome={phone2Row?.call_outcome}
+                callOutcomeUpdatedAt={phone2Row?.call_outcome_updated_at}
                 isContacted={selectedRow.phone_2_is_contacted}
                 isWrong={selectedRow.phone_2_is_wrong}
                 onContacted={(phoneId) => {
@@ -1952,6 +2023,7 @@ export function StudentsPage() {
                   void updatePhoneStatus("contacted", phoneId);
                 }}
                 onInvalid={(phoneId) => void updatePhoneStatus("invalid", phoneId)}
+                onOutcomeChange={(phoneId, outcome) => void handlePhoneOutcomeChange(phoneId, outcome)}
               />
               {readonlyDrawerPhones.map((phone) => (
                 <PhoneCard
@@ -1966,6 +2038,8 @@ export function StudentsPage() {
                     phone.id,
                     phone.phone_number
                   )}
+                  callOutcome={phone.call_outcome}
+                  callOutcomeUpdatedAt={phone.call_outcome_updated_at}
                   isContacted={phone.phone_status === "contacted"}
                   isWrong={phone.phone_status === "invalid" || phone.is_wrong || !phone.is_valid}
                   isReadOnly
@@ -1980,6 +2054,7 @@ export function StudentsPage() {
                     setSelectedCallPhoneId((currentPhoneId) => (currentPhoneId === phoneId ? null : currentPhoneId));
                     void updatePhoneStatus("invalid", phoneId);
                   }}
+                  onOutcomeChange={(phoneId, outcome) => void handlePhoneOutcomeChange(phoneId, outcome)}
                   statusText={getReadonlyPhoneStatusText(phone)}
                 />
               ))}

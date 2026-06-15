@@ -2,6 +2,14 @@ import type { BaseEntity } from "./base";
 
 export type PhoneStatus = "active" | "contacted" | "invalid";
 export type PhoneRelationLabel = "Telefon" | "Anne" | "Baba" | "Öğrenci" | "Veli" | "Yakın" | "Diğer";
+export type PhoneCallOutcome =
+  | "not_called"
+  | "no_answer"
+  | "busy"
+  | "closed"
+  | "reached"
+  | "wrong_number"
+  | "unused";
 export type PhoneOperationalStatus =
   | PhoneStatus
   | "not_reached"
@@ -11,6 +19,30 @@ export type PhoneOperationalStatus =
   | "unavailable"
   | "call_later"
   | "passive";
+
+export const PHONE_CALL_OUTCOME_LABELS: Record<PhoneCallOutcome, string> = {
+  not_called: "Aranmadı",
+  no_answer: "Cevap Yok",
+  busy: "Meşgul",
+  closed: "Kapalı",
+  reached: "Görüşüldü",
+  wrong_number: "Yanlış Numara",
+  unused: "Kullanılmıyor"
+};
+
+export const PHONE_CALL_OUTCOME_OPTIONS = [
+  "not_called",
+  "no_answer",
+  "busy",
+  "closed",
+  "reached",
+  "wrong_number",
+  "unused"
+] as const satisfies readonly PhoneCallOutcome[];
+
+export function getPhoneCallOutcomeLabel(outcome?: PhoneCallOutcome | null): string {
+  return PHONE_CALL_OUTCOME_LABELS[outcome ?? "not_called"];
+}
 
 export type PhoneSnapshot = {
   phone_id?: number | null;
@@ -35,5 +67,7 @@ export type PhoneRecord = BaseEntity & {
   is_valid: boolean;
   is_wrong: boolean;
   is_primary: boolean;
+  call_outcome?: PhoneCallOutcome | null;
+  call_outcome_updated_at?: string | null;
   note?: string | null;
 };
