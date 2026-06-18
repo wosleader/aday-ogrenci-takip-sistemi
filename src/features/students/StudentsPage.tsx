@@ -1,4 +1,5 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Bell, Check, ChevronsRight, Copy, MoreVertical, Trash2, X } from "lucide-react";
@@ -296,6 +297,14 @@ type PhoneCardProps = {
   onOutcomeChange?: (phoneId: number, outcome: PhoneCallOutcome) => void;
 };
 
+type PhoneOutcomeMenuPosition = {
+  isConstrained: boolean;
+  left: number;
+  maxHeight: number;
+  top: number;
+  width: number;
+};
+
 type OperationToast = {
   id: number;
   message: string;
@@ -320,6 +329,25 @@ const SHORTCUT_HELP_GROUPS: ShortcutHelpGroup[] = [
 const CALL_PHONE_ACTION_LABEL = "Bu görüşmede kullanılacak telefon";
 const CALL_PHONE_ACTION_SELECTED_LABEL = "Bu görüşmede kullanılacak telefon seçili";
 const WRONG_PHONE_ACTION_LABEL = "Yanlış / kullanılmayacak numara";
+
+function getPhoneOutcomeChipStyle(outcome: PhoneCallOutcome): { background: string; borderColor: string; color: string } {
+  switch (outcome) {
+    case "no_answer":
+      return { background: "#fef3c7", borderColor: "#f4d98c", color: "#92400e" };
+    case "busy":
+      return { background: "#ffedd5", borderColor: "#fdba74", color: "#9a3412" };
+    case "closed":
+    case "wrong_number":
+      return { background: "#fee2e2", borderColor: "#fca5a5", color: "#991b1b" };
+    case "reached":
+      return { background: "#dcfce7", borderColor: "#86efac", color: "#166534" };
+    case "unused":
+      return { background: "#e5e7eb", borderColor: "#cbd5e1", color: "#374151" };
+    case "not_called":
+    default:
+      return { background: "#f8fafc", borderColor: "#d6d3cc", color: "#475569" };
+  }
+}
 
 function getPhoneRelationText(relationLabel?: string | null): string | null {
   switch (relationLabel?.trim().toLocaleLowerCase("tr-TR")) {
@@ -475,8 +503,19 @@ function PhoneCard({
         : null);
   const [isCopied, setIsCopied] = useState(false);
   const [isCopyControlVisible, setIsCopyControlVisible] = useState(false);
+  const [isOutcomeMenuOpen, setIsOutcomeMenuOpen] = useState(false);
+  const [outcomeMenuPlacement, setOutcomeMenuPlacement] = useState<"top" | "bottom">("bottom");
+  const [outcomeMenuPosition, setOutcomeMenuPosition] = useState<PhoneOutcomeMenuPosition | null>(null);
   const hideCopyControlTimeoutRef = useRef<number | null>(null);
   const copySuccessTimeoutRef = useRef<number | null>(null);
+  const outcomeChipRef = useRef<HTMLButtonElement | null>(null);
+  const outcomeMenuRef = useRef<HTMLDivElement | null>(null);
+  const currentOutcome = callOutcome ?? "not_called";
+  const currentOutcomeLabel = getPhoneCallOutcomeLabel(currentOutcome);
+  const outcomeChipStyle = getPhoneOutcomeChipStyle(currentOutcome);
+  const outcomeTitle = callOutcomeUpdatedAt
+    ? `Telefon durumu: ${currentOutcomeLabel}. Güncellendi: ${formatShortDateTime(callOutcomeUpdatedAt)}`
+    : `Telefon durumu: ${currentOutcomeLabel}`;
 
   useEffect(
     () => () => {
@@ -554,12 +593,305 @@ function PhoneCard({
     }
   }
 
+  function getMeasuredOutcomeMenuHeight(): number | undefined {
+    const menu = outcomeMenuRef.current;
+
+    if (!menu) {
+      return undefined;
+    }
+
+    const measuredHeight = menu.getBoundingClientRect().height || menu.scrollHeight;
+    return measuredHeight > 0 ? measuredHeight : undefined;
+  }
+
+  function chooseOutcomeMenuPlacement(measuredMenuHeight?: number) {
+    const triggerRect = outcomeChipRef.current?.getBoundingClientRect();
+
+    if (!triggerRect) {
+      setOutcomeMenuPlacement("bottom");
+      setOutcomeMenuPosition(null);
+      return;
+    }
+
+    const safeMargin = 8;
+    const menuGap = 6;
+    const menuWidth = 156;
+    const estimatedMenuHeight = 252;
+    const naturalMenuHeight = Math.min(estimatedMenuHeight, measuredMenuHeight ?? estimatedMenuHeight);
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+    const spaceBelow = Math.max(0, viewportHeight - triggerRect.bottom - safeMargin - menuGap);
+    const spaceAbove = Math.max(0, triggerRect.top - safeMargin - menuGap);
+    const nextPlacement =
+      spaceBelow >= estimatedMenuHeight
+        ? "bottom"
+        : spaceAbove >= estimatedMenuHeight
+          ? "top"
+          : spaceAbove > spaceBelow
+            ? "top"
+            : "bottom";
+    const availableSpace = nextPlacement === "top" ? spaceAbove : spaceBelow;
+    const fallbackSpace = Math.max(48, viewportHeight - safeMargin * 2);
+    const maxHeight = Math.min(naturalMenuHeight, availableSpace > 0 ? availableSpace : fallbackSpace);
+    const isConstrained = maxHeight < naturalMenuHeight;
+    const preferredTop =
+      nextPlacement === "top"
+        ? triggerRect.top - menuGap - maxHeight
+        : triggerRect.bottom + menuGap;
+    const top = Math.max(
+      safeMargin,
+      Math.min(preferredTop, Math.max(safeMargin, viewportHeight - safeMargin - maxHeight))
+    );
+    const left = Math.max(
+      safeMargin,
+      Math.min(triggerRect.right - menuWidth, Math.max(safeMargin, viewportWidth - safeMargin - menuWidth))
+    );
+
+    setOutcomeMenuPlacement(nextPlacement);
+    setOutcomeMenuPosition({
+      isConstrained,
+      left,
+      maxHeight,
+      top,
+      width: menuWidth
+    });
+  }
+
+  function toggleOutcomeMenu() {
+    if (!isOutcomeMenuOpen) {
+      chooseOutcomeMenuPlacement();
+    }
+
+    setIsOutcomeMenuOpen((isOpen) => !isOpen);
+  }
+
+  useEffect(() => {
+    if (!isOutcomeMenuOpen) {
+      return;
+    }
+
+    function closeOnOutsidePointer(event: MouseEvent) {
+      const target = event.target;
+
+      if (
+        target instanceof Node &&
+        (outcomeChipRef.current?.contains(target) || outcomeMenuRef.current?.contains(target))
+      ) {
+        return;
+      }
+
+      setIsOutcomeMenuOpen(false);
+    }
+
+    function updatePlacement() {
+      chooseOutcomeMenuPlacement(getMeasuredOutcomeMenuHeight());
+    }
+
+    updatePlacement();
+    document.addEventListener("mousedown", closeOnOutsidePointer);
+    window.addEventListener("resize", updatePlacement);
+    window.addEventListener("scroll", updatePlacement, true);
+
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsidePointer);
+      window.removeEventListener("resize", updatePlacement);
+      window.removeEventListener("scroll", updatePlacement, true);
+    };
+  }, [isOutcomeMenuOpen]);
+
+  useLayoutEffect(() => {
+    if (!isOutcomeMenuOpen || !outcomeMenuRef.current) {
+      return;
+    }
+
+    chooseOutcomeMenuPlacement(getMeasuredOutcomeMenuHeight());
+  }, [isOutcomeMenuOpen, outcomeMenuPlacement, outcomeMenuPosition?.maxHeight]);
+
+  const phoneActions =
+    !isReadOnly && onContacted && onInvalid ? (
+      <div className="phone-actions phone-card-action-row" style={{ display: "flex", flex: "0 0 auto", gap: 5 }}>
+        <button
+          aria-label={isContacted ? CALL_PHONE_ACTION_SELECTED_LABEL : CALL_PHONE_ACTION_LABEL}
+          className={isContacted ? "active" : ""}
+          disabled={!phoneId || isWrong}
+          onClick={() => phoneId && onContacted(phoneId)}
+          title={isContacted ? CALL_PHONE_ACTION_SELECTED_LABEL : CALL_PHONE_ACTION_LABEL}
+          type="button"
+        >
+          <Check aria-hidden="true" size={14} />
+        </button>
+        <button
+          aria-label={WRONG_PHONE_ACTION_LABEL}
+          className={isWrong ? "active invalid" : ""}
+          disabled={!phoneId}
+          onClick={() => phoneId && onInvalid(phoneId)}
+          title={WRONG_PHONE_ACTION_LABEL}
+          type="button"
+        >
+          x
+        </button>
+      </div>
+    ) : isReadOnly && onSelectForCall && onInvalid ? (
+      <div className="phone-actions phone-card-action-row" style={{ display: "flex", flex: "0 0 auto", gap: 5 }}>
+        <button
+          aria-label={isEffectiveContacted ? CALL_PHONE_ACTION_SELECTED_LABEL : CALL_PHONE_ACTION_LABEL}
+          aria-pressed={isEffectiveContacted}
+          className={isEffectiveContacted ? "active" : ""}
+          disabled={!phoneId || isWrong}
+          onClick={() => phoneId && onSelectForCall(phoneId)}
+          title={isEffectiveContacted ? CALL_PHONE_ACTION_SELECTED_LABEL : CALL_PHONE_ACTION_LABEL}
+          type="button"
+        >
+          <Check aria-hidden="true" size={14} />
+        </button>
+        <button
+          aria-label={WRONG_PHONE_ACTION_LABEL}
+          className={isWrong ? "active invalid" : ""}
+          disabled={!phoneId}
+          onClick={() => phoneId && onInvalid(phoneId)}
+          title={WRONG_PHONE_ACTION_LABEL}
+          type="button"
+        >
+          x
+        </button>
+      </div>
+    ) : null;
+
+  const outcomeControl =
+    value && phoneId && onOutcomeChange ? (
+      <span
+        className="phone-outcome-control"
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            setIsOutcomeMenuOpen(false);
+          }
+        }}
+        style={{ flex: "0 0 auto", position: "relative" }}
+      >
+        <button
+          ref={outcomeChipRef}
+          aria-expanded={isOutcomeMenuOpen}
+          aria-haspopup="menu"
+          aria-label={`Telefon durumu: ${currentOutcomeLabel}`}
+          onClick={toggleOutcomeMenu}
+          style={{
+            alignItems: "center",
+            background: outcomeChipStyle.background,
+            border: `1px solid ${outcomeChipStyle.borderColor}`,
+            borderRadius: 999,
+            boxSizing: "border-box",
+            color: outcomeChipStyle.color,
+            cursor: "pointer",
+            display: "inline-flex",
+            fontSize: 11,
+            fontWeight: 700,
+            gap: 4,
+            height: 24,
+            lineHeight: 1,
+            padding: "0 8px",
+            whiteSpace: "nowrap"
+          }}
+          title={outcomeTitle}
+          type="button"
+        >
+          {currentOutcomeLabel}
+          <span aria-hidden="true" style={{ fontSize: 9, lineHeight: 1 }}>
+            ▾
+          </span>
+        </button>
+        {isOutcomeMenuOpen && outcomeMenuPosition && typeof document !== "undefined"
+          ? createPortal(
+              <div
+                ref={outcomeMenuRef}
+                className={`phone-outcome-menu phone-outcome-menu-${outcomeMenuPlacement}`}
+                data-placement={outcomeMenuPlacement}
+                role="menu"
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    setIsOutcomeMenuOpen(false);
+                    outcomeChipRef.current?.focus();
+                  }
+                }}
+                style={
+                  {
+                    background: "#fff",
+                    border: "1px solid #ddd6c8",
+                    borderRadius: 8,
+                    boxShadow: "0 18px 36px rgba(15, 23, 42, 0.18)",
+                    left: outcomeMenuPosition.left,
+                    maxHeight: outcomeMenuPosition.maxHeight,
+                    overflowY: outcomeMenuPosition.isConstrained ? "auto" : "visible",
+                    padding: 4,
+                    position: "fixed",
+                    top: outcomeMenuPosition.top,
+                    width: outcomeMenuPosition.width,
+                    zIndex: 2000
+                  } as CSSProperties
+                }
+              >
+                {PHONE_CALL_OUTCOME_OPTIONS.map((outcome) => {
+                  const labelText = PHONE_CALL_OUTCOME_LABELS[outcome];
+
+                  return (
+                    <button
+                      key={outcome}
+                      aria-checked={outcome === currentOutcome}
+                      onClick={() => {
+                        onOutcomeChange(phoneId, outcome);
+                        setIsOutcomeMenuOpen(false);
+                      }}
+                      role="menuitemradio"
+                      style={{
+                        alignItems: "center",
+                        background: outcome === currentOutcome ? "#f4f1ea" : "transparent",
+                        border: "0",
+                        borderRadius: 6,
+                        color: "#374151",
+                        cursor: "pointer",
+                        display: "flex",
+                        fontSize: 12,
+                        justifyContent: "space-between",
+                        padding: "7px 8px",
+                        textAlign: "left",
+                        width: "100%"
+                      }}
+                      type="button"
+                    >
+                      <span>{labelText}</span>
+                      {outcome === currentOutcome ? <Check aria-hidden="true" size={12} /> : null}
+                    </button>
+                  );
+                })}
+              </div>,
+              document.body
+            )
+          : null}
+      </span>
+    ) : null;
+
   return (
-    <div className={`drawer-phone-card ${isEffectiveContacted ? "contacted" : ""} ${isWrong ? "invalid" : ""}`}>
-      <div>
-        <span className="form-label" style={{ alignItems: "center", display: "flex", gap: 6 }}>
-          <span>{label}</span>
-          {relationText ? (
+    <div
+      className={`drawer-phone-card ${isEffectiveContacted ? "contacted" : ""} ${isWrong ? "invalid" : ""}`}
+      style={{ display: "block", position: "relative", zIndex: isOutcomeMenuOpen ? 30 : undefined }}
+    >
+      <div style={{ display: "grid", gap: 6 }}>
+        <div
+          className="phone-card-header-row"
+          style={{
+            alignItems: "flex-start",
+            display: "flex",
+            gap: 8,
+            justifyContent: "space-between",
+            minWidth: 0,
+            position: "relative"
+          }}
+        >
+          <span
+            className="form-label"
+            style={{ alignItems: "center", display: "flex", flex: "1 1 auto", flexWrap: "wrap", gap: 6, minWidth: 0 }}
+          >
+            <span>{label}</span>
+            {relationText ? (
             <span
               style={{
                 background: "#f4f1ea",
@@ -577,163 +909,92 @@ function PhoneCard({
             >
               {relationText}
             </span>
-          ) : null}
-        </span>
-        <strong>
-          {value ? (
-            <span
-              onBlur={(event) => {
-                const nextTarget = event.relatedTarget;
-                if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
-                  return;
-                }
-
-                scheduleCopyControlHide();
-              }}
-              onFocus={showCopyControl}
-              onMouseEnter={showCopyControl}
-              onMouseLeave={scheduleCopyControlHide}
-              style={{ alignItems: "center", display: "inline-flex", gap: 4, lineHeight: 1.2 }}
-              tabIndex={0}
-            >
-              <span style={{ userSelect: "text" }}>{value}</span>
+            ) : null}
+          </span>
+        </div>
+        <div
+          className="phone-card-body-row"
+          style={{ alignItems: "center", display: "flex", gap: 10, justifyContent: "space-between", minWidth: 0 }}
+        >
+          <strong style={{ flex: "1 1 auto", minWidth: 0 }}>
+            {value ? (
               <span
-                aria-hidden={!isCopyControlVisible}
-                style={{
-                  alignItems: "center",
-                  display: "inline-flex",
-                  flex: "0 0 18px",
-                  height: 18,
-                  justifyContent: "center",
-                  visibility: isCopyControlVisible ? "visible" : "hidden",
-                  width: 18
+                onBlur={(event) => {
+                  const nextTarget = event.relatedTarget;
+                  if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
+                    return;
+                  }
+
+                  scheduleCopyControlHide();
                 }}
+                onFocus={showCopyControl}
+                onMouseEnter={showCopyControl}
+                onMouseLeave={scheduleCopyControlHide}
+                style={{ alignItems: "center", display: "inline-flex", gap: 4, lineHeight: 1.2, maxWidth: "100%" }}
+                tabIndex={0}
               >
-                <button
-                  aria-label="Telefon numarasını kopyala"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    void copyPhoneNumber();
-                  }}
-                  onFocus={showCopyControl}
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", userSelect: "text", whiteSpace: "nowrap" }}>
+                  {value}
+                </span>
+                <span
+                  aria-hidden={!isCopyControlVisible}
                   style={{
                     alignItems: "center",
-                    background: "transparent",
-                    border: "0",
-                    color: "currentColor",
-                    cursor: "pointer",
                     display: "inline-flex",
+                    flex: "0 0 18px",
                     height: 18,
                     justifyContent: "center",
-                    lineHeight: 1,
-                    opacity: isCopied ? 1 : 0.7,
-                    padding: 0,
+                    visibility: isCopyControlVisible ? "visible" : "hidden",
                     width: 18
                   }}
-                  title={isCopied ? "Kopyalandı" : "Telefon numarasını kopyala"}
-                  type="button"
                 >
-                  {isCopied ? <Check aria-hidden="true" size={11} /> : <Copy aria-hidden="true" size={11} />}
-                </button>
+                  <button
+                    aria-label="Telefon numarasını kopyala"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void copyPhoneNumber();
+                    }}
+                    onFocus={showCopyControl}
+                    style={{
+                      alignItems: "center",
+                      background: "transparent",
+                      border: "0",
+                      color: "currentColor",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      height: 18,
+                      justifyContent: "center",
+                      lineHeight: 1,
+                      opacity: isCopied ? 1 : 0.7,
+                      padding: 0,
+                      width: 18
+                    }}
+                    title={isCopied ? "Kopyalandı" : "Telefon numarasını kopyala"}
+                    type="button"
+                  >
+                    {isCopied ? <Check aria-hidden="true" size={11} /> : <Copy aria-hidden="true" size={11} />}
+                  </button>
+                </span>
               </span>
-            </span>
-          ) : (
-            "Telefon yok"
-          )}
-        </strong>
-        {value ? (
-          <small style={{ color: "#64748b" }}>Son sonuç: {latestOutcomeLabel?.trim() || "Yok"}</small>
-        ) : null}
-        {value && phoneId && onOutcomeChange ? (
-          <label
-            style={{
-              alignItems: "center",
-              color: "#64748b",
-              display: "flex",
-              flexWrap: "wrap",
-              fontSize: 11,
-              gap: 6,
-              marginTop: 4
-            }}
-          >
-            <span style={{ fontWeight: 700 }}>Telefon durumu</span>
-            <select
-              aria-label={`${label} Telefon durumu`}
-              onChange={(event) => onOutcomeChange(phoneId, event.target.value as PhoneCallOutcome)}
-              style={{
-                background: "#fff",
-                border: "1px solid #d6d3cc",
-                borderRadius: 6,
-                boxSizing: "border-box",
-                color: "#374151",
-                fontSize: 11,
-                height: 26,
-                padding: "2px 8px"
-              }}
-              value={callOutcome ?? "not_called"}
-            >
-              {PHONE_CALL_OUTCOME_OPTIONS.map((outcome) => (
-                <option key={outcome} value={outcome}>
-                  {PHONE_CALL_OUTCOME_LABELS[outcome]}
-                </option>
-              ))}
-            </select>
-            {callOutcomeUpdatedAt ? (
-              <span style={{ color: "#94a3b8" }}>Güncellendi: {formatShortDateTime(callOutcomeUpdatedAt)}</span>
+            ) : (
+              "Telefon yok"
+            )}
+          </strong>
+          {phoneActions}
+        </div>
+        <div
+          className="phone-card-footer-row"
+          style={{ alignItems: "center", display: "flex", gap: 8, justifyContent: "space-between", minWidth: 0 }}
+        >
+          <span style={{ flex: "1 1 auto", minWidth: 0 }}>
+            {value ? (
+              <small style={{ color: "#64748b", marginTop: 0 }}>Son sonuç: {latestOutcomeLabel?.trim() || "Yok"}</small>
             ) : null}
-          </label>
-        ) : null}
-        {displayStatusText ? <small>{displayStatusText}</small> : null}
+            {displayStatusText ? <small>{displayStatusText}</small> : null}
+          </span>
+          {outcomeControl}
+        </div>
       </div>
-      {!isReadOnly && onContacted && onInvalid ? (
-        <div className="phone-actions">
-          <button
-            aria-label={isContacted ? CALL_PHONE_ACTION_SELECTED_LABEL : CALL_PHONE_ACTION_LABEL}
-            className={isContacted ? "active" : ""}
-            disabled={!phoneId || isWrong}
-            onClick={() => phoneId && onContacted(phoneId)}
-            title={isContacted ? CALL_PHONE_ACTION_SELECTED_LABEL : CALL_PHONE_ACTION_LABEL}
-            type="button"
-          >
-            <Check aria-hidden="true" size={14} />
-          </button>
-          <button
-            aria-label={WRONG_PHONE_ACTION_LABEL}
-            className={isWrong ? "active invalid" : ""}
-            disabled={!phoneId}
-            onClick={() => phoneId && onInvalid(phoneId)}
-            title={WRONG_PHONE_ACTION_LABEL}
-            type="button"
-          >
-            x
-          </button>
-        </div>
-      ) : null}
-      {isReadOnly && onSelectForCall && onInvalid ? (
-        <div className="phone-actions">
-          <button
-            aria-label={isEffectiveContacted ? CALL_PHONE_ACTION_SELECTED_LABEL : CALL_PHONE_ACTION_LABEL}
-            aria-pressed={isEffectiveContacted}
-            className={isEffectiveContacted ? "active" : ""}
-            disabled={!phoneId || isWrong}
-            onClick={() => phoneId && onSelectForCall(phoneId)}
-            title={isEffectiveContacted ? CALL_PHONE_ACTION_SELECTED_LABEL : CALL_PHONE_ACTION_LABEL}
-            type="button"
-          >
-            <Check aria-hidden="true" size={14} />
-          </button>
-          <button
-            aria-label={WRONG_PHONE_ACTION_LABEL}
-            className={isWrong ? "active invalid" : ""}
-            disabled={!phoneId}
-            onClick={() => phoneId && onInvalid(phoneId)}
-            title={WRONG_PHONE_ACTION_LABEL}
-            type="button"
-          >
-            x
-          </button>
-        </div>
-      ) : null}
     </div>
   );
 }

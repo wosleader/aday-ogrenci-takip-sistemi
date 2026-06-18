@@ -306,11 +306,194 @@ describe("StudentsPage phone selection", () => {
 
     expect(within(phone1Card).getByText("Son sonuç: Yok")).toBeInTheDocument();
     expect(within(phone3Card).getByText("Son sonuç: Yok")).toBeInTheDocument();
-    expect(within(phone1Card).getByRole("combobox", { name: "Telefon 1 Telefon durumu" })).toHaveValue("not_called");
+    expect(within(phone1Card).queryByRole("combobox", { name: "Telefon 1 Telefon durumu" })).not.toBeInTheDocument();
+    expect(within(phone1Card).getByRole("button", { name: "Telefon durumu: Aranmadı" })).toHaveAttribute(
+      "aria-haspopup",
+      "menu"
+    );
+    const headerRow = phone1Card.querySelector(".phone-card-header-row") as HTMLElement;
+    const bodyRow = phone1Card.querySelector(".phone-card-body-row") as HTMLElement;
+    const footerRow = phone1Card.querySelector(".phone-card-footer-row") as HTMLElement;
+
+    expect(headerRow).not.toBeNull();
+    expect(bodyRow).not.toBeNull();
+    expect(footerRow).not.toBeNull();
+    expect(within(headerRow).getByText("Telefon 1")).toBeInTheDocument();
+    expect(within(headerRow).queryByRole("button", { name: /Telefon durumu:/ })).not.toBeInTheDocument();
+    expect(within(bodyRow).getByText("0532 100 0001")).toBeInTheDocument();
+    expect(within(bodyRow).getByRole("button", { name: "Bu görüşmede kullanılacak telefon" })).toBeInTheDocument();
+    expect(within(bodyRow).getByRole("button", { name: "Yanlış / kullanılmayacak numara" })).toBeInTheDocument();
+    expect(within(bodyRow).getByRole("button", { name: "Bu görüşmede kullanılacak telefon" }).closest(".phone-card-action-row")).toBe(
+      within(bodyRow).getByRole("button", { name: "Yanlış / kullanılmayacak numara" }).closest(".phone-card-action-row")
+    );
+    expect(within(footerRow).getByText("Son sonuç: Yok")).toBeInTheDocument();
+    expect(within(footerRow).getByRole("button", { name: "Telefon durumu: Aranmadı" })).toBeInTheDocument();
 
     const phone1 = await db.phones.where("normalized_phone_number").equals("05321000001").first();
     expect(phone1?.call_outcome).toBeUndefined();
     expect(phone1?.call_outcome_updated_at).toBeUndefined();
+  });
+
+  it("anchors the outcome menu close to the chip when opening downward", async () => {
+    const user = userEvent.setup();
+    const originalInnerHeight = window.innerHeight;
+    await seedStudentWithPhones("MELIS KAYA", "outcome-bottom-anchor");
+
+    renderStudentsPage();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    const outcomeChip = within(phone1Card).getByRole("button", { name: "Telefon durumu: Aranmadı" });
+    const triggerBottom = 124;
+
+    Object.defineProperty(window, "innerHeight", {
+      configurable: true,
+      value: 500
+    });
+    vi.spyOn(outcomeChip, "getBoundingClientRect").mockReturnValue({
+      bottom: triggerBottom,
+      height: 24,
+      left: 300,
+      right: 420,
+      top: 100,
+      width: 120,
+      x: 300,
+      y: 100,
+      toJSON: () => ({})
+    } as DOMRect);
+
+    await user.click(outcomeChip);
+
+    const menu = screen.getByRole("menu");
+    const gap = Number.parseFloat(menu.style.top) - triggerBottom;
+    expect(menu).toHaveAttribute("data-placement", "bottom");
+    expect(menu).toHaveStyle("position: fixed");
+    expect(menu).toHaveStyle("z-index: 2000");
+    expect(gap).toBeGreaterThanOrEqual(4);
+    expect(gap).toBeLessThanOrEqual(10);
+
+    Object.defineProperty(window, "innerHeight", {
+      configurable: true,
+      value: originalInnerHeight
+    });
+  });
+
+  it("opens the outcome menu upward when there is not enough viewport space below the chip", async () => {
+    const user = userEvent.setup();
+    const originalInnerHeight = window.innerHeight;
+    await seedStudentWithPhones("MELIS KAYA", "outcome-placement");
+
+    renderStudentsPage();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    const outcomeChip = within(phone1Card).getByRole("button", { name: "Telefon durumu: Aranmadı" });
+    const triggerTop = 454;
+    const renderedMenuHeight = 210;
+
+    Object.defineProperty(window, "innerHeight", {
+      configurable: true,
+      value: 500
+    });
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+      if (this instanceof HTMLElement && this.classList.contains("phone-outcome-menu")) {
+        return {
+          bottom: 0,
+          height: renderedMenuHeight,
+          left: 0,
+          right: 156,
+          top: 0,
+          width: 156,
+          x: 0,
+          y: 0,
+          toJSON: () => ({})
+        } as DOMRect;
+      }
+
+      return {
+        bottom: 0,
+        height: 0,
+        left: 0,
+        right: 0,
+        top: 0,
+        width: 0,
+        x: 0,
+        y: 0,
+        toJSON: () => ({})
+      } as DOMRect;
+    });
+    vi.spyOn(outcomeChip, "getBoundingClientRect").mockReturnValue({
+      bottom: 478,
+      height: 24,
+      left: 300,
+      right: 420,
+      top: triggerTop,
+      width: 120,
+      x: 300,
+      y: triggerTop,
+      toJSON: () => ({})
+    } as DOMRect);
+
+    await user.click(outcomeChip);
+
+    const menu = screen.getByRole("menu");
+    expect(menu).toHaveAttribute("data-placement", "top");
+    expect(menu).toHaveClass("phone-outcome-menu-top");
+    expect(menu).toHaveStyle("position: fixed");
+    expect(menu).toHaveStyle("z-index: 2000");
+    expect(menu).toHaveStyle("overflow-y: visible");
+    const menuBottom = Number.parseFloat(menu.style.top) + Number.parseFloat(menu.style.maxHeight);
+    const gap = triggerTop - menuBottom;
+    expect(gap).toBeGreaterThanOrEqual(4);
+    expect(gap).toBeLessThanOrEqual(10);
+
+    Object.defineProperty(window, "innerHeight", {
+      configurable: true,
+      value: originalInnerHeight
+    });
+  });
+
+  it("keeps the outcome menu scrollable when viewport space is constrained", async () => {
+    const user = userEvent.setup();
+    const originalInnerHeight = window.innerHeight;
+    await seedStudentWithPhones("MELIS KAYA", "outcome-constrained");
+
+    renderStudentsPage();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    const outcomeChip = within(phone1Card).getByRole("button", { name: "Telefon durumu: Aranmadı" });
+    const triggerTop = 100;
+
+    Object.defineProperty(window, "innerHeight", {
+      configurable: true,
+      value: 220
+    });
+    vi.spyOn(outcomeChip, "getBoundingClientRect").mockReturnValue({
+      bottom: 124,
+      height: 24,
+      left: 300,
+      right: 420,
+      top: triggerTop,
+      width: 120,
+      x: 300,
+      y: triggerTop,
+      toJSON: () => ({})
+    } as DOMRect);
+
+    await user.click(outcomeChip);
+
+    const menu = screen.getByRole("menu");
+    expect(menu).toHaveStyle("position: fixed");
+    expect(menu).toHaveStyle("z-index: 2000");
+    expect(menu).toHaveStyle("overflow-y: auto");
+    expect(Number.parseFloat(menu.style.maxHeight)).toBeLessThan(252);
+    const menuBottom = Number.parseFloat(menu.style.top) + Number.parseFloat(menu.style.maxHeight);
+    const gap = triggerTop - menuBottom;
+    expect(gap).toBeGreaterThanOrEqual(4);
+    expect(gap).toBeLessThanOrEqual(10);
+
+    Object.defineProperty(window, "innerHeight", {
+      configurable: true,
+      value: originalInnerHeight
+    });
   });
 
   it("persists phone-level outcomes from right-card dropdowns without changing call selection fields", async () => {
@@ -323,7 +506,33 @@ describe("StudentsPage phone selection", () => {
     const phone2Card = getDrawerPhoneCard("Telefon 2");
     const phone3Card = getDrawerPhoneCard("Telefon 3");
 
-    await user.selectOptions(within(phone1Card).getByRole("combobox", { name: "Telefon 1 Telefon durumu" }), "no_answer");
+    const phone2Header = phone2Card.querySelector(".phone-card-header-row") as HTMLElement;
+    const phone2Footer = phone2Card.querySelector(".phone-card-footer-row") as HTMLElement;
+    expect(within(phone2Header).getByText("Telefon 2")).toBeInTheDocument();
+    expect(within(phone2Header).getByText("Anne telefonu")).toBeInTheDocument();
+    expect(within(phone2Header).queryByRole("button", { name: /Telefon durumu:/ })).not.toBeInTheDocument();
+    expect(within(phone2Footer).getByRole("button", { name: "Telefon durumu: Aranmadı" })).toBeInTheDocument();
+
+    await user.click(within(phone1Card).getByRole("button", { name: "Telefon durumu: Aranmadı" }));
+    expect((await db.phones.where("normalized_phone_number").equals("05321000001").first())?.call_outcome).toBeUndefined();
+
+    const phone1Menu = screen.getByRole("menu");
+    expect(phone1Menu).toHaveAttribute("data-placement", "bottom");
+    expect(phone1Menu).toHaveClass("phone-outcome-menu", "phone-outcome-menu-bottom");
+    expect(phone1Menu).toHaveStyle("position: fixed");
+    expect(phone1Menu).toHaveStyle("z-index: 2000");
+    expect(phone1Card).toHaveStyle("z-index: 30");
+    expect(within(phone1Menu).getAllByRole("menuitemradio").map((item) => item.textContent?.replace(/\s+/g, " ").trim())).toEqual([
+      "Aranmadı",
+      "Cevap Yok",
+      "Meşgul",
+      "Kapalı",
+      "Görüşüldü",
+      "Yanlış Numara",
+      "Kullanılmıyor"
+    ]);
+
+    await user.click(within(phone1Menu).getByRole("menuitemradio", { name: "Cevap Yok" }));
     await waitFor(async () => {
       const phone1 = await db.phones.where("normalized_phone_number").equals("05321000001").first();
 
@@ -333,9 +542,15 @@ describe("StudentsPage phone selection", () => {
       expect(phone1?.is_wrong).toBe(false);
       expect(phone1?.is_valid).toBe(true);
     });
-    expect(within(phone1Card).getByText(/Güncellendi:/)).toBeInTheDocument();
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(within(phone1Card).queryByText(/Güncellendi:/)).not.toBeInTheDocument();
+    expect(within(phone1Card).getByRole("button", { name: "Telefon durumu: Cevap Yok" })).toHaveAttribute(
+      "title",
+      expect.stringContaining("Güncellendi:")
+    );
 
-    await user.selectOptions(within(phone2Card).getByRole("combobox", { name: "Telefon 2 Telefon durumu" }), "busy");
+    await user.click(within(phone2Card).getByRole("button", { name: "Telefon durumu: Aranmadı" }));
+    await user.click(screen.getByRole("menuitemradio", { name: "Meşgul" }));
     await waitFor(async () => {
       const phone2 = await db.phones.where("normalized_phone_number").equals("05321000002").first();
 
@@ -343,7 +558,8 @@ describe("StudentsPage phone selection", () => {
       expect(phone2?.call_outcome).toBe("busy");
     });
 
-    await user.selectOptions(within(phone3Card).getByRole("combobox", { name: "Telefon 3 Telefon durumu" }), "reached");
+    await user.click(within(phone3Card).getByRole("button", { name: "Telefon durumu: Aranmadı" }));
+    await user.click(screen.getByRole("menuitemradio", { name: "Görüşüldü" }));
     await waitFor(async () => {
       const phone3 = await db.phones.where("normalized_phone_number").equals("05321000003").first();
 
@@ -370,11 +586,10 @@ describe("StudentsPage phone selection", () => {
     renderStudentsPage();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
-    const outcomeSelect = within(phone1Card).getByRole("combobox", { name: "Telefon 1 Telefon durumu" });
+    expect(within(phone1Card).getByRole("button", { name: "Telefon durumu: Görüşüldü" })).toBeInTheDocument();
 
-    expect(outcomeSelect).toHaveValue("reached");
-
-    await user.selectOptions(outcomeSelect, "not_called");
+    await user.click(within(phone1Card).getByRole("button", { name: "Telefon durumu: Görüşüldü" }));
+    await user.click(screen.getByRole("menuitemradio", { name: "Aranmadı" }));
 
     await waitFor(async () => {
       const phone1 = await db.phones.get(phone1Id);
