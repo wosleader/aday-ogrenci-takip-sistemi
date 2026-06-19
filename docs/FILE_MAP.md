@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Guardian + Phone UI Clarity | Branch: sprint-9-2-multi-phone-architecture-plan -->
+﻿<!-- Son guncelleme: Guardian + Phone UI Clarity | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -577,3 +577,22 @@ Son doğrulandı: `ead391b feat: clarify guardian and phone labels`
   UI kararını, validation sonuçlarını, değişmeyen davranışları, manuel QA sınırını ve yeni-chat handoff önerisini kaydeder.
 - `docs/CHECKPOINT_NO_PHONE_IMPORT_SETTING.md`
   Ürün kararı, policy davranışı, validation, kapsam dışı alanlar, context sync notu ve sonraki aksiyonların resmi kapanış kaydıdır.
+## Latest File Map Addendum - Phone Outcome Tracking + Compact UI Polish
+
+Son doğrulandı: `667d501 fix: polish phone outcome card menu layout`
+
+- `src/domain/models/phone.ts`
+  Phone-level outcome anahtarlarını ve Türkçe etiketlerini taşır: `not_called`, `no_answer`, `busy`, `closed`, `reached`, `wrong_number`, `unused`. `call_outcome` ve `call_outcome_updated_at` phone-level alanlardır; `phone_status` yerine kullanılmaz.
+- `src/features/students/services/studentPhoneOutcome.ts`
+  Yalnızca seçili `PhoneRecord` için `call_outcome` ve `call_outcome_updated_at` günceller. Aynı numarayı taşıyan başka aday kayıtlarını otomatik güncellemez.
+- `src/features/students/StudentsPage.tsx`
+  Sağ kart telefon alanında kompakt 3 satırlı layout'u, `Son sonuç` read-only alanını ve outcome chip/menu UI'ını render eder. Outcome menu portal/fixed positioning, viewport-aware top/bottom placement, constrained `max-height` / `overflow-y` ve düzeltilmiş anchor gap davranışını taşır.
+- `tests/students/StudentsPagePhoneSelection.test.tsx`
+  Outcome seçenek sırasını, explicit menu selection davranışını, Aranmadı reset timestamp'ini, 3-row layout'u, portal/fixed menu positioning'i, top/bottom anchor gap ve constrained overflow davranışını doğrular.
+- `tests/students/StudentsPageMultiPhone.test.tsx`
+  Çoklu telefon kartlarıyla compact layout, relation badge ve expand/collapse regresyon davranışlarını korur.
+- `tests/settings/backupRestore.test.ts`
+  Backup/restore tarafının phone-level outcome alanlarını koruduğunu doğrulayan regresyon kapsamına dahildir.
+- `docs/CHECKPOINT_PHONE_OUTCOME_TRACKING_AND_UI_POLISH.md`
+  Phone-level outcome tracking ve compact phone card UI polish zincirinin resmi docs-only kapanış checkpoint'idir.
+

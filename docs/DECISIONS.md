@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Guardian + Phone UI Clarity | Branch: sprint-9-2-multi-phone-architecture-plan -->
+﻿<!-- Son guncelleme: Guardian + Phone UI Clarity | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -216,3 +216,15 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Guardian + Phone UI Clarity] Bu UI dilimi schema, reader, persistence, import, export, backup/restore veya Telefon 1-10 slot/sıra mantığını değiştirmez.
 - [Context Layers] Google Drive / Obsidian strategy vault `eefd4ed` seviyesine ayrı olarak senkronlanmıştır; `ead391b` UI checkpoint'i için follow-up sync ayrı ve açık görev gerektirir.
 - [Workflow Trial] Sonraki ana adım yeni-chat handoff/disiplin testidir. Yeni chat kod işine başlamadan latest HEAD, branch, working tree, context sync seviyesi ve görev disiplinini doğrular. Reusable safety skeleton denemesi scope drift görülürse sonlandırılır.
+## Latest Decisions - Phone Outcome Tracking + Compact UI Polish
+
+- [Phone Outcome Tracking] Phone-level outcome state `PhoneRecord` üzerinde ayrı `call_outcome` ve `call_outcome_updated_at` alanlarıyla tutulur. `phone_status`, `is_wrong` ve `is_valid` semantiği yeniden kullanılmaz.
+- [Phone Outcome Tracking] Kullanıcıya görünen outcome seçenekleri Aranmadı, Cevap Yok, Meşgul, Kapalı, Görüşüldü, Yanlış Numara ve Kullanılmıyor olarak sabitlenmiştir.
+- [Phone Outcome Tracking] Outcome chip seçimi yalnızca seçili telefon kaydını günceller. Call log yazmaz, aday genel görüşme durumunu değiştirmez, quick call sonucunu otomatik üretmez ve aynı numarayı taşıyan başka adayları otomatik güncellemez.
+- [Phone Outcome Tracking] Legacy veya boş `call_outcome` değeri UI'da Aranmadı olarak gösterilir; kullanıcı Aranmadı'yı manuel seçerse bu gerçek reset kabul edilir ve timestamp güncellenir.
+- [Phone Outcome UI] Sağ kart telefon layout'u üç satırlıdır: header slot/relation, body numara + yatay ✓ / x, footer `Son sonuç` + outcome chip. Full-width select kullanılmaz.
+- [Phone Outcome UI] `Son sonuç` call-log-derived read-only bilgidir; phone outcome chip'i ayrı phone-level manuel durumdur. Bu iki anlam UI'da ayrıştırılmış kalır.
+- [Phone Outcome UI] Outcome menüsü portal/fixed positioning kullanır, top/bottom placement seçer, alan dar ise `max-height` ve iç scroll kullanır, chip'ten kopuk görünmeyecek şekilde anchor gap korunur.
+- [Phone Outcome Scope] Export/import outcome mapping, call log auto-mapping, outcome history/audit screen, duplicate same-number shared outcome, backend/server persistence ve VDS deploy bu checkpoint'in kapsamı değildir.
+- [VDS Demo Direction] Pilot yönü Windows VDS + domain altında `/demo` path'idir. Vite base path ve deployment planı ayrı görevde doğrulanmalıdır.
+

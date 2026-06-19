@@ -1,14 +1,14 @@
-# HANDOFF_CURRENT — Aday Öğrenci Takip Sistemi
+﻿# HANDOFF_CURRENT — Aday Öğrenci Takip Sistemi
 
 ## 1. Güncel Repo Durumu
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: ead391b feat: clarify guardian and phone labels
-- Guardian + Phone UI Clarity implementation dilimi tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: 667d501 fix: polish phone outcome card menu layout
+- Phone-level call outcome tracking + compact phone card UI polish zinciri tamamlandı ve pushlandı.
 - Tracked working tree başlangıçta temizdir. `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Bu docs-only closure tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: close guardian phone UI clarity checkpoint
+- Önerilen docs commit: docs: close phone outcome ui checkpoint
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -399,3 +399,17 @@ Repo docs remain the source of truth. The Drive/Obsidian strategy vault is a sep
 - Validation passed: focused backup/restore test 1 file / 8 tests; OOM-safe full suite 45 files / 316 tests; build PASS with known Vite chunk-size warning.
 - Next recommended step: summary export phone compatibility discovery/product decision before implementation.
 - `dev-server.log` remains local runtime output and must not be staged, committed, deleted, or treated as a project artifact.
+## Latest Handoff Update - Phone Outcome Tracking + Compact UI Polish
+
+- Current safe HEAD/origin: `667d501 fix: polish phone outcome card menu layout`.
+- Implementation chain: `f7eccc2 feat: add phone-level call outcome tracking` followed by `667d501 fix: polish phone outcome card menu layout`.
+- Every phone can now carry its own phone-level `call_outcome` and `call_outcome_updated_at`; legacy missing values display as `Aranmadı`.
+- The compact phone card layout is HEADER slot/relation, BODY phone number plus horizontal ✓ / x, FOOTER `Son sonuç` plus outcome chip.
+- The outcome chip is explicit-click only; it does not write call logs, change candidate general status, trigger quick-call behavior, or cycle values on one click.
+- The outcome menu uses portal/fixed positioning, top/bottom viewport-aware placement, constrained `max-height` / `overflow-y`, and a corrected anchor gap so it remains visually attached to the chip.
+- Backup/restore preserves outcome fields. Import/export mapping was intentionally not changed for this MVP.
+- No source, test, package, deployment, schema, import/export, backup, or VDS changes are part of this docs closure.
+- VDS pilot direction is `/demo` on Windows VDS/domain; implementation/deployment is a later task and Vite base path must be checked before deploy.
+- New checkpoint: `docs/CHECKPOINT_PHONE_OUTCOME_TRACKING_AND_UI_POLISH.md`.
+- Suggested docs commit after review: `docs: close phone outcome ui checkpoint`.
+
