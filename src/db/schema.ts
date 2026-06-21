@@ -1,5 +1,5 @@
 export const DATABASE_NAME = "aday-ogrenci-takip-db";
-export const DATABASE_VERSION = 1;
+export const DATABASE_VERSION = 2;
 
 export const STORES = {
   students:
@@ -19,6 +19,7 @@ export const STORES = {
   import_logs: "++id, import_id, row_number, column_name, severity, auto_fixed, created_at",
   duplicate_checks: "++id, duplicate_type, duplicate_value, severity, count, created_at",
   audit_logs: "++id, entity_type, entity_id, action_type, field_name, performed_by, created_at",
+  whatsapp_draft_logs: "++id, uuid, student_id, phone_id, template_id, status, created_at, deleted_at",
   settings: "key, updated_at",
   keyboard_shortcuts: "++id, action_key, shortcut, is_active, updated_at"
 } as const;

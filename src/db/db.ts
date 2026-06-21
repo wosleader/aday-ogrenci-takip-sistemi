@@ -10,6 +10,7 @@ import type { PhoneRecord } from "../domain/models/phone";
 import type { ReminderRecord } from "../domain/models/reminder";
 import type { KeyboardShortcutRecord, SettingRecord } from "../domain/models/setting";
 import type { StudentRecord } from "../domain/models/student";
+import type { WhatsAppDraftLogRecord } from "../domain/models/whatsappDraftLog";
 import { DATABASE_NAME, DATABASE_VERSION, STORES } from "./schema";
 
 export class AppDatabase extends Dexie {
@@ -24,6 +25,7 @@ export class AppDatabase extends Dexie {
   import_logs!: Table<ImportLogRecord, number>;
   duplicate_checks!: Table<DuplicateCheckRecord, number>;
   audit_logs!: Table<AuditLogRecord, number>;
+  whatsapp_draft_logs!: Table<WhatsAppDraftLogRecord, number>;
   settings!: Table<SettingRecord, string>;
   keyboard_shortcuts!: Table<KeyboardShortcutRecord, number>;
 

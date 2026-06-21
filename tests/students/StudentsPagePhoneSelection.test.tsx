@@ -838,6 +838,59 @@ describe("StudentsPage phone selection", () => {
     expect(writeText).not.toHaveBeenCalled();
   });
 
+  it("opens WhatsApp draft modal, builds a wa.me URL, and writes local draft logs", async () => {
+    const user = userEvent.setup();
+    const writeText = mockClipboard();
+    const openSpy = vi.spyOn(window, "open").mockReturnValue({} as Window);
+    await seedStudentWithPhones("MELIS KAYA", "whatsapp-draft");
+
+    renderStudentsPage();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    const phone3Card = getDrawerPhoneCard("Telefon 3");
+
+    expect(within(phone1Card).getByRole("button", { name: "Telefon 1 WhatsApp taslak mesajı" })).toBeInTheDocument();
+    expect(within(phone3Card).getByRole("button", { name: "Telefon 3 WhatsApp taslak mesajı" })).toBeInTheDocument();
+
+    await user.click(within(phone1Card).getByRole("button", { name: "Telefon 1 WhatsApp taslak mesajı" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "WhatsApp Taslak Mesajı" });
+    expect(within(dialog).getByText("MELIS KAYA")).toBeInTheDocument();
+    expect(within(dialog).getByText("Telefon 1: 0532 100 0001")).toBeInTheDocument();
+
+    await user.selectOptions(within(dialog).getByLabelText("Şablon"), "kurum-bilgisi-konum");
+
+    const preview = within(dialog).getByLabelText("Mesaj önizleme") as HTMLTextAreaElement;
+    expect(preview.value).toContain("Doğanbey Mh. 1. Doğanbey Sk.");
+    expect(preview.value).toContain("https://www.instagram.com/bursaakademiknot/");
+    expect(preview.value).toContain("https://maps.app.goo.gl/AjMa1AcJxZyE9oZq8");
+
+    await user.click(within(dialog).getByRole("button", { name: "WhatsApp'ta Aç" }));
+
+    expect(openSpy).toHaveBeenCalledWith(
+      expect.stringContaining("https://wa.me/905321000001?text="),
+      "_blank",
+      "noopener,noreferrer"
+    );
+    await waitFor(async () => {
+      const openedLog = await db.whatsapp_draft_logs.where("status").equals("draft_opened").first();
+
+      expect(openedLog?.template_title).toBe("Kurum Bilgisi + Konum");
+      expect(openedLog?.phone_number).toBe("0532 100 0001");
+    });
+
+    await user.click(within(dialog).getByRole("button", { name: "Mesajı Kopyala" }));
+    expect(writeText).toHaveBeenCalledWith(preview.value);
+
+    await user.click(within(dialog).getByRole("button", { name: "Gönderildi olarak işaretle" }));
+
+    await waitFor(async () => {
+      const logs = await db.whatsapp_draft_logs.orderBy("id").toArray();
+
+      expect(logs.map((log) => log.status)).toEqual(["draft_opened", "copied", "manually_marked_sent"]);
+    });
+  });
+
   it("does not crash when clipboard access is unavailable", async () => {
     const user = userEvent.setup();
     Object.defineProperty(navigator, "clipboard", {
