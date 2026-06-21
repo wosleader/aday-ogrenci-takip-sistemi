@@ -317,6 +317,8 @@ type WhatsAppDraftContext = {
   guardianLine?: string | null;
 };
 
+type WhatsAppDraftVisibleStatus = "draft_opened" | "copied" | "manually_marked_sent";
+
 type PhoneOutcomeMenuPosition = {
   isConstrained: boolean;
   left: number;
@@ -501,6 +503,19 @@ function createWhatsAppDraftContext(
     relationText: getPhoneRelationText(phone.relationLabel),
     guardianLine: createWhatsAppGuardianLine(row, phone.relationLabel)
   };
+}
+
+function getWhatsAppDraftVisibleStatusLabel(status: WhatsAppDraftVisibleStatus | null): string | null {
+  switch (status) {
+    case "draft_opened":
+      return "WhatsApp taslağı açıldı";
+    case "copied":
+      return "Mesaj kopyalandı";
+    case "manually_marked_sent":
+      return "Gönderildi olarak işaretlendi";
+    default:
+      return null;
+  }
 }
 
 function readShortcutHelpExpandedPreference(): boolean {
@@ -1205,6 +1220,7 @@ export function StudentsPage() {
   const [whatsAppDraftContext, setWhatsAppDraftContext] = useState<WhatsAppDraftContext | null>(null);
   const [selectedWhatsAppTemplateId, setSelectedWhatsAppTemplateId] = useState(DEFAULT_WHATSAPP_TEMPLATE_ID);
   const [whatsAppDraftMessage, setWhatsAppDraftMessage] = useState<string | null>(null);
+  const [whatsAppDraftVisibleStatus, setWhatsAppDraftVisibleStatus] = useState<WhatsAppDraftVisibleStatus | null>(null);
   const [isWhatsAppDraftBusy, setIsWhatsAppDraftBusy] = useState(false);
   const [allowAppointmentWithoutNote, setAllowAppointmentWithoutNote] = useState(false);
   const [pastAppointmentConfirmCount, setPastAppointmentConfirmCount] = useState(0);
@@ -1317,6 +1333,7 @@ export function StudentsPage() {
       telefon: whatsAppDraftContext.phoneNumber
     });
   }, [selectedWhatsAppTemplate, whatsAppDraftContext]);
+  const whatsAppDraftVisibleStatusLabel = getWhatsAppDraftVisibleStatusLabel(whatsAppDraftVisibleStatus);
   const reminderPopup = useMemo(
     () =>
       createReminderPopupModel(
@@ -1391,6 +1408,7 @@ export function StudentsPage() {
     setCallLogDeleteCandidate(null);
     setWhatsAppDraftContext(null);
     setWhatsAppDraftMessage(null);
+    setWhatsAppDraftVisibleStatus(null);
     setSelectedWhatsAppTemplateId(DEFAULT_WHATSAPP_TEMPLATE_ID);
     shouldScrollPhoneListAfterCollapseRef.current = false;
   }, [selectedRow?.student_id]);
@@ -1631,6 +1649,7 @@ export function StudentsPage() {
     setWhatsAppDraftContext(context);
     setSelectedWhatsAppTemplateId(DEFAULT_WHATSAPP_TEMPLATE_ID);
     setWhatsAppDraftMessage(null);
+    setWhatsAppDraftVisibleStatus(null);
   }
 
   async function logWhatsAppDraftAction(status: "draft_opened" | "copied" | "manually_marked_sent") {
@@ -1668,6 +1687,7 @@ export function StudentsPage() {
       await clipboard.writeText(whatsAppMessagePreview);
       await logWhatsAppDraftAction("copied");
       setWhatsAppDraftMessage("Mesaj kopyalandı.");
+      setWhatsAppDraftVisibleStatus("copied");
     } catch (error) {
       setWhatsAppDraftMessage(error instanceof Error ? error.message : "Mesaj kopyalanamadı.");
     } finally {
@@ -1693,10 +1713,12 @@ export function StudentsPage() {
         setWhatsAppDraftMessage(
           "WhatsApp taslağı açılmadıysa tarayıcı engellemiş olabilir. Mesajı kopyalayarak manuel kullanabilirsiniz."
         );
+        setWhatsAppDraftVisibleStatus("draft_opened");
         return;
       }
 
       setWhatsAppDraftMessage("WhatsApp taslağı açıldı. Gönderme işlemi WhatsApp içinde manuel yapılır.");
+      setWhatsAppDraftVisibleStatus("draft_opened");
     } catch (error) {
       setWhatsAppDraftMessage(error instanceof Error ? error.message : "WhatsApp taslağı açılamadı.");
     } finally {
@@ -1714,7 +1736,8 @@ export function StudentsPage() {
 
     try {
       await logWhatsAppDraftAction("manually_marked_sent");
-      setWhatsAppDraftMessage("Manuel gönderildi olarak işaretlendi.");
+      setWhatsAppDraftMessage("Gönderildi olarak işaretlendi.");
+      setWhatsAppDraftVisibleStatus("manually_marked_sent");
     } catch (error) {
       setWhatsAppDraftMessage(error instanceof Error ? error.message : "WhatsApp durumu kaydedilemedi.");
     } finally {
@@ -2138,6 +2161,7 @@ export function StudentsPage() {
                   onChange={(event) => {
                     setSelectedWhatsAppTemplateId(event.target.value);
                     setWhatsAppDraftMessage(null);
+                    setWhatsAppDraftVisibleStatus(null);
                   }}
                 >
                   {WHATSAPP_TEMPLATES.map((template) => (
@@ -2161,6 +2185,29 @@ export function StudentsPage() {
                   {whatsAppDraftMessage}
                 </div>
               ) : null}
+              {whatsAppDraftVisibleStatusLabel ? (
+                <div
+                  aria-live="polite"
+                  style={{
+                    background: whatsAppDraftVisibleStatus === "manually_marked_sent" ? "#ecfdf5" : "#f8fafc",
+                    border:
+                      whatsAppDraftVisibleStatus === "manually_marked_sent"
+                        ? "1px solid #bbf7d0"
+                        : "1px solid #e2e8f0",
+                    borderRadius: 8,
+                    color: whatsAppDraftVisibleStatus === "manually_marked_sent" ? "#047857" : "#475569",
+                    display: "grid",
+                    fontSize: 13,
+                    gap: 3,
+                    padding: "8px 10px"
+                  }}
+                >
+                  <strong>Son işlem: {whatsAppDraftVisibleStatusLabel}</strong>
+                  {whatsAppDraftVisibleStatus === "manually_marked_sent" ? (
+                    <span>Bu işlem WhatsApp teslimat onayı değildir; manuel takip işaretidir.</span>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
             <div className="delete-confirm-actions">
               <button
@@ -2176,8 +2223,14 @@ export function StudentsPage() {
               <button disabled={isWhatsAppDraftBusy} onClick={() => void copyWhatsAppDraftMessage()} type="button">
                 Mesajı Kopyala
               </button>
-              <button disabled={isWhatsAppDraftBusy} onClick={() => void markWhatsAppDraftAsSent()} type="button">
-                Gönderildi olarak işaretle
+              <button
+                disabled={isWhatsAppDraftBusy || whatsAppDraftVisibleStatus === "manually_marked_sent"}
+                onClick={() => void markWhatsAppDraftAsSent()}
+                type="button"
+              >
+                {whatsAppDraftVisibleStatus === "manually_marked_sent"
+                  ? "Gönderildi olarak işaretlendi"
+                  : "Gönderildi olarak işaretle"}
               </button>
               <button
                 className="danger"

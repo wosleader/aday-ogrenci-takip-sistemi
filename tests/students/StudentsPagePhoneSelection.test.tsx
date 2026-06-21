@@ -878,9 +878,11 @@ describe("StudentsPage phone selection", () => {
       expect(openedLog?.template_title).toBe("Kurum Bilgisi + Konum");
       expect(openedLog?.phone_number).toBe("0532 100 0001");
     });
+    expect(within(dialog).getByText("Son işlem: WhatsApp taslağı açıldı")).toBeInTheDocument();
 
     await user.click(within(dialog).getByRole("button", { name: "Mesajı Kopyala" }));
     expect(writeText).toHaveBeenCalledWith(preview.value);
+    expect(within(dialog).getByText("Son işlem: Mesaj kopyalandı")).toBeInTheDocument();
 
     await user.click(within(dialog).getByRole("button", { name: "Gönderildi olarak işaretle" }));
 
@@ -889,6 +891,11 @@ describe("StudentsPage phone selection", () => {
 
       expect(logs.map((log) => log.status)).toEqual(["draft_opened", "copied", "manually_marked_sent"]);
     });
+    expect(within(dialog).getByText("Son işlem: Gönderildi olarak işaretlendi")).toBeInTheDocument();
+    expect(
+      within(dialog).getByText("Bu işlem WhatsApp teslimat onayı değildir; manuel takip işaretidir.")
+    ).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Gönderildi olarak işaretlendi" })).toBeDisabled();
   });
 
   it("does not crash when clipboard access is unavailable", async () => {
