@@ -1,8 +1,12 @@
-import { describe, expect, it } from "vitest";
+﻿import { describe, expect, it } from "vitest";
 import { AppDatabase } from "../../src/db/db";
 import { bootstrapPilotSeedIfNeeded } from "../../src/db/pilotSeed";
 import { seedDatabase } from "../../src/db/seed";
 import { PHONE_CALL_OUTCOME_OPTIONS } from "../../src/domain/models/phone";
+import { readDetailedExportData } from "../../src/features/exports/services/exportDataReader";
+import { readReminderTaskRows } from "../../src/features/reminders/services/reminderListReader";
+import { readDailyReport } from "../../src/features/reports/services/dailyReportReader";
+import { readStudentListRows } from "../../src/features/students/services/studentListReader";
 import { createSearchText, normalizeText } from "../../src/utils/normalizeText";
 
 async function createDatabase() {
@@ -15,6 +19,12 @@ async function createDatabase() {
 async function destroyDatabase(database: AppDatabase) {
   database.close();
   await database.delete();
+}
+
+async function seedPilotDatabase() {
+  const database = await createDatabase();
+  const result = await bootstrapPilotSeedIfNeeded(database, true);
+  return { database, result };
 }
 
 describe("pilot seed bootstrap", () => {
@@ -36,26 +46,24 @@ describe("pilot seed bootstrap", () => {
     }
   });
 
-  it("seeds fictional pilot data when enabled and the CRM tables are empty", async () => {
-    const database = await createDatabase();
+  it("seeds the fixture-backed pilot dataset when enabled and CRM tables are empty", async () => {
+    const { database, result } = await seedPilotDatabase();
 
     try {
-      const result = await bootstrapPilotSeedIfNeeded(database, true);
-
       expect(result).toEqual({
-        appointments: 18,
-        callLogs: 110,
+        appointments: 24,
+        callLogs: 180,
         guardians: 140,
-        phones: 160,
-        reminders: 18,
+        phones: 390,
+        reminders: 30,
         students: 70
       });
       expect(await database.students.count()).toBe(70);
       expect(await database.guardians.count()).toBe(140);
-      expect(await database.phones.count()).toBe(160);
-      expect(await database.call_logs.count()).toBe(110);
-      expect(await database.reminders.count()).toBe(18);
-      expect(await database.appointments.count()).toBe(18);
+      expect(await database.phones.count()).toBe(390);
+      expect(await database.call_logs.count()).toBe(180);
+      expect(await database.reminders.count()).toBe(30);
+      expect(await database.appointments.count()).toBe(24);
 
       const students = await database.students.toArray();
       const classCounts = students.reduce<Record<string, number>>((counts, student) => {
@@ -63,7 +71,7 @@ describe("pilot seed bootstrap", () => {
         return counts;
       }, {});
 
-      expect(classCounts).toMatchObject({
+      expect(classCounts).toEqual({
         "5. Sınıf": 10,
         "6. Sınıf": 10,
         "7. Sınıf": 12,
@@ -71,12 +79,113 @@ describe("pilot seed bootstrap", () => {
         LGS: 10,
         YKS: 10
       });
+    } finally {
+      await destroyDatabase(database);
+    }
+  });
 
-      const phoneNumbers = await database.phones.toArray();
-      expect(phoneNumbers.every((phone) => phone.phone_number.startsWith("0500 000"))).toBe(true);
-      expect(phoneNumbers.some((phone) => phone.relation_label === "Anne")).toBe(true);
-      expect(phoneNumbers.some((phone) => phone.relation_label === "Baba")).toBe(true);
-      expect(phoneNumbers.some((phone) => phone.reference_label === "Telefon 3")).toBe(true);
+  it("is visible through the student list reader", async () => {
+    const { database } = await seedPilotDatabase();
+
+    try {
+      const rows = await readStudentListRows(database);
+
+      expect(rows).toHaveLength(70);
+      expect(rows.every((row) => row.phone_count >= 3)).toBe(true);
+      expect(rows.every((row) => row.phone_count <= 10)).toBe(true);
+      expect(rows.some((row) => row.mother_full_name?.startsWith("Demo Anne"))).toBe(true);
+      expect(rows.some((row) => row.father_full_name?.startsWith("Demo Baba"))).toBe(true);
+      expect(rows.every((row) => row.visible_phones.length >= 2)).toBe(true);
+    } finally {
+      await destroyDatabase(database);
+    }
+  });
+
+  it("preserves fixture phone richness and mother/father badge linkage", async () => {
+    const { database } = await seedPilotDatabase();
+
+    try {
+      const [students, guardians, phones] = await Promise.all([
+        database.students.toArray(),
+        database.guardians.toArray(),
+        database.phones.toArray()
+      ]);
+      const activeStudents = students.filter((student) => !student.deleted_at && student.id);
+      const phonesByStudent = new Map<number, typeof phones>();
+      const guardiansById = new Map(guardians.flatMap((guardian) => (guardian.id ? [[guardian.id, guardian]] : [])));
+      const distribution = new Map<number, number>();
+
+      for (const phone of phones.filter((record) => !record.deleted_at)) {
+        phonesByStudent.set(phone.student_id, [...(phonesByStudent.get(phone.student_id) ?? []), phone]);
+      }
+
+      for (const student of activeStudents) {
+        const studentPhones = phonesByStudent.get(student.id!) ?? [];
+        distribution.set(studentPhones.length, (distribution.get(studentPhones.length) ?? 0) + 1);
+        expect(studentPhones.length).toBeGreaterThanOrEqual(3);
+        expect(studentPhones.length).toBeLessThanOrEqual(10);
+
+        const motherPhone = studentPhones.find((phone) => phone.relation_label === "Anne");
+        const fatherPhone = studentPhones.find((phone) => phone.relation_label === "Baba");
+        expect(motherPhone).toBeTruthy();
+        expect(fatherPhone).toBeTruthy();
+        expect(motherPhone?.guardian_id ? guardiansById.get(motherPhone.guardian_id)?.relation_type : null).toBe("mother");
+        expect(fatherPhone?.guardian_id ? guardiansById.get(fatherPhone.guardian_id)?.relation_type : null).toBe("father");
+      }
+
+      expect(Object.fromEntries([...distribution.entries()].sort(([left], [right]) => left - right))).toEqual({
+        3: 13,
+        4: 24,
+        5: 3,
+        6: 10,
+        8: 10,
+        10: 10
+      });
+      expect(activeStudents.filter((student) => (phonesByStudent.get(student.id!) ?? []).length === 10)).toHaveLength(10);
+      expect(activeStudents.filter((student) => (phonesByStudent.get(student.id!) ?? []).length >= 8)).toHaveLength(20);
+    } finally {
+      await destroyDatabase(database);
+    }
+  });
+
+  it("covers every phone-level outcome key many times", async () => {
+    const { database } = await seedPilotDatabase();
+
+    try {
+      const counts = (await database.phones.toArray()).reduce<Record<string, number>>((summary, phone) => {
+        const outcome = phone.call_outcome ?? "not_called";
+        summary[outcome] = (summary[outcome] ?? 0) + 1;
+        return summary;
+      }, {});
+
+      for (const outcome of PHONE_CALL_OUTCOME_OPTIONS) {
+        expect(counts[outcome]).toBeGreaterThanOrEqual(50);
+      }
+    } finally {
+      await destroyDatabase(database);
+    }
+  });
+
+  it("creates visible reminders, daily report data, and detailed export rows", async () => {
+    const { database } = await seedPilotDatabase();
+
+    try {
+      const reminderRows = await readReminderTaskRows("2026-06-20T12:00:00.000Z", database);
+      const report = await readDailyReport("2026-06-20", {
+        database,
+        now: "2026-06-20T12:00:00.000Z"
+      });
+      const exportDataset = await readDetailedExportData({ database });
+
+      expect(reminderRows.length).toBeGreaterThanOrEqual(20);
+      expect(new Set(reminderRows.map((row) => row.bucket)).size).toBeGreaterThanOrEqual(2);
+      expect(report.summary.call_log_count).toBeGreaterThan(0);
+      expect(report.summary.unique_student_count).toBeGreaterThan(0);
+      expect(report.summary.reached_count).toBeGreaterThan(0);
+      expect(report.summary.not_reached_count).toBeGreaterThan(0);
+      expect(report.summary.appointment_count).toBeGreaterThan(0);
+      expect(exportDataset.bundles).toHaveLength(70);
+      expect(exportDataset.bundles.every((bundle) => (bundle.phones ?? []).length >= 3)).toBe(true);
     } finally {
       await destroyDatabase(database);
     }
@@ -114,16 +223,29 @@ describe("pilot seed bootstrap", () => {
     }
   });
 
-  it("covers every phone-level outcome key", async () => {
+  it("does not duplicate when bootstrap is called concurrently", async () => {
     const database = await createDatabase();
 
     try {
-      await bootstrapPilotSeedIfNeeded(database, true);
+      const [firstResult, secondResult] = await Promise.all([
+        bootstrapPilotSeedIfNeeded(database, true),
+        bootstrapPilotSeedIfNeeded(database, true)
+      ]);
 
-      const outcomes = new Set((await database.phones.toArray()).map((phone) => phone.call_outcome));
-      for (const outcome of PHONE_CALL_OUTCOME_OPTIONS) {
-        expect(outcomes.has(outcome)).toBe(true);
-      }
+      expect(firstResult ?? secondResult).toEqual({
+        appointments: 24,
+        callLogs: 180,
+        guardians: 140,
+        phones: 390,
+        reminders: 30,
+        students: 70
+      });
+      expect(await database.students.count()).toBe(70);
+      expect(await database.guardians.count()).toBe(140);
+      expect(await database.phones.count()).toBe(390);
+      expect(await database.call_logs.count()).toBe(180);
+      expect(await database.reminders.count()).toBe(30);
+      expect(await database.appointments.count()).toBe(24);
     } finally {
       await destroyDatabase(database);
     }

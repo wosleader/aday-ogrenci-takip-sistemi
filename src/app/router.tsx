@@ -28,7 +28,7 @@ export const router = createBrowserRouter(
       path: "/",
       element: <AppLayout />,
       children: [
-        { index: true, element: <Navigate to="/import" replace /> },
+        { index: true, element: <Navigate to="/students" replace /> },
         { path: "import", element: <ImportPage /> },
         { path: "students", element: <StudentsPage /> },
         { path: "call", element: <CallPage /> },
