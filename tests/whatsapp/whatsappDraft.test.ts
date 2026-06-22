@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { db } from "../../src/db/db";
-import { createWhatsAppDraftLog } from "../../src/features/whatsapp/whatsappDraftLogService";
+import {
+  createWhatsAppDraftLog,
+  readLatestManualSentWhatsAppDraftsForStudent
+} from "../../src/features/whatsapp/whatsappDraftLogService";
 import { renderWhatsAppTemplate } from "../../src/features/whatsapp/whatsappTemplateRenderer";
 import { getWhatsAppTemplateById } from "../../src/features/whatsapp/whatsappTemplates";
 import { buildWhatsAppDraftUrl, normalizeWhatsAppPhoneNumber } from "../../src/features/whatsapp/whatsappUrl";
@@ -90,5 +93,31 @@ describe("WhatsApp draft helpers", () => {
       template_title: "Kurum Bilgisi + Konum",
       sync_status: "local"
     });
+  });
+
+  it("reads the latest manually sent WhatsApp draft per phone", async () => {
+    await createWhatsAppDraftLog({
+      student_id: 1,
+      phone_id: 2,
+      phone_number: "0532 111 2233",
+      template_id: "yks-yaz-kampi-davet",
+      template_title: "YKS Yaz Kampı Davet",
+      message_preview: "Eski mesaj",
+      status: "manually_marked_sent"
+    });
+    await createWhatsAppDraftLog({
+      student_id: 1,
+      phone_id: 2,
+      phone_number: "0532 111 2233",
+      template_id: "kurum-bilgisi-konum",
+      template_title: "Kurum Bilgisi + Konum",
+      message_preview: "Yeni mesaj",
+      status: "manually_marked_sent"
+    });
+
+    const lookup = await readLatestManualSentWhatsAppDraftsForStudent(1);
+
+    expect(lookup.byPhoneId.get(2)?.template_title).toBe("Kurum Bilgisi + Konum");
+    expect(lookup.byPhoneNumber.get("05321112233")?.template_title).toBe("Kurum Bilgisi + Konum");
   });
 });

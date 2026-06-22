@@ -849,12 +849,15 @@ describe("StudentsPage phone selection", () => {
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
     const phone3Card = getDrawerPhoneCard("Telefon 3");
 
-    expect(within(phone1Card).getByRole("button", { name: "Telefon 1 WhatsApp taslak mesajı" })).toBeInTheDocument();
-    expect(within(phone3Card).getByRole("button", { name: "Telefon 3 WhatsApp taslak mesajı" })).toBeInTheDocument();
+    expect(within(phone1Card).getByRole("button", { name: "Telefon 1 WhatsApp taslağı hazırla" })).toBeInTheDocument();
+    expect(within(phone3Card).getByRole("button", { name: "Telefon 3 WhatsApp taslağı hazırla" })).toBeInTheDocument();
+    expect(within(phone1Card).queryByText("WhatsApp")).not.toBeInTheDocument();
+    expect(phone1Card.querySelector(".whatsapp-sent-badge")).not.toBeInTheDocument();
 
-    await user.click(within(phone1Card).getByRole("button", { name: "Telefon 1 WhatsApp taslak mesajı" }));
+    await user.click(within(phone1Card).getByRole("button", { name: "Telefon 1 WhatsApp taslağı hazırla" }));
 
     const dialog = await screen.findByRole("dialog", { name: "WhatsApp Taslak Mesajı" });
+    expect(dialog.querySelector(".delete-confirm-modal")).toHaveStyle("max-height: calc(100vh - 48px)");
     expect(within(dialog).getByText("MELIS KAYA")).toBeInTheDocument();
     expect(within(dialog).getByText("Telefon 1: 0532 100 0001")).toBeInTheDocument();
 
@@ -896,6 +899,15 @@ describe("StudentsPage phone selection", () => {
       within(dialog).getByText("Bu işlem WhatsApp teslimat onayı değildir; manuel takip işaretidir.")
     ).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: "Gönderildi olarak işaretlendi" })).toBeDisabled();
+    await waitFor(() => {
+      const whatsAppButton = within(phone1Card).getByRole("button", {
+        name: "Telefon 1 WhatsApp gönderildi olarak işaretlendi"
+      });
+
+      expect(whatsAppButton).toHaveAttribute("title", expect.stringContaining("WhatsApp gönderildi olarak işaretlendi"));
+      expect(whatsAppButton).toHaveAttribute("title", expect.stringContaining("Şablon: Kurum Bilgisi + Konum"));
+      expect(whatsAppButton.querySelector(".whatsapp-sent-badge")).toBeInTheDocument();
+    });
   });
 
   it("does not crash when clipboard access is unavailable", async () => {

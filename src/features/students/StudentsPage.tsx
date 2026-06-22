@@ -2,7 +2,7 @@ import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type C
 import { createPortal } from "react-dom";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Bell, Check, ChevronsRight, Copy, MessageCircle, MoreVertical, Trash2, X } from "lucide-react";
+import { Bell, Check, ChevronsRight, Copy, MoreVertical, Trash2, X } from "lucide-react";
 import type { AppOutletContext } from "../../app/AppLayout";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/EmptyState";
@@ -59,7 +59,12 @@ import {
 } from "./services/studentListReader";
 import { updatePhoneOutcome } from "./services/studentPhoneOutcome";
 import { markPhoneAsContacted, markPhoneAsInvalid } from "./services/studentPhoneStatus";
-import { createWhatsAppDraftLog } from "../whatsapp/whatsappDraftLogService";
+import {
+  createWhatsAppDraftLog,
+  readLatestManualSentWhatsAppDraftsForStudent,
+  type WhatsAppManualSentLookup,
+  type WhatsAppManualSentSummary
+} from "../whatsapp/whatsappDraftLogService";
 import { renderWhatsAppTemplate } from "../whatsapp/whatsappTemplateRenderer";
 import {
   DEFAULT_WHATSAPP_TEMPLATE_ID,
@@ -304,6 +309,7 @@ type PhoneCardProps = {
   onSelectForCall?: (phoneId: number) => void;
   onOutcomeChange?: (phoneId: number, outcome: PhoneCallOutcome) => void;
   onWhatsAppDraft?: () => void;
+  whatsAppSentInfo?: WhatsAppManualSentSummary | null;
 };
 
 type WhatsAppDraftContext = {
@@ -518,6 +524,66 @@ function getWhatsAppDraftVisibleStatusLabel(status: WhatsAppDraftVisibleStatus |
   }
 }
 
+function getWhatsAppManualSentInfo(
+  lookup: WhatsAppManualSentLookup | undefined,
+  phoneId?: number | null,
+  phoneNumber?: string | null
+): WhatsAppManualSentSummary | null {
+  if (!lookup) {
+    return null;
+  }
+
+  if (phoneId != null) {
+    const byId = lookup.byPhoneId.get(phoneId);
+
+    if (byId) {
+      return byId;
+    }
+  }
+
+  const normalizedPhoneNumber = phoneNumber?.replace(/\D/g, "") ?? "";
+
+  return normalizedPhoneNumber ? lookup.byPhoneNumber.get(normalizedPhoneNumber) ?? null : null;
+}
+
+function getWhatsAppActionTitle(info?: WhatsAppManualSentSummary | null): string {
+  if (!info) {
+    return "WhatsApp taslağı hazırla";
+  }
+
+  return [
+    "WhatsApp gönderildi olarak işaretlendi",
+    `Şablon: ${info.template_title}`,
+    `Tarih: ${formatShortDateTime(info.created_at)}`
+  ].join("\n");
+}
+
+function getWhatsAppActionAriaLabel(label: string, info?: WhatsAppManualSentSummary | null): string {
+  if (!info) {
+    return `${label} WhatsApp taslağı hazırla`;
+  }
+
+  return `${label} WhatsApp gönderildi olarak işaretlendi`;
+}
+
+function WhatsAppActionGlyph() {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="currentColor"
+      height="16"
+      shapeRendering="geometricPrecision"
+      viewBox="0 0 16 16"
+      width="16"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M13.6 2.33A7.84 7.84 0 0 0 8.02 0 7.94 7.94 0 0 0 .08 7.94c0 1.4.37 2.76 1.07 3.96L0 16l4.2-1.1a7.93 7.93 0 0 0 3.81.97h.01A7.94 7.94 0 0 0 16 7.94a7.87 7.87 0 0 0-2.4-5.61ZM8.02 14.52h-.01a6.6 6.6 0 0 1-3.36-.92l-.24-.14-2.5.65.67-2.43-.16-.25a6.55 6.55 0 0 1-1.01-3.49A6.6 6.6 0 0 1 8.02 1.34a6.56 6.56 0 0 1 4.68 1.94 6.57 6.57 0 0 1 1.96 4.66 6.62 6.62 0 0 1-6.64 6.58Zm3.63-4.94c-.2-.1-1.18-.58-1.36-.65-.18-.07-.31-.1-.44.1-.13.2-.5.65-.62.78-.11.13-.23.15-.43.05-.2-.1-.84-.31-1.6-.99-.59-.52-.99-1.17-1.11-1.37-.12-.2-.01-.31.09-.4.09-.09.2-.23.3-.35.1-.12.13-.2.2-.33.06-.13.03-.25-.02-.35-.05-.1-.44-1.06-.6-1.45-.16-.38-.32-.33-.44-.34h-.38c-.13 0-.35.05-.53.25-.18.2-.7.68-.7 1.66 0 .98.72 1.93.82 2.06.1.13 1.4 2.14 3.4 3 .48.21.86.34 1.15.43.48.15.92.13 1.27.08.39-.06 1.18-.48 1.35-.95.17-.47.17-.87.12-.95-.05-.08-.18-.13-.38-.23Z"
+      />
+    </svg>
+  );
+}
+
 function readShortcutHelpExpandedPreference(): boolean {
   try {
     return window.localStorage.getItem(SHORTCUT_HELP_STORAGE_KEY) === "true";
@@ -576,7 +642,8 @@ function PhoneCard({
   onInvalid,
   onSelectForCall,
   onOutcomeChange,
-  onWhatsAppDraft
+  onWhatsAppDraft,
+  whatsAppSentInfo
 }: PhoneCardProps) {
   const relationText = getPhoneRelationText(relationLabel);
   const isEffectiveContacted = isContacted || isSelectedForCall;
@@ -794,6 +861,53 @@ function PhoneCard({
     chooseOutcomeMenuPlacement(getMeasuredOutcomeMenuHeight());
   }, [isOutcomeMenuOpen, outcomeMenuPlacement, outcomeMenuPosition?.maxHeight]);
 
+  const whatsAppAction =
+    value && onWhatsAppDraft ? (
+      <button
+        aria-label={getWhatsAppActionAriaLabel(label, whatsAppSentInfo)}
+        className={whatsAppSentInfo ? "active whatsapp-action-sent" : "whatsapp-action"}
+        onClick={onWhatsAppDraft}
+        style={{
+          background: whatsAppSentInfo ? "#16a34a" : "#f6fff9",
+          borderColor: whatsAppSentInfo ? "#15803d" : "#b7e4c7",
+          boxShadow: whatsAppSentInfo ? "0 1px 3px rgba(22, 101, 52, 0.24)" : "none",
+          color: whatsAppSentInfo ? "#ffffff" : "#128c4a",
+          fontFamily: "inherit",
+          overflow: "visible",
+          position: "relative"
+        }}
+        title={getWhatsAppActionTitle(whatsAppSentInfo)}
+        type="button"
+      >
+        <WhatsAppActionGlyph />
+        {whatsAppSentInfo ? (
+          <span
+            aria-hidden="true"
+            className="whatsapp-sent-badge"
+            style={{
+              alignItems: "center",
+              background: "#ffffff",
+              border: "1px solid #16a34a",
+              borderRadius: 999,
+              bottom: -2,
+              boxShadow: "0 0 0 1px #ffffff, 0 1px 2px rgba(22, 101, 52, 0.2)",
+              color: "#16a34a",
+              display: "inline-flex",
+              height: 12,
+              justifyContent: "center",
+              lineHeight: 1,
+              position: "absolute",
+              right: -2,
+              width: 12,
+              zIndex: 1
+            }}
+          >
+            <Check size={8} strokeWidth={3.2} />
+          </span>
+        ) : null}
+      </button>
+    ) : null;
+
   const phoneActions =
     !isReadOnly && onContacted && onInvalid ? (
       <div className="phone-actions phone-card-action-row" style={{ display: "flex", flex: "0 0 auto", gap: 5 }}>
@@ -817,6 +931,7 @@ function PhoneCard({
         >
           x
         </button>
+        {whatsAppAction}
       </div>
     ) : isReadOnly && onSelectForCall && onInvalid ? (
       <div className="phone-actions phone-card-action-row" style={{ display: "flex", flex: "0 0 auto", gap: 5 }}>
@@ -841,36 +956,8 @@ function PhoneCard({
         >
           x
         </button>
+        {whatsAppAction}
       </div>
-    ) : null;
-
-  const whatsAppAction =
-    value && onWhatsAppDraft ? (
-      <button
-        aria-label={`${label} WhatsApp taslak mesajı`}
-        onClick={onWhatsAppDraft}
-        style={{
-          alignItems: "center",
-          background: "#ecfdf5",
-          border: "1px solid #bbf7d0",
-          borderRadius: 999,
-          color: "#047857",
-          cursor: "pointer",
-          display: "inline-flex",
-          flex: "0 0 auto",
-          fontSize: 11,
-          fontWeight: 700,
-          gap: 5,
-          height: 24,
-          lineHeight: 1,
-          padding: "0 8px"
-        }}
-        title="WhatsApp taslak mesajı hazırla"
-        type="button"
-      >
-        <MessageCircle aria-hidden="true" size={12} />
-        WhatsApp
-      </button>
     ) : null;
 
   const outcomeControl =
@@ -1108,10 +1195,7 @@ function PhoneCard({
             ) : null}
             {displayStatusText ? <small>{displayStatusText}</small> : null}
           </span>
-          <span style={{ alignItems: "center", display: "inline-flex", flex: "0 0 auto", gap: 6 }}>
-            {whatsAppAction}
-            {outcomeControl}
-          </span>
+          {outcomeControl}
         </div>
       </div>
     </div>
@@ -1313,6 +1397,14 @@ export function StudentsPage() {
     () => (selectedRow ? readCallHistoryForStudent(selectedRow.student_id) : Promise.resolve([])),
     [selectedRow?.student_id],
     []
+  );
+  const whatsAppManualSentLookup = useLiveQuery(
+    () =>
+      selectedRow
+        ? readLatestManualSentWhatsAppDraftsForStudent(selectedRow.student_id)
+        : Promise.resolve({ byPhoneId: new Map(), byPhoneNumber: new Map() }),
+    [selectedRow?.student_id],
+    { byPhoneId: new Map(), byPhoneNumber: new Map() }
   );
   const latestPhoneOutcomeLookup = useMemo(
     () => createLatestPhoneOutcomeLookup(callHistory ?? []),
@@ -2140,12 +2232,21 @@ export function StudentsPage() {
           className="delete-confirm-backdrop"
           role="dialog"
         >
-          <div className="delete-confirm-modal" style={{ maxWidth: 620 }}>
+          <div
+            className="delete-confirm-modal"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              maxHeight: "calc(100vh - 48px)",
+              maxWidth: 620,
+              overflow: "hidden"
+            }}
+          >
             <h2 id="whatsapp-draft-title">WhatsApp Taslak Mesajı</h2>
             <p style={{ marginBottom: 12 }}>
               Bu ekran sadece WhatsApp mesaj taslağı hazırlar. Gönderme işlemi WhatsApp içinde manuel yapılır.
             </p>
-            <div style={{ display: "grid", gap: 10, marginBottom: 12 }}>
+            <div style={{ display: "grid", flex: "1 1 auto", gap: 10, marginBottom: 12, minHeight: 0, overflowY: "auto" }}>
               <div style={{ color: "#475569", display: "grid", fontSize: 13, gap: 4 }}>
                 <strong style={{ color: "#1f2937" }}>{whatsAppDraftContext.studentName}</strong>
                 <span>
@@ -2176,7 +2277,7 @@ export function StudentsPage() {
                 <span className="form-label">Mesaj önizleme</span>
                 <textarea
                   readOnly
-                  style={{ minHeight: 220, resize: "vertical", whiteSpace: "pre-wrap" }}
+                  style={{ maxHeight: 240, minHeight: 160, overflowY: "auto", resize: "vertical", whiteSpace: "pre-wrap" }}
                   value={whatsAppMessagePreview}
                 />
               </label>
@@ -2209,7 +2310,16 @@ export function StudentsPage() {
                 </div>
               ) : null}
             </div>
-            <div className="delete-confirm-actions">
+            <div
+              className="delete-confirm-actions"
+              style={{
+                background: "#fff",
+                borderTop: "1px solid #e2e8f0",
+                flexShrink: 0,
+                marginTop: 0,
+                paddingTop: 12
+              }}
+            >
               <button
                 disabled={isWhatsAppDraftBusy}
                 onClick={() => {
@@ -2636,6 +2746,11 @@ export function StudentsPage() {
                     })
                   )
                 }
+                whatsAppSentInfo={getWhatsAppManualSentInfo(
+                  whatsAppManualSentLookup,
+                  selectedRow.phone_1_id,
+                  selectedRow.phone_1
+                )}
               />
               <PhoneCard
                 label={phone2Row?.reference_label || "Telefon 2"}
@@ -2668,6 +2783,11 @@ export function StudentsPage() {
                     })
                   )
                 }
+                whatsAppSentInfo={getWhatsAppManualSentInfo(
+                  whatsAppManualSentLookup,
+                  selectedRow.phone_2_id,
+                  selectedRow.phone_2
+                )}
               />
               {readonlyDrawerPhones.map((phone) => (
                 <PhoneCard
@@ -2710,6 +2830,7 @@ export function StudentsPage() {
                       })
                     )
                   }
+                  whatsAppSentInfo={getWhatsAppManualSentInfo(whatsAppManualSentLookup, phone.id, phone.phone_number)}
                 />
               ))}
               {selectedRow.hidden_phone_count > 0 ? (
