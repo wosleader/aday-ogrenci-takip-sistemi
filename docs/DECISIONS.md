@@ -1,4 +1,4 @@
-﻿<!-- Son guncelleme: Guardian + Phone UI Clarity | Branch: sprint-9-2-multi-phone-architecture-plan -->
+﻿<!-- Son guncelleme: WhatsApp Manual Draft / Phone Action UI | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -227,4 +227,18 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Phone Outcome UI] Outcome menüsü portal/fixed positioning kullanır, top/bottom placement seçer, alan dar ise `max-height` ve iç scroll kullanır, chip'ten kopuk görünmeyecek şekilde anchor gap korunur.
 - [Phone Outcome Scope] Export/import outcome mapping, call log auto-mapping, outcome history/audit screen, duplicate same-number shared outcome, backend/server persistence ve VDS deploy bu checkpoint'in kapsamı değildir.
 - [VDS Demo Direction] Pilot yönü Windows VDS + domain altında `/demo` path'idir. Vite base path ve deployment planı ayrı görevde doğrulanmalıdır.
+
+## Latest Decisions - Demo Seed and WhatsApp Manual Drafts
+
+- [Subpath Deploy] Pilot demo için `/demo` subpath desteği tamamlanmıştır. `netvadi.com/demo` pilot demo alanıdır; domain root hedefi değildir.
+- [Pilot Data Areas] `localhost:5173` gerçek lokal data alanıdır. `localhost:7777` fake/pilot test alanıdır. Bu iki alan karıştırılmamalıdır.
+- [Pilot Seed] Pilot demo seed bootstrap ve zengin fake pilot seed + UI smoke QA tamamlanmıştır. Seed/pilot test verisi gerçek öğrenci verisi gibi ele alınmamalıdır.
+- [WhatsApp Manual Drafts] WhatsApp için API, bot, otomatik gönderim, kişi kaydetme/vCard veya teslimat doğrulama kullanılmayacaktır. Ücretsiz/manual `wa.me` taslak akışı kullanılacaktır.
+- [WhatsApp Manual Drafts] `WhatsApp'ta Aç` yalnız taslak bağlantısı açar. Gönderme işlemi WhatsApp içinde kullanıcı/personel tarafından manuel yapılır.
+- [WhatsApp Manual Sent Marker] `Gönderildi olarak işaretle` WhatsApp teslimat onayı değildir. Bu yalnız CRM içinde manuel takip işaretidir.
+- [WhatsApp UI Scope] Öğrenci listesinde WhatsApp rozeti gösterilmeyecektir. WhatsApp bilgisi telefon kartı bazlı mikro UI olarak kalır.
+- [WhatsApp Pending] WhatsApp taslak editleme ve gönderildi işaretini geri alma aktif scope değildir; ayrı ürün kararı gerektirir.
+- [Phone Action Semantics] X/çarpı butonu operational invalid marker'dır ve `phone_status` ile `is_wrong` alanlarını etkiler.
+- [Phone Action Semantics] Dropdown `Yanlış Numara` ve `Kullanılmıyor` seçenekleri phone-level `call_outcome` alanını etkiler.
+- [Phone Action Semantics] X ile dropdown aynı veri davranışını üretmez. X/dropdown birleşimi veya sadeleştirmesi ayrı product/data decision olmadan yapılmayacaktır.
 

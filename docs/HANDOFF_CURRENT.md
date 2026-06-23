@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 667d501 fix: polish phone outcome card menu layout
-- Phone-level call outcome tracking + compact phone card UI polish zinciri tamamlandı ve pushlandı.
-- Tracked working tree başlangıçta temizdir. `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
-- Bu docs-only closure tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: close phone outcome ui checkpoint
+- Son güvenli HEAD/origin: 48da40c fix: polish WhatsApp phone action icon
+- `/demo` subpath support, pilot demo seed bootstrap, zengin pilot seed/UI smoke QA ve WhatsApp manuel taslak/manuel gönderildi/icon polish zinciri tamamlandı ve pushlandı.
+- Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
+- Bu docs-only governance sync tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
+- Önerilen docs commit: docs: sync project memory after WhatsApp icon polish
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -41,6 +41,32 @@
 - Strategy vault ayrı katmandır ve `eefd4ed` seviyesine senkronlanmıştır; `ead391b` için küçük follow-up sync gerekebilir.
 - Reusable safety skeleton + task-specific customization kontrollü deneme olarak sürer; scope drift veya kontrol kaybında geri alınır.
 - `Reporting Area V2: Aday Pipeline Görselleştirme` deferred roadmap olarak kalır, aktif scope değildir.
+
+## Latest Handoff Update - Demo Seed + WhatsApp Manual Draft UI
+
+- Current safe HEAD/origin: `48da40c fix: polish WhatsApp phone action icon`.
+- Recent implementation chain:
+  - `13f5d12 fix: support subpath deployment base`
+  - `edae87a feat: add pilot demo seed bootstrap`
+  - `1dc09c7 fix: enrich pilot seed and add UI smoke QA`
+  - `cf660d1 feat: add WhatsApp draft message templates`
+  - `6fdd940 fix: show WhatsApp manual sent status`
+  - `48da40c fix: polish WhatsApp phone action icon`
+- `/demo` subpath deploy support is complete. `netvadi.com/demo` is the pilot demo area.
+- Pilot seed bootstrap and richer fake pilot seed + UI smoke QA are complete.
+- WhatsApp is implemented as a manual `wa.me` draft flow only. No WhatsApp API, bot, auto-send, vCard/contact-save or delivery confirmation exists.
+- `Gönderildi olarak işaretle` means manual CRM follow-up status only; it must not be described as WhatsApp delivery confirmation.
+- WhatsApp status remains phone-card scoped. Student list WhatsApp badges are intentionally not part of the current product.
+- Environment split:
+  - `localhost:5173` = real local data area.
+  - `localhost:7777` = fake/pilot test area.
+  - `netvadi.com/demo` = pilot demo area.
+- Pending decisions:
+  - WhatsApp draft editing.
+  - Undo/revert for manual sent marker.
+  - X/dropdown semantic redesign.
+- X/dropdown discovery result: X is the operational invalid marker and changes `phone_status` / `is_wrong`; dropdown `Yanlış Numara` / `Kullanılmıyor` changes `call_outcome`. They are not equivalent and must not be merged without a separate product/data decision.
+- Working tree should be clean except `dev-server.log`. During this docs sync an extra untracked `docs/docs.zip` may be present locally; do not stage it unless explicitly requested and verified.
 
 ## 2. Proje Özeti
 
@@ -202,12 +228,12 @@ Bu projeye yeni başlayan AI önce şunları yapmalı:
 ## 10. Şu Anki En Güvenli Sonraki Adım
 
 Şu anki en güvenli sıradaki iş:
-Mahalle/İlçe Import Pilot docs-only closure review ve Strategy AI onayı sonrası docs commit/push.
+WhatsApp icon polish sonrası repo docs / handoff / governance sync review ve Strategy AI onayı sonrası docs commit/push.
 
 Bunun ardından:
 Anne/Baba implementasyonu hemen başlatılmamalıdır. Önce `DISCOVERY — Agent Context / Repo Hygiene Standardization` yapılmalı; repo hygiene/risk scan, agent instruction standardization ve context export/prompt-pack stratejisi değerlendirilmelidir.
 
-Yeni kod işi başlatmadan önce Mahalle/İlçe Import Pilot docs-only kapanış commit/push edildiği doğrulanmalıdır.
+Yeni kod işi başlatmadan önce latest HEAD, working tree, gerçek/demo data alanı ayrımı, Drive/Obsidian sync seviyesi ve bu docs governance sync'in commit/push durumu doğrulanmalıdır.
 
 Telefon 3-10 mapping/simulation, gerçek import writer/persistence, sağ kart latest phone outcome read model, AD/SOYAD composition ve Mahalle/İlçe import pilot tamamlandı. Anne/Baba implementasyonu ertelendi ve guardian/contact model kararı gerektirir. Communication history delete/correction, Phone Action Simplification ve phone-level outcome persistence/export ayrı discovery olmadan uygulanmamalıdır.
 

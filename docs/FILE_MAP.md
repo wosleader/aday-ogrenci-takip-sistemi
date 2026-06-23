@@ -596,3 +596,28 @@ Son doğrulandı: `667d501 fix: polish phone outcome card menu layout`
 - `docs/CHECKPOINT_PHONE_OUTCOME_TRACKING_AND_UI_POLISH.md`
   Phone-level outcome tracking ve compact phone card UI polish zincirinin resmi docs-only kapanış checkpoint'idir.
 
+## Latest File Map Addendum - Demo Seed and WhatsApp Manual Drafts
+
+Son doğrulandı: `48da40c fix: polish WhatsApp phone action icon`
+
+- `vite.config.ts`
+  `/demo` subpath deployment compatibility için Vite base path davranışını taşır. Pilot demo hedefi domain root değil `/demo` path'idir.
+- `src/db/seed.ts`
+  Pilot demo seed bootstrap ve zengin fake pilot seed verilerinin kaynağıdır. Gerçek data alanı ile demo/test seed alanı karıştırılmamalıdır.
+- `src/features/students/StudentsPage.tsx`
+  Telefon kartındaki WhatsApp ikon aksiyonunu, WhatsApp taslak modalını, kopyalama/açma/manuel gönderildi feedback'ini ve ilgili telefon kartındaki gönderildi badge'ini render eder. X, ✓, phone outcome dropdown ve `phone_status` / `call_outcome` semantiklerini değiştirmez.
+- `src/features/whatsapp/whatsappTemplates.ts`
+  Kurum bilgisi, konum, takip ve randevu gibi manuel WhatsApp taslak şablonlarını taşır.
+- `src/features/whatsapp/whatsappTemplateRenderer.ts`
+  Şablon değişkenlerini aday/veli/telefon bağlamına göre metne dönüştürür.
+- `src/features/whatsapp/whatsappUrl.ts`
+  Telefonu `wa.me` linki için normalize eder ve taslak URL üretir. WhatsApp API, bot veya auto-send değildir.
+- `src/features/whatsapp/whatsappDraftLogService.ts`
+  `draft_opened`, `copied` ve `manually_marked_sent` local log kayıtlarını yazar/okur. `manually_marked_sent` WhatsApp teslimat onayı değil, manuel CRM takip işaretidir.
+- `src/domain/models/whatsappDraftLog.ts`
+  WhatsApp draft log modelini ve izinli local log status değerlerini tanımlar.
+- `tests/whatsapp/whatsappDraft.test.ts`
+  URL normalization, template rendering, draft log write/read ve manually marked sent lookup davranışlarını doğrular.
+- `tests/students/StudentsPagePhoneSelection.test.tsx`
+  WhatsApp ikon butonu, modal açma, `WhatsApp'ta Aç`, `Mesajı Kopyala`, `Gönderildi olarak işaretle`, gönderildi badge'i ve X/✓ regression davranışlarını doğrular.
+

@@ -116,13 +116,31 @@ Her sprint sonunda Strategy AI şu 5 soruyu kontrol eder:
 4. Working tree durumu net mi?
 5. Docs/checkpoint/handoff güncellemesi gerekiyorsa yapıldı mı?
 
-## 8. Kullanılmayacak Ağır Süreçler
+## 8. Vault Read Checklist Gate
+
+Bu gate yeni bir paralel sistem kurmak için değil, mevcut repo docs / strateji hafızası disiplinini uygulanabilir hale getirmek içindir.
+
+Büyük sprint, ürün kararı veya Codex promptu öncesi:
+
+1. MASTER_CONTEXT veya repo docs memory okunur.
+2. `docs/PROJECT_MEMORY.md` okunur.
+3. `docs/HANDOFF_CURRENT.md` okunur.
+4. `docs/AI_WORKFLOW_GOVERNANCE.md` okunur.
+5. `docs/DECISIONS.md` okunur.
+6. `docs/FILE_MAP.md` okunur.
+7. İlgili sprint / decision / risk notları okunur.
+8. Okunan dosyalar raporda isim isim belirtilir.
+9. Okunmayan dosya hakkında kesin konuşulmaz.
+
+Küçük bugfix veya mikro UI işleri için bu liste task riskine göre daraltılabilir; ancak daraltma raporda açıkça belirtilmelidir.
+
+## 9. Kullanılmayacak Ağır Süreçler
 
 Bu proje şu aşamada ağır AI observability platformu, agent zinciri, MCP entegrasyonu, otomatik merge/push veya dış AI API entegrasyonu kullanmayacaktır.
 
 Bunlar ancak EL_Patron onayı, ayrı discovery ve güvenlik değerlendirmesiyle ele alınabilir.
 
-## 9. Devam Eden Roadmap ile İlişki
+## 10. Devam Eden Roadmap ile İlişki
 
 Bu governance mini sprint, ürün roadmap'ini değiştirmez.
 

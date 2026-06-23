@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Guardian + Phone UI Clarity | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: WhatsApp Phone Action Icon Polish | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,11 +6,12 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Guardian + Phone UI Clarity
-- FILE_MAP: Guardian + Phone UI Clarity
-- DECISIONS: Guardian + Phone UI Clarity
-- Son implementation commit: ead391b feat: clarify guardian and phone labels
-- Son docs closure hedefi: docs: close guardian phone UI clarity checkpoint
+- PROJECT_MEMORY: WhatsApp Phone Action Icon Polish
+- FILE_MAP: WhatsApp Phone Action Icon Polish
+- DECISIONS: WhatsApp Manual Draft / Phone Action UI
+- Son implementation commit: 48da40c fix: polish WhatsApp phone action icon
+- Güncel branch: sprint-9-2-multi-phone-architecture-plan
+- Beklenen final working tree: yalnız `?? dev-server.log`
 
 ## 1. Proje Amacı
 
@@ -367,7 +368,7 @@ Bu bölüm sık değişir ve dosyanın en altında kalmalıdır.
 - Son multi-phone import simulation commit’i: `2e1bbff feat: add multi-phone import simulation`
 - Son multi-phone import writer commit’i: `34ec8d5 feat: persist multi-phone import records`
 - Son bilinen dokümantasyon commit’i: `92dfb4e docs: close import ad soyad composition checkpoint`
-- Sonraki zorunlu aşama: Parent / Location Import Product Decision docs-only commit/push. Sonra Mahalle/İlçe import için ayrı ve küçük implementation/discovery değerlendirilebilir; Anne/Baba aynı sprintte ele alınmamalı ve önce guardian/contact model kararı verilmelidir.
+- Sonraki zorunlu aşama: WhatsApp icon polish sonrası repo docs / handoff / governance sync review. Yeni ürün kod işi başlatılmadan önce HEAD, working tree, gerçek/demo data alanı ve Drive/Obsidian sync durumu doğrulanmalıdır.
 
 ## 15. Codex Standart Başlangıç Talimatı
 
@@ -521,3 +522,27 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - Temiz browser profilinde aday verisi bulunmadığı için gerçek veri kartı üzerinde görsel QA tamamlanamadı; uygulama hatasız açıldı. Veri içeren localhost profiliyle manuel kart kontrolü önerilir.
 - Google Drive / Obsidian strategy vault ayrı olarak `eefd4ed` seviyesine senkronlanmıştır; bu checkpoint sonrasında `ead391b` değişikliğini içeren küçük follow-up sync gerekebilir.
 - Sonraki ana aksiyon yeni-chat handoff/disiplin testidir; yeni oturum önce HEAD, branch, working tree, Drive/Obsidian sync durumu ve çalışma disiplinini doğrulamalıdır.
+
+## Latest Implementation Chain - Demo Seed and WhatsApp Manual Drafts
+
+- Güncel HEAD/origin: `48da40c fix: polish WhatsApp phone action icon`.
+- Beklenen final git durumu: tracked working tree temiz; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir.
+- `/demo` subpath deploy compatibility tamamlandı: `13f5d12 fix: support subpath deployment base`.
+- Pilot demo seed bootstrap tamamlandı: `edae87a feat: add pilot demo seed bootstrap`.
+- Zengin pilot seed + görünür CRM data/UI smoke QA tamamlandı: `1dc09c7 fix: enrich pilot seed and add UI smoke QA`.
+- WhatsApp manuel taslak sistemi tamamlandı: `cf660d1 feat: add WhatsApp draft message templates`.
+- WhatsApp manuel gönderildi status feedback tamamlandı: `6fdd940 fix: show WhatsApp manual sent status`.
+- WhatsApp phone action icon polish tamamlandı: `48da40c fix: polish WhatsApp phone action icon`.
+- WhatsApp entegrasyonu bilinçli olarak ücretsiz/manual taslak modelidir: WhatsApp API, bot, otomatik gönderim, kişi kaydetme/vCard veya teslimat onayı yoktur.
+- `Gönderildi olarak işaretle` WhatsApp teslimat onayı değildir; yalnız personelin CRM içinde manuel takip işaretidir.
+- WhatsApp bilgisi öğrenci listesinde rozet olarak gösterilmez; telefon kartı bazlı küçük aksiyon/ikon ve ilgili telefonun gönderildi rozeti olarak kalır.
+- Ortam ayrımı: `localhost:5173` gerçek lokal data alanıdır; `localhost:7777` fake/pilot test alanıdır; `netvadi.com/demo` pilot demo alanıdır.
+
+## Pending Decisions - WhatsApp and Phone Actions
+
+- WhatsApp taslak editleme henüz yapılmadı; ayrı ürün kararı ve implementation gerektirir.
+- Gönderildi işaretini geri alma henüz yapılmadı; ayrı ürün kararı ve audit/UX değerlendirmesi gerektirir.
+- X/dropdown semantic redesign henüz yapılmadı.
+- X/çarpı butonu operational invalid marker'dır; `phone_status` ve `is_wrong` alanlarını etkiler.
+- Dropdown `Yanlış Numara` / `Kullanılmıyor` phone-level `call_outcome` alanını etkiler.
+- X ile dropdown aynı veri davranışını üretmez. Bu yüzden birleştirme veya sadeleştirme ayrı product/data decision gerektirir.
