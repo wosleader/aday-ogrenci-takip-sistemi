@@ -72,6 +72,11 @@ import {
   WHATSAPP_TEMPLATES,
   type WhatsAppTemplate
 } from "../whatsapp/whatsappTemplates";
+import {
+  readWhatsAppTemplateWithOverride,
+  resetWhatsAppTemplateOverride,
+  saveWhatsAppTemplateOverride
+} from "../whatsapp/whatsappTemplateOverrides";
 import { buildWhatsAppDraftUrl } from "../whatsapp/whatsappUrl";
 
 const PAGE_SIZE = 100;
@@ -1730,7 +1735,7 @@ export function StudentsPage() {
     }
   }
 
-  function openWhatsAppDraft(context: WhatsAppDraftContext | null) {
+  async function openWhatsAppDraft(context: WhatsAppDraftContext | null) {
     if (!context) {
       const message = "WhatsApp taslağı için telefon numarası bulunamadı.";
       setWhatsAppDraftMessage(message);
@@ -1738,11 +1743,94 @@ export function StudentsPage() {
       return;
     }
 
+    const defaultTemplate = getWhatsAppTemplateById(DEFAULT_WHATSAPP_TEMPLATE_ID);
+
     setWhatsAppDraftContext(context);
-    setSelectedWhatsAppTemplateId(DEFAULT_WHATSAPP_TEMPLATE_ID);
-    setWhatsAppDraftBody(renderWhatsAppDraftBody(getWhatsAppTemplateById(DEFAULT_WHATSAPP_TEMPLATE_ID), context));
+    setSelectedWhatsAppTemplateId(defaultTemplate.id);
+    setWhatsAppDraftBody(renderWhatsAppDraftBody(defaultTemplate, context));
     setWhatsAppDraftMessage(null);
     setWhatsAppDraftVisibleStatus(null);
+
+    try {
+      const template = await readWhatsAppTemplateWithOverride(defaultTemplate.id);
+      setSelectedWhatsAppTemplateId(template.id);
+      setWhatsAppDraftBody(renderWhatsAppDraftBody(template, context));
+    } catch (error) {
+      setWhatsAppDraftMessage(
+        error instanceof Error ? error.message : "WhatsApp şablonu okunamadı. Varsayılan metin kullanıldı."
+      );
+    }
+  }
+
+  async function selectWhatsAppTemplate(templateId: string) {
+    if (!whatsAppDraftContext) {
+      return;
+    }
+
+    const nextTemplate = getWhatsAppTemplateById(templateId);
+
+    setSelectedWhatsAppTemplateId(nextTemplate.id);
+    setWhatsAppDraftBody(renderWhatsAppDraftBody(nextTemplate, whatsAppDraftContext));
+    setWhatsAppDraftMessage(null);
+    setWhatsAppDraftVisibleStatus(null);
+
+    try {
+      const template = await readWhatsAppTemplateWithOverride(nextTemplate.id);
+      setSelectedWhatsAppTemplateId(template.id);
+      setWhatsAppDraftBody(renderWhatsAppDraftBody(template, whatsAppDraftContext));
+    } catch (error) {
+      setWhatsAppDraftMessage(
+        error instanceof Error ? error.message : "WhatsApp şablonu okunamadı. Varsayılan metin kullanıldı."
+      );
+    }
+  }
+
+  async function saveCurrentWhatsAppTemplateOverride() {
+    if (!whatsAppDraftContext || isWhatsAppDraftBusy) {
+      return;
+    }
+
+    if (!whatsAppDraftBody.trim()) {
+      setWhatsAppDraftMessage("Mesaj metni boş olamaz.");
+      return;
+    }
+
+    setIsWhatsAppDraftBusy(true);
+    setWhatsAppDraftMessage(null);
+    setWhatsAppDraftVisibleStatus(null);
+
+    try {
+      const template = await saveWhatsAppTemplateOverride(selectedWhatsAppTemplate.id, whatsAppDraftBody);
+
+      setSelectedWhatsAppTemplateId(template.id);
+      setWhatsAppDraftMessage("Şablon güncellendi.");
+    } catch (error) {
+      setWhatsAppDraftMessage(error instanceof Error ? error.message : "Şablon güncellenemedi.");
+    } finally {
+      setIsWhatsAppDraftBusy(false);
+    }
+  }
+
+  async function resetCurrentWhatsAppTemplateOverride() {
+    if (!whatsAppDraftContext || isWhatsAppDraftBusy) {
+      return;
+    }
+
+    setIsWhatsAppDraftBusy(true);
+    setWhatsAppDraftMessage(null);
+    setWhatsAppDraftVisibleStatus(null);
+
+    try {
+      const template = await resetWhatsAppTemplateOverride(selectedWhatsAppTemplate.id);
+
+      setSelectedWhatsAppTemplateId(template.id);
+      setWhatsAppDraftBody(renderWhatsAppDraftBody(template, whatsAppDraftContext));
+      setWhatsAppDraftMessage("Şablon varsayılan haline döndürüldü.");
+    } catch (error) {
+      setWhatsAppDraftMessage(error instanceof Error ? error.message : "Şablon varsayılana döndürülemedi.");
+    } finally {
+      setIsWhatsAppDraftBusy(false);
+    }
   }
 
   async function logWhatsAppDraftAction(
@@ -2275,14 +2363,7 @@ export function StudentsPage() {
                 <span className="form-label">Şablon</span>
                 <select
                   value={selectedWhatsAppTemplateId}
-                  onChange={(event) => {
-                    const nextTemplate = getWhatsAppTemplateById(event.target.value);
-
-                    setSelectedWhatsAppTemplateId(nextTemplate.id);
-                    setWhatsAppDraftBody(renderWhatsAppDraftBody(nextTemplate, whatsAppDraftContext));
-                    setWhatsAppDraftMessage(null);
-                    setWhatsAppDraftVisibleStatus(null);
-                  }}
+                  onChange={(event) => void selectWhatsAppTemplate(event.target.value)}
                 >
                   {WHATSAPP_TEMPLATES.map((template) => (
                     <option key={template.id} value={template.id}>
@@ -2304,6 +2385,14 @@ export function StudentsPage() {
                   value={whatsAppDraftBody}
                 />
               </label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <button disabled={isWhatsAppDraftBusy} onClick={() => void saveCurrentWhatsAppTemplateOverride()} type="button">
+                  Şablonu güncelle
+                </button>
+                <button disabled={isWhatsAppDraftBusy} onClick={() => void resetCurrentWhatsAppTemplateOverride()} type="button">
+                  Varsayılana döndür
+                </button>
+              </div>
               {whatsAppDraftMessage ? (
                 <div aria-live="polite" style={{ color: "#475569", fontSize: 13 }}>
                   {whatsAppDraftMessage}
@@ -2349,6 +2438,8 @@ export function StudentsPage() {
                   setWhatsAppDraftContext(null);
                   setWhatsAppDraftBody("");
                   setWhatsAppDraftMessage(null);
+                  setWhatsAppDraftVisibleStatus(null);
+                  setSelectedWhatsAppTemplateId(DEFAULT_WHATSAPP_TEMPLATE_ID);
                 }}
                 type="button"
               >
@@ -2761,7 +2852,7 @@ export function StudentsPage() {
                 onInvalid={(phoneId) => void updatePhoneStatus("invalid", phoneId)}
                 onOutcomeChange={(phoneId, outcome) => void handlePhoneOutcomeChange(phoneId, outcome)}
                 onWhatsAppDraft={() =>
-                  openWhatsAppDraft(
+                  void openWhatsAppDraft(
                     createWhatsAppDraftContext(selectedRow, {
                       phoneId: selectedRow.phone_1_id,
                       phoneNumber: selectedRow.phone_1,
@@ -2798,7 +2889,7 @@ export function StudentsPage() {
                 onInvalid={(phoneId) => void updatePhoneStatus("invalid", phoneId)}
                 onOutcomeChange={(phoneId, outcome) => void handlePhoneOutcomeChange(phoneId, outcome)}
                 onWhatsAppDraft={() =>
-                  openWhatsAppDraft(
+                  void openWhatsAppDraft(
                     createWhatsAppDraftContext(selectedRow, {
                       phoneId: selectedRow.phone_2_id,
                       phoneNumber: selectedRow.phone_2,
@@ -2845,7 +2936,7 @@ export function StudentsPage() {
                   onOutcomeChange={(phoneId, outcome) => void handlePhoneOutcomeChange(phoneId, outcome)}
                   statusText={getReadonlyPhoneStatusText(phone)}
                   onWhatsAppDraft={() =>
-                    openWhatsAppDraft(
+                    void openWhatsAppDraft(
                       createWhatsAppDraftContext(selectedRow, {
                         phoneId: phone.id,
                         phoneNumber: phone.phone_number,

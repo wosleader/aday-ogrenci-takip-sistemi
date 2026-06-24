@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { createBackupSnapshot } from "../../src/db/backup";
 import { db } from "../../src/db/db";
 import {
   createWhatsAppDraftLog,
@@ -6,6 +7,12 @@ import {
 } from "../../src/features/whatsapp/whatsappDraftLogService";
 import { renderWhatsAppTemplate } from "../../src/features/whatsapp/whatsappTemplateRenderer";
 import { getWhatsAppTemplateById } from "../../src/features/whatsapp/whatsappTemplates";
+import {
+  readWhatsAppTemplateWithOverride,
+  resetWhatsAppTemplateOverride,
+  saveWhatsAppTemplateOverride,
+  WHATSAPP_TEMPLATE_OVERRIDE_KEY_PREFIX
+} from "../../src/features/whatsapp/whatsappTemplateOverrides";
 import { buildWhatsAppDraftUrl, normalizeWhatsAppPhoneNumber } from "../../src/features/whatsapp/whatsappUrl";
 
 describe("WhatsApp draft helpers", () => {
@@ -119,5 +126,57 @@ describe("WhatsApp draft helpers", () => {
 
     expect(lookup.byPhoneId.get(2)?.template_title).toBe("Kurum Bilgisi + Konum");
     expect(lookup.byPhoneNumber.get("05321112233")?.template_title).toBe("Kurum Bilgisi + Konum");
+  });
+
+  it("persists WhatsApp template body overrides in settings without changing static metadata", async () => {
+    const template = getWhatsAppTemplateById("kurum-bilgisi-konum");
+    const overrideBody = "Merhaba {{veli_unvani}}, özel kayıtlı şablon.";
+
+    expect((await readWhatsAppTemplateWithOverride(template.id)).body).toBe(template.body);
+
+    const saved = await saveWhatsAppTemplateOverride(template.id, overrideBody);
+
+    expect(saved).toMatchObject({
+      id: template.id,
+      title: template.title,
+      description: template.description,
+      category: template.category,
+      body: overrideBody
+    });
+    expect((await readWhatsAppTemplateWithOverride(template.id)).body).toBe(overrideBody);
+    await expect(db.settings.get(`${WHATSAPP_TEMPLATE_OVERRIDE_KEY_PREFIX}${template.id}`)).resolves.toMatchObject({
+      key: `${WHATSAPP_TEMPLATE_OVERRIDE_KEY_PREFIX}${template.id}`,
+      value: overrideBody
+    });
+  });
+
+  it("resets WhatsApp template overrides back to the static fallback", async () => {
+    const template = getWhatsAppTemplateById("kurum-bilgisi-konum");
+
+    await saveWhatsAppTemplateOverride(template.id, "Kalıcı özel şablon");
+    const reset = await resetWhatsAppTemplateOverride(template.id);
+
+    expect(reset.body).toBe(template.body);
+    expect((await readWhatsAppTemplateWithOverride(template.id)).body).toBe(template.body);
+    await expect(db.settings.get(`${WHATSAPP_TEMPLATE_OVERRIDE_KEY_PREFIX}${template.id}`)).resolves.toBeUndefined();
+  });
+
+  it("includes WhatsApp template overrides in the existing full-system backup settings table", async () => {
+    const template = getWhatsAppTemplateById("kurum-bilgisi-konum");
+    const overrideBody = "Backup içinde taşınan WhatsApp şablonu.";
+
+    await saveWhatsAppTemplateOverride(template.id, overrideBody);
+
+    const snapshot = await createBackupSnapshot(db);
+
+    expect(snapshot.metadata.counts.settings).toBe(1);
+    expect(snapshot.tables.settings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: `${WHATSAPP_TEMPLATE_OVERRIDE_KEY_PREFIX}${template.id}`,
+          value: overrideBody
+        })
+      ])
+    );
   });
 });

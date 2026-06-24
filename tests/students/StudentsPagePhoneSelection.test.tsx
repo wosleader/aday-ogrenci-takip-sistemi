@@ -856,13 +856,13 @@ describe("StudentsPage phone selection", () => {
 
     await user.click(within(phone1Card).getByRole("button", { name: "Telefon 1 WhatsApp taslağı hazırla" }));
 
-    const dialog = await screen.findByRole("dialog", { name: "WhatsApp Taslak Mesajı" });
+    let dialog = await screen.findByRole("dialog", { name: "WhatsApp Taslak Mesajı" });
     expect(dialog.querySelector(".delete-confirm-modal")).toHaveStyle("max-height: calc(100vh - 48px)");
     expect(within(dialog).getByText("MELIS KAYA")).toBeInTheDocument();
     expect(within(dialog).getByText("Telefon 1: 0532 100 0001")).toBeInTheDocument();
 
-    const templateSelect = within(dialog).getByLabelText("Şablon");
-    const draftBody = within(dialog).getByLabelText("Mesaj taslağı") as HTMLTextAreaElement;
+    let templateSelect = within(dialog).getByLabelText("Şablon");
+    let draftBody = within(dialog).getByLabelText("Mesaj taslağı") as HTMLTextAreaElement;
     expect(draftBody.value).toContain("Doğanbey Mh. 1. Doğanbey Sk.");
     expect(draftBody.value).toContain("https://www.instagram.com/bursaakademiknot/");
     expect(draftBody.value).toContain("https://maps.app.goo.gl/AjMa1AcJxZyE9oZq8");
@@ -877,6 +877,10 @@ describe("StudentsPage phone selection", () => {
     expect(openSpy).not.toHaveBeenCalled();
     await expect(db.whatsapp_draft_logs.toArray()).resolves.toHaveLength(0);
 
+    await user.click(within(dialog).getByRole("button", { name: "Şablonu güncelle" }));
+    expect(within(dialog).getByText("Mesaj metni boş olamaz.")).toBeInTheDocument();
+    await expect(db.settings.count()).resolves.toBe(0);
+
     fireEvent.change(draftBody, { target: { value: "Kullanıcının geçici düzenlemesi" } });
     expect(draftBody.value).toBe("Kullanıcının geçici düzenlemesi");
 
@@ -886,6 +890,34 @@ describe("StudentsPage phone selection", () => {
 
     await user.selectOptions(templateSelect, "kurum-bilgisi-konum");
     const editedMessage = "Merhaba, bu mesaj modal içinde düzenlendi.\nKonum bilgisi aşağıdadır.";
+    fireEvent.change(draftBody, { target: { value: editedMessage } });
+
+    await user.click(within(dialog).getByRole("button", { name: "Şablonu güncelle" }));
+    expect(await within(dialog).findByText("Şablon güncellendi.")).toBeInTheDocument();
+    await expect(db.settings.where("key").startsWith("whatsapp_template_override:").count()).resolves.toBe(1);
+
+    await user.click(within(dialog).getByRole("button", { name: "Kapat" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "WhatsApp Taslak Mesajı" })).not.toBeInTheDocument();
+    });
+
+    await user.click(within(phone1Card).getByRole("button", { name: "Telefon 1 WhatsApp taslağı hazırla" }));
+
+    dialog = await screen.findByRole("dialog", { name: "WhatsApp Taslak Mesajı" });
+    templateSelect = within(dialog).getByLabelText("Şablon");
+    draftBody = within(dialog).getByLabelText("Mesaj taslağı") as HTMLTextAreaElement;
+    await waitFor(() => {
+      expect(draftBody.value).toBe(editedMessage);
+    });
+
+    await user.click(within(dialog).getByRole("button", { name: "Varsayılana döndür" }));
+    expect(await within(dialog).findByText("Şablon varsayılan haline döndürüldü.")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(draftBody.value).toContain("Doğanbey Mh. 1. Doğanbey Sk.");
+      expect(draftBody.value).not.toBe(editedMessage);
+    });
+    await expect(db.settings.where("key").startsWith("whatsapp_template_override:").count()).resolves.toBe(0);
+
     fireEvent.change(draftBody, { target: { value: editedMessage } });
 
     await user.click(within(dialog).getByRole("button", { name: "WhatsApp'ta Aç" }));
