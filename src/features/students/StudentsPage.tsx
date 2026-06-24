@@ -69,7 +69,8 @@ import { renderWhatsAppTemplate } from "../whatsapp/whatsappTemplateRenderer";
 import {
   DEFAULT_WHATSAPP_TEMPLATE_ID,
   getWhatsAppTemplateById,
-  WHATSAPP_TEMPLATES
+  WHATSAPP_TEMPLATES,
+  type WhatsAppTemplate
 } from "../whatsapp/whatsappTemplates";
 import { buildWhatsAppDraftUrl } from "../whatsapp/whatsappUrl";
 
@@ -509,6 +510,14 @@ function createWhatsAppDraftContext(
     relationText: getPhoneRelationText(phone.relationLabel),
     guardianLine: createWhatsAppGuardianLine(row, phone.relationLabel)
   };
+}
+
+function renderWhatsAppDraftBody(template: WhatsAppTemplate, context: WhatsAppDraftContext): string {
+  return renderWhatsAppTemplate(template, {
+    veli_unvani: "Sayın Veli",
+    ogrenci_adi: context.studentName,
+    telefon: context.phoneNumber
+  });
 }
 
 function getWhatsAppDraftVisibleStatusLabel(status: WhatsAppDraftVisibleStatus | null): string | null {
@@ -1303,6 +1312,7 @@ export function StudentsPage() {
   const [operationToast, setOperationToast] = useState<OperationToast | null>(null);
   const [whatsAppDraftContext, setWhatsAppDraftContext] = useState<WhatsAppDraftContext | null>(null);
   const [selectedWhatsAppTemplateId, setSelectedWhatsAppTemplateId] = useState(DEFAULT_WHATSAPP_TEMPLATE_ID);
+  const [whatsAppDraftBody, setWhatsAppDraftBody] = useState("");
   const [whatsAppDraftMessage, setWhatsAppDraftMessage] = useState<string | null>(null);
   const [whatsAppDraftVisibleStatus, setWhatsAppDraftVisibleStatus] = useState<WhatsAppDraftVisibleStatus | null>(null);
   const [isWhatsAppDraftBusy, setIsWhatsAppDraftBusy] = useState(false);
@@ -1414,17 +1424,6 @@ export function StudentsPage() {
     () => getWhatsAppTemplateById(selectedWhatsAppTemplateId),
     [selectedWhatsAppTemplateId]
   );
-  const whatsAppMessagePreview = useMemo(() => {
-    if (!whatsAppDraftContext) {
-      return "";
-    }
-
-    return renderWhatsAppTemplate(selectedWhatsAppTemplate, {
-      veli_unvani: "Sayın Veli",
-      ogrenci_adi: whatsAppDraftContext.studentName,
-      telefon: whatsAppDraftContext.phoneNumber
-    });
-  }, [selectedWhatsAppTemplate, whatsAppDraftContext]);
   const whatsAppDraftVisibleStatusLabel = getWhatsAppDraftVisibleStatusLabel(whatsAppDraftVisibleStatus);
   const reminderPopup = useMemo(
     () =>
@@ -1499,6 +1498,7 @@ export function StudentsPage() {
     setSelectedCallPhoneId(null);
     setCallLogDeleteCandidate(null);
     setWhatsAppDraftContext(null);
+    setWhatsAppDraftBody("");
     setWhatsAppDraftMessage(null);
     setWhatsAppDraftVisibleStatus(null);
     setSelectedWhatsAppTemplateId(DEFAULT_WHATSAPP_TEMPLATE_ID);
@@ -1740,11 +1740,15 @@ export function StudentsPage() {
 
     setWhatsAppDraftContext(context);
     setSelectedWhatsAppTemplateId(DEFAULT_WHATSAPP_TEMPLATE_ID);
+    setWhatsAppDraftBody(renderWhatsAppDraftBody(getWhatsAppTemplateById(DEFAULT_WHATSAPP_TEMPLATE_ID), context));
     setWhatsAppDraftMessage(null);
     setWhatsAppDraftVisibleStatus(null);
   }
 
-  async function logWhatsAppDraftAction(status: "draft_opened" | "copied" | "manually_marked_sent") {
+  async function logWhatsAppDraftAction(
+    status: "draft_opened" | "copied" | "manually_marked_sent",
+    messagePreview = whatsAppDraftBody
+  ) {
     if (!whatsAppDraftContext) {
       return;
     }
@@ -1755,7 +1759,7 @@ export function StudentsPage() {
       phone_number: whatsAppDraftContext.phoneNumber,
       template_id: selectedWhatsAppTemplate.id,
       template_title: selectedWhatsAppTemplate.title,
-      message_preview: whatsAppMessagePreview,
+      message_preview: messagePreview,
       status,
       created_by_optional: "agent"
     });
@@ -1763,6 +1767,12 @@ export function StudentsPage() {
 
   async function copyWhatsAppDraftMessage() {
     if (!whatsAppDraftContext || isWhatsAppDraftBusy) {
+      return;
+    }
+
+    const currentMessage = whatsAppDraftBody;
+    if (!currentMessage.trim()) {
+      setWhatsAppDraftMessage("Mesaj metni boş olamaz.");
       return;
     }
 
@@ -1776,8 +1786,8 @@ export function StudentsPage() {
         return;
       }
 
-      await clipboard.writeText(whatsAppMessagePreview);
-      await logWhatsAppDraftAction("copied");
+      await clipboard.writeText(currentMessage);
+      await logWhatsAppDraftAction("copied", currentMessage);
       setWhatsAppDraftMessage("Mesaj kopyalandı.");
       setWhatsAppDraftVisibleStatus("copied");
     } catch (error) {
@@ -1792,14 +1802,20 @@ export function StudentsPage() {
       return;
     }
 
+    const currentMessage = whatsAppDraftBody;
+    if (!currentMessage.trim()) {
+      setWhatsAppDraftMessage("Mesaj metni boş olamaz.");
+      return;
+    }
+
     setIsWhatsAppDraftBusy(true);
     setWhatsAppDraftMessage(null);
 
     try {
-      const draftUrl = buildWhatsAppDraftUrl(whatsAppDraftContext.phoneNumber, whatsAppMessagePreview);
+      const draftUrl = buildWhatsAppDraftUrl(whatsAppDraftContext.phoneNumber, currentMessage);
       const openedWindow = window.open(draftUrl, "_blank", "noopener,noreferrer");
 
-      await logWhatsAppDraftAction("draft_opened");
+      await logWhatsAppDraftAction("draft_opened", currentMessage);
 
       if (!openedWindow) {
         setWhatsAppDraftMessage(
@@ -1827,7 +1843,7 @@ export function StudentsPage() {
     setWhatsAppDraftMessage(null);
 
     try {
-      await logWhatsAppDraftAction("manually_marked_sent");
+      await logWhatsAppDraftAction("manually_marked_sent", whatsAppDraftBody);
       setWhatsAppDraftMessage("Gönderildi olarak işaretlendi.");
       setWhatsAppDraftVisibleStatus("manually_marked_sent");
     } catch (error) {
@@ -2260,7 +2276,10 @@ export function StudentsPage() {
                 <select
                   value={selectedWhatsAppTemplateId}
                   onChange={(event) => {
-                    setSelectedWhatsAppTemplateId(event.target.value);
+                    const nextTemplate = getWhatsAppTemplateById(event.target.value);
+
+                    setSelectedWhatsAppTemplateId(nextTemplate.id);
+                    setWhatsAppDraftBody(renderWhatsAppDraftBody(nextTemplate, whatsAppDraftContext));
                     setWhatsAppDraftMessage(null);
                     setWhatsAppDraftVisibleStatus(null);
                   }}
@@ -2274,11 +2293,15 @@ export function StudentsPage() {
               </label>
               <small style={{ color: "#64748b" }}>{selectedWhatsAppTemplate.description}</small>
               <label style={{ display: "grid", gap: 6 }}>
-                <span className="form-label">Mesaj önizleme</span>
+                <span className="form-label">Mesaj taslağı</span>
                 <textarea
-                  readOnly
+                  onChange={(event) => {
+                    setWhatsAppDraftBody(event.target.value);
+                    setWhatsAppDraftMessage(null);
+                    setWhatsAppDraftVisibleStatus(null);
+                  }}
                   style={{ maxHeight: 240, minHeight: 160, overflowY: "auto", resize: "vertical", whiteSpace: "pre-wrap" }}
-                  value={whatsAppMessagePreview}
+                  value={whatsAppDraftBody}
                 />
               </label>
               {whatsAppDraftMessage ? (
@@ -2324,6 +2347,7 @@ export function StudentsPage() {
                 disabled={isWhatsAppDraftBusy}
                 onClick={() => {
                   setWhatsAppDraftContext(null);
+                  setWhatsAppDraftBody("");
                   setWhatsAppDraftMessage(null);
                 }}
                 type="button"

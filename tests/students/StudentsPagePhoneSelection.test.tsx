@@ -861,17 +861,37 @@ describe("StudentsPage phone selection", () => {
     expect(within(dialog).getByText("MELIS KAYA")).toBeInTheDocument();
     expect(within(dialog).getByText("Telefon 1: 0532 100 0001")).toBeInTheDocument();
 
-    await user.selectOptions(within(dialog).getByLabelText("Şablon"), "kurum-bilgisi-konum");
+    const templateSelect = within(dialog).getByLabelText("Şablon");
+    const draftBody = within(dialog).getByLabelText("Mesaj taslağı") as HTMLTextAreaElement;
+    expect(draftBody.value).toContain("Doğanbey Mh. 1. Doğanbey Sk.");
+    expect(draftBody.value).toContain("https://www.instagram.com/bursaakademiknot/");
+    expect(draftBody.value).toContain("https://maps.app.goo.gl/AjMa1AcJxZyE9oZq8");
 
-    const preview = within(dialog).getByLabelText("Mesaj önizleme") as HTMLTextAreaElement;
-    expect(preview.value).toContain("Doğanbey Mh. 1. Doğanbey Sk.");
-    expect(preview.value).toContain("https://www.instagram.com/bursaakademiknot/");
-    expect(preview.value).toContain("https://maps.app.goo.gl/AjMa1AcJxZyE9oZq8");
+    fireEvent.change(draftBody, { target: { value: "   " } });
+    await user.click(within(dialog).getByRole("button", { name: "Mesajı Kopyala" }));
+    expect(within(dialog).getByText("Mesaj metni boş olamaz.")).toBeInTheDocument();
+    expect(writeText).not.toHaveBeenCalled();
+
+    await user.click(within(dialog).getByRole("button", { name: "WhatsApp'ta Aç" }));
+    expect(within(dialog).getByText("Mesaj metni boş olamaz.")).toBeInTheDocument();
+    expect(openSpy).not.toHaveBeenCalled();
+    await expect(db.whatsapp_draft_logs.toArray()).resolves.toHaveLength(0);
+
+    fireEvent.change(draftBody, { target: { value: "Kullanıcının geçici düzenlemesi" } });
+    expect(draftBody.value).toBe("Kullanıcının geçici düzenlemesi");
+
+    await user.selectOptions(templateSelect, "lgs-yaz-kampi-davet");
+    expect(draftBody.value).toContain("LGS");
+    expect(draftBody.value).not.toContain("Kullanıcının geçici düzenlemesi");
+
+    await user.selectOptions(templateSelect, "kurum-bilgisi-konum");
+    const editedMessage = "Merhaba, bu mesaj modal içinde düzenlendi.\nKonum bilgisi aşağıdadır.";
+    fireEvent.change(draftBody, { target: { value: editedMessage } });
 
     await user.click(within(dialog).getByRole("button", { name: "WhatsApp'ta Aç" }));
 
     expect(openSpy).toHaveBeenCalledWith(
-      expect.stringContaining("https://wa.me/905321000001?text="),
+      `https://wa.me/905321000001?text=${encodeURIComponent(editedMessage)}`,
       "_blank",
       "noopener,noreferrer"
     );
@@ -880,11 +900,12 @@ describe("StudentsPage phone selection", () => {
 
       expect(openedLog?.template_title).toBe("Kurum Bilgisi + Konum");
       expect(openedLog?.phone_number).toBe("0532 100 0001");
+      expect(openedLog?.message_preview).toBe(editedMessage);
     });
     expect(within(dialog).getByText("Son işlem: WhatsApp taslağı açıldı")).toBeInTheDocument();
 
     await user.click(within(dialog).getByRole("button", { name: "Mesajı Kopyala" }));
-    expect(writeText).toHaveBeenCalledWith(preview.value);
+    expect(writeText).toHaveBeenCalledWith(editedMessage);
     expect(within(dialog).getByText("Son işlem: Mesaj kopyalandı")).toBeInTheDocument();
 
     await user.click(within(dialog).getByRole("button", { name: "Gönderildi olarak işaretle" }));
@@ -893,6 +914,7 @@ describe("StudentsPage phone selection", () => {
       const logs = await db.whatsapp_draft_logs.orderBy("id").toArray();
 
       expect(logs.map((log) => log.status)).toEqual(["draft_opened", "copied", "manually_marked_sent"]);
+      expect(logs.map((log) => log.message_preview)).toEqual([editedMessage, editedMessage, editedMessage]);
     });
     expect(within(dialog).getByText("Son işlem: Gönderildi olarak işaretlendi")).toBeInTheDocument();
     expect(
