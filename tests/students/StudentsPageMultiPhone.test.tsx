@@ -338,6 +338,37 @@ describe("StudentsPage right card multi-phone display", () => {
     expect(scrollIntoViewMock).toHaveBeenCalledTimes(1);
   });
 
+  it("does not show an empty student group separator in the drawer class line", async () => {
+    const studentId = await seedStudentWithPhones(1, "YAREN BEREN KIZIL");
+    await db.students.update(studentId, {
+      current_class: "8",
+      student_group: ""
+    });
+
+    renderStudentsPage();
+
+    expect(await screen.findAllByText("YAREN BEREN KIZIL")).toHaveLength(2);
+    const drawer = getStudentDrawer();
+
+    expect(within(drawer).getByText("Sınıf: 8")).toBeInTheDocument();
+    expect(within(drawer).queryByText(/Sınıf: 8 ·/)).not.toBeInTheDocument();
+  });
+
+  it("shows the student group separator only when a group value exists", async () => {
+    const studentId = await seedStudentWithPhones(1, "YAREN BEREN KIZIL");
+    await db.students.update(studentId, {
+      current_class: "8",
+      student_group: "8. Sınıf LGS Hazırlık"
+    });
+
+    renderStudentsPage();
+
+    expect(await screen.findAllByText("YAREN BEREN KIZIL")).toHaveLength(2);
+    const drawer = getStudentDrawer();
+
+    expect(within(drawer).getByText("Sınıf: 8 · 8. Sınıf LGS Hazırlık")).toBeInTheDocument();
+  });
+
   it("shows only non-empty Veli, Anne and Baba rows in the right drawer", async () => {
     const studentId = await seedStudentWithPhones(1);
     await db.guardians.bulkAdd([

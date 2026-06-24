@@ -50,8 +50,56 @@ describe("writeImportToDatabase", () => {
       expect(await database.students.count()).toBe(1);
       expect(await database.guardians.count()).toBe(1);
       expect(await database.phones.count()).toBe(1);
-      expect((await database.students.toArray())[0].campaign_id).toBeDefined();
+      const [student] = await database.students.toArray();
+      expect(student.student_group).toBe("11. Sınıf YKS");
+      expect(student.category).toBe("Diger");
+      expect(student.campaign_id).toBeDefined();
       expect((await database.guardians.toArray())[0].relation_type).toBe("guardian");
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("does not invent a hardcoded student group or YKS category when the import row has no group", async () => {
+    const database = await createDatabase();
+    const parsedWorksheet = worksheet(
+      ["Sınıf", "Ad Soyad", "Telefon"],
+      [["8", "Yaren Beren Kızıl", "5321234567"]]
+    );
+
+    try {
+      const summary = simulateImport(parsedWorksheet);
+      const result = await writeImportToDatabase(parsedWorksheet, summary, { database });
+      const [student] = await database.students.toArray();
+
+      expect(result.created_students).toBe(1);
+      expect(student.current_class).toBe("8");
+      expect(student.student_group).toBe("");
+      expect(student.student_group).not.toBe("11. Sınıf YKS Hazırlık");
+      expect(student.category).toBe("Diger");
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("keeps student group neutral when the mapped group column is blank", async () => {
+    const database = await createDatabase();
+    const parsedWorksheet = worksheet(
+      ["Sınıf", "Öğrenci Grubu", "Ad Soyad", "Telefon"],
+      [["8", "   ", "Yaren Beren Kızıl", "5321234567"]]
+    );
+
+    try {
+      const summary = simulateImport(parsedWorksheet);
+      const result = await writeImportToDatabase(parsedWorksheet, summary, { database });
+      const [student] = await database.students.toArray();
+
+      expect(result.created_students).toBe(1);
+      expect(student.current_class).toBe("8");
+      expect(student.student_group).toBe("");
+      expect(student.student_group).not.toBe("11. Sınıf YKS Hazırlık");
     } finally {
       database.close();
       await database.delete();

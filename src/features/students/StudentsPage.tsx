@@ -580,6 +580,13 @@ function getWhatsAppActionAriaLabel(label: string, info?: WhatsAppManualSentSumm
   return `${label} WhatsApp gönderildi olarak işaretlendi`;
 }
 
+function formatDrawerClassLine(row: StudentListRow): string {
+  const currentClass = row.current_class || "-";
+  const studentGroup = row.student_group?.trim();
+
+  return studentGroup ? `Sınıf: ${currentClass} · ${studentGroup}` : `Sınıf: ${currentClass}`;
+}
+
 function WhatsAppActionGlyph() {
   return (
     <svg
@@ -2747,7 +2754,7 @@ export function StudentsPage() {
                   <div className="drawer-name">{selectedRow.student_full_name}</div>
                   <div className="drawer-class" style={{ alignItems: "center", display: "inline-flex", flexWrap: "wrap", gap: 8 }}>
                     <span>
-                      Sınıf: {selectedRow.current_class || "-"} · {selectedRow.student_group}
+                      {formatDrawerClassLine(selectedRow)}
                     </span>
                     {selectedRow.has_duplicate_phone && selectedRow.duplicate_group_key ? (
                       <button

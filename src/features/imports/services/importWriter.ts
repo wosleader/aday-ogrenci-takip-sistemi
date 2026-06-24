@@ -3,6 +3,7 @@ import { db } from "../../../db/db";
 import type { CampaignRecord } from "../../../domain/models/campaign";
 import type { GuardianRelationType } from "../../../domain/models/guardian";
 import type { PhoneRelationLabel } from "../../../domain/models/phone";
+import type { StudentCategory } from "../../../domain/constants/statuses";
 import { createSearchText, normalizeText } from "../../../utils/normalizeText";
 import { normalizePhone } from "../../../utils/normalizePhone";
 import { nowIso } from "../../../utils/dateTime";
@@ -34,6 +35,8 @@ type ImportWriterOptions = {
   failAfterBackupForTest?: boolean;
   failAfterFirstStudentForTest?: boolean;
 };
+
+const NEUTRAL_IMPORT_CATEGORY: StudentCategory = "Diger";
 
 async function ensureDefaultCampaign(database: AppDatabase, timestamp: string): Promise<CampaignRecord> {
   const existingDefault =
@@ -259,6 +262,7 @@ export async function writeImportToDatabase(
 
       for (const row of summary.simulated_rows) {
         const rowTimestamp = nowIso();
+        const studentGroup = row.student_group?.trim() ?? "";
         const studentId = await database.students.add({
           uuid: createUuid(),
           student_full_name: row.student_full_name,
@@ -270,13 +274,13 @@ export async function writeImportToDatabase(
             row.father_full_name,
             ...getSearchPhones(row),
             row.current_class,
-            row.student_group
+            studentGroup
           ]),
           current_class: row.current_class ?? null,
-          student_group: row.student_group ?? "11. Sınıf YKS Hazırlık",
+          student_group: studentGroup,
           neighborhood: row.neighborhood ?? null,
           district: row.district ?? null,
-          category: "YKS",
+          category: NEUTRAL_IMPORT_CATEGORY,
           campaign_id: campaign.id ?? null,
           lifecycle_status: "candidate",
           last_call_result: "not_called",
