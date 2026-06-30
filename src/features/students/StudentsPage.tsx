@@ -81,6 +81,9 @@ import { buildWhatsAppDraftUrl } from "../whatsapp/whatsappUrl";
 
 const PAGE_SIZE = 100;
 const SHORTCUT_HELP_STORAGE_KEY = "aots-shortcut-help-expanded";
+const WHATSAPP_WEB_OPEN_SUSPENDED = true;
+const WHATSAPP_WEB_OPEN_SUSPENDED_MESSAGE =
+  "WhatsApp Web yeni sohbet açma geçici olarak kapalı. Mesajı kopyalayıp WhatsApp'a manuel yapıştırabilirsiniz.";
 
 const FILTER_OPTIONS: Array<{ key: StudentListFilter; label: string }> = [
   { key: "all", label: "Tümü" },
@@ -1897,6 +1900,12 @@ export function StudentsPage() {
       return;
     }
 
+    if (WHATSAPP_WEB_OPEN_SUSPENDED) {
+      setWhatsAppDraftMessage(WHATSAPP_WEB_OPEN_SUSPENDED_MESSAGE);
+      setWhatsAppDraftVisibleStatus(null);
+      return;
+    }
+
     const currentMessage = whatsAppDraftBody;
     if (!currentMessage.trim()) {
       setWhatsAppDraftMessage("Mesaj metni boş olamaz.");
@@ -2428,6 +2437,11 @@ export function StudentsPage() {
                   ) : null}
                 </div>
               ) : null}
+              {WHATSAPP_WEB_OPEN_SUSPENDED ? (
+                <div aria-live="polite" style={{ color: "#64748b", fontSize: 13 }}>
+                  {WHATSAPP_WEB_OPEN_SUSPENDED_MESSAGE}
+                </div>
+              ) : null}
             </div>
             <div
               className="delete-confirm-actions"
@@ -2466,9 +2480,10 @@ export function StudentsPage() {
               </button>
               <button
                 className="danger"
-                disabled={isWhatsAppDraftBusy}
+                disabled={isWhatsAppDraftBusy || WHATSAPP_WEB_OPEN_SUSPENDED}
                 onClick={() => void openWhatsAppDraftUrl()}
                 style={{ background: "#047857", borderColor: "#047857" }}
+                title={WHATSAPP_WEB_OPEN_SUSPENDED ? WHATSAPP_WEB_OPEN_SUSPENDED_MESSAGE : undefined}
                 type="button"
               >
                 WhatsApp'ta Aç
