@@ -45,7 +45,7 @@ describe("AD/SOYAD import composition", () => {
     expect(matches[1]).toMatchObject({ status: "matched", target_field: "student_last_name" });
     expect(matches[2]).toMatchObject({ status: "matched", target_field: "student_first_name" });
     expect(matches[3]).toMatchObject({ status: "matched", target_field: "student_last_name" });
-    expect(matches[4]).toMatchObject({ status: "mapping_required" });
+    expect(matches[4]).toMatchObject({ status: "matched", target_field: "guardian_full_name" });
     expect(matches[5]).toMatchObject({ status: "matched", target_field: "mother_full_name" });
     expect(matches[6]).toMatchObject({ status: "matched", target_field: "father_full_name" });
   });
@@ -98,7 +98,7 @@ describe("AD/SOYAD import composition", () => {
     });
   });
 
-  it("keeps AD/SOYAD readable when another column is manually mapped", () => {
+  it("keeps AD/SOYAD readable when Veli Adı is auto mapped", () => {
     const summary = simulateImport(
       worksheet(
         ["AD", "SOYAD", "Veli Adı", "Telefon", "Telefon 10", "Açıklama"],
@@ -108,11 +108,6 @@ describe("AD/SOYAD import composition", () => {
           ["Zeynep", "Demir", "Ali Veli", "5321234569", "5320000012", "Not 3"]
         ]
       ),
-      {
-        manualMappings: {
-          2: "guardian_full_name"
-        }
-      }
     );
 
     expect(summary.readable_rows).toBe(3);

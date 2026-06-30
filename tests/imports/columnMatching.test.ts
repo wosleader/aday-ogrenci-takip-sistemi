@@ -10,11 +10,12 @@ describe("column matching", () => {
   });
 
   it("matches supported columns by normalized aliases", () => {
-    const { matches } = matchColumns(["Ad Soyad", "Veli Ad Soyad", "2. Telefon"]);
+    const { matches } = matchColumns(["Ad Soyad", "Veli Adı", "Veli Ad Soyad", "2. Telefon"]);
 
     expect(matches[0].target_field).toBe("student_full_name");
     expect(matches[1].target_field).toBe("guardian_full_name");
-    expect(matches[2].target_field).toBe("phone_2");
+    expect(matches[2].target_field).toBe("guardian_full_name");
+    expect(matches[3].target_field).toBe("phone_2");
   });
 
   it("auto-fixes known misspelled headers and logs them", () => {
@@ -61,7 +62,7 @@ describe("column matching", () => {
     expect(matches[1]).toMatchObject({ status: "matched", target_field: "student_last_name" });
     expect(matches[2]).toMatchObject({ status: "matched", target_field: "student_first_name" });
     expect(matches[3]).toMatchObject({ status: "matched", target_field: "student_last_name" });
-    expect(matches[4]).toMatchObject({ status: "mapping_required" });
+    expect(matches[4]).toMatchObject({ status: "matched", target_field: "guardian_full_name" });
     expect(matches[5]).toMatchObject({ status: "matched", target_field: "mother_full_name" });
     expect(matches[6]).toMatchObject({ status: "matched", target_field: "father_full_name" });
   });

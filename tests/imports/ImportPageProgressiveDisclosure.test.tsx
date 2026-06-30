@@ -376,7 +376,7 @@ describe("ImportPage progressive disclosure", () => {
     expect(fileInput.value).toBe("");
   });
 
-  it("applies manual guardian mapping when importing without rerunning simulation", async () => {
+  it("applies Veli Adı auto guardian mapping when importing without rerunning simulation", async () => {
     const worksheet = createWorksheet(
       ["Ad Soyad", "Veli Adı", "Telefon"],
       [["Ayşe Yılmaz", "Ahmet Veli", "0555 123 4567"]]
@@ -387,11 +387,8 @@ describe("ImportPage progressive disclosure", () => {
     const guardianRow = guardianHeaderCell.closest("tr");
 
     expect(guardianRow).not.toBeNull();
-    expect(within(guardianRow as HTMLElement).getByText("Elle eşleştirme gerekli")).toBeInTheDocument();
-
-    await user.selectOptions(within(guardianRow as HTMLElement).getByRole("combobox"), "guardian_full_name");
-
-    expect(within(guardianRow as HTMLElement).getByText("Elle eşleştirildi")).toBeInTheDocument();
+    expect(within(guardianRow as HTMLElement).getByText("Tam eşleşti")).toBeInTheDocument();
+    expect(within(guardianRow as HTMLElement).getByRole("combobox")).toHaveValue("guardian_full_name");
 
     await user.click(screen.getByRole("button", { name: "İçe Aktar" }));
 

@@ -40,7 +40,7 @@ export const COLUMN_DEFINITIONS: ColumnDefinition[] = [
   {
     field: "guardian_full_name",
     label: "Veli Ad Soyad",
-    aliases: ["veli ad soyad", "veli adi soyadi", "veli ad soyadi"]
+    aliases: ["veli adi", "veli ad soyad", "veli adi soyadi", "veli ad soyadi"]
   },
   {
     field: "mother_full_name",
