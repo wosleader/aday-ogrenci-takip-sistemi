@@ -256,3 +256,11 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Student Cleanup Candidate Service] `f609292` eski hardcoded student_group kayıtlarını tespit eden read-only servis eklemiştir. DB write, migration, UI, apply/cleanup yoktur.
 - [Student Cleanup UI Gate] StudentsPage içine cleanup report UI gömülmeyecek; daha önce denenmiş cleanup UI iptal edilmiştir. Ana operasyon sayfasına bakım UI eklemek ayrı discovery ve kullanıcı onayı ister.
 
+## Latest Decisions - VELI ADI Import Alias Fix
+
+- [VELI ADI Import Alias] `VELI ADI` / `Veli Adı`, import kolon eşleştirmede `Veli Ad Soyad` ile aynı anlamda kabul edilir ve mevcut `guardian_full_name` alanına otomatik eşleşir.
+- [VELI ADI Import Alias] `VELI AD SOYAD` / `Veli Ad Soyad` mevcut davranışı korunur.
+- [VELI ADI Import Alias Scope] Bu karar yalnız alias/mapping düzeyindedir; import writer, schema/db, export/backup, StudentsPage, WhatsApp ve package/config davranışı değişmez.
+- [VELI TEL Deferred] `VELI TEL`, `VELI TELEFON` veya `guardian_phone` bu sprintin kapsamında değildir; Veli telefonu relation davranışı ayrı karar ve implementation gerektirir.
+- [VDS Demo] `18f47c9` VDS demo ortamına deploy edilmiş ve kullanıcı tarafından tamamlandı olarak bildirilmiştir; bu not yalnız deploy bildirimi olarak tutulur.
+

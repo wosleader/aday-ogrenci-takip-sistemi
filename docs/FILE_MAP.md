@@ -99,7 +99,7 @@ Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
 - `src/features/imports/services/excelReader.ts`
   Excel dosyası ve worksheet okuma.
 - `src/features/imports/services/columnDefinitions.ts`
-  Import alanları, kolon label/alias tanımları. Sprint 9.3G-4 itibarıyla Telefon 3-10 mapping definitions ve `gsm3` / `gsm 3` / `telefon 3` / `tel 3` / `phone 3` pattern'lerini 10'a kadar taşır; mevcut Telefon / 2. Telefon korunur.
+  Import alanları, kolon label/alias tanımları. Sprint 9.3G-4 itibarıyla Telefon 3-10 mapping definitions ve `gsm3` / `gsm 3` / `telefon 3` / `tel 3` / `phone 3` pattern'lerini 10'a kadar taşır; mevcut Telefon / 2. Telefon korunur. `18f47c9` itibarıyla `VELI ADI` / `Veli Adı` alias'ı mevcut `guardian_full_name` / `Veli Ad Soyad` alanına eşleşir.
 - `src/features/imports/services/columnMatching.ts`
   Başlık satırı/kolon eşleştirme ve yazım hatası yakalama.
 - `src/features/imports/services/importSimulation.ts`
@@ -195,13 +195,13 @@ Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
 - `tests/imports/*`
   Excel okuma, kolon eşleştirme, import simülasyonu, duplicate guard, import writer, log export ve import UI progressive disclosure davranışları.
 - `tests/imports/columnMatching.test.ts`
-  Telefon 3-10 mapping key ve alias davranışlarını test eder; mevcut Telefon / 2. Telefon davranışının korunmasını doğrular.
+  Telefon 3-10 mapping key ve alias davranışlarını test eder; mevcut Telefon / 2. Telefon davranışının korunmasını ve `Veli Adı` başlığının `guardian_full_name` alanına otomatik eşleşmesini doğrular.
 - `tests/imports/importSimulation.test.ts`
   `phones[]` simulation üretimini, `phone_1` / `phone_2` compatibility davranışını, boş telefonların atlanmasını, aynı satır duplicate tekilleştirmesini, invalid phone metadata davranışını ve duplicate warning kontrolünün tüm phone alanlarını kapsamasını test eder.
 - `tests/imports/importWriter.test.ts`
   Telefon 3-10 writer/persistence, metadata persistence, duplicate/empty/invalid/search_text/rollback davranışları ve Telefon 1/2 backward compatibility testlerini içerir.
 - `tests/imports/ImportPageProgressiveDisclosure.test.tsx`
-  Uzun kolon listesi kademeli gösterimini, `mapping_required` / önemli kolonların dar görünümde kalmasını, hata listesi expand/collapse davranışını ve uyarı listesi expand/collapse davranışını test eder.
+  Uzun kolon listesi kademeli gösterimini, `mapping_required` / önemli kolonların dar görünümde kalmasını, hata listesi expand/collapse davranışını, uyarı listesi expand/collapse davranışını ve `Veli Adı` auto guardian mapping akışını test eder.
 - `tests/calls/*`
   Call writer, call history ve call save validation.
 - `tests/calls/callSaveValidation.test.ts`
@@ -641,4 +641,18 @@ Son doğrulandı: `4ebfe33 fix: suspend WhatsApp web open action`
   Eski hardcoded student_group fallback'inden etkilenmiş olabilecek kayıtları read-only tespit eder. DB write, apply/cleanup, migration veya UI içermez.
 - `tests/students/studentCleanupCandidates.test.ts`
   Cleanup candidate servisinin high_confidence / needs_review sınıflamasını, current_class 11 dışlamasını ve kaynak metadata taşımasını doğrular.
+
+## Latest File Map Addendum - VELI ADI Import Alias Fix
+
+Son doğrulandı: `18f47c9 fix: map veli adi import column`
+
+- `src/features/imports/services/columnDefinitions.ts`
+  `guardian_full_name` alias listesine `veli adi` eklenmiştir. Bu sayede `VELI ADI` / `Veli Adı` başlığı mevcut `Veli Ad Soyad` import alanına otomatik eşleşir.
+- `tests/imports/columnMatching.test.ts`
+  `Veli Adı` ve `Veli Ad Soyad` başlıklarının ikisinin de `guardian_full_name` hedefini verdiğini, Anne/Baba adlarının öğrenci adı olarak yorumlanmadığını ve generic telefon aliaslarının parent relation üretmediğini doğrular.
+- `tests/imports/importNameComposition.test.ts`
+  `AD` + `SOYAD` composition davranışı korunurken `Veli Adı` kolonunun manuel mapping olmadan `guardian_full_name` olarak taşınmasını doğrular.
+- `tests/imports/ImportPageProgressiveDisclosure.test.tsx`
+  ImportPage kolon eşleştirme UI'ında `Veli Adı` satırının `Tam eşleşti` durumunda ve `guardian_full_name` değerinde olduğunu doğrular.
+- Scope dışı: `VELI TEL`, `guardian_phone`, import writer, schema/db, export/backup, StudentsPage ve WhatsApp davranışı değiştirilmemiştir.
 

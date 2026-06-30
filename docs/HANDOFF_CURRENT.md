@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 4ebfe33 fix: suspend WhatsApp web open action
-- WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service ve WhatsApp Web open suspend zinciri tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: 18f47c9 fix: map veli adi import column
+- VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service ve WhatsApp Web open suspend zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Bu docs-only handoff sync tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: sync handoff after WhatsApp web suspend
+- Önerilen docs commit: docs: close veli adi import alias checkpoint
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -45,6 +45,17 @@
 - `f609292` eski fallback kayıtlarını tespit eden read-only cleanup candidate service ekledi. DB write, migration, UI, apply/cleanup yoktur.
 - StudentsPage içine cleanup report UI gömülmeyecek; daha önce denenmiş cleanup UI iptal edilmiştir. Ana operasyon sayfasına bakım UI'ı eklemek ayrı discovery ve kullanıcı onayı ister.
 - Devam disiplini: tek iş, temiz working tree, discovery sonrası implementation, kullanıcı onayı olmadan commit/push yok.
+
+## Latest Handoff Update - VELI ADI Import Alias Fix
+
+- Current safe HEAD/origin: `18f47c9 fix: map veli adi import column`.
+- `VELI ADI` / `Veli Adı` import kolon başlığı artık otomatik olarak mevcut `guardian_full_name` / `Veli Ad Soyad` alanına eşleşir.
+- `VELI AD SOYAD` / `Veli Ad Soyad` mevcut davranışı korunur.
+- Değişiklik yalnız alias/mapping düzeyindedir; import writer, schema/db, export/backup, StudentsPage, WhatsApp ve package/config değişmedi.
+- `VELI TEL`, `VELI TELEFON` ve `guardian_phone` bu sprintte eklenmedi; ayrı karar/implementation gerektirir.
+- Validation: `npm.cmd test -- --run tests/imports` PASS, 9 files / 94 tests; `npm.cmd run build` PASS with known Vite chunk-size warning; `git diff --check` PASS with only LF -> CRLF working-copy warnings.
+- `18f47c9` VDS demo ortamına deploy edildi ve kullanıcı tarafından tamamlandı olarak bildirildi. Bu not deploy bildirimiyle sınırlıdır.
+- Beklenen working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 
 ## Latest Handoff Update - Guardian + Phone UI Clarity
 

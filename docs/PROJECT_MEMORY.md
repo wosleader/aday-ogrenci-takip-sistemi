@@ -1,4 +1,4 @@
-<!-- Son guncelleme: WhatsApp Web Open Suspend + Current Handoff | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: VELI ADI Import Alias Fix | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: WhatsApp Web Open Suspend + Current Handoff
-- FILE_MAP: WhatsApp Web Open Suspend + Student Cleanup Candidate Service
-- DECISIONS: WhatsApp Web Open Suspend / Import Fallback Cleanup Discipline
-- Son implementation commit: 4ebfe33 fix: suspend WhatsApp web open action
+- PROJECT_MEMORY: VELI ADI Import Alias Fix
+- FILE_MAP: VELI ADI Import Alias Fix
+- DECISIONS: VELI ADI Import Alias Fix
+- Son implementation commit: 18f47c9 fix: map veli adi import column
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
 
@@ -81,6 +81,8 @@ Kısa özet:
 - Generic telefon başlıklarından Anne/Baba ilişkisi tahmin edilmez. Yalnızca açık Anne/Baba telefon kolonları ileride relation label taşıyabilir.
 - `Telefonsuz adayları içe aktar` ayarı tamamlandı; varsayılan kapalıdır, yalnızca mevcut import oturumunda geçerlidir ve kalıcı storage'a yazılmaz.
 - Anne/Baba names-only import tamamlandı. `mother_full_name` / `father_full_name` simulation alanları mevcut `guardians` tablosuna `mother` / `father` ilişkileriyle yazılır.
+- `VELI ADI` / `Veli Adı` import kolon başlığı artık mevcut `guardian_full_name` / `Veli Ad Soyad` alanına otomatik eşleşir; `VELI AD SOYAD` davranışı korunur.
+- Bu alias fix yalnızca kolon eşleştirme düzeyindedir. `VELI TEL`, `guardian_phone`, writer, schema/db, export/backup, StudentsPage ve WhatsApp davranışı değişmemiştir.
 - Reader Veli/Anne/Baba kayıtlarını relation type ile ayırır; legacy `relation_type: null` Veli olarak kalır.
 - Sağ kart yalnızca dolu `Veli Ad Soyad`, `Anne Adı`, `Baba Adı` satırlarını kompakt gösterir.
 - Explicit Anne/Baba phone relation import tamamlandı. Açık `ANNE TEL` / `BABA TEL` kolonları relation metadata taşır; generic telefon kolonlarından Anne/Baba ilişkisi çıkarılmaz.
@@ -568,3 +570,13 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - Bu import fallback fix yalnızca yeni importları etkiler; mevcut DB'deki eski hatalı kayıtlar otomatik düzeltilmez.
 - `f609292` ile eski hardcoded student_group kayıtlarını tespit eden read-only cleanup candidate servisi eklendi. DB write, migration, apply/cleanup ve UI yoktur.
 - StudentsPage içine cleanup report UI gömülmeyecek; daha önce denenmiş cleanup UI iptal edilmiştir. Ana operasyon sayfalarına bakım UI'ı eklemek için ayrı discovery ve kullanıcı onayı gerekir.
+
+## Latest Checkpoint Closure - VELI ADI Import Alias Fix
+
+- Implementation commit: `18f47c9 fix: map veli adi import column`.
+- `VELI ADI` / `Veli Adı` import kolon başlığı artık mevcut `guardian_full_name` / `Veli Ad Soyad` alanına otomatik eşleşir.
+- `VELI AD SOYAD` / `Veli Ad Soyad` mevcut davranışı korunur.
+- Değişiklik yalnız alias/mapping düzeyindedir.
+- `VELI TEL`, `VELI TELEFON`, `guardian_phone`, import writer, schema/db, export/backup, StudentsPage ve WhatsApp dosyaları değiştirilmedi.
+- Validation: `npm.cmd test -- --run tests/imports` PASS, 9 test files / 94 tests; `npm.cmd run build` PASS, bilinen Vite chunk-size warning dışında sorun yok; `git diff --check` PASS, yalnız LF -> CRLF çalışma kopyası uyarıları görüldü.
+- `18f47c9` VDS demo ortamına deploy edildi ve kullanıcı tarafından tamamlandı olarak bildirildi; bu not deploy bildirimiyle sınırlıdır, canlıda ek davranış doğrulaması iddia etmez.
