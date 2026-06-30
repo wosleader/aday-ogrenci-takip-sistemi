@@ -43,6 +43,11 @@ export const COLUMN_DEFINITIONS: ColumnDefinition[] = [
     aliases: ["veli adi", "veli ad soyad", "veli adi soyadi", "veli ad soyadi"]
   },
   {
+    field: "guardian_phone",
+    label: "Veli Telefonu",
+    aliases: ["veli tel", "veli telefon", "veli gsm", "veli cep", "veli telefonu", "veli cep telefonu"]
+  },
+  {
     field: "mother_full_name",
     label: "Anne Adı",
     aliases: ["anne adi", "anne ad soyad", "anne adi soyadi"]

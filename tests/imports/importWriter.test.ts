@@ -133,7 +133,7 @@ describe("writeImportToDatabase", () => {
     }
   });
 
-  it("links explicit Anne and Baba phones to the correct guardians while preserving slot order", async () => {
+  it("links explicit Veli, Anne and Baba phones to the correct guardians while preserving slot order", async () => {
     const database = await createDatabase();
     const parsedWorksheet = worksheet(
       [
@@ -142,6 +142,7 @@ describe("writeImportToDatabase", () => {
         "Anne Adı",
         "Baba Adı",
         "GSM",
+        "VELİ TEL",
         "BABA TEL",
         "GSM2",
         "GSM3",
@@ -158,7 +159,8 @@ describe("writeImportToDatabase", () => {
         "5320000003",
         "5320000004",
         "5320000005",
-        "5320000006"
+        "5320000006",
+        "5320000007"
       ]]
     );
 
@@ -172,17 +174,19 @@ describe("writeImportToDatabase", () => {
       );
 
       expect(result.created_guardians).toBe(3);
-      expect(result.created_phones).toBe(6);
+      expect(result.created_phones).toBe(7);
       expect(phones.map((phone) => phone.reference_label)).toEqual([
         "Telefon 1",
         "Telefon 2",
         "Telefon 3",
         "Telefon 4",
         "Telefon 5",
-        "Telefon 6"
+        "Telefon 6",
+        "Telefon 7"
       ]);
       expect(phones.map((phone) => phone.source_column)).toEqual([
         "GSM",
+        "VELİ TEL",
         "BABA TEL",
         "GSM2",
         "GSM3",
@@ -190,20 +194,22 @@ describe("writeImportToDatabase", () => {
         "GSM4"
       ]);
       expect(phones[0]).toMatchObject({ relation_label: null, guardian_id: guardianIds.get("guardian") });
-      expect(phones[1]).toMatchObject({ relation_label: "Baba", guardian_id: guardianIds.get("father") });
-      expect(phones[2]).toMatchObject({ relation_label: null, guardian_id: guardianIds.get("guardian") });
+      expect(phones[1]).toMatchObject({ relation_label: "Veli", guardian_id: guardianIds.get("guardian") });
+      expect(phones[2]).toMatchObject({ relation_label: "Baba", guardian_id: guardianIds.get("father") });
       expect(phones[3]).toMatchObject({ relation_label: null, guardian_id: guardianIds.get("guardian") });
-      expect(phones[4]).toMatchObject({ relation_label: "Anne", guardian_id: guardianIds.get("mother") });
-      expect(phones[5]).toMatchObject({ relation_label: null, guardian_id: guardianIds.get("guardian") });
+      expect(phones[4]).toMatchObject({ relation_label: null, guardian_id: guardianIds.get("guardian") });
+      expect(phones[5]).toMatchObject({ relation_label: "Anne", guardian_id: guardianIds.get("mother") });
+      expect(phones[6]).toMatchObject({ relation_label: null, guardian_id: guardianIds.get("guardian") });
 
       const [row] = await readStudentListRows(database);
       expect(row.phones.map((phone) => phone.display_label)).toEqual([
         "Telefon 1",
-        "Telefon 2 · Baba",
-        "Telefon 3",
+        "Telefon 2 · Veli",
+        "Telefon 3 · Baba",
         "Telefon 4",
-        "Telefon 5 · Anne",
-        "Telefon 6"
+        "Telefon 5",
+        "Telefon 6 · Anne",
+        "Telefon 7"
       ]);
     } finally {
       database.close();
@@ -214,8 +220,8 @@ describe("writeImportToDatabase", () => {
   it("keeps explicit parent phone relation labels without inventing guardian names", async () => {
     const database = await createDatabase();
     const parsedWorksheet = worksheet(
-      ["Ad Soyad", "ANNE TEL", "BABA TEL"],
-      [["Ayse Yilmaz", "5320000001", "5320000002"]]
+      ["Ad Soyad", "VELİ TEL", "ANNE TEL", "BABA TEL"],
+      [["Ayse Yilmaz", "5320000001", "5320000002", "5320000003"]]
     );
 
     try {
@@ -228,8 +234,9 @@ describe("writeImportToDatabase", () => {
       expect(result.created_guardians).toBe(0);
       expect(await database.guardians.count()).toBe(0);
       expect(phones).toEqual([
-        expect.objectContaining({ relation_label: "Anne", guardian_id: null, reference_label: "Telefon 1" }),
-        expect.objectContaining({ relation_label: "Baba", guardian_id: null, reference_label: "Telefon 2" })
+        expect.objectContaining({ relation_label: "Veli", guardian_id: null, reference_label: "Telefon 1" }),
+        expect.objectContaining({ relation_label: "Anne", guardian_id: null, reference_label: "Telefon 2" }),
+        expect.objectContaining({ relation_label: "Baba", guardian_id: null, reference_label: "Telefon 3" })
       ]);
     } finally {
       database.close();

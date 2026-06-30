@@ -103,22 +103,33 @@ describe("column matching", () => {
     expect(matches[4].target_field).toBe("phone_10");
   });
 
-  it("matches only explicit Anne and Baba phone aliases as parent phones", () => {
+  it("matches only explicit Veli, Anne and Baba phone aliases as relation phones", () => {
     const { matches } = matchColumns([
+      "VELİ TEL",
+      "VELİ TELEFON",
+      "VELİ GSM",
+      "VELİ CEP",
+      "Veli Telefonu",
+      "Veli Cep Telefonu",
       "ANNE TEL",
       "Anne GSM",
       "BABA TEL",
       "Baba GSM",
+      "GSM",
       "GSM2",
-      "Tel1"
+      "Tel1",
+      "Telefon 1"
     ]);
 
-    expect(matches[0]).toMatchObject({ status: "matched", target_field: "mother_phone" });
-    expect(matches[1]).toMatchObject({ status: "matched", target_field: "mother_phone" });
-    expect(matches[2]).toMatchObject({ status: "matched", target_field: "father_phone" });
-    expect(matches[3]).toMatchObject({ status: "matched", target_field: "father_phone" });
-    expect(matches[4]).toMatchObject({ status: "matched", target_field: "phone_2" });
-    expect(matches[5]).toMatchObject({ status: "matched", target_field: "phone_1" });
+    expect(matches.slice(0, 6).every((match) => match.target_field === "guardian_phone")).toBe(true);
+    expect(matches[6]).toMatchObject({ status: "matched", target_field: "mother_phone" });
+    expect(matches[7]).toMatchObject({ status: "matched", target_field: "mother_phone" });
+    expect(matches[8]).toMatchObject({ status: "matched", target_field: "father_phone" });
+    expect(matches[9]).toMatchObject({ status: "matched", target_field: "father_phone" });
+    expect(matches[10]).toMatchObject({ status: "matched", target_field: "phone_1" });
+    expect(matches[11]).toMatchObject({ status: "matched", target_field: "phone_2" });
+    expect(matches[12]).toMatchObject({ status: "matched", target_field: "phone_1" });
+    expect(matches[13]).toMatchObject({ status: "matched", target_field: "phone_1" });
   });
 
   it("matches Genel Açıklama as the real Açıklama import field", () => {

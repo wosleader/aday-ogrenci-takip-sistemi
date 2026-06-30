@@ -68,8 +68,8 @@ describe("AD/SOYAD import composition", () => {
 
   it("blocks rows that contain only Veli, Anne and Baba names or parent phones", () => {
     const parsedWorksheet = worksheet(
-      ["Veli Ad Soyad", "Anne Adı", "Baba Adı", "ANNE TEL", "BABA TEL"],
-      [["Ayşe Veli", "Fatma Yılmaz", "Mehmet Yılmaz", "5321234567", "5327654321"]]
+      ["Veli Ad Soyad", "Anne Adı", "Baba Adı", "VELİ TEL", "ANNE TEL", "BABA TEL"],
+      [["Ayşe Veli", "Fatma Yılmaz", "Mehmet Yılmaz", "5321234567", "5327654321", "5320000003"]]
     );
 
     for (const allowNoPhoneCandidates of [false, true]) {

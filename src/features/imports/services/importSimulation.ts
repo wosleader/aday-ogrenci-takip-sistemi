@@ -39,7 +39,7 @@ const PHONE_IMPORT_FIELDS: ImportPhoneFieldKey[] = [
   "phone_10"
 ];
 
-const PARENT_PHONE_FIELDS: ImportParentPhoneFieldKey[] = ["mother_phone", "father_phone"];
+const PARENT_PHONE_FIELDS: ImportParentPhoneFieldKey[] = ["guardian_phone", "mother_phone", "father_phone"];
 const PHONE_SOURCE_FIELDS = new Set<ImportFieldKey>([...PHONE_IMPORT_FIELDS, ...PARENT_PHONE_FIELDS]);
 
 const FULL_NAME_OVERRIDES_SPLIT_NAME_MESSAGE =
@@ -236,7 +236,13 @@ function collectImportPhones(
       normalized_phone_number: normalizedPhone.normalized_phone_number,
       reference_label: getImportFieldLabel(field),
       relation_label:
-        sourceField === "mother_phone" ? "Anne" : sourceField === "father_phone" ? "Baba" : null,
+        sourceField === "guardian_phone"
+          ? "Veli"
+          : sourceField === "mother_phone"
+            ? "Anne"
+            : sourceField === "father_phone"
+              ? "Baba"
+              : null,
       source_column: match.source_header || getImportFieldLabel(field),
       priority: slot,
       is_valid: normalizedPhone.is_valid

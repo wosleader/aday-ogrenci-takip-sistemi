@@ -12,7 +12,7 @@ export type ImportPhoneFieldKey =
   | "phone_9"
   | "phone_10";
 
-export type ImportParentPhoneFieldKey = "mother_phone" | "father_phone";
+export type ImportParentPhoneFieldKey = "guardian_phone" | "mother_phone" | "father_phone";
 
 export type ImportFieldKey =
   | "current_class"
