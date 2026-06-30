@@ -1,4 +1,4 @@
-<!-- Son guncelleme: VELI ADI Import Alias Fix | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: VELI TEL / Guardian Phone Import | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: VELI ADI Import Alias Fix
-- FILE_MAP: VELI ADI Import Alias Fix
-- DECISIONS: VELI ADI Import Alias Fix
-- Son implementation commit: 18f47c9 fix: map veli adi import column
+- PROJECT_MEMORY: VELI TEL / Guardian Phone Import
+- FILE_MAP: VELI TEL / Guardian Phone Import
+- DECISIONS: VELI TEL / Guardian Phone Import
+- Son implementation commit: cf47e2d feat: import explicit guardian phone relations
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
 
@@ -82,7 +82,12 @@ Kısa özet:
 - `Telefonsuz adayları içe aktar` ayarı tamamlandı; varsayılan kapalıdır, yalnızca mevcut import oturumunda geçerlidir ve kalıcı storage'a yazılmaz.
 - Anne/Baba names-only import tamamlandı. `mother_full_name` / `father_full_name` simulation alanları mevcut `guardians` tablosuna `mother` / `father` ilişkileriyle yazılır.
 - `VELI ADI` / `Veli Adı` import kolon başlığı artık mevcut `guardian_full_name` / `Veli Ad Soyad` alanına otomatik eşleşir; `VELI AD SOYAD` davranışı korunur.
-- Bu alias fix yalnızca kolon eşleştirme düzeyindedir. `VELI TEL`, `guardian_phone`, writer, schema/db, export/backup, StudentsPage ve WhatsApp davranışı değişmemiştir.
+- Explicit Veli phone import tamamlandı. `VELI TEL`, `VELI TELEFON`, `VELI GSM`, `VELI CEP`, `Veli Telefonu` ve `Veli Cep Telefonu` başlıkları import-only `guardian_phone` alanına eşleşir.
+- `guardian_phone` persistent student field değildir; schema/db değişmedi. Simülasyonda bu telefonlar `phones[]` hattına `relation_label: "Veli"` ve gerçek Excel `source_column` bilgisiyle katılır.
+- Veli telefonu özel slota zorlanmaz; mevcut Telefon 1-10 slot fidelity / Excel kolon sırası korunur. Generic Telefon/GSM/Tel/Telefon 1 başlıklarından Veli ilişkisi tahmin edilmez.
+- Veli adı varsa writer telefonu ilgili Veli guardian kaydına bağlar. Veli adı yoksa fake/boş guardian oluşturulmaz; `relation_label: "Veli"` korunur ve `guardian_id: null` kalabilir.
+- `VELI ADI` / `VELI AD SOYAD`, Anne/Baba/Veli isimleri ve Veli phone alanları öğrenci adı kaynağı değildir.
+- Export, backup/restore, StudentsPage, WhatsApp, schema/db ve package/config davranışı bu Veli phone diliminde değişmedi.
 - Reader Veli/Anne/Baba kayıtlarını relation type ile ayırır; legacy `relation_type: null` Veli olarak kalır.
 - Sağ kart yalnızca dolu `Veli Ad Soyad`, `Anne Adı`, `Baba Adı` satırlarını kompakt gösterir.
 - Explicit Anne/Baba phone relation import tamamlandı. Açık `ANNE TEL` / `BABA TEL` kolonları relation metadata taşır; generic telefon kolonlarından Anne/Baba ilişkisi çıkarılmaz.
@@ -580,3 +585,16 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - `VELI TEL`, `VELI TELEFON`, `guardian_phone`, import writer, schema/db, export/backup, StudentsPage ve WhatsApp dosyaları değiştirilmedi.
 - Validation: `npm.cmd test -- --run tests/imports` PASS, 9 test files / 94 tests; `npm.cmd run build` PASS, bilinen Vite chunk-size warning dışında sorun yok; `git diff --check` PASS, yalnız LF -> CRLF çalışma kopyası uyarıları görüldü.
 - `18f47c9` VDS demo ortamına deploy edildi ve kullanıcı tarafından tamamlandı olarak bildirildi; bu not deploy bildirimiyle sınırlıdır, canlıda ek davranış doğrulaması iddia etmez.
+
+## Latest Checkpoint Closure - VELI TEL / Guardian Phone Import
+
+- Implementation commit: `cf47e2d feat: import explicit guardian phone relations`.
+- `VELI TEL`, `VELI TELEFON`, `VELI GSM`, `VELI CEP`, `Veli Telefonu` ve `Veli Cep Telefonu` başlıkları artık import-only `guardian_phone` alanına otomatik eşleşir.
+- Simülasyonda Veli telefonu `phones[]` hattına `relation_label: "Veli"` ve gerçek Excel `source_column` değeriyle katılır.
+- Telefon özel slota zorlanmaz; Excel kolon sırası ve mevcut Telefon 1-10 slot fidelity korunur.
+- Generic Telefon/GSM/Tel/Telefon 1 gibi başlıklardan Veli ilişkisi tahmin edilmez.
+- Veli adı varsa writer telefonu ilgili Veli guardian kaydına bağlar. Veli adı yoksa fake/boş guardian oluşturulmaz; relation label korunur ve `guardian_id: null` kalabilir.
+- ANNE TEL / BABA TEL mevcut davranışı korunur. `VELI ADI` / `VELI AD SOYAD`, Anne/Baba/Veli isimleri ve Veli phone alanları öğrenci adı kaynağı değildir.
+- Export, backup/restore, StudentsPage, WhatsApp, schema/db ve package/config değişmedi.
+- Validation: `npm.cmd test -- --run tests/imports` PASS, 9 test files / 96 tests; `npm.cmd run build` PASS, bilinen Vite chunk-size warning dışında hata yok; `git diff --check` PASS, yalnız LF -> CRLF çalışma kopyası uyarıları görüldü.
+- `cf47e2d` VDS demo ortamına deploy edildi ve kullanıcı tarafından test/QA okey olarak bildirildi; bu not kullanıcı bildirimiyle sınırlıdır.

@@ -261,6 +261,17 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [VELI ADI Import Alias] `VELI ADI` / `Veli Adı`, import kolon eşleştirmede `Veli Ad Soyad` ile aynı anlamda kabul edilir ve mevcut `guardian_full_name` alanına otomatik eşleşir.
 - [VELI ADI Import Alias] `VELI AD SOYAD` / `Veli Ad Soyad` mevcut davranışı korunur.
 - [VELI ADI Import Alias Scope] Bu karar yalnız alias/mapping düzeyindedir; import writer, schema/db, export/backup, StudentsPage, WhatsApp ve package/config davranışı değişmez.
-- [VELI TEL Deferred] `VELI TEL`, `VELI TELEFON` veya `guardian_phone` bu sprintin kapsamında değildir; Veli telefonu relation davranışı ayrı karar ve implementation gerektirir.
+- [VELI TEL Deferred] Bu eski not `cf47e2d feat: import explicit guardian phone relations` ile kapanmıştır; Veli telefonu import davranışı artık aşağıdaki ayrı karar kapsamında tanımlıdır.
 - [VDS Demo] `18f47c9` VDS demo ortamına deploy edilmiş ve kullanıcı tarafından tamamlandı olarak bildirilmiştir; bu not yalnız deploy bildirimi olarak tutulur.
+
+## Latest Decisions - VELI TEL / Guardian Phone Import
+
+- [VELI TEL / Guardian Phone Import] Açık `VELI TEL`, `VELI TELEFON`, `VELI GSM`, `VELI CEP`, `Veli Telefonu` ve `Veli Cep Telefonu` başlıkları explicit Veli relation phone kabul edilir ve import-only `guardian_phone` alanına eşleşir.
+- [VELI TEL / Guardian Phone Import] Generic Telefon/GSM/Tel/Telefon 1 gibi başlıklardan Veli ilişkisi tahmin edilmez; bu başlıklar mevcut generic Telefon N davranışında kalır.
+- [VELI TEL / Guardian Phone Import] Veli telefonu mevcut Telefon N slot hattında kalır. Özel bir slot zorlanmaz; Excel kolon sırası ve Telefon 1-10 slot fidelity korunur.
+- [VELI TEL / Guardian Phone Import] Veli adı varsa writer telefonu ilgili Veli guardian kaydına bağlar. Veli adı yoksa fake/boş guardian oluşturulmaz; `relation_label: "Veli"` korunur ve `guardian_id: null` kalabilir.
+- [VELI TEL / Guardian Phone Import] `guardian_phone` persistent student field değildir. Schema/db, export, backup/restore, StudentsPage, WhatsApp ve package/config davranışı değişmez.
+- [VELI TEL / Guardian Phone Import] Veli phone alanı, `VELI ADI` / `VELI AD SOYAD`, Anne/Baba/Veli isimleri ve parent phone alanları öğrenci adı composition kaynağı değildir.
+- [VELI TEL / Guardian Phone Import] Ayrı Veli telefonu export kolonu bu sprintte eklenmez; parent relation telefonları mevcut Telefon 1-10 slotları içinde kalır.
+- [VDS Demo] `cf47e2d` VDS demo ortamına deploy edilmiş ve kullanıcı tarafından test/QA okey olarak bildirilmiştir; bu not kullanıcı bildirimiyle sınırlıdır.
 

@@ -656,3 +656,25 @@ Son doğrulandı: `18f47c9 fix: map veli adi import column`
   ImportPage kolon eşleştirme UI'ında `Veli Adı` satırının `Tam eşleşti` durumunda ve `guardian_full_name` değerinde olduğunu doğrular.
 - Scope dışı: `VELI TEL`, `guardian_phone`, import writer, schema/db, export/backup, StudentsPage ve WhatsApp davranışı değiştirilmemiştir.
 
+## Latest File Map Addendum - VELI TEL / Guardian Phone Import
+
+Son doğrulandı: `cf47e2d feat: import explicit guardian phone relations`
+
+- `src/features/imports/services/types.ts`
+  `guardian_phone` import-only parent phone field olarak `mother_phone` / `father_phone` hattına paralel tanımlıdır. Kalıcı student field değildir.
+- `src/features/imports/services/columnDefinitions.ts`
+  `VELI TEL`, `VELI TELEFON`, `VELI GSM`, `VELI CEP`, `Veli Telefonu` ve `Veli Cep Telefonu` alias'larını `guardian_phone` alanına eşler. Generic Telefon/GSM/Tel başlıkları generic Telefon N olarak kalır.
+- `src/features/imports/services/importSimulation.ts`
+  `guardian_phone` kaynaklarını Excel kolon sırası ve mevcut Telefon N allocator kuralıyla `phones[]` hattına katar; `relation_label: "Veli"` ve gerçek Excel `source_column` bilgisini taşır.
+- `src/features/imports/services/importWriter.ts`
+  Mevcut relation phone davranışıyla Veli telefonunu Veli guardian kaydına bağlar. Veli adı yoksa fake guardian oluşturmaz; relation label korunur ve `guardian_id: null` kalabilir.
+- `tests/imports/columnMatching.test.ts`
+  Explicit Veli/Anne/Baba phone alias'larının generic Telefon/GSM/Tel başlıklarından ayrıldığını doğrular.
+- `tests/imports/importNameComposition.test.ts`
+  Veli telefonu ve parent bilgileri öğrenci adı kaynağı olmadığını doğrular.
+- `tests/imports/importSimulation.test.ts`
+  Veli phone relation metadata, source column, slot allocation, no-phone policy ve duplicate warning davranışını doğrular.
+- `tests/imports/importWriter.test.ts`
+  Veli telefonunun Veli guardian kaydına bağlanmasını ve Veli adı yoksa fake guardian oluşturulmadan `guardian_id: null` kalmasını doğrular.
+- Scope dışı: export/backup, StudentsPage, WhatsApp, schema/db ve package/config değişmemiştir.
+

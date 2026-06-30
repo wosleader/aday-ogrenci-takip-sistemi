@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 18f47c9 fix: map veli adi import column
-- VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service ve WhatsApp Web open suspend zinciri tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: cf47e2d feat: import explicit guardian phone relations
+- VELI TEL / guardian_phone import, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service ve WhatsApp Web open suspend zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Bu docs-only handoff sync tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: close veli adi import alias checkpoint
+- Önerilen docs commit: docs: close guardian phone import checkpoint
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -55,6 +55,22 @@
 - `VELI TEL`, `VELI TELEFON` ve `guardian_phone` bu sprintte eklenmedi; ayrı karar/implementation gerektirir.
 - Validation: `npm.cmd test -- --run tests/imports` PASS, 9 files / 94 tests; `npm.cmd run build` PASS with known Vite chunk-size warning; `git diff --check` PASS with only LF -> CRLF working-copy warnings.
 - `18f47c9` VDS demo ortamına deploy edildi ve kullanıcı tarafından tamamlandı olarak bildirildi. Bu not deploy bildirimiyle sınırlıdır.
+- Beklenen working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
+
+## Latest Handoff Update - VELI TEL / Guardian Phone Import
+
+- Current safe HEAD/origin: `cf47e2d feat: import explicit guardian phone relations`.
+- `VELI TEL`, `VELI TELEFON`, `VELI GSM`, `VELI CEP`, `Veli Telefonu` ve `Veli Cep Telefonu` başlıkları import-only `guardian_phone` alanına otomatik eşleşir.
+- `guardian_phone` kalıcı student field değildir; schema/db değişmedi.
+- Simülasyon bu telefonları `phones[]` hattına `relation_label: "Veli"` ve gerçek Excel `source_column` bilgisiyle ekler.
+- Telefon özel slota zorlanmaz; mevcut Telefon 1-10 slot fidelity ve Excel kolon sırası korunur.
+- Generic Telefon/GSM/Tel/Telefon 1 gibi başlıklardan Veli ilişkisi tahmin edilmez.
+- Veli adı varsa writer telefonu ilgili Veli guardian kaydına bağlar. Veli adı yoksa fake/boş guardian oluşturulmaz; `relation_label: "Veli"` korunur ve `guardian_id: null` kalabilir.
+- ANNE TEL / BABA TEL mevcut davranışı korunur.
+- `VELI ADI` / `VELI AD SOYAD`, Veli telefonu ve Anne/Baba/Veli bilgileri öğrenci adı kaynağı değildir.
+- Export, backup/restore, StudentsPage, WhatsApp, schema/db ve package/config değişmedi.
+- Validation: `npm.cmd test -- --run tests/imports` PASS, 9 files / 96 tests; `npm.cmd run build` PASS with known Vite chunk-size warning; `git diff --check` PASS with only LF -> CRLF working-copy warnings.
+- `cf47e2d` VDS demo ortamına deploy edildi ve kullanıcı tarafından test/QA okey olarak bildirildi. Bu not kullanıcı bildirimiyle sınırlıdır.
 - Beklenen working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 
 ## Latest Handoff Update - Guardian + Phone UI Clarity
