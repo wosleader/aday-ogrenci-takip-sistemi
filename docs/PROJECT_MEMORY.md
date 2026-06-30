@@ -1,4 +1,4 @@
-<!-- Son guncelleme: WhatsApp Phone Action Icon Polish | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: WhatsApp Web Open Suspend + Current Handoff | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: WhatsApp Phone Action Icon Polish
-- FILE_MAP: WhatsApp Phone Action Icon Polish
-- DECISIONS: WhatsApp Manual Draft / Phone Action UI
-- Son implementation commit: 48da40c fix: polish WhatsApp phone action icon
+- PROJECT_MEMORY: WhatsApp Web Open Suspend + Current Handoff
+- FILE_MAP: WhatsApp Web Open Suspend + Student Cleanup Candidate Service
+- DECISIONS: WhatsApp Web Open Suspend / Import Fallback Cleanup Discipline
+- Son implementation commit: 4ebfe33 fix: suspend WhatsApp web open action
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
 
@@ -546,3 +546,25 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - X/çarpı butonu operational invalid marker'dır; `phone_status` ve `is_wrong` alanlarını etkiler.
 - Dropdown `Yanlış Numara` / `Kullanılmıyor` phone-level `call_outcome` alanını etkiler.
 - X ile dropdown aynı veri davranışını üretmez. Bu yüzden birleştirme veya sadeleştirme ayrı product/data decision gerektirir.
+
+## Latest Handoff Sync - WhatsApp Web Open Suspend + Import Fallback Cleanup
+
+- Güncel güvenli HEAD/origin: `4ebfe33 fix: suspend WhatsApp web open action`.
+- Son güvenli commit zinciri:
+  - `7067175 feat: allow editing WhatsApp draft messages`
+  - `723326f feat: persist WhatsApp template overrides`
+  - `c77e8cf fix: avoid hardcoded student group import fallback`
+  - `f609292 feat: report hardcoded student group cleanup candidates`
+  - `4ebfe33 fix: suspend WhatsApp web open action`
+- WhatsApp modalındaki `WhatsApp'ta Aç` / `wa.me` yeni sohbet açma aksiyonu, WhatsApp Web bağlı cihaz kısıtı nedeniyle geçici olarak askıya alınmıştır.
+- Buton görünür ama disabled durumdadır; kullanıcıya mesajı kopyalayıp WhatsApp'a manuel yapıştırması gerektiğini söyleyen kısa açıklama gösterilir.
+- Yeni kullanımda `window.open` çalışmaz, UI akışı `buildWhatsAppDraftUrl` çağırmaz ve `draft_opened` log oluşmaz.
+- `Mesajı Kopyala`, edited/current draft body ile çalışmaya devam eder ve `copied` log yazar.
+- `Gönderildi olarak işaretle`, WhatsApp teslimat onayı değil manuel CRM takip işaretidir ve `manually_marked_sent` log yazmaya devam eder.
+- WhatsApp API, bot, auto-send, vCard/kişi kaydetme veya teslimat doğrulama yoktur.
+- `src/features/whatsapp/whatsappUrl.ts` silinmemiştir; gelecekte `wa.me` açma akışı tekrar kabul edilirse helper yeniden kullanılabilir.
+- `4ebfe33` VDS demo ortamına deploy edildi ve kullanıcı tarafından tamamlandı olarak bildirildi. Demo kontrol hedefi: `/students` WhatsApp modalında Aç butonu disabled, kopyalama ve manuel gönderildi akışları çalışıyor.
+- `c77e8cf` ile yeni importlarda hardcoded `11. Sınıf YKS Hazırlık` student_group fallback'i ve hardcoded `YKS` category yazımı kaldırıldı. Yeni importta Excel'de yoksa/boşsa bu alanlar neutral kalır.
+- Bu import fallback fix yalnızca yeni importları etkiler; mevcut DB'deki eski hatalı kayıtlar otomatik düzeltilmez.
+- `f609292` ile eski hardcoded student_group kayıtlarını tespit eden read-only cleanup candidate servisi eklendi. DB write, migration, apply/cleanup ve UI yoktur.
+- StudentsPage içine cleanup report UI gömülmeyecek; daha önce denenmiş cleanup UI iptal edilmiştir. Ana operasyon sayfalarına bakım UI'ı eklemek için ayrı discovery ve kullanıcı onayı gerekir.

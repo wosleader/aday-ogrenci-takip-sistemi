@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 48da40c fix: polish WhatsApp phone action icon
-- `/demo` subpath support, pilot demo seed bootstrap, zengin pilot seed/UI smoke QA ve WhatsApp manuel taslak/manuel gönderildi/icon polish zinciri tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: 4ebfe33 fix: suspend WhatsApp web open action
+- WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service ve WhatsApp Web open suspend zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
-- Bu docs-only governance sync tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: sync project memory after WhatsApp icon polish
+- Bu docs-only handoff sync tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
+- Önerilen docs commit: docs: sync handoff after WhatsApp web suspend
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -24,6 +24,27 @@
 - Bir önceki phone context persistence commit’i: 595979d feat: wire phone context persistence for calls and reminders
 - Working tree beklenen durumu: clean
 - GitHub/origin durumu: aktif branch `origin/sprint-9-2-multi-phone-architecture-plan` ile aynı son commit üzerinde görünür.
+
+## Latest Handoff Update - WhatsApp Web Open Suspend + Cleanup Candidate Service
+
+- Current safe HEAD/origin: `4ebfe33 fix: suspend WhatsApp web open action`.
+- Recent safe chain:
+  - `7067175 feat: allow editing WhatsApp draft messages`
+  - `723326f feat: persist WhatsApp template overrides`
+  - `c77e8cf fix: avoid hardcoded student group import fallback`
+  - `f609292 feat: report hardcoded student group cleanup candidates`
+  - `4ebfe33 fix: suspend WhatsApp web open action`
+- WhatsApp Web bağlı cihaz kısıtı nedeniyle CRM içindeki `WhatsApp'ta Aç` / `wa.me` yeni sohbet açma aksiyonu geçici olarak askıya alındı.
+- Modalda `WhatsApp'ta Aç` butonu görünür ama disabled kalır. Kısa açıklama kullanıcıyı `Mesajı Kopyala` ile WhatsApp'a manuel yapıştırmaya yönlendirir.
+- Yeni kullanımda `window.open` çalışmaz, UI akışı `buildWhatsAppDraftUrl` çağırmaz ve `draft_opened` log oluşmaz.
+- `Mesajı Kopyala` edited/current draft body ile çalışır ve `copied` log yazar.
+- `Gönderildi olarak işaretle` yalnız manuel CRM takip işaretidir; `manually_marked_sent` log yazmaya devam eder ve WhatsApp teslimat onayı değildir.
+- WhatsApp API, bot, auto-send, vCard/contact-save ve teslimat doğrulama yoktur. `src/features/whatsapp/whatsappUrl.ts` gelecekte yeniden açma ihtimali için korunur.
+- `4ebfe33` VDS demo ortamına deploy edildi ve kullanıcı tarafından tamamlandı olarak bildirildi. Demo kontrol hedefi: `/students` WhatsApp modalında Aç butonu disabled, kopyalama ve manuel gönderildi akışları çalışıyor.
+- `c77e8cf` yeni importlarda hardcoded `11. Sınıf YKS Hazırlık` student_group fallback'ini ve hardcoded `YKS` category yazımını kaldırdı. Eski DB kayıtları otomatik düzeltilmez.
+- `f609292` eski fallback kayıtlarını tespit eden read-only cleanup candidate service ekledi. DB write, migration, UI, apply/cleanup yoktur.
+- StudentsPage içine cleanup report UI gömülmeyecek; daha önce denenmiş cleanup UI iptal edilmiştir. Ana operasyon sayfasına bakım UI'ı eklemek ayrı discovery ve kullanıcı onayı ister.
+- Devam disiplini: tek iş, temiz working tree, discovery sonrası implementation, kullanıcı onayı olmadan commit/push yok.
 
 ## Latest Handoff Update - Guardian + Phone UI Clarity
 

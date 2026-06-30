@@ -621,3 +621,24 @@ Son doğrulandı: `48da40c fix: polish WhatsApp phone action icon`
 - `tests/students/StudentsPagePhoneSelection.test.tsx`
   WhatsApp ikon butonu, modal açma, `WhatsApp'ta Aç`, `Mesajı Kopyala`, `Gönderildi olarak işaretle`, gönderildi badge'i ve X/✓ regression davranışlarını doğrular.
 
+## Latest File Map Addendum - WhatsApp Web Open Suspend + Student Cleanup Candidate Service
+
+Son doğrulandı: `4ebfe33 fix: suspend WhatsApp web open action`
+
+- `src/features/students/StudentsPage.tsx`
+  WhatsApp taslak modalını, template override/edit state'ini, kopyalama ve manuel gönderildi işaretleme akışını render eder. `WhatsApp'ta Aç` / `wa.me` open action geçici olarak disabled durumdadır; yeni kullanımda `window.open`, `buildWhatsAppDraftUrl` ve `draft_opened` log tetiklenmez. `Mesajı Kopyala` ve `Gönderildi olarak işaretle` akışları korunur.
+- `src/features/whatsapp/whatsappUrl.ts`
+  `wa.me` URL helper'ını taşımaya devam eder. Geçici suspend sırasında UI akışından çağrılmaz, silinmemiştir ve gelecekte open action yeniden kabul edilirse kullanılabilir.
+- `src/features/whatsapp/whatsappDraftLogService.ts`
+  `copied` ve `manually_marked_sent` logları aktif kalır. `draft_opened` modelde tarihsel/gelecek uyumluluk için durur, fakat suspend sonrası yeni open action kullanımında üretilmez.
+- `tests/students/StudentsPagePhoneSelection.test.tsx`
+  WhatsApp modalında open action'ın disabled olduğunu, `window.open` ve `draft_opened` oluşmadığını, buna karşılık edited/current body ile kopyalama ve manuel gönderildi loglarının çalıştığını doğrular.
+- `tests/whatsapp/whatsappDraft.test.ts`
+  URL helper, template rendering, draft log write/read ve manually sent lookup birim davranışlarını korur; helper silinmediği için bu testler kalır.
+- `src/features/imports/services/importWriter.ts`
+  `c77e8cf` sonrası yeni importlarda hardcoded `11. Sınıf YKS Hazırlık` student_group fallback'i ve hardcoded `YKS` category yazımı yapmaz. Bu yalnız yeni importları etkiler; eski DB kayıtlarını temizlemez.
+- `src/features/students/services/studentCleanupCandidates.ts`
+  Eski hardcoded student_group fallback'inden etkilenmiş olabilecek kayıtları read-only tespit eder. DB write, apply/cleanup, migration veya UI içermez.
+- `tests/students/studentCleanupCandidates.test.ts`
+  Cleanup candidate servisinin high_confidence / needs_review sınıflamasını, current_class 11 dışlamasını ve kaynak metadata taşımasını doğrular.
+

@@ -59,6 +59,10 @@ Bu blok promptun en kritik güvenlik katmanıdır. Detaylar uzun olsa bile Codex
 
 ## 5. Kalıcı Kırmızı Çizgiler
 
+- Aynı anda tek açık Codex işi yürütülür; açık iş bitmeden yeni prompt/task başlatılmaz.
+- Working tree temizliği teyit edilmeden yeni işe başlanmaz.
+- Discovery olmadan implementation yapılmaz; özellikle data model, import/export, backup/restore, ana operasyon ekranı ve schema etkisi olan işler önce discovery gerektirir.
+- `StudentsPage` gibi ana operasyon sayfalarına bakım/rapor/teknik UI gömme işleri ekstra discovery ve açık kullanıcı onayı ister.
 - Kullanıcı onayı olmadan commit/push/merge yok.
 - Kullanıcı onayı olmadan branch silme yok.
 - İzinli dosya dışına çıkma yok.
@@ -69,6 +73,7 @@ Bu blok promptun en kritik güvenlik katmanıdır. Detaylar uzun olsa bile Codex
 - Gerçek öğrenci/veli/telefon verisi promptlara konmaz.
 - Secrets, auth, env, token, config dosyaları paylaşılmaz.
 - Codex raporu tek başına yeterli değildir; git status/diff/test/build kontrol edilir.
+- `dev-server.log` yerel runtime çıktısıdır; stage/commit edilmez, silinmez ve ürün artifact'i gibi ele alınmaz.
 
 ## 6. Standart Codex Rapor Formatı
 

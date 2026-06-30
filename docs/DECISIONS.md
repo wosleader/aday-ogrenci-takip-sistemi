@@ -242,3 +242,17 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Phone Action Semantics] Dropdown `Yanlış Numara` ve `Kullanılmıyor` seçenekleri phone-level `call_outcome` alanını etkiler.
 - [Phone Action Semantics] X ile dropdown aynı veri davranışını üretmez. X/dropdown birleşimi veya sadeleştirmesi ayrı product/data decision olmadan yapılmayacaktır.
 
+## Latest Decisions - WhatsApp Web Open Suspend + Import Fallback Cleanup
+
+- [WhatsApp Web Open Suspend] WhatsApp Web bağlı cihaz kısıtı nedeniyle `WhatsApp'ta Aç` / `wa.me` yeni sohbet açma aksiyonu geçici olarak askıya alınmıştır.
+- [WhatsApp Web Open Suspend] Buton görünür ama disabled kalır; kullanıcı mesajı kopyalayıp WhatsApp'a manuel yapıştırmaya yönlendirilir.
+- [WhatsApp Web Open Suspend] Yeni kullanımda `window.open` çalışmaz, UI akışı `buildWhatsAppDraftUrl` çağırmaz ve `draft_opened` log oluşmaz.
+- [WhatsApp Web Open Suspend] `Mesajı Kopyala` edited/current draft body ile çalışır ve `copied` log yazar.
+- [WhatsApp Manual Sent Marker] `Gönderildi olarak işaretle` manuel CRM takip işareti olarak kalır; `manually_marked_sent` log yazar ve WhatsApp teslimat onayı değildir.
+- [WhatsApp Scope] WhatsApp API, bot, auto-send, vCard/contact-save ve teslimat doğrulama yoktur. `whatsappUrl.ts` helper'ı gelecekte yeniden açma ihtimali için korunur.
+- [VDS Demo] `4ebfe33` VDS demo ortamına deploy edilmiş ve kullanıcı tarafından tamamlandı olarak bildirilmiştir. Bu not doğrulanan detayları abartmaz; demo kontrol hedefi `/students` WhatsApp modalında Aç butonu disabled, kopyalama ve manuel gönderildi akışlarıdır.
+- [Import Fallback Fix] `c77e8cf` ile yeni importlarda hardcoded `11. Sınıf YKS Hazırlık` student_group fallback'i ve hardcoded `YKS` category yazımı kaldırılmıştır.
+- [Import Fallback Fix] Yeni importta Excel'de `student_group` veya `category` yoksa/boşsa CRM bu değerleri uydurmaz. Bu fix sadece yeni importları etkiler; mevcut DB'deki eski kayıtları otomatik düzeltmez.
+- [Student Cleanup Candidate Service] `f609292` eski hardcoded student_group kayıtlarını tespit eden read-only servis eklemiştir. DB write, migration, UI, apply/cleanup yoktur.
+- [Student Cleanup UI Gate] StudentsPage içine cleanup report UI gömülmeyecek; daha önce denenmiş cleanup UI iptal edilmiştir. Ana operasyon sayfasına bakım UI eklemek ayrı discovery ve kullanıcı onayı ister.
+
