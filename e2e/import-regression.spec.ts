@@ -150,4 +150,68 @@ test.describe("import regression matrix", () => {
 
     runtimeErrors.assertNoErrors();
   });
+
+  test("imports guardian phone relations with parent phones", async ({ page }, testInfo) => {
+    const runtimeErrors = guardRuntimeErrors(page);
+    const { filePath } = createImportWorkbook(testInfo.outputDir, "guardian-phone-relations.xlsx", [
+      {
+        AD: "Ada",
+        SOYAD: "Yılmaz",
+        "VELİ ADI": "Mehmet Yılmaz",
+        "VELİ TEL": "0530 111 22 33",
+        "ANNE ADI": "Ayşe Yılmaz",
+        "ANNE TEL": "0530 222 33 44",
+        "BABA ADI": "Ahmet Yılmaz",
+        "BABA TEL": "0530 333 44 55",
+        Telefon: "0530 444 55 66",
+        MAHALLE: "Nilüfer Mah.",
+        İLÇE: "Osmangazi"
+      }
+    ]);
+
+    await resetAndOpenImport(page);
+    const drawer = await importWorkbookAndOpenStudent(page, filePath, "Ada Yılmaz");
+
+    await expect(drawer).toContainText("Veli Ad Soyad: Mehmet Yılmaz");
+    await expect(drawer).toContainText("Anne Adı: Ayşe Yılmaz");
+    await expect(drawer).toContainText("Baba Adı: Ahmet Yılmaz");
+    await expect(drawer).toContainText("Mahalle / İlçe: Nilüfer Mah. / Osmangazi");
+
+    await expect(drawer).toContainText("05301112233");
+    await expect(drawer).toContainText("Veli telefonu");
+    await expect(drawer).toContainText("05302223344");
+    await expect(drawer).toContainText("Anne telefonu");
+    await expect(drawer).toContainText("05303334455");
+    await expect(drawer).toContainText("Baba telefonu");
+
+    await drawer.getByRole("button", { name: /numara daha göster/i }).click();
+    await expect(drawer).toContainText("05304445566");
+    const genericPhoneCard = drawer.locator(".drawer-phone-card").filter({ hasText: "05304445566" });
+    await expect(genericPhoneCard).toBeVisible();
+    await expect(genericPhoneCard).not.toContainText("Veli telefonu");
+    await expect(genericPhoneCard).not.toContainText("Anne telefonu");
+    await expect(genericPhoneCard).not.toContainText("Baba telefonu");
+
+    runtimeErrors.assertNoErrors();
+  });
+
+  test("imports Veli phone without creating a fake guardian name", async ({ page }, testInfo) => {
+    const runtimeErrors = guardRuntimeErrors(page);
+    const { filePath } = createImportWorkbook(testInfo.outputDir, "guardian-phone-without-name.xlsx", [
+      {
+        AD: "Veli",
+        SOYAD: "Telefonsuz",
+        "VELİ TEL": "0530 555 66 77"
+      }
+    ]);
+
+    await resetAndOpenImport(page);
+    const drawer = await importWorkbookAndOpenStudent(page, filePath, "Veli Telefonsuz");
+
+    await expect(drawer).toContainText("05305556677");
+    await expect(drawer).toContainText("Veli telefonu");
+    await expect(drawer.getByText(/Veli Ad Soyad:/)).toHaveCount(0);
+
+    runtimeErrors.assertNoErrors();
+  });
 });
