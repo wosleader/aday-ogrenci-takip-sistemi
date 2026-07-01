@@ -61,6 +61,114 @@ describe("writeImportToDatabase", () => {
     }
   });
 
+  it("persists the mapped campaign name instead of assigning every row to Diger", async () => {
+    const database = await createDatabase();
+    const parsedWorksheet = worksheet(
+      ["Ad Soyad", "Telefon", "Kampanya"],
+      [["Ayşe Yılmaz", "5321234567", "Yaz Kampı"]]
+    );
+
+    try {
+      const summary = simulateImport(parsedWorksheet);
+      const result = await writeImportToDatabase(parsedWorksheet, summary, { database });
+      const [student] = await database.students.toArray();
+      const importedCampaign = await database.campaigns.where("name").equals("Yaz Kampı").first();
+      const defaultCampaign = await database.campaigns.where("name").equals("Diğer").first();
+      const [row] = await readStudentListRows(database);
+
+      expect(result.created_students).toBe(1);
+      expect(importedCampaign).toBeDefined();
+      expect(student.campaign_id).toBe(importedCampaign?.id);
+      expect(student.campaign_id).not.toBe(defaultCampaign?.id);
+      expect(row.campaign_name).toBe("Yaz Kampı");
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("keeps using the default campaign when the import row has no campaign value", async () => {
+    const database = await createDatabase();
+    const parsedWorksheet = worksheet(
+      ["Ad Soyad", "Telefon", "Kampanya"],
+      [["Ayşe Yılmaz", "5321234567", "   "]]
+    );
+
+    try {
+      const summary = simulateImport(parsedWorksheet);
+      const result = await writeImportToDatabase(parsedWorksheet, summary, { database });
+      const [student] = await database.students.toArray();
+      const defaultCampaign = await database.campaigns.where("name").equals("Diğer").first();
+      const [row] = await readStudentListRows(database);
+
+      expect(result.created_students).toBe(1);
+      expect(defaultCampaign).toBeDefined();
+      expect(student.campaign_id).toBe(defaultCampaign?.id);
+      expect(row.campaign_name).toBe("Diğer");
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("reuses one campaign record when multiple imported rows have the same campaign", async () => {
+    const database = await createDatabase();
+    const parsedWorksheet = worksheet(
+      ["Ad Soyad", "Telefon", "Kampanya"],
+      [
+        ["Ayşe Yılmaz", "5321234567", "Yaz Kampı"],
+        ["Mehmet Demir", "5321234568", "Yaz Kampı"]
+      ]
+    );
+
+    try {
+      const summary = simulateImport(parsedWorksheet);
+      const result = await writeImportToDatabase(parsedWorksheet, summary, { database });
+      const students = await database.students.orderBy("id").toArray();
+      const importedCampaigns = await database.campaigns.where("name").equals("Yaz Kampı").toArray();
+
+      expect(result.created_students).toBe(2);
+      expect(importedCampaigns).toHaveLength(1);
+      expect(students.map((student) => student.campaign_id)).toEqual([
+        importedCampaigns[0].id,
+        importedCampaigns[0].id
+      ]);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("creates separate campaign records for different imported campaign names", async () => {
+    const database = await createDatabase();
+    const parsedWorksheet = worksheet(
+      ["Ad Soyad", "Telefon", "Kampanya"],
+      [
+        ["Ayşe Yılmaz", "5321234567", "Yaz Kampı"],
+        ["Mehmet Demir", "5321234568", "LGS Deneme"]
+      ]
+    );
+
+    try {
+      const summary = simulateImport(parsedWorksheet);
+      const result = await writeImportToDatabase(parsedWorksheet, summary, { database });
+      const students = await database.students.orderBy("id").toArray();
+      const summerCampaign = await database.campaigns.where("name").equals("Yaz Kampı").first();
+      const lgsCampaign = await database.campaigns.where("name").equals("LGS Deneme").first();
+      const rows = await readStudentListRows(database);
+
+      expect(result.created_students).toBe(2);
+      expect(summerCampaign).toBeDefined();
+      expect(lgsCampaign).toBeDefined();
+      expect(students[0].campaign_id).toBe(summerCampaign?.id);
+      expect(students[1].campaign_id).toBe(lgsCampaign?.id);
+      expect(rows.map((row) => row.campaign_name).sort()).toEqual(["LGS Deneme", "Yaz Kampı"]);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
   it("does not invent a hardcoded student group or YKS category when the import row has no group", async () => {
     const database = await createDatabase();
     const parsedWorksheet = worksheet(

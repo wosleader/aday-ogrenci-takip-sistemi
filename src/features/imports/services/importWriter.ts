@@ -62,6 +62,53 @@ async function ensureDefaultCampaign(database: AppDatabase, timestamp: string): 
   return { ...campaign, id };
 }
 
+async function ensureCampaignByName(
+  database: AppDatabase,
+  campaignName: string | null | undefined,
+  timestamp: string,
+  campaignCache: Map<string, CampaignRecord>
+): Promise<CampaignRecord> {
+  const normalizedCampaignName = campaignName?.trim() || "Diğer";
+  const cachedCampaign = campaignCache.get(normalizedCampaignName);
+
+  if (cachedCampaign) {
+    return cachedCampaign;
+  }
+
+  if (normalizedCampaignName === "Diğer") {
+    const defaultCampaign = await ensureDefaultCampaign(database, timestamp);
+    campaignCache.set(normalizedCampaignName, defaultCampaign);
+    return defaultCampaign;
+  }
+
+  const existingCampaign = await database.campaigns
+    .where("name")
+    .equals(normalizedCampaignName)
+    .filter((campaign) => campaign.is_active && campaign.deleted_at == null)
+    .first();
+
+  if (existingCampaign) {
+    campaignCache.set(normalizedCampaignName, existingCampaign);
+    return existingCampaign;
+  }
+
+  const campaign: CampaignRecord = {
+    uuid: createUuid(),
+    name: normalizedCampaignName,
+    is_default: false,
+    is_active: true,
+    sync_status: "local",
+    created_at: timestamp,
+    updated_at: timestamp,
+    deleted_at: null
+  };
+  const id = await database.campaigns.add(campaign);
+  const createdCampaign = { ...campaign, id };
+
+  campaignCache.set(normalizedCampaignName, createdCampaign);
+  return createdCampaign;
+}
+
 type WritableImportPhone = {
   phone_number: string;
   normalized_phone_number: string;
@@ -226,7 +273,7 @@ export async function writeImportToDatabase(
     ],
     async () => {
       const timestamp = nowIso();
-      const campaign = await ensureDefaultCampaign(database, timestamp);
+      const campaignCache = new Map<string, CampaignRecord>();
       const importId = await database.imports.add({
         uuid: createUuid(),
         file_name: worksheet.file_name,
@@ -263,6 +310,7 @@ export async function writeImportToDatabase(
       for (const row of summary.simulated_rows) {
         const rowTimestamp = nowIso();
         const studentGroup = row.student_group?.trim() ?? "";
+        const campaign = await ensureCampaignByName(database, row.campaign_name, timestamp, campaignCache);
         const studentId = await database.students.add({
           uuid: createUuid(),
           student_full_name: row.student_full_name,
