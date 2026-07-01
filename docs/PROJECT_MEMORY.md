@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Kampanya Import Persistence Bugfix | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Dar Pilot Basari Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Kampanya Import Persistence Bugfix
+- PROJECT_MEMORY: Dar Pilot Basari Kapanisi
 - FILE_MAP: Kampanya Import Persistence Bugfix
-- DECISIONS: Kampanya Import Persistence Bugfix
-- Son güvenli HEAD/origin: 82036c0 fix: persist imported campaign names
+- DECISIONS: Dar Pilot Basari Kapanisi
+- Son güvenli HEAD/origin: b8dad6a docs: close campaign import persistence bugfix
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
 
@@ -645,3 +645,13 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - Eski DB kayıtları geriye dönük düzeltilmedi; fix yeni importlar için geçerlidir.
 - Validation: `npm.cmd test -- --run tests/imports` PASS, 9 files / 100 tests; `npm.cmd test -- --run tests/students` PASS, 10 files / 86 tests; `npm.cmd run build` PASS, bilinen Vite chunk-size warning dışında hata yok; `git diff --check` PASS, yalnız LF -> CRLF çalışma kopyası uyarıları görüldü.
 - `82036c0` VDS demo ortamına deploy edildi. Kullanıcı VDS deploy, import sonrası kampanya ve kampanya filtresi smoke testlerini okey bildirdi; bu not kullanıcı bildirimiyle sınırlıdır.
+
+## Latest Pilot Result - Dar Pilot Basari Kapanisi
+
+- Pilot kapanış base commit: `b8dad6a docs: close campaign import persistence bugfix`.
+- Kullanıcı bildirimi: test başarılı, hepsi okey, dar pilot başarılı.
+- Dar pilot kullanım testi başarıyla tamamlandı; Sprint 9.2 pilot eşiği geçildi.
+- Pilot sırasında Excel import, Kampanya import persistence, gerçek kampanyaların kampanya filtresinde görünmesi, Veli/Anne/Baba telefon ilişkileri, generic Telefon alanlarının yanlışlıkla Veli/Anne/Baba olarak etiketlenmemesi, aday kartı temel bilgileri, filtreler, WhatsApp modal temel akışı ve export kontrolü başarılı kabul edildi.
+- Yeni blocker/high bug bildirilmedi.
+- Kod tarafında yeni iş açılmadı; bundan sonraki aşama pilot geri bildirimlerini kontrollü backlog/prioritization ile değerlendirmektir.
+- Yeni geliştirme işleri ayrı discovery ve karar ile ele alınmalıdır.

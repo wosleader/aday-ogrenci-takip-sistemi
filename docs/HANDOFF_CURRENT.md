@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 82036c0 fix: persist imported campaign names
-- Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS`; VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend ve Kampanya import persistence bugfix zinciri tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: b8dad6a docs: close campaign import persistence bugfix
+- Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend ve Kampanya import persistence bugfix zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Bu docs-only handoff sync tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: close campaign import persistence bugfix
+- Önerilen docs commit: docs: record successful pilot completion
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -24,6 +24,17 @@
 - Bir önceki phone context persistence commit’i: 595979d feat: wire phone context persistence for calls and reminders
 - Working tree beklenen durumu: clean
 - GitHub/origin durumu: aktif branch `origin/sprint-9-2-multi-phone-architecture-plan` ile aynı son commit üzerinde görünür.
+
+## Latest Handoff Update - Dar Pilot Basari Kapanisi
+
+- Current safe HEAD/origin: `b8dad6a docs: close campaign import persistence bugfix`.
+- Kullanıcı bildirimi: test başarılı, hepsi okey, dar pilot başarılı.
+- Dar pilot kullanım testi başarıyla tamamlandı ve Sprint 9.2 pilot eşiği geçildi.
+- Pilot sırasında doğrulanan ana akışlar: Excel import, Kampanya import sonrası doğru persistence, kampanya filtresinde gerçek kampanyaların görünmesi, Veli/Anne/Baba telefon ilişkileri, generic Telefon alanlarının yanlışlıkla parent relation etiketi almaması, aday kartı temel bilgileri, filtreler, WhatsApp modal temel akışı ve export kontrolü.
+- Yeni blocker/high bug bildirilmedi.
+- Kod tarafında yeni iş açılmadı; sonraki aşama pilot geri bildirimlerini kontrollü backlog/prioritization sürecine almak olmalıdır.
+- Yeni geliştirme veya düzeltme işleri ayrı discovery/karar ile ele alınmalıdır.
+- Beklenen working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 
 ## Latest Handoff Update - Kampanya Import Persistence Bugfix
 

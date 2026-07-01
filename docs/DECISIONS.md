@@ -1,4 +1,4 @@
-﻿<!-- Son guncelleme: Kampanya Import Persistence Bugfix | Branch: sprint-9-2-multi-phone-architecture-plan -->
+﻿<!-- Son guncelleme: Dar Pilot Basari Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -303,3 +303,12 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Campaign Import Persistence] Bu bugfix eski DB kayıtlarını geriye dönük temizlemez; yalnız yeni importlar için geçerlidir.
 - [Campaign Import Persistence Scope] Campaign management UI, schema migration, export/backup değişikliği, `category`, `student_group`, guardian phone ve phone slot logic bu sprintte değiştirilmemiştir.
 - [VDS Demo] `82036c0` VDS demo ortamına deploy edilmiş; kullanıcı import sonrası kampanya ve kampanya filtresi smoke testlerini okey bildirmiştir. Bu not kullanıcı bildirimiyle sınırlıdır.
+
+## Latest Decisions - Dar Pilot Basari Kapanisi
+
+- [Dar Pilot Success] Dar pilot kullanım testi kullanıcı bildirimiyle başarılı tamamlanmıştır: test başarılı, hepsi okey, dar pilot başarılı.
+- [Dar Pilot Success] Pilot sonucunda blocker/high bug bildirilmemiştir.
+- [Dar Pilot Success] Import, kampanya persistence, kampanya filtresi, Veli/Anne/Baba telefon ilişkileri, generic Telefon alanlarının parent relation üretmemesi, aday kartı temel bilgileri, filtreler, WhatsApp modal temel akışı ve export kontrolü pilot için yeterli kabul edilmiştir.
+- [Dar Pilot Success] Sprint 9.2 pilot eşiği geçilmiştir.
+- [Dar Pilot Success] Kod tarafında yeni iş açılmamıştır; yeni geliştirme başlamadan önce gerçek kullanım geri bildirimi toplanacak ve kontrollü backlog/prioritization yapılacaktır.
+- [Dar Pilot Success] Sonraki işler ayrı discovery ve ürün kararıyla ele alınacaktır.
