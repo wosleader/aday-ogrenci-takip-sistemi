@@ -1,4 +1,4 @@
-import { FileDown, FileSpreadsheet, PhoneCall, Settings, Users } from "lucide-react";
+import { FileDown, FileSpreadsheet, PhoneCall, Settings, Users, LayoutTemplate } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 
 const navItems = [
@@ -6,7 +6,8 @@ const navItems = [
   { to: "/students", label: "Aday Listesi", icon: Users },
   { to: "/call", label: "Arama Ekranı", icon: PhoneCall },
   { to: "/export", label: "Detaylı Export", icon: FileDown },
-  { to: "/settings", label: "Ayarlar", icon: Settings }
+  { to: "/settings", label: "Ayarlar", icon: Settings },
+  { to: "/demo-ui", label: "UI Demo", icon: LayoutTemplate }
 ];
 
 export function AppLayout() {
