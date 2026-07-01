@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Guardian Phone Import E2E | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Dar Pilot Final Gate | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Guardian Phone Import E2E
+- PROJECT_MEMORY: Dar Pilot Final Gate
 - FILE_MAP: Guardian Phone Import E2E
-- DECISIONS: Guardian Phone Import E2E
-- Son güvenli HEAD/origin: b486735 test: cover guardian phone import e2e
+- DECISIONS: Dar Pilot Final Gate
+- Son güvenli HEAD/origin: 0e58928 docs: close guardian phone e2e checkpoint
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
 
@@ -174,6 +174,9 @@ Kısa özet:
   temiz veri → import → aday listesi → görüşme → reminder → export → backup → temizle → restore.
 - Sprint 9.1 pilot bulguları kapatıldı.
 - Sistem küçük ölçekli kontrollü pilot deneme için release candidate kabul edilebilir.
+- Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` olarak kaydedildi; `0e58928` seviyesi için blocker/high risk yoktur.
+- VDS `/demo` manuel smoke kullanıcı tarafından okey bildirildi; bu not kullanıcı bildirimiyle sınırlıdır.
+- Pilot öncesi zorunlu bugfix gerekmez; kısa manuel QA/smoke yeterli kabul edildi.
 - Pilot v1.0 gerçek kullanım denemesi yapıldı.
 - Pilot izleme sırasında gelen PF-006–PF-012 küçük UI/UX polish bulguları kapatıldı.
 - Sprint 9.2 Çoklu Telefon Mimarisi Planı başlatıldı; uygulama yapılmadan ürün/UX/teknik kararlar dokümante ediliyor.
@@ -611,3 +614,22 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - `VELI TEL` var ama `VELI ADI` yok senaryosunda fake/boş guardian oluşmadığı, `Veli Ad Soyad` satırı basılmadığı ve telefonun `Veli telefonu` badge'iyle görünebildiği testlenir.
 - Bu test-only checkpoint ürün kodu değiştirmez: `src/**`, schema, import writer, export/backup, StudentsPage, WhatsApp, docs ve package/config değişmedi.
 - Validation: `npm.cmd run qa:import:e2e` PASS, 6/6 Playwright test; `npm.cmd test -- --run tests/imports` PASS, 9 files / 96 tests; `npm.cmd run build` PASS, bilinen Vite chunk-size warning dışında sorun yok; `git diff --check` PASS, yalnız LF -> CRLF çalışma kopyası uyarısı görüldü.
+
+## Latest Pilot Gate Decision - Dar Pilot Final Gate
+
+- Gate base: `0e58928 docs: close guardian phone e2e checkpoint`.
+- Final karar: `PILOT READY WITH WARNINGS`.
+- Blocker/high risk bulunmadı; dar pilot başlayabilir.
+- Validation özeti:
+  - `npm.cmd test -- --run tests/imports`: PASS, 9 files / 96 tests.
+  - `npm.cmd test -- --run tests/students`: ilk koşuda WhatsApp UI async/flaky fail görüldü; izole retry PASS; full retry PASS, 10 files / 86 tests.
+  - `npm.cmd test -- --run tests/exports`: PASS, 4 files / 34 tests.
+  - `npm.cmd test -- --run tests/settings`: PASS, 3 files / 15 tests.
+  - `npm.cmd test -- --run tests/reports tests/reminders`: PASS, 9 files / 41 tests.
+  - `npm.cmd run qa:import:e2e`: PASS, 6/6 Playwright test.
+  - `npm.cmd run build`: PASS, yalnız bilinen Vite chunk-size warning.
+- VDS `/demo` manuel smoke kullanıcı tarafından okey bildirildi; bu not canlı ortam için abartılı garanti olarak yorumlanmamalıdır.
+- Risk sınıfları: BLOCKER yok; HIGH yok; MEDIUM olarak WhatsApp modal testinde ilk koşu async/flaky fail ve React `act(...)` warning not edildi; LOW olarak bilinen Vite chunk-size warning devam ediyor.
+- Deferred işler: Phone Action Simplification / `✓` `x` dropdown karmaşası, Communication History correction/delete, Reporting Area V2, mobile polish, eski `student_group` cleanup apply, `VELI TEL` ayrı export kolonu, WhatsApp Web open suspend kalıcı ürün kararı.
+- Pilot öncesi zorunlu bugfix gerekmiyor; kısa manuel QA/smoke yeterli kabul edildi.
+- Sıradaki muhtemel product/discovery: Phone Action Simplification veya WhatsApp Web open suspend için kalıcı ürün kararı.

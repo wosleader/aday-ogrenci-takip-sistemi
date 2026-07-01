@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: b486735 test: cover guardian phone import e2e
-- VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service ve WhatsApp Web open suspend zinciri tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: 0e58928 docs: close guardian phone e2e checkpoint
+- Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS`; VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service ve WhatsApp Web open suspend zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Bu docs-only handoff sync tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: close guardian phone e2e checkpoint
+- Önerilen docs commit: docs: record pilot final gate decision
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -24,6 +24,26 @@
 - Bir önceki phone context persistence commit’i: 595979d feat: wire phone context persistence for calls and reminders
 - Working tree beklenen durumu: clean
 - GitHub/origin durumu: aktif branch `origin/sprint-9-2-multi-phone-architecture-plan` ile aynı son commit üzerinde görünür.
+
+## Latest Handoff Update - Dar Pilot Final Gate
+
+- Current safe HEAD/origin: `0e58928 docs: close guardian phone e2e checkpoint`.
+- Final gate kararı: `PILOT READY WITH WARNINGS`.
+- Dar pilot için blocker veya high risk bulunmadı; pilot başlayabilir.
+- VDS `/demo` manuel smoke kullanıcı tarafından okey bildirildi. Bu not kullanıcı bildirimiyle sınırlıdır; canlıda doğrulanmamış ek davranış garantisi olarak yazılmamalıdır.
+- Final validation:
+  - `npm.cmd test -- --run tests/imports` PASS, 9 files / 96 tests.
+  - `npm.cmd test -- --run tests/students` ilk koşuda WhatsApp UI async/flaky fail verdi; izole retry PASS; full retry PASS, 10 files / 86 tests.
+  - `npm.cmd test -- --run tests/exports` PASS, 4 files / 34 tests.
+  - `npm.cmd test -- --run tests/settings` PASS, 3 files / 15 tests.
+  - `npm.cmd test -- --run tests/reports tests/reminders` PASS, 9 files / 41 tests.
+  - `npm.cmd run qa:import:e2e` PASS, 6/6 Playwright test.
+  - `npm.cmd run build` PASS, bilinen Vite chunk-size warning dışında sorun yok.
+- Risk sınıfları: BLOCKER yok; HIGH yok; MEDIUM WhatsApp modal async/flaky test ilk koşu ve React `act(...)` warning; LOW bilinen Vite chunk-size warning.
+- Deferred işler: Phone Action Simplification / `✓` `x` dropdown karmaşası, Communication History correction/delete, Reporting Area V2, mobile polish, eski `student_group` cleanup apply, `VELI TEL` ayrı export kolonu, WhatsApp Web open suspend kalıcı ürün kararı.
+- Pilot öncesi zorunlu bugfix gerekmiyor; kısa manuel QA/smoke yeterli kabul edildi.
+- Sıradaki muhtemel karar/discovery: Phone Action Simplification veya WhatsApp Web open suspend için kalıcı ürün kararı.
+- Beklenen working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 
 ## Latest Handoff Update - WhatsApp Web Open Suspend + Cleanup Candidate Service
 

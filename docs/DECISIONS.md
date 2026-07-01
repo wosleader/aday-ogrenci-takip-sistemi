@@ -282,3 +282,13 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Guardian Phone Import E2E] Generic `Telefon` kolonu Veli/Anne/Baba relation üretmemelidir; normal Telefon N olarak kalması browser testte korunur.
 - [Guardian Phone Import E2E] `VELI TEL` bulunan ama `VELI ADI` bulunmayan satır fake/boş guardian oluşturmamalıdır; `Veli Ad Soyad` satırı basılmamalı, telefon relation badge'iyle görünebilmelidir.
 - [Guardian Phone Import E2E] Bu checkpoint test-only'dir; production `src/**`, import writer, schema/db, export/backup, StudentsPage, WhatsApp ve package/config davranışı değişmez.
+
+## Latest Decisions - Dar Pilot Final Gate
+
+- [Dar Pilot Final Gate] `0e58928 docs: close guardian phone e2e checkpoint` seviyesi dar pilot için `PILOT READY WITH WARNINGS` kabul edilir.
+- [Dar Pilot Final Gate] Blocker ve high risk bulunmamıştır; pilot öncesi zorunlu bugfix gerekmez.
+- [Dar Pilot Final Gate] Kısa manuel QA/smoke yeterli kabul edilir; VDS `/demo` manuel smoke kullanıcı tarafından okey bildirildiği kadar kayda alınır, canlıda doğrulanmamış ek garanti dili kullanılmaz.
+- [Dar Pilot Final Gate] Final validation import, students, exports, settings, reports/reminders, Playwright import E2E ve build kontrollerinde PASS sonucuyla kapanmıştır.
+- [Risk Classification] BLOCKER yok; HIGH yok; MEDIUM olarak WhatsApp modal testinde ilk koşu async/flaky fail ve React `act(...)` warning not edilir; LOW olarak bilinen Vite chunk-size warning kabul edilir.
+- [Deferred Scope] Phone Action Simplification / `✓` `x` dropdown karmaşası, Communication History correction/delete, Reporting Area V2, mobile polish, eski `student_group` cleanup apply, `VELI TEL` ayrı export kolonu ve WhatsApp Web open suspend kalıcı ürün kararı pilot sonrası veya ayrı discovery kapsamındadır.
+- [Next Decision Candidates] Bir sonraki ürün/discovery hattı Phone Action Simplification veya WhatsApp Web open suspend için kalıcı ürün kararı olabilir; ikisi de ayrı tekil görev olarak ele alınmalıdır.
