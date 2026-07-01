@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 0e58928 docs: close guardian phone e2e checkpoint
-- Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS`; VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service ve WhatsApp Web open suspend zinciri tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: 82036c0 fix: persist imported campaign names
+- Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS`; VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend ve Kampanya import persistence bugfix zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Bu docs-only handoff sync tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: record pilot final gate decision
+- Önerilen docs commit: docs: close campaign import persistence bugfix
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -24,6 +24,19 @@
 - Bir önceki phone context persistence commit’i: 595979d feat: wire phone context persistence for calls and reminders
 - Working tree beklenen durumu: clean
 - GitHub/origin durumu: aktif branch `origin/sprint-9-2-multi-phone-architecture-plan` ile aynı son commit üzerinde görünür.
+
+## Latest Handoff Update - Kampanya Import Persistence Bugfix
+
+- Current safe HEAD/origin: `82036c0 fix: persist imported campaign names`.
+- Kullanıcı bug gözlemi: Excel import dosyasındaki `Kampanya` değerleri simülasyon/preview ekranında doğru görünüyordu; import sonrası adaylar `Diğer` kampanyasına düşüyor ve kampanya filtresinde yalnız `Diğer` görünüyordu.
+- Kök neden: `importSimulation` `row.campaign_name` değerini doğru taşıyor ve `ImportPage` preview bunu gösteriyordu; `importWriter` ise `row.campaign_name` değerini kullanmayıp tüm student kayıtlarına default `Diğer` `campaign_id` yazıyordu.
+- Fix davranışı: `importWriter` artık `row.campaign_name` değerini trimleyerek kullanır. Boş kampanya mevcut default `Diğer` davranışını korur.
+- Kampanya doluysa aynı isimde aktif campaign kullanılır; yoksa yeni aktif campaign oluşturulur. Aynı import içinde aynı kampanya adı tekrar ederse cache ile tek campaign kaydı kullanılır.
+- Student `campaign_id` gerçek kampanya kaydına bağlanır; `category`, `student_group`, `current_class`, guardian phone ve phone slot logic değişmedi.
+- Eski DB kayıtları geriye dönük düzeltilmedi; fix yalnız yeni importlar için geçerlidir.
+- Validation: `npm.cmd test -- --run tests/imports` PASS, 9 files / 100 tests; `npm.cmd test -- --run tests/students` PASS, 10 files / 86 tests; `npm.cmd run build` PASS, bilinen Vite chunk-size warning dışında hata yok; `git diff --check` PASS, yalnız LF -> CRLF çalışma kopyası uyarıları görüldü.
+- `82036c0` VDS demo ortamına deploy edildi. Kullanıcı VDS deploy, import sonrası kampanya ve kampanya filtresi smoke testlerini okey bildirdi; bu not kullanıcı bildirimiyle sınırlıdır.
+- Beklenen working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 
 ## Latest Handoff Update - Dar Pilot Final Gate
 

@@ -105,7 +105,7 @@ Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
 - `src/features/imports/services/importSimulation.ts`
   Import önizleme, uyarılar ve simülasyon özeti. Sprint 9.3G-4 itibarıyla `phones[]` üretimi, empty phone skip, row-level duplicate dedupe, invalid phone metadata ve duplicate warning kontrolünün tüm `phones[]` üzerinden çalışması davranışlarını taşır.
 - `src/features/imports/services/importWriter.ts`
-  Gerçek IndexedDB import transaction akışı. Sprint 9.3G-5 itibarıyla `row.phones[]` tüketir, `phone_1` / `phone_2` fallback'ini korur, Telefon 1-10 `PhoneRecord` persistence yapar, `phone_label` / `reference_label` / `priority` / `source_column` / `original_phone_value` / `is_valid` metadata'sını taşır, invalid non-empty phone persistence kararını uygular, `search_text` içine tüm `row.phones[]` numaralarını ekler ve dedupe / empty skip / `is_primary` davranışını yönetir.
+  Gerçek IndexedDB import transaction akışı. Sprint 9.3G-5 itibarıyla `row.phones[]` tüketir, `phone_1` / `phone_2` fallback'ini korur, Telefon 1-10 `PhoneRecord` persistence yapar, `phone_label` / `reference_label` / `priority` / `source_column` / `original_phone_value` / `is_valid` metadata'sını taşır, invalid non-empty phone persistence kararını uygular, `search_text` içine tüm `row.phones[]` numaralarını ekler ve dedupe / empty skip / `is_primary` davranışını yönetir. `82036c0` itibarıyla `row.campaign_name` değerini campaign lookup/create ve `student.campaign_id` persistence için kullanır; boş kampanyada default `Diğer` davranışı korunur.
 - `src/features/imports/services/importDuplicateGuard.ts`
   Aynı dosya/sheet/fingerprint şüphesini yakalama.
 - `src/features/imports/services/logExport.ts`
@@ -199,7 +199,7 @@ Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
 - `tests/imports/importSimulation.test.ts`
   `phones[]` simulation üretimini, `phone_1` / `phone_2` compatibility davranışını, boş telefonların atlanmasını, aynı satır duplicate tekilleştirmesini, invalid phone metadata davranışını ve duplicate warning kontrolünün tüm phone alanlarını kapsamasını test eder.
 - `tests/imports/importWriter.test.ts`
-  Telefon 3-10 writer/persistence, metadata persistence, duplicate/empty/invalid/search_text/rollback davranışları ve Telefon 1/2 backward compatibility testlerini içerir.
+  Telefon 3-10 writer/persistence, metadata persistence, duplicate/empty/invalid/search_text/rollback davranışları ve Telefon 1/2 backward compatibility testlerini içerir. `82036c0` sonrası Kampanya persist, default `Diğer`, aynı import içinde duplicate campaign reuse ve farklı campaign senaryolarını kapsar.
 - `tests/imports/ImportPageProgressiveDisclosure.test.tsx`
   Uzun kolon listesi kademeli gösterimini, `mapping_required` / önemli kolonların dar görünümde kalmasını, hata listesi expand/collapse davranışını, uyarı listesi expand/collapse davranışını ve `Veli Adı` auto guardian mapping akışını test eder.
 - `tests/calls/*`
@@ -687,4 +687,20 @@ Son doğrulandı: `b486735 test: cover guardian phone import e2e`
 - `e2e/helpers/importFixtures.ts`
   Runtime workbook helper'ı guardian phone E2E fixture verisini üretmek için kullanılır; binary Excel fixture commit edilmez.
 - Scope dışı: production `src/**`, import writer, schema/db, export/backup, StudentsPage, WhatsApp, package/config ve docs davranışı `b486735` test commit'inde değiştirilmemiştir.
+
+## Latest File Map Addendum - Kampanya Import Persistence Bugfix
+
+Son doğrulandı: `82036c0 fix: persist imported campaign names`
+
+- `src/features/imports/services/importSimulation.ts`
+  `campaign_name` değerini simülasyon satırına doğru taşır; bu dilimde değiştirilmedi.
+- `src/features/imports/ImportPage.tsx`
+  Preview tablosunda `row.campaign_name` değerini gösterir; bu dilimde değiştirilmedi.
+- `src/features/imports/services/importWriter.ts`
+  `row.campaign_name` değerini trimleyip campaign lookup/create için kullanır. Boş kampanya default `Diğer` kampanyasına bağlanır. Dolu kampanya için aynı isimde aktif campaign varsa kullanılır, yoksa yeni aktif campaign oluşturulur. Aynı import içinde tekrar eden kampanya adları cache ile tek kayda bağlanır.
+- `src/features/students/services/studentListReader.ts`
+  Student `campaign_id` üzerinden aktif campaign adını `campaign_name` olarak read model'e taşır; bu dilimde değiştirilmedi.
+- `tests/imports/importWriter.test.ts`
+  Kampanya persist, default `Diğer`, duplicate campaign reuse ve farklı campaign senaryolarını doğrular.
+- Scope dışı: schema/db migration, export/backup, StudentsPage UI, WhatsApp, campaign management UI, `category`, `student_group`, guardian phone ve phone slot logic değişmemiştir.
 

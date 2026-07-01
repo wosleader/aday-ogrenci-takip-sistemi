@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Dar Pilot Final Gate | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Kampanya Import Persistence Bugfix | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Dar Pilot Final Gate
-- FILE_MAP: Guardian Phone Import E2E
-- DECISIONS: Dar Pilot Final Gate
-- Son güvenli HEAD/origin: 0e58928 docs: close guardian phone e2e checkpoint
+- PROJECT_MEMORY: Kampanya Import Persistence Bugfix
+- FILE_MAP: Kampanya Import Persistence Bugfix
+- DECISIONS: Kampanya Import Persistence Bugfix
+- Son güvenli HEAD/origin: 82036c0 fix: persist imported campaign names
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
 
@@ -633,3 +633,15 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - Deferred işler: Phone Action Simplification / `✓` `x` dropdown karmaşası, Communication History correction/delete, Reporting Area V2, mobile polish, eski `student_group` cleanup apply, `VELI TEL` ayrı export kolonu, WhatsApp Web open suspend kalıcı ürün kararı.
 - Pilot öncesi zorunlu bugfix gerekmiyor; kısa manuel QA/smoke yeterli kabul edildi.
 - Sıradaki muhtemel product/discovery: Phone Action Simplification veya WhatsApp Web open suspend için kalıcı ürün kararı.
+
+## Latest Checkpoint Closure - Kampanya Import Persistence Bugfix
+
+- Bugfix commit: `82036c0 fix: persist imported campaign names`.
+- Kullanıcı gözlemi: Excel import dosyasında `Kampanya` değerleri simülasyon/preview ekranında doğru görünmesine rağmen import sonrası adaylar `Diğer` kampanyasına düşüyor ve kampanya filtresinde yalnız `Diğer` görünüyordu.
+- Kök neden: `importSimulation` `row.campaign_name` değerini doğru taşıyor ve `ImportPage` preview bu değeri gösteriyordu; ancak `importWriter` bu değeri kullanmayıp tüm student kayıtlarına default `Diğer` `campaign_id` yazıyordu.
+- Fix davranışı: `importWriter` artık `row.campaign_name` değerini trimleyerek kullanır. Kampanya boşsa mevcut default `Diğer` davranışı korunur.
+- Kampanya doluysa aynı isimde aktif campaign varsa kullanılır; yoksa yeni aktif campaign oluşturulur. Aynı import içinde aynı kampanya adı tekrar ederse cache ile tek campaign kaydı kullanılır.
+- Student `campaign_id` gerçek kampanya kaydına bağlanır; `category`, `student_group`, `current_class`, guardian phone ve phone slot logic değişmemiştir.
+- Eski DB kayıtları geriye dönük düzeltilmedi; fix yeni importlar için geçerlidir.
+- Validation: `npm.cmd test -- --run tests/imports` PASS, 9 files / 100 tests; `npm.cmd test -- --run tests/students` PASS, 10 files / 86 tests; `npm.cmd run build` PASS, bilinen Vite chunk-size warning dışında hata yok; `git diff --check` PASS, yalnız LF -> CRLF çalışma kopyası uyarıları görüldü.
+- `82036c0` VDS demo ortamına deploy edildi. Kullanıcı VDS deploy, import sonrası kampanya ve kampanya filtresi smoke testlerini okey bildirdi; bu not kullanıcı bildirimiyle sınırlıdır.

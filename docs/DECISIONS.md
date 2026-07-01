@@ -1,4 +1,4 @@
-﻿<!-- Son guncelleme: WhatsApp Manual Draft / Phone Action UI | Branch: sprint-9-2-multi-phone-architecture-plan -->
+﻿<!-- Son guncelleme: Kampanya Import Persistence Bugfix | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -292,3 +292,14 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Risk Classification] BLOCKER yok; HIGH yok; MEDIUM olarak WhatsApp modal testinde ilk koşu async/flaky fail ve React `act(...)` warning not edilir; LOW olarak bilinen Vite chunk-size warning kabul edilir.
 - [Deferred Scope] Phone Action Simplification / `✓` `x` dropdown karmaşası, Communication History correction/delete, Reporting Area V2, mobile polish, eski `student_group` cleanup apply, `VELI TEL` ayrı export kolonu ve WhatsApp Web open suspend kalıcı ürün kararı pilot sonrası veya ayrı discovery kapsamındadır.
 - [Next Decision Candidates] Bir sonraki ürün/discovery hattı Phone Action Simplification veya WhatsApp Web open suspend için kalıcı ürün kararı olabilir; ikisi de ayrı tekil görev olarak ele alınmalıdır.
+
+## Latest Decisions - Kampanya Import Persistence Bugfix
+
+- [Campaign Import Persistence] Importta dolu `Kampanya` değeri default `Diğer` ile ezilmez.
+- [Campaign Import Persistence] Dolu kampanya adı trimlenir; aynı isimde aktif campaign varsa kullanılır, yoksa yeni aktif campaign oluşturulur.
+- [Campaign Import Persistence] Aynı import içinde aynı kampanya adı tekrar ederse tek campaign kaydı cache ile tekrar kullanılır.
+- [Campaign Import Persistence] Student kaydı `campaign_id` üzerinden gerçek kampanya kaydına bağlanır; student list/read model ve filtreler bu ilişkiyi kullanır.
+- [Campaign Import Persistence] Kampanya boşsa mevcut default `Diğer` davranışı korunur.
+- [Campaign Import Persistence] Bu bugfix eski DB kayıtlarını geriye dönük temizlemez; yalnız yeni importlar için geçerlidir.
+- [Campaign Import Persistence Scope] Campaign management UI, schema migration, export/backup değişikliği, `category`, `student_group`, guardian phone ve phone slot logic bu sprintte değiştirilmemiştir.
+- [VDS Demo] `82036c0` VDS demo ortamına deploy edilmiş; kullanıcı import sonrası kampanya ve kampanya filtresi smoke testlerini okey bildirmiştir. Bu not kullanıcı bildirimiyle sınırlıdır.
