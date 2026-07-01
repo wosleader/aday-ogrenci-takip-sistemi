@@ -1,4 +1,4 @@
-<!-- Son guncelleme: VELI TEL / Guardian Phone Import | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Guardian Phone Import E2E | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: VELI TEL / Guardian Phone Import
-- FILE_MAP: VELI TEL / Guardian Phone Import
-- DECISIONS: VELI TEL / Guardian Phone Import
-- Son implementation commit: cf47e2d feat: import explicit guardian phone relations
+- PROJECT_MEMORY: Guardian Phone Import E2E
+- FILE_MAP: Guardian Phone Import E2E
+- DECISIONS: Guardian Phone Import E2E
+- Son güvenli HEAD/origin: b486735 test: cover guardian phone import e2e
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
 
@@ -87,6 +87,7 @@ Kısa özet:
 - Veli telefonu özel slota zorlanmaz; mevcut Telefon 1-10 slot fidelity / Excel kolon sırası korunur. Generic Telefon/GSM/Tel/Telefon 1 başlıklarından Veli ilişkisi tahmin edilmez.
 - Veli adı varsa writer telefonu ilgili Veli guardian kaydına bağlar. Veli adı yoksa fake/boş guardian oluşturulmaz; `relation_label: "Veli"` korunur ve `guardian_id: null` kalabilir.
 - `VELI ADI` / `VELI AD SOYAD`, Anne/Baba/Veli isimleri ve Veli phone alanları öğrenci adı kaynağı değildir.
+- Guardian phone import davranışı `b486735` ile browser-level Playwright E2E altında da korunur. Senaryo `VELI ADI` + `VELI TEL`, `ANNE TEL`, `BABA TEL`, generic Telefon ve Veli adı olmadan Veli telefonu akışını sağ kart seviyesinde doğrular.
 - Export, backup/restore, StudentsPage, WhatsApp, schema/db ve package/config davranışı bu Veli phone diliminde değişmedi.
 - Reader Veli/Anne/Baba kayıtlarını relation type ile ayırır; legacy `relation_type: null` Veli olarak kalır.
 - Sağ kart yalnızca dolu `Veli Ad Soyad`, `Anne Adı`, `Baba Adı` satırlarını kompakt gösterir.
@@ -598,3 +599,15 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - Export, backup/restore, StudentsPage, WhatsApp, schema/db ve package/config değişmedi.
 - Validation: `npm.cmd test -- --run tests/imports` PASS, 9 test files / 96 tests; `npm.cmd run build` PASS, bilinen Vite chunk-size warning dışında hata yok; `git diff --check` PASS, yalnız LF -> CRLF çalışma kopyası uyarıları görüldü.
 - `cf47e2d` VDS demo ortamına deploy edildi ve kullanıcı tarafından test/QA okey olarak bildirildi; bu not kullanıcı bildirimiyle sınırlıdır.
+
+## Latest Test Checkpoint - Guardian Phone Import E2E
+
+- Test commit: `b486735 test: cover guardian phone import e2e`.
+- Playwright import regression içine `imports guardian phone relations with parent phones` senaryosu eklendi.
+- Senaryo browser üzerinden Excel upload, import, aday listesi ve sağ kart doğrulama akışını çalıştırır.
+- `VELI ADI` + `VELI TEL` birlikte doğrulanır: Veli adı sağ kartta `Veli Ad Soyad` olarak, telefon `Veli telefonu` relation badge'iyle görünür.
+- `ANNE TEL` ve `BABA TEL` ayrı `Anne telefonu` / `Baba telefonu` badge'leriyle doğrulanır.
+- Generic `Telefon` kolonu relation badge üretmeden normal Telefon N olarak kalır.
+- `VELI TEL` var ama `VELI ADI` yok senaryosunda fake/boş guardian oluşmadığı, `Veli Ad Soyad` satırı basılmadığı ve telefonun `Veli telefonu` badge'iyle görünebildiği testlenir.
+- Bu test-only checkpoint ürün kodu değiştirmez: `src/**`, schema, import writer, export/backup, StudentsPage, WhatsApp, docs ve package/config değişmedi.
+- Validation: `npm.cmd run qa:import:e2e` PASS, 6/6 Playwright test; `npm.cmd test -- --run tests/imports` PASS, 9 files / 96 tests; `npm.cmd run build` PASS, bilinen Vite chunk-size warning dışında sorun yok; `git diff --check` PASS, yalnız LF -> CRLF çalışma kopyası uyarısı görüldü.

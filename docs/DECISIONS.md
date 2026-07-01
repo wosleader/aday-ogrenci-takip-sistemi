@@ -275,3 +275,10 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [VELI TEL / Guardian Phone Import] Ayrı Veli telefonu export kolonu bu sprintte eklenmez; parent relation telefonları mevcut Telefon 1-10 slotları içinde kalır.
 - [VDS Demo] `cf47e2d` VDS demo ortamına deploy edilmiş ve kullanıcı tarafından test/QA okey olarak bildirilmiştir; bu not kullanıcı bildirimiyle sınırlıdır.
 
+## Latest Decisions - Guardian Phone Import E2E
+
+- [Guardian Phone Import E2E] Guardian phone import davranışı artık browser-level Playwright E2E ile de korunur; `qa:import:e2e` komutu bu senaryoyu regression matrix içinde çalıştırır.
+- [Guardian Phone Import E2E] `VELI ADI` + `VELI TEL`, `ANNE TEL` ve `BABA TEL` ilişkileri import sonrası sağ kart seviyesinde doğrulanır.
+- [Guardian Phone Import E2E] Generic `Telefon` kolonu Veli/Anne/Baba relation üretmemelidir; normal Telefon N olarak kalması browser testte korunur.
+- [Guardian Phone Import E2E] `VELI TEL` bulunan ama `VELI ADI` bulunmayan satır fake/boş guardian oluşturmamalıdır; `Veli Ad Soyad` satırı basılmamalı, telefon relation badge'iyle görünebilmelidir.
+- [Guardian Phone Import E2E] Bu checkpoint test-only'dir; production `src/**`, import writer, schema/db, export/backup, StudentsPage, WhatsApp ve package/config davranışı değişmez.

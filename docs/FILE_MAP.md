@@ -678,3 +678,13 @@ Son doğrulandı: `cf47e2d feat: import explicit guardian phone relations`
   Veli telefonunun Veli guardian kaydına bağlanmasını ve Veli adı yoksa fake guardian oluşturulmadan `guardian_id: null` kalmasını doğrular.
 - Scope dışı: export/backup, StudentsPage, WhatsApp, schema/db ve package/config değişmemiştir.
 
+## Latest File Map Addendum - Guardian Phone Import E2E
+
+Son doğrulandı: `b486735 test: cover guardian phone import e2e`
+
+- `e2e/import-regression.spec.ts`
+  Guardian phone import relation senaryosunu içerir. Browser üzerinden Excel upload, import, Aday Listesi ve sağ kart doğrulama akışında `VELI ADI` + `VELI TEL`, `ANNE TEL`, `BABA TEL` ve generic `Telefon` davranışını kapsar. Generic Telefon relation badge üretmez. `VELI TEL` var ama `VELI ADI` yoksa fake/boş guardian satırı oluşmadığını ve telefonun `Veli telefonu` badge'iyle görünebildiğini doğrular.
+- `e2e/helpers/importFixtures.ts`
+  Runtime workbook helper'ı guardian phone E2E fixture verisini üretmek için kullanılır; binary Excel fixture commit edilmez.
+- Scope dışı: production `src/**`, import writer, schema/db, export/backup, StudentsPage, WhatsApp, package/config ve docs davranışı `b486735` test commit'inde değiştirilmemiştir.
+

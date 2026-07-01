@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: cf47e2d feat: import explicit guardian phone relations
-- VELI TEL / guardian_phone import, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service ve WhatsApp Web open suspend zinciri tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: b486735 test: cover guardian phone import e2e
+- VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service ve WhatsApp Web open suspend zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Bu docs-only handoff sync tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: close guardian phone import checkpoint
+- Önerilen docs commit: docs: close guardian phone e2e checkpoint
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -71,6 +71,19 @@
 - Export, backup/restore, StudentsPage, WhatsApp, schema/db ve package/config değişmedi.
 - Validation: `npm.cmd test -- --run tests/imports` PASS, 9 files / 96 tests; `npm.cmd run build` PASS with known Vite chunk-size warning; `git diff --check` PASS with only LF -> CRLF working-copy warnings.
 - `cf47e2d` VDS demo ortamına deploy edildi ve kullanıcı tarafından test/QA okey olarak bildirildi. Bu not kullanıcı bildirimiyle sınırlıdır.
+- Beklenen working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
+
+## Latest Handoff Update - Guardian Phone Import E2E
+
+- Current safe HEAD/origin: `b486735 test: cover guardian phone import e2e`.
+- Playwright import regression içinde `imports guardian phone relations with parent phones` senaryosu bulunur.
+- Senaryo gerçek browser akışında Excel upload, import, Aday Listesi ve sağ kart doğrulaması yapar.
+- `VELI ADI` + `VELI TEL` birlikte doğrulanır: Veli adı `Veli Ad Soyad`, telefon `Veli telefonu` badge'iyle görünür.
+- `ANNE TEL` ve `BABA TEL` sırasıyla `Anne telefonu` / `Baba telefonu` badge'leriyle doğrulanır.
+- Generic `Telefon` relation badge üretmez ve normal Telefon N davranışında kalır.
+- `VELI TEL` var ama `VELI ADI` yoksa fake/boş guardian oluşmadığı ve `Veli Ad Soyad` satırının basılmadığı E2E ile korunur; telefon yine `Veli telefonu` badge'iyle görünebilir.
+- Ürün kodu değişmedi: `src/**`, schema, import writer, export/backup, StudentsPage, WhatsApp, package/config ve docs `b486735` içinde değişmedi.
+- Validation: `npm.cmd run qa:import:e2e` PASS, 6/6 Playwright test; `npm.cmd test -- --run tests/imports` PASS, 9 files / 96 tests; `npm.cmd run build` PASS with known Vite chunk-size warning; `git diff --check` PASS with only LF -> CRLF working-copy warning.
 - Beklenen working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 
 ## Latest Handoff Update - Guardian + Phone UI Clarity
