@@ -239,7 +239,7 @@ describe("StudentsPage phone selection", () => {
     expect(selectedPhoneControl.closest(".phone-actions")).not.toBeNull();
     expect(selectedPhoneControl).not.toHaveTextContent("Bu görüşmede kullanılacak telefon");
     expect(phone3Card).toHaveClass("contacted");
-    expect(within(phone3Card as HTMLElement).getByText("Son görüşülen / iletişim kurulan numara")).toBeInTheDocument();
+    expect(within(phone3Card as HTMLElement).getByText("Aranan / işlem yapılan telefon")).toBeInTheDocument();
     expect(
       within(phone3Card as HTMLElement).getByRole("button", {
         name: "Yanlış / kullanılmayacak numara"
@@ -271,7 +271,7 @@ describe("StudentsPage phone selection", () => {
     );
 
     expect(
-      within(getDrawerPhoneCard("Telefon 3")).getByText("Son görüşülen / iletişim kurulan numara")
+      within(getDrawerPhoneCard("Telefon 3")).getByText("Aranan / işlem yapılan telefon")
     ).toBeInTheDocument();
 
     await user.click(
@@ -721,7 +721,7 @@ describe("StudentsPage phone selection", () => {
       expect(getDrawerPhoneCard("Telefon 1")).not.toHaveClass("contacted");
       expect(getDrawerPhoneCard("Telefon 3")).toHaveClass("contacted");
       expect(
-        within(getDrawerPhoneCard("Telefon 3")).getByText("Son görüşülen / iletişim kurulan numara")
+        within(getDrawerPhoneCard("Telefon 3")).getByText("Aranan / işlem yapılan telefon")
       ).toBeInTheDocument();
     });
 
@@ -1057,7 +1057,31 @@ describe("StudentsPage phone selection", () => {
     );
   });
 
-  it("requires an explicit call phone when multiple eligible phones exist", async () => {
+  it("allows Ulaşılamadı without an explicit call phone when multiple eligible phones exist", async () => {
+    const user = userEvent.setup();
+    const studentId = await seedStudentWithPhones("MELIS KAYA", "not-reached-validation");
+
+    renderStudentsPage();
+
+    await screen.findByText("Telefon 3");
+    await user.selectOptions(getCallResultSelect(), "not_reached");
+    await user.click(screen.getByRole("button", { name: /Kaydet ve sonrakine geç/ }));
+
+    expect(await screen.findByText("Görüşme kaydedildi. Liste sonuna geldiniz.")).toBeInTheDocument();
+    expect(await db.call_logs.count()).toBe(1);
+    const callLog = await db.call_logs.where("student_id").equals(studentId).first();
+    const student = await db.students.get(studentId);
+    expect(callLog).toMatchObject({
+      call_result: "not_reached",
+      contacted_phone_id: null,
+      phone_id: null,
+      phone_snapshot: null
+    });
+    expect(student?.last_call_result).toBe("not_reached");
+    expect(student?.last_contacted_phone_id).toBeNull();
+  });
+
+  it("requires an explicit call phone for reached when multiple eligible phones exist", async () => {
     const user = userEvent.setup();
     await seedStudentWithPhones("MELIS KAYA", "validation");
 
@@ -1068,7 +1092,7 @@ describe("StudentsPage phone selection", () => {
     await user.click(screen.getByRole("button", { name: /Kaydet ve sonrakine geç/ }));
 
     expect(
-      await screen.findByText("Hangi numarayla görüşüldü? Lütfen görüşmede kullanılan telefonu seçin.")
+      await screen.findByText("Hangi telefonla işlem yapılacak? Lütfen bu kayıt için ilgili telefonu seçin.")
     ).toBeInTheDocument();
   });
 

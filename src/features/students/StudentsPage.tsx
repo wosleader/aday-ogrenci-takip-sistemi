@@ -275,7 +275,7 @@ function PhoneCell({
     <span className={`phone-cell ${isEmpty ? "empty-value" : ""}`} title={value || undefined}>
       <span className="phone-cell-number">{compactPhone(value)}</span>
       {mark ? (
-        <span className={`phone-cell-mark ${isWrong ? "invalid" : "contacted"}`} title={isWrong ? "Yanlış numara / kullanılmıyor" : "Son görüşülen / iletişim kurulan numara"}>
+        <span className={`phone-cell-mark ${isWrong ? "invalid" : "contacted"}`} title={isWrong ? "Yanlış numara / kullanılmıyor" : "Aranan / işlem yapılan telefon"}>
           {mark}
         </span>
       ) : null}
@@ -675,7 +675,7 @@ function PhoneCard({
   const displayStatusText =
     effectiveStatusText ??
     (isEffectiveContacted
-      ? "Son görüşülen / iletişim kurulan numara"
+      ? "Aranan / işlem yapılan telefon"
       : isWrong
         ? "Yanlış numara / kullanılmıyor"
         : null);
@@ -1250,7 +1250,7 @@ function getReadonlyPhoneStatusText(phone: StudentListPhoneRow): string | null {
   }
 
   if (phone.phone_status === "contacted") {
-    return "Son görüşülen / iletişim kurulan numara";
+    return "Aranan / işlem yapılan telefon";
   }
 
   return null;
@@ -1672,7 +1672,7 @@ export function StudentsPage() {
     }
 
     if (isWrong) {
-      const message = "Yanlış numara / kullanılmıyor işaretli telefon görüşülen numara olarak seçilemez.";
+      const message = "Yanlış numara / kullanılmıyor işaretli telefon bu kayıt için seçilemez.";
       setActionMessage(message);
       showOperationToast(message, "error");
       return;
@@ -1711,8 +1711,8 @@ export function StudentsPage() {
         const result = await markPhoneAsContacted(phoneId);
         const message =
           result.phone_status === "contacted"
-            ? "Telefon görüşülen numara olarak işaretlendi."
-            : "Görüşülen numara işareti kaldırıldı.";
+            ? "Telefon aranan / işlem yapılan telefon olarak işaretlendi."
+            : "Aranan / işlem yapılan telefon işareti kaldırıldı.";
         setActionMessage(message);
         showOperationToast(message, "success");
       } else {

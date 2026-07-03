@@ -279,7 +279,7 @@ describe("callLogWriter", () => {
     }
   });
 
-  it("does not auto-select invalid phones", async () => {
+  it("does not auto-select invalid phones for optional call results", async () => {
     const database = await createDatabase();
 
     try {
@@ -289,7 +289,7 @@ describe("callLogWriter", () => {
       await writeCallLog(
         {
           student_id: studentId,
-          call_result: "wrong_number"
+          call_result: "not_reached"
         },
         { database }
       );
@@ -304,7 +304,130 @@ describe("callLogWriter", () => {
     }
   });
 
-  it("requires explicit phone selection when two eligible phones exist", async () => {
+  it("allows not_reached without selected phone when multiple eligible phones exist", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      await database.phones.bulkAdd([
+        phone(studentId),
+        phone(studentId, {
+          phone_number: "05327654321",
+          normalized_phone_number: "05327654321",
+          phone_label: "Telefon 2",
+          is_primary: false
+        })
+      ]);
+
+      const result = await writeCallLog({ student_id: studentId, call_result: "not_reached" }, { database });
+      const callLog = await database.call_logs.get(result.call_log_id);
+      const updatedStudent = await database.students.get(studentId);
+
+      expect(callLog).toMatchObject({
+        call_result: "not_reached",
+        contacted_phone_id: null,
+        phone_id: null,
+        phone_snapshot: null
+      });
+      expect(updatedStudent?.last_call_result).toBe("not_reached");
+      expect(updatedStudent?.last_contacted_phone_id).toBeNull();
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("rejects wrong_number when no selectable phone exists", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      await database.phones.add(phone(studentId, { phone_status: "invalid", is_wrong: true }));
+
+      await expect(writeCallLog({ student_id: studentId, call_result: "wrong_number" }, { database })).rejects.toThrow(
+        "Bu kayıt için seçilebilir telefon bulunmadı."
+      );
+      expect(await database.call_logs.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("allows call_later without selected phone when multiple eligible phones exist", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      await database.phones.bulkAdd([
+        phone(studentId),
+        phone(studentId, {
+          phone_number: "05327654321",
+          normalized_phone_number: "05327654321",
+          phone_label: "Telefon 2",
+          is_primary: false
+        })
+      ]);
+
+      const result = await writeCallLog(
+        {
+          student_id: studentId,
+          call_result: "call_later",
+          reminder_at: "2026-05-16T11:00:00.000Z"
+        },
+        { database }
+      );
+      const callLog = await database.call_logs.get(result.call_log_id);
+      const reminderRecord = await database.reminders.get(result.created_reminder_id!);
+
+      expect(callLog).toMatchObject({
+        call_result: "call_later",
+        contacted_phone_id: null,
+        phone_id: null,
+        phone_snapshot: null
+      });
+      expect(reminderRecord).toMatchObject({
+        phone_id: null,
+        phone_snapshot: null,
+        reminder_at: "2026-05-16T11:00:00.000Z"
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("allows appointment without selected phone when multiple eligible phones exist", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      await database.phones.bulkAdd([
+        phone(studentId),
+        phone(studentId, {
+          phone_number: "05327654321",
+          normalized_phone_number: "05327654321",
+          phone_label: "Telefon 2",
+          is_primary: false
+        })
+      ]);
+
+      const result = await writeCallLog({ student_id: studentId, call_result: "appointment" }, { database });
+      const callLog = await database.call_logs.get(result.call_log_id);
+
+      expect(callLog).toMatchObject({
+        call_result: "appointment",
+        contacted_phone_id: null,
+        phone_id: null,
+        phone_snapshot: null
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("requires explicit phone selection for reached when two eligible phones exist", async () => {
     const database = await createDatabase();
 
     try {
@@ -320,8 +443,57 @@ describe("callLogWriter", () => {
       ]);
 
       await expect(writeCallLog({ student_id: studentId, call_result: "reached" }, { database })).rejects.toThrow(
-        "Hangi numarayla görüşüldü"
+        "Hangi telefonla işlem yapılacak"
       );
+      expect(await database.call_logs.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("requires explicit phone selection for wrong_number when two eligible phones exist", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      await database.phones.bulkAdd([
+        phone(studentId),
+        phone(studentId, {
+          phone_number: "05327654321",
+          normalized_phone_number: "05327654321",
+          phone_label: "Telefon 2",
+          is_primary: false
+        })
+      ]);
+
+      await expect(writeCallLog({ student_id: studentId, call_result: "wrong_number" }, { database })).rejects.toThrow(
+        "Hangi telefonla işlem yapılacak"
+      );
+      expect(await database.call_logs.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("rejects selected wrong or unusable phones for optional call results", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const phoneId = await database.phones.add(phone(studentId, { phone_status: "invalid", is_wrong: true }));
+
+      await expect(
+        writeCallLog(
+          {
+            student_id: studentId,
+            contacted_phone_id: phoneId,
+            call_result: "not_reached"
+          },
+          { database }
+        )
+      ).rejects.toThrow("Yanlış numara / kullanılmıyor işaretli telefon bu kayıt için seçilemez.");
       expect(await database.call_logs.count()).toBe(0);
     } finally {
       database.close();

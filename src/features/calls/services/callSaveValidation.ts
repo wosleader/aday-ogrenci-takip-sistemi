@@ -34,6 +34,12 @@ export type CallSaveValidationResult =
       confirmation_type?: "appointment_note" | "past_appointment";
     };
 
+const CALL_RESULTS_REQUIRING_PHONE_SELECTION = new Set<CallResult>(["reached", "wrong_number"]);
+
+export function requiresCallPhoneSelection(callResult: CallResult): boolean {
+  return CALL_RESULTS_REQUIRING_PHONE_SELECTION.has(callResult);
+}
+
 function hasDateTime(input: CallSaveValidationInput): boolean {
   return Boolean(input.reminder_date?.trim() && input.reminder_time?.trim());
 }
@@ -73,18 +79,30 @@ function validatePhoneSelection(input: CallSaveValidationInput): CallSaveValidat
       return {
         ok: false,
         severity: "error",
-        message: "Yanlış numara / kullanılmıyor işaretli telefon görüşülen numara olarak seçilemez."
+        message: "Yanlış numara / kullanılmıyor işaretli telefon bu kayıt için seçilemez."
       };
     }
 
     return null;
   }
 
+  if (!requiresCallPhoneSelection(input.call_result)) {
+    return null;
+  }
+
+  if (eligiblePhones.length === 0) {
+    return {
+      ok: false,
+      severity: "error",
+      message: "Bu kayıt için seçilebilir telefon bulunmadı."
+    };
+  }
+
   if (eligiblePhones.length > 1) {
     return {
       ok: false,
       severity: "error",
-      message: "Hangi numarayla görüşüldü? Lütfen görüşmede kullanılan telefonu seçin."
+      message: "Hangi telefonla işlem yapılacak? Lütfen bu kayıt için ilgili telefonu seçin."
     };
   }
 

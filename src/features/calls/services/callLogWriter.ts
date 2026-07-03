@@ -5,6 +5,7 @@ import type { PhoneRecord } from "../../../domain/models/phone";
 import { nowIso } from "../../../utils/dateTime";
 import { createUuid } from "../../../utils/id";
 import { createPhoneSnapshot } from "../../students/services/phoneCompatibility";
+import { requiresCallPhoneSelection } from "./callSaveValidation";
 
 export type CallLogWriteInput = {
   student_id: number;
@@ -55,6 +56,7 @@ function lifecycleFromCallResult(callResult: CallResult, currentLifecycleStatus:
 async function resolveContactPhone(
   database: AppDatabase,
   studentId: number,
+  callResult: CallResult,
   contactedPhoneId?: number | null
 ): Promise<(PhoneRecord & { id: number }) | null> {
   const phones = (await database.phones.where("student_id").equals(studentId).toArray()).flatMap((phone) =>
@@ -69,7 +71,7 @@ async function resolveContactPhone(
     }
 
     if (!isEligibleContactPhone(phone)) {
-      throw new Error("Yanlış numara / kullanılmıyor işaretli telefon görüşülen numara olarak seçilemez.");
+      throw new Error("Yanlış numara / kullanılmıyor işaretli telefon bu kayıt için seçilemez.");
     }
 
     return phone;
@@ -81,8 +83,14 @@ async function resolveContactPhone(
     return eligiblePhones[0];
   }
 
-  if (eligiblePhones.length > 1) {
-    throw new Error("Hangi numarayla görüşüldü? Lütfen Telefon 1 veya Telefon 2 için ✓ işaretleyin.");
+  if (requiresCallPhoneSelection(callResult)) {
+    if (eligiblePhones.length === 0) {
+      throw new Error("Bu kayıt için seçilebilir telefon bulunmadı.");
+    }
+
+    if (eligiblePhones.length > 1) {
+      throw new Error("Hangi telefonla işlem yapılacak? Lütfen bu kayıt için ilgili telefonu seçin.");
+    }
   }
 
   return null;
@@ -144,7 +152,12 @@ export async function writeCallLog(
       }
 
       const timestamp = nowIso();
-      const contactedPhone = await resolveContactPhone(database, student.id, input.contacted_phone_id);
+      const contactedPhone = await resolveContactPhone(
+        database,
+        student.id,
+        input.call_result,
+        input.contacted_phone_id
+      );
       const phoneSnapshot = contactedPhone ? createPhoneSnapshot(contactedPhone) : null;
       const trimmedNote = input.note?.trim() || null;
       const callLogId = await database.call_logs.add({
