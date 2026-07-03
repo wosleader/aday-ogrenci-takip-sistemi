@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 055597a fix: relax phone selection for non-contact call results
-- Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix ve görüşme durumu telefon seçimi kuralı düzeltmesi tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: 8bf7cb2 fix: allow wrong number when all phones are invalid
+- Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi ve tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Bu docs-only handoff sync tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: close call phone selection rule fix
+- Önerilen docs commit: docs: close all phones invalid wrong number fix
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -25,12 +25,25 @@
 - Working tree beklenen durumu: clean
 - GitHub/origin durumu: aktif branch `origin/sprint-9-2-multi-phone-architecture-plan` ile aynı son commit üzerinde görünür.
 
+## Latest Handoff Update - All Phones Invalid Wrong Number Fix
+
+- Current safe HEAD/origin: `8bf7cb2 fix: allow wrong number when all phones are invalid`.
+- Edge-case: Adaydaki tüm telefonlar X / yanlış-kullanılmıyor işaretliyken ve phone-level outcome dropdown'larında `Kullanılmıyor` seçiliyken genel `Yanlış Numara` kaydı artık `Bu kayıt için seçilebilir telefon bulunamadı` hatasıyla bloklanmaz.
+- Son kural: `reached` / Görüşüldü için telefon zorunluluğu korunur. `wrong_number` / Yanlış Numara için seçilebilir telefon varsa telefon seçimi zorunlu kalır.
+- Eğer adayda en az bir telefon var ama tüm telefonlar zaten `is_wrong` veya `phone_status: invalid` ise genel `wrong_number` telefon seçmeden kaydedilebilir.
+- Bu edge-case'te call log null phone context taşıyabilir; aday genel sonucu `wrong_number` olur ve phone-level status/outcome tekrar güncellenmez.
+- No-phone aday davranışı bu fix'in kapsamı değildir; mevcut guard korunur.
+- Validation: focused 5 files / 77 tests PASS; full default 49 files / 397 tests PASS; full serial 49 files / 397 tests PASS; build PASS, bilinen Vite chunk-size warning dışında sorun yok; `git diff --check` PASS, yalnız LF -> CRLF çalışma kopyası uyarıları görüldü.
+- `8bf7cb2` VDS demo ortamına deploy edildi. Kullanıcı smoke testte tüm telefonları X / yanlış-kullanılmıyor yaptı, phone outcome dropdown'larında `Kullanılmıyor` seçti, genel `Yanlış Numara` kaydetti ve sorun olmadığını bildirdi.
+- Scope dışı/değişmeyenler: schema/migration, import/export, backup/restore, WhatsApp, reminder lifecycle, communication history edit/delete ve package/config.
+- Beklenen working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
+
 ## Latest Handoff Update - Call Phone Selection Rule
 
 - Current safe HEAD/origin: `055597a fix: relax phone selection for non-contact call results`.
 - Kullanıcı gözlemi: `Ulaşılamadı` seçildiğinde sistem “Son görüşülen / iletişim kurulan numara” seçimini zorunlu tutuyordu; ulaşılamayan çağrıda bu hem mantık hem metin olarak yanıltıcıydı.
 - Kök neden: `validateCallSave()` ve `callLogWriter()` birden fazla uygun telefon olduğunda telefon seçimini `call_result` değerinden bağımsız istiyordu.
-- Yeni kural: Telefon seçimi yalnız `reached` ve `wrong_number` için zorunludur.
+- Yeni kural: Telefon seçimi `reached` için zorunludur; `wrong_number` için seçilebilir telefon varsa zorunludur.
 - Telefon seçimi opsiyonel/non-blocking sonuçlar: `not_called`, `not_reached`, `call_later`, `appointment`, `do_not_call`, `not_interested`, `registered`.
 - Telefon seçilmeden yazılan call log null phone context taşıyabilir; call history `Telefon seçilmedi` fallback'iyle gösterir.
 - Phone-level outcome/status yalnız telefon bağlamı varsa güncellenir. Non-contact ve telefonsuz kayıtlar telefon kartı durumunu mutate etmez.

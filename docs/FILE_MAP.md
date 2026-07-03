@@ -1,4 +1,4 @@
-﻿<!-- Son guncelleme: Call Phone Selection Rule Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
+﻿<!-- Son guncelleme: All Phones Invalid Wrong Number Fix Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -52,9 +52,9 @@ Son doğrulandı: Phone-Level Outcome Read Model Pilot
 - `src/features/calls/CallPage.tsx`
   Eski/yardımcı call route sayfası; ana operasyon Aday Listesi + sağ drawer üzerinden yürür.
 - `src/features/calls/services/callSaveValidation.ts`
-  Görüşme kaydetme validasyonları, uyarı ve onay mantığı. Sprint 9.3F-1 itibarıyla görüşülen telefon seçimi için Telefon 1/2'ye özel olmayan genel validation mesajını ve çoklu telefon listesiyle uyumlu seçim kontrolünü taşır.
+  Görüşme kaydetme validasyonları, uyarı ve onay mantığı. Sprint 9.3F-1 itibarıyla görüşülen telefon seçimi için Telefon 1/2'ye özel olmayan genel validation mesajını ve çoklu telefon listesiyle uyumlu seçim kontrolünü taşır. `8bf7cb2` itibarıyla `wrong_number` için seçilebilir telefon varsa telefon seçimi zorunlu kalır; adayda telefon olup tüm telefonlar invalid/wrong ise genel `wrong_number` kaydına null phone context ile izin verir.
 - `src/features/calls/services/callLogWriter.ts`
-  `writeCallLog` transaction akışı; `call_logs`, student son durum, telefon güncellemeleri ve pending reminder create/update davranışını yönetir. Sprint 9.3B-2 itibarıyla call log ve pending reminder kayıtlarına `phone_id` / `phone_snapshot` persistence wiring yapar; legacy contacted phone alanlarını korur.
+  `writeCallLog` transaction akışı; `call_logs`, student son durum, telefon güncellemeleri ve pending reminder create/update davranışını yönetir. Sprint 9.3B-2 itibarıyla call log ve pending reminder kayıtlarına `phone_id` / `phone_snapshot` persistence wiring yapar; legacy contacted phone alanlarını korur. `8bf7cb2` edge-case'inde tüm telefonlar invalid/wrong ise genel `wrong_number` kaydını telefon bağlamı olmadan yazabilir.
 - `src/features/calls/services/callLogPhoneContext.ts`
   Call log telefon bağlamı display/fallback helper’ları; `phone_snapshot` varsa Telefon N / ilişki etiketi label’ı üretir, eski kayıtlarda güvenli fallback döner.
 - `src/features/calls/services/callHistoryReader.ts`
@@ -721,4 +721,22 @@ Son doğrulandı: `055597a fix: relax phone selection for non-contact call resul
 - `tests/students/StudentsPagePhoneSelection.test.tsx`
   UI metinleri, telefon seçimi zorunluluk uyarıları, yanlış/uygun olmayan telefon blokları ve sağ kart regresyonlarını kapsar.
 - Scope dışı: schema/migration, import/export, backup/restore, WhatsApp, package/config ve report/export label metinleri değiştirilmemiştir.
+
+## Latest File Map Addendum - All Phones Invalid Wrong Number Fix
+
+Son doğrulandı: `8bf7cb2 fix: allow wrong number when all phones are invalid`
+
+- `src/features/calls/services/callSaveValidation.ts`
+  Görüşme durumu bazlı telefon seçimi kuralının validation kaynağıdır. `wrong_number` için seçilebilir telefon varsa telefon seçimi zorunlu kalır; adayda telefon olup tüm telefonlar `is_wrong` veya `phone_status: invalid` ise genel `wrong_number` kaydına null phone context ile izin verir.
+- `src/features/calls/services/callLogWriter.ts`
+  Service-level guard validation ile aynı edge-case'i korur. Tüm telefonlar invalid/wrong ise `wrong_number` call log'u telefon bağlamı olmadan yazılabilir; seçilebilir telefon varsa `wrong_number` için telefon bağlamı ister.
+- `src/features/students/StudentsPage.tsx`
+  Sağ kart genel görüşme kaydı akışında bu validation/writer sonucunu tüketir; X, phone outcome dropdown, phone-level status/outcome ve no-phone aday davranışı bu fix kapsamında değiştirilmemiştir.
+- `tests/calls/callSaveValidation.test.ts`
+  Tüm telefonlar invalid/wrong iken `wrong_number` kaydının bloklanmamasını, seçilebilir telefon varken `wrong_number` zorunluluğunun sürmesini ve `reached` zorunluluğunun korunmasını doğrular.
+- `tests/calls/callLogWriter.test.ts`
+  Writer'ın tüm telefonlar invalid/wrong edge-case'inde null phone context ile genel `wrong_number` yazabilmesini ve seçilebilir telefon guard'ını koruduğunu doğrular.
+- `tests/students/StudentsPagePhoneSelection.test.tsx`
+  Sağ kart UI regression'larında tüm telefonlar yanlış/kullanılmıyor iken genel `Yanlış Numara` kaydının yapılabildiğini ve ilgili hata metninin çıkmadığını kapsar.
+- Scope dışı: schema/migration, import/export, backup/restore, WhatsApp, reminder lifecycle, communication history edit/delete ve package/config değiştirilmemiştir.
 
