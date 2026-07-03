@@ -2,7 +2,7 @@ import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type C
 import { createPortal } from "react-dom";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Bell, Check, ChevronsRight, Copy, MoreVertical, Trash2, X } from "lucide-react";
+import { Bell, Check, ChevronsRight, Copy, MoreVertical, Pencil, Trash2, X } from "lucide-react";
 import type { AppOutletContext } from "../../app/AppLayout";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/EmptyState";
@@ -13,6 +13,7 @@ import {
   PHONE_CALL_OUTCOME_LABELS,
   type PhoneCallOutcome
 } from "../../domain/models/phone";
+import { updateCallLogCorrection } from "../calls/services/callLogCorrection";
 import { softDeleteCallLogAndRecomputeStudentSummary } from "../calls/services/callLogDeletion";
 import { readCallHistoryForStudent, type CallHistoryItem } from "../calls/services/callHistoryReader";
 import { writeCallLog } from "../calls/services/callLogWriter";
@@ -218,6 +219,16 @@ function mergeReminderDateTime(dateValue: string, timeValue: string): string | n
   }
 
   return new Date(`${dateValue}T${timeValue || "11:00"}:00`).toISOString();
+}
+
+function getEditableCallHistoryPhoneId(historyItem: CallHistoryItem, selectedRow?: StudentListRow | null): string {
+  const phoneId = historyItem.contacted_phone_id ?? historyItem.phone_snapshot_phone_id ?? historyItem.phone_id ?? null;
+
+  if (!phoneId || !selectedRow?.phones.some((phone) => phone.id === phoneId)) {
+    return "";
+  }
+
+  return String(phoneId);
 }
 
 function playReminderChime() {
@@ -1315,6 +1326,12 @@ export function StudentsPage() {
   const [isStudentActionsOpen, setIsStudentActionsOpen] = useState(false);
   const [studentDeleteCandidate, setStudentDeleteCandidate] = useState<StudentListRow | null>(null);
   const [callLogDeleteCandidate, setCallLogDeleteCandidate] = useState<CallHistoryItem | null>(null);
+  const [callLogEditCandidate, setCallLogEditCandidate] = useState<CallHistoryItem | null>(null);
+  const [callLogEditResult, setCallLogEditResult] = useState<CallResult>("not_called");
+  const [callLogEditDate, setCallLogEditDate] = useState("");
+  const [callLogEditTime, setCallLogEditTime] = useState("11:00");
+  const [callLogEditPhoneId, setCallLogEditPhoneId] = useState("");
+  const [callLogEditNote, setCallLogEditNote] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
@@ -1324,6 +1341,7 @@ export function StudentsPage() {
   const [reminderTime, setReminderTime] = useState("11:00");
   const [isSavingCall, setIsSavingCall] = useState(false);
   const [isDeletingCallLog, setIsDeletingCallLog] = useState(false);
+  const [isUpdatingCallLog, setIsUpdatingCallLog] = useState(false);
   const [operationToast, setOperationToast] = useState<OperationToast | null>(null);
   const [whatsAppDraftContext, setWhatsAppDraftContext] = useState<WhatsAppDraftContext | null>(null);
   const [selectedWhatsAppTemplateId, setSelectedWhatsAppTemplateId] = useState(DEFAULT_WHATSAPP_TEMPLATE_ID);
@@ -1512,6 +1530,7 @@ export function StudentsPage() {
     setIsExtraPhonesExpanded(false);
     setSelectedCallPhoneId(null);
     setCallLogDeleteCandidate(null);
+    setCallLogEditCandidate(null);
     setWhatsAppDraftContext(null);
     setWhatsAppDraftBody("");
     setWhatsAppDraftMessage(null);
@@ -1983,15 +2002,68 @@ export function StudentsPage() {
     try {
       await softDeleteCallLogAndRecomputeStudentSummary(historyItem.call_log_id);
       setCallLogDeleteCandidate(null);
-      const message = "İletişim kaydı silindi. Son görüşme bilgisi kalan kayıtlara göre güncellendi.";
+      const message = "İletişim kaydı geçersiz sayıldı / silindi. Son görüşme bilgisi kalan kayıtlara göre güncellendi.";
       setActionMessage(message);
       showOperationToast(message, "success");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "İletişim kaydı silinemedi.";
+      const message = error instanceof Error ? error.message : "İletişim kaydı geçersiz sayılamadı / silinemedi.";
       setActionMessage(message);
       showOperationToast(message, "error");
     } finally {
       setIsDeletingCallLog(false);
+    }
+  }
+
+  function openCallLogEditModal(historyItem: CallHistoryItem) {
+    setCallLogEditCandidate(historyItem);
+    setCallLogEditResult(historyItem.call_result as CallResult);
+    setCallLogEditDate(toDateInputValue(historyItem.call_time));
+    setCallLogEditTime(toTimeInputValue(historyItem.call_time));
+    setCallLogEditPhoneId(getEditableCallHistoryPhoneId(historyItem, selectedRow));
+    setCallLogEditNote(historyItem.note ?? "");
+    setActionMessage(null);
+  }
+
+  function closeCallLogEditModal() {
+    setCallLogEditCandidate(null);
+    setCallLogEditNote("");
+  }
+
+  async function confirmUpdateCallLog() {
+    if (!callLogEditCandidate || isUpdatingCallLog) {
+      return;
+    }
+
+    const correctedCallTime = mergeReminderDateTime(callLogEditDate, callLogEditTime);
+
+    if (!correctedCallTime) {
+      const message = "Görüşme tarihi/saat bilgisi geçersiz.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
+      return;
+    }
+
+    setIsUpdatingCallLog(true);
+    setActionMessage(null);
+
+    try {
+      await updateCallLogCorrection({
+        call_log_id: callLogEditCandidate.call_log_id,
+        call_result: callLogEditResult,
+        call_time: correctedCallTime,
+        contacted_phone_id: callLogEditPhoneId ? Number(callLogEditPhoneId) : null,
+        note: callLogEditNote
+      });
+      closeCallLogEditModal();
+      const message = "İletişim kaydı düzeltildi. Son görüşme bilgisi aktif kayıtlara göre güncellendi.";
+      setActionMessage(message);
+      showOperationToast(message, "success");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "İletişim kaydı düzeltilemedi.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
+    } finally {
+      setIsUpdatingCallLog(false);
     }
   }
 
@@ -2324,10 +2396,10 @@ export function StudentsPage() {
           role="dialog"
         >
           <div className="delete-confirm-modal">
-            <h2 id="call-log-delete-title">İletişim kaydı silinsin mi?</h2>
+            <h2 id="call-log-delete-title">İletişim kaydı geçersiz sayılsın / silinsin mi?</h2>
             <p>
-              Bu iletişim kaydı silindi olarak işaretlenecek. İşlem öğrenci son görüşme bilgisini kalan kayıtlara göre
-              günceller.
+              Bu iletişim kaydı silindi olarak işaretlenecek ve geçmişte görünmeyecek. İşlem öğrenci son görüşme
+              bilgisini kalan kayıtlara göre günceller.
             </p>
             <div className="delete-confirm-actions">
               <button disabled={isDeletingCallLog} onClick={() => setCallLogDeleteCandidate(null)} type="button">
@@ -2339,7 +2411,94 @@ export function StudentsPage() {
                 onClick={() => void confirmDeleteCallLog(callLogDeleteCandidate)}
                 type="button"
               >
-                {isDeletingCallLog ? "Siliniyor..." : "Sil"}
+                {isDeletingCallLog ? "İşleniyor..." : "Geçersiz say / sil"}
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : null}
+      {callLogEditCandidate ? (
+        <section
+          aria-labelledby="call-log-edit-title"
+          aria-modal="true"
+          className="delete-confirm-backdrop"
+          role="dialog"
+        >
+          <div className="delete-confirm-modal" style={{ maxWidth: 560 }}>
+            <h2 id="call-log-edit-title">İletişim kaydı düzelt</h2>
+            <p style={{ marginBottom: 12 }}>
+              Bağlı hatırlatma/randevu içeren kayıtlar bu aşamada düzeltilemez.
+            </p>
+            <div style={{ display: "grid", gap: 10 }}>
+              <label style={{ display: "grid", gap: 4 }}>
+                <span>Görüşme Durumu</span>
+                <select
+                  disabled={isUpdatingCallLog}
+                  onChange={(event) => setCallLogEditResult(event.target.value as CallResult)}
+                  value={callLogEditResult}
+                >
+                  {(Object.entries(CALL_RESULTS) as Array<[CallResult, string]>).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr" }}>
+                <label style={{ display: "grid", gap: 4 }}>
+                  <span>Tarih</span>
+                  <input
+                    disabled={isUpdatingCallLog}
+                    onChange={(event) => setCallLogEditDate(event.target.value)}
+                    type="date"
+                    value={callLogEditDate}
+                  />
+                </label>
+                <label style={{ display: "grid", gap: 4 }}>
+                  <span>Saat</span>
+                  <input
+                    disabled={isUpdatingCallLog}
+                    onChange={(event) => setCallLogEditTime(event.target.value)}
+                    type="time"
+                    value={callLogEditTime}
+                  />
+                </label>
+              </div>
+              <label style={{ display: "grid", gap: 4 }}>
+                <span>Telefon bağlamı</span>
+                <select
+                  disabled={isUpdatingCallLog}
+                  onChange={(event) => setCallLogEditPhoneId(event.target.value)}
+                  value={callLogEditPhoneId}
+                >
+                  <option value="">Telefon seçilmedi</option>
+                  {(selectedRow?.phones ?? []).flatMap((phone) =>
+                    phone.id
+                      ? [
+                          <option key={phone.id} value={phone.id}>
+                            {phone.display_label}: {phone.phone_number}
+                          </option>
+                        ]
+                      : []
+                  )}
+                </select>
+              </label>
+              <label style={{ display: "grid", gap: 4 }}>
+                <span>Not</span>
+                <textarea
+                  disabled={isUpdatingCallLog}
+                  onChange={(event) => setCallLogEditNote(event.target.value)}
+                  rows={3}
+                  value={callLogEditNote}
+                />
+              </label>
+            </div>
+            <div className="delete-confirm-actions" style={{ marginTop: 16 }}>
+              <button disabled={isUpdatingCallLog} onClick={closeCallLogEditModal} type="button">
+                İptal
+              </button>
+              <button disabled={isUpdatingCallLog} onClick={() => void confirmUpdateCallLog()} type="button">
+                {isUpdatingCallLog ? "Kaydediliyor..." : "Kaydet"}
               </button>
             </div>
           </div>
@@ -3049,27 +3208,50 @@ export function StudentsPage() {
                         <span>
                           {formatShortDateTime(historyItem.call_time)} · {historyItem.call_result_label}
                         </span>
-                        <button
-                          aria-label="İletişim kaydını sil"
-                          onClick={() => setCallLogDeleteCandidate(historyItem)}
-                          style={{
-                            alignItems: "center",
-                            background: "transparent",
-                            border: "0",
-                            color: "#9f4338",
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            height: 20,
-                            justifyContent: "center",
-                            opacity: 0.72,
-                            padding: 0,
-                            width: 20
-                          }}
-                          title="İletişim kaydını sil"
-                          type="button"
-                        >
-                          <Trash2 aria-hidden="true" size={12} />
-                        </button>
+                        <span style={{ display: "inline-flex", gap: 4 }}>
+                          <button
+                            aria-label="İletişim kaydını düzelt"
+                            onClick={() => openCallLogEditModal(historyItem)}
+                            style={{
+                              alignItems: "center",
+                              background: "transparent",
+                              border: "0",
+                              color: "#475569",
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              height: 20,
+                              justifyContent: "center",
+                              opacity: 0.72,
+                              padding: 0,
+                              width: 20
+                            }}
+                            title="İletişim kaydını düzelt"
+                            type="button"
+                          >
+                            <Pencil aria-hidden="true" size={12} />
+                          </button>
+                          <button
+                            aria-label="İletişim kaydını geçersiz say / sil"
+                            onClick={() => setCallLogDeleteCandidate(historyItem)}
+                            style={{
+                              alignItems: "center",
+                              background: "transparent",
+                              border: "0",
+                              color: "#9f4338",
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              height: 20,
+                              justifyContent: "center",
+                              opacity: 0.72,
+                              padding: 0,
+                              width: 20
+                            }}
+                            title="İletişim kaydını geçersiz say / sil"
+                            type="button"
+                          >
+                            <Trash2 aria-hidden="true" size={12} />
+                          </button>
+                        </span>
                       </div>
                       <div className="tl-text">
                         {formatCallHistoryPhoneContext(

@@ -23,6 +23,26 @@ function resolveContactedPhoneId(log: ActiveCallLog): number | null {
   return log.contacted_phone_id ?? log.phone_snapshot?.phone_id ?? log.phone_id ?? null;
 }
 
+export async function recomputeStudentSummaryFromActiveCallLogs(
+  database: AppDatabase,
+  studentId: number,
+  timestamp: string = nowIso()
+): Promise<number | null> {
+  const activeLogs = (await database.call_logs.where("student_id").equals(studentId).toArray())
+    .filter(isActiveCallLog)
+    .sort(sortLatestFirst);
+  const latestLog = activeLogs[0] ?? null;
+
+  await database.students.update(studentId, {
+    last_call_result: latestLog?.call_result ?? "not_called",
+    last_contacted_at: latestLog?.call_time ?? null,
+    last_contacted_phone_id: latestLog ? resolveContactedPhoneId(latestLog) : null,
+    updated_at: timestamp
+  });
+
+  return latestLog?.id ?? null;
+}
+
 export async function softDeleteCallLogAndRecomputeStudentSummary(
   callLogId: number,
   database: AppDatabase = db
@@ -56,23 +76,12 @@ export async function softDeleteCallLogAndRecomputeStudentSummary(
       updated_at: timestamp
     });
 
-    const activeLogs = (await database.call_logs.where("student_id").equals(callLog.student_id).toArray())
-      .filter((log) => log.id !== callLog.id)
-      .filter(isActiveCallLog)
-      .sort(sortLatestFirst);
-    const latestLog = activeLogs[0] ?? null;
-
-    await database.students.update(student.id, {
-      last_call_result: latestLog?.call_result ?? "not_called",
-      last_contacted_at: latestLog?.call_time ?? null,
-      last_contacted_phone_id: latestLog ? resolveContactedPhoneId(latestLog) : null,
-      updated_at: timestamp
-    });
+    const latestCallLogId = await recomputeStudentSummaryFromActiveCallLogs(database, student.id, timestamp);
 
     result = {
       call_log_id: callLog.id,
       student_id: student.id,
-      latest_call_log_id: latestLog?.id ?? null
+      latest_call_log_id: latestCallLogId
     };
   });
 
