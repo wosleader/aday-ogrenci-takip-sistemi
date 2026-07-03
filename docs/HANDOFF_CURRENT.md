@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: b8dad6a docs: close campaign import persistence bugfix
-- Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend ve Kampanya import persistence bugfix zinciri tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: 055597a fix: relax phone selection for non-contact call results
+- Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix ve görüşme durumu telefon seçimi kuralı düzeltmesi tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Bu docs-only handoff sync tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: record successful pilot completion
+- Önerilen docs commit: docs: close call phone selection rule fix
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -24,6 +24,23 @@
 - Bir önceki phone context persistence commit’i: 595979d feat: wire phone context persistence for calls and reminders
 - Working tree beklenen durumu: clean
 - GitHub/origin durumu: aktif branch `origin/sprint-9-2-multi-phone-architecture-plan` ile aynı son commit üzerinde görünür.
+
+## Latest Handoff Update - Call Phone Selection Rule
+
+- Current safe HEAD/origin: `055597a fix: relax phone selection for non-contact call results`.
+- Kullanıcı gözlemi: `Ulaşılamadı` seçildiğinde sistem “Son görüşülen / iletişim kurulan numara” seçimini zorunlu tutuyordu; ulaşılamayan çağrıda bu hem mantık hem metin olarak yanıltıcıydı.
+- Kök neden: `validateCallSave()` ve `callLogWriter()` birden fazla uygun telefon olduğunda telefon seçimini `call_result` değerinden bağımsız istiyordu.
+- Yeni kural: Telefon seçimi yalnız `reached` ve `wrong_number` için zorunludur.
+- Telefon seçimi opsiyonel/non-blocking sonuçlar: `not_called`, `not_reached`, `call_later`, `appointment`, `do_not_call`, `not_interested`, `registered`.
+- Telefon seçilmeden yazılan call log null phone context taşıyabilir; call history `Telefon seçilmedi` fallback'iyle gösterir.
+- Phone-level outcome/status yalnız telefon bağlamı varsa güncellenir. Non-contact ve telefonsuz kayıtlar telefon kartı durumunu mutate etmez.
+- UI/error dili nötrleşti: `Aranan / işlem yapılan telefon` ve `Hangi telefonla işlem yapılacak? Lütfen bu kayıt için ilgili telefonu seçin.`.
+- Impact audit: reminder/call_later, appointment, reports, export ve call history null phone context ile uyumludur; blocker/high risk bulunmadı.
+- Validation: `npm.cmd test -- --run tests/calls` PASS, 5 files / 53 tests; `npm.cmd test -- --run tests/students` PASS, 10 files / 87 tests; `npm.cmd test -- --run tests/exports` PASS, 4 files / 34 tests; `npm.cmd test -- --run tests/reminders` PASS, 7 files / 33 tests; `npm.cmd test -- --run tests/reports` PASS, 2 files / 8 tests; `npx.cmd vitest run --exclude e2e/** --maxWorkers=1` PASS, 49 files / 392 tests; `npm.cmd run build` PASS with known Vite chunk-size warning.
+- `git diff --check` PASS; yalnız LF -> CRLF çalışma kopyası uyarıları görüldü.
+- `055597a` VDS demo ortamına deploy edildi ve kullanıcı sorun olmadığını bildirdi. `Ulaşılamadı`, `Görüşüldü`, `Yanlış Numara`, `Sonra Aranacak` ve `Randevu Verildi` smoke akışlarında sorun bildirilmediği not edildi; bu kullanıcı bildirimiyle sınırlıdır.
+- Scope dışı/değişmeyenler: schema/migration, import/export, backup/restore, WhatsApp, package/config ve rapor/export label metinleri.
+- Beklenen working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 
 ## Latest Handoff Update - Dar Pilot Basari Kapanisi
 

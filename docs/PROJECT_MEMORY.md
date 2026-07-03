@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Dar Pilot Basari Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Call Phone Selection Rule Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Dar Pilot Basari Kapanisi
-- FILE_MAP: Kampanya Import Persistence Bugfix
-- DECISIONS: Dar Pilot Basari Kapanisi
-- Son güvenli HEAD/origin: b8dad6a docs: close campaign import persistence bugfix
+- PROJECT_MEMORY: Call Phone Selection Rule Kapanisi
+- FILE_MAP: Call Phone Selection Rule Kapanisi
+- DECISIONS: Call Phone Selection Rule Kapanisi
+- Son güvenli HEAD/origin: 055597a fix: relax phone selection for non-contact call results
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
 
@@ -106,6 +106,10 @@ Kısa özet:
 - Telefon 1/2, son görüşülen numara, yanlış numara davranışları korunur.
 - Telefon 1/2 ve Telefon 3+ kartlarında son telefon bazlı görüşme sonucu read-only olarak gösterilir.
 - Telefon bazlı son sonuç `call_logs` üzerinden türetilir; `PhoneRecord` mutate edilmez ve `phone_status` anlamı değişmez.
+- Görüşme durumu kaydında telefon seçimi her sonuç için genel zorunluluk değildir. Telefon seçimi yalnız gerçek temas/telefon bağlamı gerektiren `reached` ve `wrong_number` sonuçlarında zorunludur.
+- `not_called`, `not_reached`, `call_later`, `appointment`, `do_not_call`, `not_interested` ve `registered` sonuçları telefon seçilmeden kaydedilebilir; kullanıcı telefon seçerse bağlam kayda geçebilir.
+- Telefon seçilmeden yazılan call log kayıtları null phone context taşıyabilir; call history bu durumu `Telefon seçilmedi` fallback'iyle güvenli gösterir.
+- Phone-level outcome/status yalnız telefon bağlamı varsa güncellenir; schema, import, export, backup/restore ve WhatsApp davranışı bu kural değişikliğinde değişmedi.
 - Açıklama/not, `call_logs` ve reminder akışları korunur.
 - Sınıf / Şube filtresi pilot öncesi polish olarak eklendi.
 - Sınıf seviyesi ve şube seviyesi filtrelenebilir.
@@ -655,3 +659,16 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - Yeni blocker/high bug bildirilmedi.
 - Kod tarafında yeni iş açılmadı; bundan sonraki aşama pilot geri bildirimlerini kontrollü backlog/prioritization ile değerlendirmektir.
 - Yeni geliştirme işleri ayrı discovery ve karar ile ele alınmalıdır.
+
+## Latest Checkpoint Closure - Call Phone Selection Rule
+
+- Bugfix commit: `055597a fix: relax phone selection for non-contact call results`.
+- Kullanıcı gözlemi: `Ulaşılamadı` seçildiğinde sistem yine “Son görüşülen / iletişim kurulan numara” seçimini zorunlu tutuyordu; ulaşılamayan çağrıda bu dil ve zorunluluk yanıltıcıydı.
+- Kök neden: `validateCallSave()` ve `callLogWriter()` birden fazla uygun telefon olduğunda telefon seçimini `call_result` değerinden bağımsız istiyordu.
+- Yeni karar: Telefon seçimi yalnız `reached` ve `wrong_number` sonuçlarında zorunlu kalır. `not_called`, `not_reached`, `call_later`, `appointment`, `do_not_call`, `not_interested` ve `registered` telefon seçilmeden kaydedilebilir.
+- UI/error dili nötr hale getirildi: `Aranan / işlem yapılan telefon` ve `Hangi telefonla işlem yapılacak? Lütfen bu kayıt için ilgili telefonu seçin.` kullanılır.
+- Null phone context güvenlidir: call history `Telefon seçilmedi` fallback'iyle gösterir; reminders, appointment, reports ve export akışları null/boş telefon bağlamıyla çalışabilir.
+- Phone-level outcome/status yalnız telefon bağlamı varsa güncellenir; telefon seçilmemiş non-contact kayıtlar telefon kartı durumunu mutate etmez.
+- Impact audit sonucu blocker/high risk yoktur. Schema/migration, import/export, backup/restore, WhatsApp ve package/config değişmedi.
+- Validation: `npm.cmd test -- --run tests/calls` PASS, 5 files / 53 tests; `npm.cmd test -- --run tests/students` PASS, 10 files / 87 tests; `npm.cmd test -- --run tests/exports` PASS, 4 files / 34 tests; `npm.cmd test -- --run tests/reminders` PASS, 7 files / 33 tests; `npm.cmd test -- --run tests/reports` PASS, 2 files / 8 tests; `npx.cmd vitest run --exclude e2e/** --maxWorkers=1` PASS, 49 files / 392 tests; `npm.cmd run build` PASS, bilinen Vite chunk-size warning dışında sorun yok; `git diff --check` PASS, yalnız LF -> CRLF çalışma kopyası uyarıları görüldü.
+- `055597a` VDS demo ortamına deploy edildi ve kullanıcı sorun olmadığını bildirdi. Smoke akışı olarak `Ulaşılamadı`, `Görüşüldü`, `Yanlış Numara`, `Sonra Aranacak` ve `Randevu Verildi` durumlarında sorun bildirilmedi; bu not kullanıcı bildirimiyle sınırlıdır.

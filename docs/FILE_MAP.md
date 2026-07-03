@@ -1,4 +1,4 @@
-﻿<!-- Son guncelleme: Guardian + Phone UI Clarity | Branch: sprint-9-2-multi-phone-architecture-plan -->
+﻿<!-- Son guncelleme: Call Phone Selection Rule Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -703,4 +703,22 @@ Son doğrulandı: `82036c0 fix: persist imported campaign names`
 - `tests/imports/importWriter.test.ts`
   Kampanya persist, default `Diğer`, duplicate campaign reuse ve farklı campaign senaryolarını doğrular.
 - Scope dışı: schema/db migration, export/backup, StudentsPage UI, WhatsApp, campaign management UI, `category`, `student_group`, guardian phone ve phone slot logic değişmemiştir.
+
+## Latest File Map Addendum - Call Phone Selection Rule
+
+Son doğrulandı: `055597a fix: relax phone selection for non-contact call results`
+
+- `src/features/calls/services/callSaveValidation.ts`
+  Görüşme durumu bazlı telefon seçimi zorunluluğunun birincil validation kaynağıdır. Telefon seçimi yalnız `reached` ve `wrong_number` için zorunludur; non-contact sonuçlarda telefon seçimi opsiyoneldir.
+- `src/features/calls/services/callLogWriter.ts`
+  Service-level guard aynı kuralı korur. Telefon bağlamı olmayan non-contact kayıtları null phone context ile yazabilir; `reached` ve `wrong_number` için telefon bağlamı ister.
+- `src/features/students/StudentsPage.tsx`
+  Sağ kart call save UI'ında nötr telefon seçimi dilini gösterir: `Aranan / işlem yapılan telefon`. Zorunluluk mesajı artık “görüşülen / iletişim kurulan numara” anlamı taşımaz.
+- `tests/calls/callSaveValidation.test.ts`
+  `reached` / `wrong_number` zorunluluğunu ve `not_reached`, `call_later`, `appointment`, `do_not_call`, `not_interested`, `registered`, `not_called` gibi sonuçlarda telefon seçiminin opsiyonel olduğunu doğrular.
+- `tests/calls/callLogWriter.test.ts`
+  Writer guard davranışını, null phone context ile non-contact kayıt yazımını ve telefon bağlamı varsa snapshot/persistence davranışını korur.
+- `tests/students/StudentsPagePhoneSelection.test.tsx`
+  UI metinleri, telefon seçimi zorunluluk uyarıları, yanlış/uygun olmayan telefon blokları ve sağ kart regresyonlarını kapsar.
+- Scope dışı: schema/migration, import/export, backup/restore, WhatsApp, package/config ve report/export label metinleri değiştirilmemiştir.
 

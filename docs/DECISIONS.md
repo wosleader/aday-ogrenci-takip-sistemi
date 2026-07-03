@@ -1,4 +1,4 @@
-﻿<!-- Son guncelleme: Dar Pilot Basari Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
+﻿<!-- Son guncelleme: Call Phone Selection Rule Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -312,3 +312,15 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Dar Pilot Success] Sprint 9.2 pilot eşiği geçilmiştir.
 - [Dar Pilot Success] Kod tarafında yeni iş açılmamıştır; yeni geliştirme başlamadan önce gerçek kullanım geri bildirimi toplanacak ve kontrollü backlog/prioritization yapılacaktır.
 - [Dar Pilot Success] Sonraki işler ayrı discovery ve ürün kararıyla ele alınacaktır.
+
+## Latest Decisions - Call Phone Selection Rule
+
+- [Call Phone Selection Rule] Görüşme durumu kaydında telefon seçimi her sonuç için genel zorunluluk değildir.
+- [Call Phone Selection Rule] Telefon seçimi yalnız `reached` ve `wrong_number` için zorunludur. `reached` gerçek temas kurulan telefonu, `wrong_number` ise hangi numaranın yanlış olduğunun bilinmesini gerektirir.
+- [Call Phone Selection Rule] `not_called`, `not_reached`, `call_later`, `appointment`, `do_not_call`, `not_interested` ve `registered` telefon seçimi olmadan kaydedilebilir. Kullanıcı telefon seçerse bağlam kayda geçebilir.
+- [Call Phone Selection Rule] Telefon seçilmeden yazılan call log kayıtlarında phone context null kalabilir. Call history bu durumu `Telefon seçilmedi` fallback'iyle gösterir.
+- [Call Phone Selection Rule] Phone-level outcome/status yalnız telefon bağlamı varsa güncellenir; null phone context bulunan non-contact kayıtlar telefon kartı outcome/status değerlerini değiştirmez.
+- [Call Phone Selection Rule] UI/error metinlerinde “görüşülen / iletişim kurulan numara” yerine nötr “Aranan / işlem yapılan telefon” dili kullanılır.
+- [Call Phone Selection Rule Scope] Schema/migration, import/export, backup/restore, WhatsApp, reports/export label metinleri ve package/config davranışı değiştirilmemiştir.
+- [Impact Audit] `055597a` sonrası calls, students, exports, reminders, reports, full OOM-safe unit ve build kontrolleri PASS; blocker/high risk bulunmamıştır.
+- [VDS Demo] `055597a` VDS demo ortamına deploy edilmiş ve kullanıcı sorun olmadığını bildirmiştir; `Ulaşılamadı`, `Görüşüldü`, `Yanlış Numara`, `Sonra Aranacak` ve `Randevu Verildi` smoke akışlarında sorun bildirilmediği kullanıcı bildirimiyle kaydedilir.
