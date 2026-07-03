@@ -5,7 +5,11 @@ import type { PhoneRecord } from "../../../domain/models/phone";
 import { nowIso } from "../../../utils/dateTime";
 import { createUuid } from "../../../utils/id";
 import { createPhoneSnapshot } from "../../students/services/phoneCompatibility";
-import { requiresCallPhoneSelection } from "./callSaveValidation";
+import {
+  areAllPhonesInvalidOrWrong,
+  isSelectableCallPhone,
+  requiresCallPhoneSelection
+} from "./callSaveValidation";
 
 export type CallLogWriteInput = {
   student_id: number;
@@ -36,7 +40,7 @@ function isActive<T extends { deleted_at?: string | null }>(record: T): boolean 
 }
 
 function isEligibleContactPhone(phone: PhoneRecord): boolean {
-  return isActive(phone) && !phone.is_wrong && phone.phone_status !== "invalid";
+  return isActive(phone) && isSelectableCallPhone(phone);
 }
 
 function lifecycleFromCallResult(callResult: CallResult, currentLifecycleStatus: LifecycleStatus): LifecycleStatus {
@@ -77,10 +81,21 @@ async function resolveContactPhone(
     return phone;
   }
 
-  const eligiblePhones = phones.filter(isEligibleContactPhone);
+  const activePhones = phones.filter(isActive);
+  const eligiblePhones = activePhones.filter(isSelectableCallPhone);
 
-  if (eligiblePhones.length === 1) {
+  if (callResult !== "wrong_number" && eligiblePhones.length === 1) {
     return eligiblePhones[0];
+  }
+
+  if (callResult === "wrong_number") {
+    if (eligiblePhones.length === 0 && areAllPhonesInvalidOrWrong(activePhones)) {
+      return null;
+    }
+
+    if (eligiblePhones.length > 0) {
+      throw new Error("Hangi telefonla işlem yapılacak? Lütfen bu kayıt için ilgili telefonu seçin.");
+    }
   }
 
   if (requiresCallPhoneSelection(callResult)) {

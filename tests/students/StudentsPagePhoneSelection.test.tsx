@@ -1081,6 +1081,45 @@ describe("StudentsPage phone selection", () => {
     expect(student?.last_contacted_phone_id).toBeNull();
   });
 
+  it("allows general Yanlış Numara without selected phone when all phones are already invalid", async () => {
+    const user = userEvent.setup();
+    const studentId = await seedStudentWithPhones("MELIS KAYA", "all-invalid-wrong-number");
+    const phones = await db.phones.where("student_id").equals(studentId).toArray();
+
+    await Promise.all(
+      phones.map((phone) =>
+        db.phones.update(phone.id!, {
+          phone_status: "invalid",
+          is_wrong: true,
+          call_outcome: "unused",
+          call_outcome_updated_at: now
+        })
+      )
+    );
+
+    renderStudentsPage();
+
+    await screen.findByText("Telefon 3");
+    await user.selectOptions(getCallResultSelect(), "wrong_number");
+    await user.click(screen.getByRole("button", { name: /Kaydet ve sonrakine geç/ }));
+
+    expect(await screen.findByText("Görüşme kaydedildi. Liste sonuna geldiniz.")).toBeInTheDocument();
+    const callLog = await db.call_logs.where("student_id").equals(studentId).first();
+    const student = await db.students.get(studentId);
+    const updatedPhones = await db.phones.where("student_id").equals(studentId).toArray();
+
+    expect(callLog).toMatchObject({
+      call_result: "wrong_number",
+      contacted_phone_id: null,
+      phone_id: null,
+      phone_snapshot: null
+    });
+    expect(student?.last_call_result).toBe("wrong_number");
+    expect(student?.last_contacted_phone_id).toBeNull();
+    expect(updatedPhones.every((phone) => phone.phone_status === "invalid" && phone.is_wrong)).toBe(true);
+    expect(updatedPhones.every((phone) => phone.call_outcome === "unused")).toBe(true);
+  });
+
   it("requires an explicit call phone for reached when multiple eligible phones exist", async () => {
     const user = userEvent.setup();
     await seedStudentWithPhones("MELIS KAYA", "validation");

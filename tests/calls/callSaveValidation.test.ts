@@ -209,7 +209,12 @@ describe("callSaveValidation", () => {
     });
   });
 
-  it("requires a phone context for wrong_number when two eligible phones exist", () => {
+  it("requires a phone context for wrong_number when eligible phones exist", () => {
+    expect(validateCallSave({ call_result: "wrong_number", phones: [phone1] })).toEqual({
+      ok: false,
+      severity: "error",
+      message: phoneSelectionMessage
+    });
     expect(validateCallSave({ call_result: "wrong_number", phones: [phone1, phone2] })).toEqual({
       ok: false,
       severity: "error",
@@ -217,10 +222,30 @@ describe("callSaveValidation", () => {
     });
   });
 
-  it("requires a selectable phone for wrong_number", () => {
+  it("allows wrong_number without phone context when all existing phones are invalid or wrong", () => {
     expect(
       validateCallSave({
         call_result: "wrong_number",
+        phones: [
+          { ...phone1, phone_status: "invalid", is_wrong: true },
+          { ...phone2, phone_status: "invalid", is_wrong: true }
+        ]
+      })
+    ).toEqual({ ok: true, note: "" });
+  });
+
+  it("still requires a selectable phone for wrong_number when no phone exists", () => {
+    expect(validateCallSave({ call_result: "wrong_number", phones: [] })).toEqual({
+      ok: false,
+      severity: "error",
+      message: "Bu kayıt için seçilebilir telefon bulunmadı."
+    });
+  });
+
+  it("still blocks reached when all existing phones are invalid or wrong", () => {
+    expect(
+      validateCallSave({
+        call_result: "reached",
         phones: [{ ...phone1, phone_status: "invalid", is_wrong: true }]
       })
     ).toEqual({

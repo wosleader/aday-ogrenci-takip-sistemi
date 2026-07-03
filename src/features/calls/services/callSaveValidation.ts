@@ -65,17 +65,30 @@ function isPastAppointment(input: CallSaveValidationInput): boolean {
   return appointmentDate.getTime() < now.getTime();
 }
 
-function isEligiblePhone(phone: CallSaveValidationPhone): boolean {
+export function isSelectableCallPhone(phone: CallSaveValidationPhone): boolean {
   return Boolean(phone.id && !phone.is_wrong && phone.phone_status !== "invalid");
 }
 
+export function areAllPhonesInvalidOrWrong(phones: CallSaveValidationPhone[]): boolean {
+  const existingPhones = phones.filter((phone) => Boolean(phone.id));
+
+  return (
+    existingPhones.length > 0 &&
+    existingPhones.every((phone) => Boolean(phone.is_wrong) || phone.phone_status === "invalid")
+  );
+}
+
+function canSaveWrongNumberWithoutPhoneContext(input: CallSaveValidationInput): boolean {
+  return input.call_result === "wrong_number" && areAllPhonesInvalidOrWrong(input.phones);
+}
+
 function validatePhoneSelection(input: CallSaveValidationInput): CallSaveValidationResult | null {
-  const eligiblePhones = input.phones.filter(isEligiblePhone);
+  const eligiblePhones = input.phones.filter(isSelectableCallPhone);
 
   if (input.contacted_phone_id) {
     const selectedPhone = input.phones.find((phone) => phone.id === input.contacted_phone_id);
 
-    if (!selectedPhone || !isEligiblePhone(selectedPhone)) {
+    if (!selectedPhone || !isSelectableCallPhone(selectedPhone)) {
       return {
         ok: false,
         severity: "error",
@@ -88,6 +101,20 @@ function validatePhoneSelection(input: CallSaveValidationInput): CallSaveValidat
 
   if (!requiresCallPhoneSelection(input.call_result)) {
     return null;
+  }
+
+  if (input.call_result === "wrong_number") {
+    if (eligiblePhones.length === 0 && canSaveWrongNumberWithoutPhoneContext(input)) {
+      return null;
+    }
+
+    if (eligiblePhones.length > 0) {
+      return {
+        ok: false,
+        severity: "error",
+        message: "Hangi telefonla işlem yapılacak? Lütfen bu kayıt için ilgili telefonu seçin."
+      };
+    }
   }
 
   if (eligiblePhones.length === 0) {

@@ -337,12 +337,39 @@ describe("callLogWriter", () => {
     }
   });
 
-  it("rejects wrong_number when no selectable phone exists", async () => {
+  it("allows wrong_number with null phone context when all existing phones are invalid or wrong", async () => {
     const database = await createDatabase();
 
     try {
       const studentId = await database.students.add(student());
-      await database.phones.add(phone(studentId, { phone_status: "invalid", is_wrong: true }));
+      const phoneId = await database.phones.add(phone(studentId, { phone_status: "invalid", is_wrong: true }));
+
+      const result = await writeCallLog({ student_id: studentId, call_result: "wrong_number" }, { database });
+      const callLog = await database.call_logs.get(result.call_log_id);
+      const updatedStudent = await database.students.get(studentId);
+      const updatedPhone = await database.phones.get(phoneId);
+
+      expect(callLog).toMatchObject({
+        call_result: "wrong_number",
+        contacted_phone_id: null,
+        phone_id: null,
+        phone_snapshot: null
+      });
+      expect(updatedStudent?.last_call_result).toBe("wrong_number");
+      expect(updatedStudent?.last_contacted_phone_id).toBeNull();
+      expect(updatedPhone?.phone_status).toBe("invalid");
+      expect(updatedPhone?.is_wrong).toBe(true);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("rejects wrong_number when no phone exists", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
 
       await expect(writeCallLog({ student_id: studentId, call_result: "wrong_number" }, { database })).rejects.toThrow(
         "Bu kayıt için seçilebilir telefon bulunmadı."
@@ -466,6 +493,23 @@ describe("callLogWriter", () => {
           is_primary: false
         })
       ]);
+
+      await expect(writeCallLog({ student_id: studentId, call_result: "wrong_number" }, { database })).rejects.toThrow(
+        "Hangi telefonla işlem yapılacak"
+      );
+      expect(await database.call_logs.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("requires explicit phone selection for wrong_number when one eligible phone exists", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      await database.phones.add(phone(studentId));
 
       await expect(writeCallLog({ student_id: studentId, call_result: "wrong_number" }, { database })).rejects.toThrow(
         "Hangi telefonla işlem yapılacak"
