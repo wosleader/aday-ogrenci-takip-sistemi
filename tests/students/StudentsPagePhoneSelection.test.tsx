@@ -307,7 +307,7 @@ describe("StudentsPage phone selection", () => {
     expect(within(phone1Card).getByText("Son sonuç: Yok")).toBeInTheDocument();
     expect(within(phone3Card).getByText("Son sonuç: Yok")).toBeInTheDocument();
     expect(screen.getByText("Aday genel görüşme sonucu")).toBeInTheDocument();
-    expect(screen.getByText("Bu seçim iletişim geçmişine kayıt olarak işlenir.")).toBeInTheDocument();
+    expect(screen.queryByText("Bu seçim iletişim geçmişine kayıt olarak işlenir.")).not.toBeInTheDocument();
     expect(within(phone1Card).queryByRole("combobox", { name: "Telefon 1 Telefon durumu" })).not.toBeInTheDocument();
     expect(within(phone1Card).getByRole("button", { name: "Bu telefonun son arama sonucu: Aranmadı" })).toHaveAttribute(
       "aria-haspopup",
@@ -329,9 +329,10 @@ describe("StudentsPage phone selection", () => {
       within(bodyRow).getByRole("button", { name: "Telefonu yanlış / kullanılmayacak olarak işaretle" }).closest(".phone-card-action-row")
     );
     expect(within(footerRow).getByText("Son sonuç: Yok")).toBeInTheDocument();
-    expect(within(footerRow).getByText("Bu telefonun son arama sonucu")).toHaveAttribute(
+    expect(within(footerRow).queryByText("Bu telefonun son arama sonucu")).not.toBeInTheDocument();
+    expect(within(footerRow).getByRole("button", { name: "Bu telefonun son arama sonucu: Aranmadı" })).toHaveAttribute(
       "title",
-      "Bu seçim aday genel görüşme durumunu değiştirmez."
+      expect.stringContaining("Bu seçim aday genel görüşme durumunu değiştirmez.")
     );
     expect(within(footerRow).getByRole("button", { name: "Bu telefonun son arama sonucu: Aranmadı" })).toBeInTheDocument();
 

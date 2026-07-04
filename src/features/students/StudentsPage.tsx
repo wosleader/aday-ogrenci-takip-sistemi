@@ -1233,16 +1233,7 @@ function PhoneCard({
             ) : null}
             {displayStatusText ? <small>{displayStatusText}</small> : null}
           </span>
-          {outcomeControl ? (
-            <span
-              style={{ alignItems: "flex-end", display: "inline-flex", flex: "0 0 auto", flexDirection: "column", gap: 3 }}
-            >
-              <small style={{ color: "#64748b", fontSize: 10, lineHeight: 1.1 }} title={PHONE_OUTCOME_ACTION_HELPER}>
-                {PHONE_OUTCOME_ACTION_LABEL}
-              </small>
-              {outcomeControl}
-            </span>
-          ) : null}
+          {outcomeControl}
         </div>
       </div>
     </div>
@@ -3169,9 +3160,6 @@ export function StudentsPage() {
                     </option>
                   ))}
                 </select>
-                <small style={{ color: "#64748b", display: "block", marginTop: 4 }}>
-                  Bu seçim iletişim geçmişine kayıt olarak işlenir.
-                </small>
               </div>
 
               <div>
