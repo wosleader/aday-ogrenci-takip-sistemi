@@ -376,7 +376,10 @@ const SHORTCUT_HELP_GROUPS: ShortcutHelpGroup[] = [
 
 const CALL_PHONE_ACTION_LABEL = "Bu görüşmede kullanılacak telefon";
 const CALL_PHONE_ACTION_SELECTED_LABEL = "Bu görüşmede kullanılacak telefon seçili";
-const WRONG_PHONE_ACTION_LABEL = "Yanlış / kullanılmayacak numara";
+const WRONG_PHONE_ACTION_LABEL = "Telefonu yanlış / kullanılmayacak olarak işaretle";
+const WRONG_PHONE_ACTION_SELECTED_LABEL = "Telefonu tekrar kullanılabilir yap";
+const PHONE_OUTCOME_ACTION_LABEL = "Bu telefonun son arama sonucu";
+const PHONE_OUTCOME_ACTION_HELPER = "Bu seçim aday genel görüşme durumunu değiştirmez.";
 
 function getPhoneOutcomeChipStyle(outcome: PhoneCallOutcome): { background: string; borderColor: string; color: string } {
   switch (outcome) {
@@ -703,8 +706,8 @@ function PhoneCard({
   const currentOutcomeLabel = getPhoneCallOutcomeLabel(currentOutcome);
   const outcomeChipStyle = getPhoneOutcomeChipStyle(currentOutcome);
   const outcomeTitle = callOutcomeUpdatedAt
-    ? `Telefon durumu: ${currentOutcomeLabel}. Güncellendi: ${formatShortDateTime(callOutcomeUpdatedAt)}`
-    : `Telefon durumu: ${currentOutcomeLabel}`;
+    ? `${PHONE_OUTCOME_ACTION_LABEL}: ${currentOutcomeLabel}. ${PHONE_OUTCOME_ACTION_HELPER} Güncellendi: ${formatShortDateTime(callOutcomeUpdatedAt)}`
+    : `${PHONE_OUTCOME_ACTION_LABEL}: ${currentOutcomeLabel}. ${PHONE_OUTCOME_ACTION_HELPER}`;
 
   useEffect(
     () => () => {
@@ -957,11 +960,11 @@ function PhoneCard({
           <Check aria-hidden="true" size={14} />
         </button>
         <button
-          aria-label={WRONG_PHONE_ACTION_LABEL}
+          aria-label={isWrong ? WRONG_PHONE_ACTION_SELECTED_LABEL : WRONG_PHONE_ACTION_LABEL}
           className={isWrong ? "active invalid" : ""}
           disabled={!phoneId}
           onClick={() => phoneId && onInvalid(phoneId)}
-          title={WRONG_PHONE_ACTION_LABEL}
+          title={isWrong ? WRONG_PHONE_ACTION_SELECTED_LABEL : WRONG_PHONE_ACTION_LABEL}
           type="button"
         >
           x
@@ -982,11 +985,11 @@ function PhoneCard({
           <Check aria-hidden="true" size={14} />
         </button>
         <button
-          aria-label={WRONG_PHONE_ACTION_LABEL}
+          aria-label={isWrong ? WRONG_PHONE_ACTION_SELECTED_LABEL : WRONG_PHONE_ACTION_LABEL}
           className={isWrong ? "active invalid" : ""}
           disabled={!phoneId}
           onClick={() => phoneId && onInvalid(phoneId)}
-          title={WRONG_PHONE_ACTION_LABEL}
+          title={isWrong ? WRONG_PHONE_ACTION_SELECTED_LABEL : WRONG_PHONE_ACTION_LABEL}
           type="button"
         >
           x
@@ -1010,7 +1013,7 @@ function PhoneCard({
           ref={outcomeChipRef}
           aria-expanded={isOutcomeMenuOpen}
           aria-haspopup="menu"
-          aria-label={`Telefon durumu: ${currentOutcomeLabel}`}
+          aria-label={`${PHONE_OUTCOME_ACTION_LABEL}: ${currentOutcomeLabel}`}
           onClick={toggleOutcomeMenu}
           style={{
             alignItems: "center",
@@ -1230,7 +1233,16 @@ function PhoneCard({
             ) : null}
             {displayStatusText ? <small>{displayStatusText}</small> : null}
           </span>
-          {outcomeControl}
+          {outcomeControl ? (
+            <span
+              style={{ alignItems: "flex-end", display: "inline-flex", flex: "0 0 auto", flexDirection: "column", gap: 3 }}
+            >
+              <small style={{ color: "#64748b", fontSize: 10, lineHeight: 1.1 }} title={PHONE_OUTCOME_ACTION_HELPER}>
+                {PHONE_OUTCOME_ACTION_LABEL}
+              </small>
+              {outcomeControl}
+            </span>
+          ) : null}
         </div>
       </div>
     </div>
@@ -3149,7 +3161,7 @@ export function StudentsPage() {
               ) : null}
 
               <div>
-                <label className="form-label">Görüşme durumu</label>
+                <label className="form-label">Aday genel görüşme sonucu</label>
                 <select value={callResult} onChange={(event) => setCallResult(event.target.value as CallResult)}>
                   {Object.entries(CALL_RESULTS).map(([key, label]) => (
                     <option key={key} value={key}>
@@ -3157,6 +3169,9 @@ export function StudentsPage() {
                     </option>
                   ))}
                 </select>
+                <small style={{ color: "#64748b", display: "block", marginTop: 4 }}>
+                  Bu seçim iletişim geçmişine kayıt olarak işlenir.
+                </small>
               </div>
 
               <div>

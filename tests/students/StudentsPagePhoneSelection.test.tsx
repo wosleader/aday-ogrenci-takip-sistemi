@@ -242,7 +242,7 @@ describe("StudentsPage phone selection", () => {
     expect(within(phone3Card as HTMLElement).getByText("Aranan / işlem yapılan telefon")).toBeInTheDocument();
     expect(
       within(phone3Card as HTMLElement).getByRole("button", {
-        name: "Yanlış / kullanılmayacak numara"
+        name: "Telefonu yanlış / kullanılmayacak olarak işaretle"
       })
     ).toBeInTheDocument();
 
@@ -285,7 +285,7 @@ describe("StudentsPage phone selection", () => {
 
     await user.click(
       within(getDrawerPhoneCard("Telefon 3")).getByRole("button", {
-        name: "Yanlış / kullanılmayacak numara"
+        name: "Telefonu yanlış / kullanılmayacak olarak işaretle"
       })
     );
 
@@ -306,8 +306,10 @@ describe("StudentsPage phone selection", () => {
 
     expect(within(phone1Card).getByText("Son sonuç: Yok")).toBeInTheDocument();
     expect(within(phone3Card).getByText("Son sonuç: Yok")).toBeInTheDocument();
+    expect(screen.getByText("Aday genel görüşme sonucu")).toBeInTheDocument();
+    expect(screen.getByText("Bu seçim iletişim geçmişine kayıt olarak işlenir.")).toBeInTheDocument();
     expect(within(phone1Card).queryByRole("combobox", { name: "Telefon 1 Telefon durumu" })).not.toBeInTheDocument();
-    expect(within(phone1Card).getByRole("button", { name: "Telefon durumu: Aranmadı" })).toHaveAttribute(
+    expect(within(phone1Card).getByRole("button", { name: "Bu telefonun son arama sonucu: Aranmadı" })).toHaveAttribute(
       "aria-haspopup",
       "menu"
     );
@@ -319,15 +321,19 @@ describe("StudentsPage phone selection", () => {
     expect(bodyRow).not.toBeNull();
     expect(footerRow).not.toBeNull();
     expect(within(headerRow).getByText("Telefon 1")).toBeInTheDocument();
-    expect(within(headerRow).queryByRole("button", { name: /Telefon durumu:/ })).not.toBeInTheDocument();
+    expect(within(headerRow).queryByRole("button", { name: /Bu telefonun son arama sonucu:/ })).not.toBeInTheDocument();
     expect(within(bodyRow).getByText("0532 100 0001")).toBeInTheDocument();
     expect(within(bodyRow).getByRole("button", { name: "Bu görüşmede kullanılacak telefon" })).toBeInTheDocument();
-    expect(within(bodyRow).getByRole("button", { name: "Yanlış / kullanılmayacak numara" })).toBeInTheDocument();
+    expect(within(bodyRow).getByRole("button", { name: "Telefonu yanlış / kullanılmayacak olarak işaretle" })).toBeInTheDocument();
     expect(within(bodyRow).getByRole("button", { name: "Bu görüşmede kullanılacak telefon" }).closest(".phone-card-action-row")).toBe(
-      within(bodyRow).getByRole("button", { name: "Yanlış / kullanılmayacak numara" }).closest(".phone-card-action-row")
+      within(bodyRow).getByRole("button", { name: "Telefonu yanlış / kullanılmayacak olarak işaretle" }).closest(".phone-card-action-row")
     );
     expect(within(footerRow).getByText("Son sonuç: Yok")).toBeInTheDocument();
-    expect(within(footerRow).getByRole("button", { name: "Telefon durumu: Aranmadı" })).toBeInTheDocument();
+    expect(within(footerRow).getByText("Bu telefonun son arama sonucu")).toHaveAttribute(
+      "title",
+      "Bu seçim aday genel görüşme durumunu değiştirmez."
+    );
+    expect(within(footerRow).getByRole("button", { name: "Bu telefonun son arama sonucu: Aranmadı" })).toBeInTheDocument();
 
     const phone1 = await db.phones.where("normalized_phone_number").equals("05321000001").first();
     expect(phone1?.call_outcome).toBeUndefined();
@@ -342,7 +348,7 @@ describe("StudentsPage phone selection", () => {
     renderStudentsPage();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
-    const outcomeChip = within(phone1Card).getByRole("button", { name: "Telefon durumu: Aranmadı" });
+    const outcomeChip = within(phone1Card).getByRole("button", { name: "Bu telefonun son arama sonucu: Aranmadı" });
     const triggerBottom = 124;
 
     Object.defineProperty(window, "innerHeight", {
@@ -385,7 +391,7 @@ describe("StudentsPage phone selection", () => {
     renderStudentsPage();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
-    const outcomeChip = within(phone1Card).getByRole("button", { name: "Telefon durumu: Aranmadı" });
+    const outcomeChip = within(phone1Card).getByRole("button", { name: "Bu telefonun son arama sonucu: Aranmadı" });
     const triggerTop = 454;
     const renderedMenuHeight = 210;
 
@@ -459,7 +465,7 @@ describe("StudentsPage phone selection", () => {
     renderStudentsPage();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
-    const outcomeChip = within(phone1Card).getByRole("button", { name: "Telefon durumu: Aranmadı" });
+    const outcomeChip = within(phone1Card).getByRole("button", { name: "Bu telefonun son arama sonucu: Aranmadı" });
     const triggerTop = 100;
 
     Object.defineProperty(window, "innerHeight", {
@@ -510,10 +516,10 @@ describe("StudentsPage phone selection", () => {
     const phone2Footer = phone2Card.querySelector(".phone-card-footer-row") as HTMLElement;
     expect(within(phone2Header).getByText("Telefon 2")).toBeInTheDocument();
     expect(within(phone2Header).getByText("Anne telefonu")).toBeInTheDocument();
-    expect(within(phone2Header).queryByRole("button", { name: /Telefon durumu:/ })).not.toBeInTheDocument();
-    expect(within(phone2Footer).getByRole("button", { name: "Telefon durumu: Aranmadı" })).toBeInTheDocument();
+    expect(within(phone2Header).queryByRole("button", { name: /Bu telefonun son arama sonucu:/ })).not.toBeInTheDocument();
+    expect(within(phone2Footer).getByRole("button", { name: "Bu telefonun son arama sonucu: Aranmadı" })).toBeInTheDocument();
 
-    await user.click(within(phone1Card).getByRole("button", { name: "Telefon durumu: Aranmadı" }));
+    await user.click(within(phone1Card).getByRole("button", { name: "Bu telefonun son arama sonucu: Aranmadı" }));
     expect((await db.phones.where("normalized_phone_number").equals("05321000001").first())?.call_outcome).toBeUndefined();
 
     const phone1Menu = screen.getByRole("menu");
@@ -544,12 +550,12 @@ describe("StudentsPage phone selection", () => {
     });
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
     expect(within(phone1Card).queryByText(/Güncellendi:/)).not.toBeInTheDocument();
-    expect(within(phone1Card).getByRole("button", { name: "Telefon durumu: Cevap Yok" })).toHaveAttribute(
+    expect(within(phone1Card).getByRole("button", { name: "Bu telefonun son arama sonucu: Cevap Yok" })).toHaveAttribute(
       "title",
       expect.stringContaining("Güncellendi:")
     );
 
-    await user.click(within(phone2Card).getByRole("button", { name: "Telefon durumu: Aranmadı" }));
+    await user.click(within(phone2Card).getByRole("button", { name: "Bu telefonun son arama sonucu: Aranmadı" }));
     await user.click(screen.getByRole("menuitemradio", { name: "Meşgul" }));
     await waitFor(async () => {
       const phone2 = await db.phones.where("normalized_phone_number").equals("05321000002").first();
@@ -558,7 +564,7 @@ describe("StudentsPage phone selection", () => {
       expect(phone2?.call_outcome).toBe("busy");
     });
 
-    await user.click(within(phone3Card).getByRole("button", { name: "Telefon durumu: Aranmadı" }));
+    await user.click(within(phone3Card).getByRole("button", { name: "Bu telefonun son arama sonucu: Aranmadı" }));
     await user.click(screen.getByRole("menuitemradio", { name: "Görüşüldü" }));
     await waitFor(async () => {
       const phone3 = await db.phones.where("normalized_phone_number").equals("05321000003").first();
@@ -586,9 +592,9 @@ describe("StudentsPage phone selection", () => {
     renderStudentsPage();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
-    expect(within(phone1Card).getByRole("button", { name: "Telefon durumu: Görüşüldü" })).toBeInTheDocument();
+    expect(within(phone1Card).getByRole("button", { name: "Bu telefonun son arama sonucu: Görüşüldü" })).toBeInTheDocument();
 
-    await user.click(within(phone1Card).getByRole("button", { name: "Telefon durumu: Görüşüldü" }));
+    await user.click(within(phone1Card).getByRole("button", { name: "Bu telefonun son arama sonucu: Görüşüldü" }));
     await user.click(screen.getByRole("menuitemradio", { name: "Aranmadı" }));
 
     await waitFor(async () => {
@@ -689,9 +695,9 @@ describe("StudentsPage phone selection", () => {
       "title",
       "Bu görüşmede kullanılacak telefon"
     );
-    expect(within(phone1Card).getByRole("button", { name: "Yanlış / kullanılmayacak numara" })).toHaveAttribute(
+    expect(within(phone1Card).getByRole("button", { name: "Telefonu yanlış / kullanılmayacak olarak işaretle" })).toHaveAttribute(
       "title",
-      "Yanlış / kullanılmayacak numara"
+      "Telefonu yanlış / kullanılmayacak olarak işaretle"
     );
 
     await user.click(
@@ -760,11 +766,11 @@ describe("StudentsPage phone selection", () => {
     ).toHaveAttribute("title", "Bu görüşmede kullanılacak telefon");
 
     const invalidControl = within(phone3Card as HTMLElement).getByRole("button", {
-      name: "Yanlış / kullanılmayacak numara"
+      name: "Telefonu yanlış / kullanılmayacak olarak işaretle"
     });
 
     expect(invalidControl).toBeInTheDocument();
-    expect(invalidControl).toHaveAttribute("title", "Yanlış / kullanılmayacak numara");
+    expect(invalidControl).toHaveAttribute("title", "Telefonu yanlış / kullanılmayacak olarak işaretle");
 
     await user.click(invalidControl);
 
@@ -777,7 +783,7 @@ describe("StudentsPage phone selection", () => {
 
     expect(
       within(phone3Card as HTMLElement).getByRole("button", {
-        name: "Yanlış / kullanılmayacak numara"
+        name: "Telefonu tekrar kullanılabilir yap"
       })
     ).toHaveClass("active", "invalid");
   });
@@ -831,7 +837,7 @@ describe("StudentsPage phone selection", () => {
 
     await user.click(
       within(getDrawerPhoneCard("Telefon 3")).getByRole("button", {
-        name: "Yanlış / kullanılmayacak numara"
+        name: "Telefonu yanlış / kullanılmayacak olarak işaretle"
       })
     );
 
@@ -935,9 +941,14 @@ describe("StudentsPage phone selection", () => {
     await expect(db.whatsapp_draft_logs.where("status").equals("draft_opened").count()).resolves.toBe(0);
     expect(within(dialog).queryByText("Son işlem: WhatsApp taslağı açıldı")).not.toBeInTheDocument();
 
-    await user.click(within(dialog).getByRole("button", { name: "Mesajı Kopyala" }));
+    const copyButton = within(dialog).getByRole("button", { name: "Mesajı Kopyala" });
+    await waitFor(() => {
+      expect(draftBody.value).toBe(editedMessage);
+      expect(copyButton).toBeEnabled();
+    });
+    await user.click(copyButton);
     expect(writeText).toHaveBeenCalledWith(editedMessage);
-    expect(within(dialog).getByText("Son işlem: Mesaj kopyalandı")).toBeInTheDocument();
+    expect(await within(dialog).findByText("Son işlem: Mesaj kopyalandı")).toBeInTheDocument();
 
     await user.click(within(dialog).getByRole("button", { name: "Gönderildi olarak işaretle" }));
 

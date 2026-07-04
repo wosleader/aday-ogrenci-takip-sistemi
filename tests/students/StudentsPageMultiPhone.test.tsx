@@ -307,7 +307,7 @@ describe("StudentsPage right card multi-phone display", () => {
     ).not.toBeInTheDocument();
     expect(
       within(readonlyCard as HTMLElement).getByRole("button", {
-        name: "Yanlış / kullanılmayacak numara"
+        name: "Telefonu yanlış / kullanılmayacak olarak işaretle"
       })
     ).toBeInTheDocument();
     expect(within(readonlyCard as HTMLElement).queryByText("Aktif numara")).not.toBeInTheDocument();
