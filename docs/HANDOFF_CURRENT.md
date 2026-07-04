@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 8bf7cb2 fix: allow wrong number when all phones are invalid
-- Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi ve tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: 8f1f613 feat: allow correcting unlinked communication history
+- Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi, tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i ve iletişim geçmişi edit/void MVP'si tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Bu docs-only handoff sync tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: close all phones invalid wrong number fix
+- Önerilen docs commit: docs: close communication history edit void mvp
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -36,6 +36,21 @@
 - Validation: focused 5 files / 77 tests PASS; full default 49 files / 397 tests PASS; full serial 49 files / 397 tests PASS; build PASS, bilinen Vite chunk-size warning dışında sorun yok; `git diff --check` PASS, yalnız LF -> CRLF çalışma kopyası uyarıları görüldü.
 - `8bf7cb2` VDS demo ortamına deploy edildi. Kullanıcı smoke testte tüm telefonları X / yanlış-kullanılmıyor yaptı, phone outcome dropdown'larında `Kullanılmıyor` seçti, genel `Yanlış Numara` kaydetti ve sorun olmadığını bildirdi.
 - Scope dışı/değişmeyenler: schema/migration, import/export, backup/restore, WhatsApp, reminder lifecycle, communication history edit/delete ve package/config.
+- Beklenen working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
+
+## Latest Handoff Update - Communication History Edit / Void MVP
+
+- Current safe HEAD/origin: `8f1f613 feat: allow correcting unlinked communication history`.
+- Bağlantısız iletişim geçmişi kayıtları sağ karttan düzeltilebilir/düzenlenebilir.
+- Düzeltilebilir alanlar: görüşme durumu, not, tarih/saat ve telefon bağlamı. Bu MVP reminder/randevu lifecycle, cascade veya detach davranışı eklemez.
+- Bağlantısız iletişim kayıtları mevcut soft delete altyapısıyla `Geçersiz Say / Sil` yapılabilir. Teknikte hard delete yoktur; `call_logs.deleted_at` ve `updated_at` set edilir.
+- Soft-deleted kayıtlar history/read model'den düşer. Reports/export aktif call log kayıtları üzerinden doğal güncellenir; backup ham tabloları aldığı için soft-deleted kayıtlar yedekte kalır.
+- Edit/delete sonrası aday özeti aktif call log kayıtlarından yeniden hesaplanır: `last_call_result`, `last_contacted_at`, `last_contacted_phone_id`.
+- `created_reminder_id` veya `created_appointment_id` dolu call log kayıtları bu MVP'de edit/delete için bloklanır.
+- `PhoneRecord` status/outcome alanları edit/delete sırasında mutate edilmez.
+- Validation: focused 3 files / 15 tests PASS; full serial 50 files / 402 tests PASS; standard full 50 files / 402 tests PASS; build PASS, bilinen Vite chunk-size warning dışında sorun yok; `git diff --check` PASS, yalnız LF -> CRLF çalışma kopyası uyarıları görüldü.
+- `8f1f613` VDS demo ortamına deploy edildi. Kullanıcı smoke testte bağlantısız kayıt düzeltme, görüşme durumu/not/tarih-saat güncelleme, `Geçersiz Say / Sil` ile history'den düşürme, bağlı reminder/randevu kayıtlarının bloklanması, aday özetinin aktif call loglara göre güncellenmesi ve reminder/randevu tarafında bozulma gözlenmemesi akışlarını sorun yok olarak bildirdi.
+- Scope dışı/değişmeyenler: schema/migration, import/export formatı, backup/restore formatı, WhatsApp, reminder/appointment cascade, communication history undo ve package/config.
 - Beklenen working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 
 ## Latest Handoff Update - Call Phone Selection Rule

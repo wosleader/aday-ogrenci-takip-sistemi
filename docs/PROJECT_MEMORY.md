@@ -1,4 +1,4 @@
-<!-- Son guncelleme: All Phones Invalid Wrong Number Fix Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Communication History Edit / Void MVP Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: All Phones Invalid Wrong Number Fix Kapanisi
-- FILE_MAP: All Phones Invalid Wrong Number Fix Kapanisi
-- DECISIONS: All Phones Invalid Wrong Number Fix Kapanisi
-- Son güvenli HEAD/origin: 8bf7cb2 fix: allow wrong number when all phones are invalid
+- PROJECT_MEMORY: Communication History Edit / Void MVP Kapanisi
+- FILE_MAP: Communication History Edit / Void MVP Kapanisi
+- DECISIONS: Communication History Edit / Void MVP Kapanisi
+- Son güvenli HEAD/origin: 8f1f613 feat: allow correcting unlinked communication history
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
 
@@ -111,6 +111,10 @@ Kısa özet:
 - `wrong_number` seçildiğinde adayda telefon var ama tüm telefonlar zaten `is_wrong` veya `phone_status: invalid` ise genel Yanlış Numara kaydı telefon seçmeden yapılabilir; call log null phone context taşır ve phone-level durumlar tekrar güncellenmez.
 - Telefon seçilmeden yazılan call log kayıtları null phone context taşıyabilir; call history bu durumu `Telefon seçilmedi` fallback'iyle güvenli gösterir.
 - Phone-level outcome/status yalnız telefon bağlamı varsa güncellenir; schema, import, export, backup/restore ve WhatsApp davranışı bu kural değişikliğinde değişmedi.
+- Bağlantısız iletişim geçmişi kayıtları sağ karttan düzeltilebilir/düzenlenebilir veya `Geçersiz Say / Sil` ile soft delete yapılabilir.
+- İletişim geçmişi edit/delete hard delete yapmaz; `call_logs.deleted_at` / `updated_at` kullanılır ve aday özeti aktif call log kayıtlarından yeniden hesaplanır.
+- `created_reminder_id` veya `created_appointment_id` taşıyan iletişim kayıtları edit/delete için bloklanır; reminder/randevu cascade, detach veya otomatik iptal yapılmaz.
+- İletişim geçmişi düzeltme sırasında `PhoneRecord` status/outcome alanları mutate edilmez.
 - Açıklama/not, `call_logs` ve reminder akışları korunur.
 - Sınıf / Şube filtresi pilot öncesi polish olarak eklendi.
 - Sınıf seviyesi ve şube seviyesi filtrelenebilir.
@@ -684,3 +688,14 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - No-phone aday davranışı bu fix'in kapsamı değildir; mevcut guard korunur.
 - Validation: focused 5 files / 77 tests PASS; full default 49 files / 397 tests PASS; full serial 49 files / 397 tests PASS; build PASS, bilinen Vite chunk-size warning dışında sorun yok; `git diff --check` PASS, yalnız LF -> CRLF çalışma kopyası uyarıları görüldü.
 - `8bf7cb2` VDS demo ortamına deploy edildi. Kullanıcı smoke testte tüm telefonları X / yanlış-kullanılmıyor yaptı, phone outcome dropdown'larında `Kullanılmıyor` seçti, genel `Yanlış Numara` kaydetti ve sorun olmadığını bildirdi.
+
+## Latest Checkpoint Closure - Communication History Edit / Void MVP
+
+- Implementation commit: `8f1f613 feat: allow correcting unlinked communication history`.
+- Bağlantısız iletişim geçmişi kayıtları sağ karttan düzeltilebilir/düzenlenebilir; görüşme durumu, not, tarih/saat ve telefon bağlamı güncellenebilir.
+- Bağlantısız iletişim kayıtları `Geçersiz Say / Sil` ile mevcut soft delete altyapısını kullanır. Hard delete yoktur; `call_logs.deleted_at` / `updated_at` set edilir.
+- `created_reminder_id` veya `created_appointment_id` bulunan kayıtlar edit/delete için bloklanır; reminder/appointment cascade, detach veya otomatik iptal yapılmaz.
+- Edit/delete sonrası aday özeti aktif call log kayıtlarından yeniden hesaplanır. PhoneRecord status/outcome alanları mutate edilmez.
+- Reports/export aktif call log kayıtları üzerinden doğal güncellenir; backup ham tabloları koruduğu için soft-deleted kayıtlar yedekte kalır.
+- Validation: focused 3 files / 15 tests PASS; full serial 50 files / 402 tests PASS; standard full 50 files / 402 tests PASS; build PASS, bilinen Vite chunk-size warning dışında sorun yok; `git diff --check` PASS, yalnız LF -> CRLF çalışma kopyası uyarıları görüldü.
+- `8f1f613` VDS demo ortamına deploy edildi. Kullanıcı smoke testte bağlantısız kayıt düzeltme, görüşme durumu/not/tarih-saat güncelleme, `Geçersiz Say / Sil` ile history'den düşürme, bağlı reminder/randevu kayıtlarının bloklanması, aday özetinin aktif call loglara göre güncellenmesi ve reminder/randevu tarafında bozulma gözlenmemesi akışlarında sorun olmadığını bildirdi.

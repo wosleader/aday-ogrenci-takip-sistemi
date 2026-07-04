@@ -1,4 +1,4 @@
-﻿<!-- Son guncelleme: All Phones Invalid Wrong Number Fix Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Communication History Edit / Void MVP Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -66,6 +66,15 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Communication History Soft Delete Pilot] Iletisim gecmisi silme davranisi hard delete degil soft delete olarak uygulanir. `call_logs.deleted_at` ve `updated_at` set edilir; kayit DB'de kalir ama aktif history/read model aklarindan gizlenir.
 - [Communication History Soft Delete Pilot] Soft delete sonrasi ogrenci son gorusme ozeti kalan aktif `call_logs` kayitlarindan yeniden hesaplanir. `last_call_result`, `last_contacted_at`, `last_contacted_phone_id` aktif son kayda gore guncellenir; aktif kayit kalmazsa `not_called` / `null` guvenli bos durum kullanilir.
 - [Communication History Soft Delete Pilot] `created_reminder_id` veya `created_appointment_id` bulunan call log kayitlari bu MVP'de silinmez. Reminder/appointment cascade delete, detach veya otomatik iptal yapilmaz; bu politika ayri discovery konusudur.
+
+## Latest Decisions - Communication History Edit / Void MVP
+
+- [Communication History Edit / Void MVP] Bağlantısız iletişim geçmişi kayıtları düzeltilebilir/düzenlenebilir. Düzeltme kapsamı görüşme durumu, not, tarih/saat ve telefon bağlamıyla sınırlıdır.
+- [Communication History Edit / Void MVP] Bağlantısız iletişim kayıtları `Geçersiz Say / Sil` ile mevcut soft delete altyapısını kullanır. Hard delete yapılmaz; `call_logs.deleted_at` ve `updated_at` set edilir.
+- [Communication History Edit / Void MVP] Edit/delete sonrası aday özeti aktif ve silinmemiş `call_logs` kayıtlarından yeniden hesaplanır. Aktif kayıt yoksa güvenli boş durum `not_called` / `null` olur.
+- [Communication History Edit / Void MVP] `created_reminder_id` veya `created_appointment_id` taşıyan call log kayıtları bu MVP'de edit/delete için bloklanır. Reminder/appointment cascade, detach, otomatik iptal veya lifecycle değişikliği yapılmaz.
+- [Communication History Edit / Void MVP] PhoneRecord `phone_status`, `is_wrong` ve `call_outcome` alanları edit/delete sırasında mutate edilmez; telefon bazlı durumlar ayrı model semantiğini korur.
+- [Communication History Edit / Void MVP] Reports/export aktif call log kayıtları üzerinden doğal güncellenir. Backup ham tabloları koruduğu için soft-deleted kayıtlar yedekte kalır. Schema/migration, import/export formatı, backup/restore formatı ve WhatsApp davranışı değişmez.
 
 ## Latest Decisions - Import AD/SOYAD Composition
 

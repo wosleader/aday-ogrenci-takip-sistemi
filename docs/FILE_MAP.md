@@ -1,4 +1,4 @@
-﻿<!-- Son guncelleme: All Phones Invalid Wrong Number Fix Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Communication History Edit / Void MVP Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -35,7 +35,7 @@ Son doğrulandı: Sprint 8.2
 Son doğrulandı: Phone-Level Outcome Read Model Pilot
 
 - `src/features/students/StudentsPage.tsx`
-  Aday Listesi, filtreler, sağ drawer, görüşme akışı, kompakt/açılır-kapanır kısayol yardım barı, call history UI ve sağ kişi kartı telefon alanını içerir. Sprint 9.3D-1 itibarıyla call history `phone_context_label` / `phone_context_number` display alanlarını gösterir. Sprint 9.3E-2 itibarıyla Telefon 1 / Telefon 2 aksiyonlu kartlarını korur, Telefon 3+ için readonly görünüm sunar, `+N numara daha göster` / `Daha az göster` interaction'ını yönetir ve `visible_phones` / `phones` / `hidden_phone_count` alanlarını tüketir. Sprint 9.3F-1 itibarıyla Telefon 3+ için call save selection, selected call phone state, `saveCallAndGoNext` içinde `contacted_phone_id` hesaplaması ve legacy Telefon 1/2 fallback davranışını taşır. Phone-Level Outcome Read Model Pilot itibarıyla Telefon 1/2 ve Telefon 3+ kartlarında `call_logs` kaynaklı read-only `Son sonuç` göstergesini render eder; schema, import/export ve `phone_status` semantiğini değiştirmez.
+  Aday Listesi, filtreler, sağ drawer, görüşme akışı, kompakt/açılır-kapanır kısayol yardım barı, call history UI ve sağ kişi kartı telefon alanını içerir. Sprint 9.3D-1 itibarıyla call history `phone_context_label` / `phone_context_number` display alanlarını gösterir. Sprint 9.3E-2 itibarıyla Telefon 1 / Telefon 2 aksiyonlu kartlarını korur, Telefon 3+ için readonly görünüm sunar, `+N numara daha göster` / `Daha az göster` interaction'ını yönetir ve `visible_phones` / `phones` / `hidden_phone_count` alanlarını tüketir. Sprint 9.3F-1 itibarıyla Telefon 3+ için call save selection, selected call phone state, `saveCallAndGoNext` içinde `contacted_phone_id` hesaplaması ve legacy Telefon 1/2 fallback davranışını taşır. Phone-Level Outcome Read Model Pilot itibarıyla Telefon 1/2 ve Telefon 3+ kartlarında `call_logs` kaynaklı read-only `Son sonuç` göstergesini render eder; schema, import/export ve `phone_status` semantiğini değiştirmez. `8f1f613` itibarıyla bağlantısız call history kayıtları için düzeltme/düzenle modalını ve `İletişim kaydını geçersiz say / sil` / `Geçersiz say / sil` soft delete aksiyon dilini sunar.
 - `src/features/students/services/studentListReader.ts`
   Aday liste satırlarını okuma, filtreleme, Sınıf/Şube helper’ları ve `StudentListRow` read model üretimi. Legacy `phone_1` / `phone_2` / `phone_count` alanlarını korur; Sprint 9.3E-1 itibarıyla sağ kişi kartı çoklu telefon hazırlığı için `phones`, `visible_phones` ve `hidden_phone_count` alanlarını taşır.
 - `src/features/students/services/studentPhoneStatus.ts`
@@ -55,6 +55,10 @@ Son doğrulandı: Phone-Level Outcome Read Model Pilot
   Görüşme kaydetme validasyonları, uyarı ve onay mantığı. Sprint 9.3F-1 itibarıyla görüşülen telefon seçimi için Telefon 1/2'ye özel olmayan genel validation mesajını ve çoklu telefon listesiyle uyumlu seçim kontrolünü taşır. `8bf7cb2` itibarıyla `wrong_number` için seçilebilir telefon varsa telefon seçimi zorunlu kalır; adayda telefon olup tüm telefonlar invalid/wrong ise genel `wrong_number` kaydına null phone context ile izin verir.
 - `src/features/calls/services/callLogWriter.ts`
   `writeCallLog` transaction akışı; `call_logs`, student son durum, telefon güncellemeleri ve pending reminder create/update davranışını yönetir. Sprint 9.3B-2 itibarıyla call log ve pending reminder kayıtlarına `phone_id` / `phone_snapshot` persistence wiring yapar; legacy contacted phone alanlarını korur. `8bf7cb2` edge-case'inde tüm telefonlar invalid/wrong ise genel `wrong_number` kaydını telefon bağlamı olmadan yazabilir.
+- `src/features/calls/services/callLogCorrection.ts`
+  Bağlantısız iletişim geçmişi kayıtlarını düzeltir. Görüşme durumu, tarih/saat, not ve telefon bağlamını günceller; bağlı reminder/appointment kayıtlarını bloklar; PhoneRecord mutate etmeden öğrenci özetini aktif call log kayıtlarından yeniden hesaplatır.
+- `src/features/calls/services/callLogDeletion.ts`
+  İletişim geçmişi soft delete / geçersiz sayma akışı. `call_logs.deleted_at` / `updated_at` set eder, hard delete yapmaz, linked reminder/appointment guard'ını korur ve öğrenci özetini aktif call log kayıtlarından yeniden hesaplayan ortak helper'ı sağlar.
 - `src/features/calls/services/callLogPhoneContext.ts`
   Call log telefon bağlamı display/fallback helper’ları; `phone_snapshot` varsa Telefon N / ilişki etiketi label’ı üretir, eski kayıtlarda güvenli fallback döner.
 - `src/features/calls/services/callHistoryReader.ts`
@@ -173,7 +177,7 @@ Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
 - `tests/students/StudentsPageShortcutHelp.test.tsx`
   Aday Listesi alt kısayol yardım barının kompakt/açık görünümünü, Göster/Gizle davranışını ve localStorage toleransını test eder.
 - `tests/students/StudentsPageCallHistory.test.tsx`
-  Call history UI'da phone context label/number görünürlüğünü ve no-context fallback davranışını test eder.
+  Call history UI'da phone context label/number görünürlüğünü, no-context fallback davranışını, düzeltme/düzenle modalını ve `Geçersiz Say / Sil` soft delete aksiyonunu test eder.
 - `tests/students/StudentsPageMultiPhone.test.tsx`
   Sağ kişi kartında 5 telefonlu aday için Telefon 3+ readonly görünümü, expand/collapse davranışı, `hidden_phone_count` sıfır durumu, telefonsuz aday fallback'i ve Telefon 3+ için aksiyon butonu gösterilmemesini test eder.
 - `tests/students/StudentsPagePhoneSelection.test.tsx`
@@ -204,6 +208,8 @@ Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
   Uzun kolon listesi kademeli gösterimini, `mapping_required` / önemli kolonların dar görünümde kalmasını, hata listesi expand/collapse davranışını, uyarı listesi expand/collapse davranışını ve `Veli Adı` auto guardian mapping akışını test eder.
 - `tests/calls/*`
   Call writer, call history ve call save validation.
+- `tests/calls/callLogCorrection.test.ts`
+  Bağlantısız call log düzeltme, linked reminder/appointment bloklama, aktif call loglardan student summary recompute ve PhoneRecord mutate edilmeme davranışlarını test eder.
 - `tests/calls/callSaveValidation.test.ts`
   Görüşme kaydetme validation davranışını, çoklu telefon için genel görüşülen telefon seçimi mesajını ve mevcut call result/reminder/appointment uyarılarını test eder.
 - `tests/calls/callHistoryReader.test.ts`
