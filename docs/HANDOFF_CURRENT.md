@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 8f1f613 feat: allow correcting unlinked communication history
-- Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi, tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i ve iletişim geçmişi edit/void MVP'si tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: c094741 chore: simplify phone result helper labels
+- Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi, tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i, iletişim geçmişi edit/void MVP'si ve phone action label/helper cleanup zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Bu docs-only handoff sync tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: close communication history edit void mvp
+- Önerilen docs commit: docs: close phone action label cleanup
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -24,6 +24,19 @@
 - Bir önceki phone context persistence commit’i: 595979d feat: wire phone context persistence for calls and reminders
 - Working tree beklenen durumu: clean
 - GitHub/origin durumu: aktif branch `origin/sprint-9-2-multi-phone-architecture-plan` ile aynı son commit üzerinde görünür.
+
+## Latest Handoff Update - Phone Action Label Clarification / Helper Cleanup
+
+- Current safe HEAD/origin: `c094741 chore: simplify phone result helper labels`.
+- Implementation chain: `8224582 chore: clarify phone action labels` followed by `c094741 chore: simplify phone result helper labels`.
+- Telefon kartındaki ✓, X, phone outcome dropdown ve genel görüşme sonucu alanlarının kullanıcı dili netleştirildi; teknik davranış değiştirilmedi.
+- ✓ `Bu görüşmede kullanılacak telefon` anlamını korur. X `Telefonu yanlış / kullanılmayacak olarak işaretle` anlamındadır ve `phone_status` / `is_wrong` davranışını korur; `call_outcome` değiştirmez.
+- Phone outcome dropdown telefon bazlı manuel sonuç alanıdır; yalnız `call_outcome` yazar, `phone_status` / `is_wrong` / genel aday görüşme sonucu değiştirmez ve call log oluşturmaz.
+- Genel Görüşme Durumu aday genel call log kaydı anlamını korur; call log / student summary akışı değişmedi.
+- Görsel kalabalık yapan görünür `Bu telefonun son arama sonucu` ve `Bu seçim iletişim geçmişine kayıt olarak işlenir.` helper yazıları kaldırıldı; uygun aria/title anlamı korundu.
+- Korunanlar: schema/migration yok, PhoneRecord model/semantik değişmedi, X/dropdown/✓ davranışı değişmedi, call log write rules ve general validation değişmedi, `reached` telefon zorunluluğu ve `wrong_number` eligible phone / all-invalid edge-case kuralları korundu, communication history edit/void, import/export/backup ve WhatsApp değişmedi.
+- Validation: `8224582` için focused student 4/40, calls 6/61, exports 4/34, settings 3/15, full serial 50/402 ve build PASS. `c094741` için focused student 4/40, calls 6/61, full serial 50/402 ve build PASS. Bilinen Vite chunk-size warning devam eder.
+- `8224582` VDS deploy + browser smoke OK; `c094741` VDS deploy + visual smoke OK olarak kullanıcı tarafından temiz bildirildi.
 
 ## Latest Handoff Update - All Phones Invalid Wrong Number Fix
 

@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Communication History Edit / Void MVP Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Phone Action Label Clarification / Helper Cleanup Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,10 +6,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Communication History Edit / Void MVP Kapanisi
-- FILE_MAP: Communication History Edit / Void MVP Kapanisi
-- DECISIONS: Communication History Edit / Void MVP Kapanisi
-- Son güvenli HEAD/origin: 8f1f613 feat: allow correcting unlinked communication history
+- PROJECT_MEMORY: Phone Action Label Clarification / Helper Cleanup Kapanisi
+- FILE_MAP: Phone Action Label Clarification / Helper Cleanup Kapanisi
+- DECISIONS: Phone Action Label Clarification / Helper Cleanup Kapanisi
+- Son güvenli HEAD/origin: c094741 chore: simplify phone result helper labels
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
 
@@ -699,3 +699,14 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - Reports/export aktif call log kayıtları üzerinden doğal güncellenir; backup ham tabloları koruduğu için soft-deleted kayıtlar yedekte kalır.
 - Validation: focused 3 files / 15 tests PASS; full serial 50 files / 402 tests PASS; standard full 50 files / 402 tests PASS; build PASS, bilinen Vite chunk-size warning dışında sorun yok; `git diff --check` PASS, yalnız LF -> CRLF çalışma kopyası uyarıları görüldü.
 - `8f1f613` VDS demo ortamına deploy edildi. Kullanıcı smoke testte bağlantısız kayıt düzeltme, görüşme durumu/not/tarih-saat güncelleme, `Geçersiz Say / Sil` ile history'den düşürme, bağlı reminder/randevu kayıtlarının bloklanması, aday özetinin aktif call loglara göre güncellenmesi ve reminder/randevu tarafında bozulma gözlenmemesi akışlarında sorun olmadığını bildirdi.
+
+## Latest Checkpoint Closure - Phone Action Label Clarification / Helper Cleanup
+
+- Implementation commits: `8224582 chore: clarify phone action labels` and `c094741 chore: simplify phone result helper labels`.
+- Telefon kartındaki ✓ aksiyonu `Bu görüşmede kullanılacak telefon`, X aksiyonu `Telefonu yanlış / kullanılmayacak olarak işaretle`, telefon outcome dropdown'u ise telefon bazlı manuel son arama sonucu olarak netleştirildi.
+- Genel Görüşme Durumu alanı aday genel görüşme sonucu / call log kaydı anlamını korur.
+- Görsel kalabalık yapan görünür `Bu telefonun son arama sonucu` ve `Bu seçim iletişim geçmişine kayıt olarak işlenir.` helper yazıları kaldırıldı; aria/title anlamı uygun yerde korundu.
+- Teknik davranış değişmedi: ✓, X, dropdown, `phone_status`, `is_wrong`, `call_outcome`, call log write rules, general call result validation, `reached` zorunluluğu, `wrong_number` eligible phone kuralı, all-invalid `wrong_number` null-context edge-case ve communication history edit/void davranışları korunur.
+- Schema/migration, import/export/backup formatı ve WhatsApp dosyaları değişmedi; büyük UI redesign yapılmadı.
+- Validation: `8224582` için focused student 4 files / 40 tests, calls 6 files / 61 tests, exports 4 files / 34 tests, settings 3 files / 15 tests, full serial 50 files / 402 tests ve build PASS. `c094741` için focused student 4 files / 40 tests, calls 6 files / 61 tests, full serial 50 files / 402 tests ve build PASS. Bilinen Vite chunk-size warning devam eder; `git diff --check` yalnız LF -> CRLF çalışma kopyası uyarılarıyla PASS.
+- `8224582` VDS deploy + browser smoke OK; `c094741` VDS deploy + visual smoke OK olarak kullanıcı tarafından temiz bildirildi.

@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Communication History Edit / Void MVP Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Phone Action Label Clarification / Helper Cleanup Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -75,6 +75,15 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Communication History Edit / Void MVP] `created_reminder_id` veya `created_appointment_id` taşıyan call log kayıtları bu MVP'de edit/delete için bloklanır. Reminder/appointment cascade, detach, otomatik iptal veya lifecycle değişikliği yapılmaz.
 - [Communication History Edit / Void MVP] PhoneRecord `phone_status`, `is_wrong` ve `call_outcome` alanları edit/delete sırasında mutate edilmez; telefon bazlı durumlar ayrı model semantiğini korur.
 - [Communication History Edit / Void MVP] Reports/export aktif call log kayıtları üzerinden doğal güncellenir. Backup ham tabloları koruduğu için soft-deleted kayıtlar yedekte kalır. Schema/migration, import/export formatı, backup/restore formatı ve WhatsApp davranışı değişmez.
+
+## Latest Decisions - Phone Action Label Clarification / Helper Cleanup
+
+- [Phone Action Labels] Telefon kartındaki ✓ aksiyonu `Bu görüşmede kullanılacak telefon` anlamındadır ve mevcut seçim davranışını korur.
+- [Phone Action Labels] X aksiyonu `Telefonu yanlış / kullanılmayacak olarak işaretle` anlamındadır; `phone_status` / `is_wrong` davranışını korur, telefonu seçilebilir listeden düşürür ve `call_outcome` değiştirmez.
+- [Phone Outcome Dropdown] Telefon outcome dropdown telefon bazlı manuel sonuç alanıdır. Yalnız `call_outcome` yazar; `phone_status`, `is_wrong`, aday genel görüşme sonucu ve call log akışını değiştirmez.
+- [General Call Result] Genel Görüşme Durumu aday genel görüşme sonucu / call log kaydı anlamını korur; call log ve student summary akışı değişmez.
+- [Helper Cleanup] Görünür `Bu telefonun son arama sonucu` ve `Bu seçim iletişim geçmişine kayıt olarak işlenir.` helper yazıları kaldırılmıştır. Anlam aria/title gibi erişilebilirlik yüzeylerinde gerektiği kadar korunabilir.
+- [Scope] X kaldırılmadı, dropdown davranışı değiştirilmedi, X/dropdown semantiği birleştirilmedi, PhoneRecord alanları değiştirilmedi, call log validation değiştirilmedi, export/backup/import/WhatsApp değiştirilmedi ve büyük UI redesign yapılmadı.
 
 ## Latest Decisions - Import AD/SOYAD Composition
 

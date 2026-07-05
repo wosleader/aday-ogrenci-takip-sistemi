@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Communication History Edit / Void MVP Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Phone Action Label Clarification / Helper Cleanup Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -745,4 +745,16 @@ Son doğrulandı: `8bf7cb2 fix: allow wrong number when all phones are invalid`
 - `tests/students/StudentsPagePhoneSelection.test.tsx`
   Sağ kart UI regression'larında tüm telefonlar yanlış/kullanılmıyor iken genel `Yanlış Numara` kaydının yapılabildiğini ve ilgili hata metninin çıkmadığını kapsar.
 - Scope dışı: schema/migration, import/export, backup/restore, WhatsApp, reminder lifecycle, communication history edit/delete ve package/config değiştirilmemiştir.
+
+## Latest File Map Addendum - Phone Action Label Clarification / Helper Cleanup
+
+Son doğrulandı: `c094741 chore: simplify phone result helper labels`
+
+- `src/features/students/StudentsPage.tsx`
+  Telefon kartı ✓ / X / outcome dropdown ve genel görüşme sonucu microcopy ayrımını taşır. ✓ = bu görüşmede kullanılacak telefon; X = yanlış / kullanılmayacak telefon işareti; phone outcome dropdown = telefon bazlı manuel sonuç alanı; Genel Görüşme Durumu = aday genel call log kaydı. Görünür helper yazılar sadeleştirilip kaldırılmıştır; büyük redesign ve teknik davranış değişikliği yoktur.
+- `tests/students/StudentsPagePhoneSelection.test.tsx`
+  Phone action label, aria/title, dropdown davranışı, genel görüşme sonucu akışı ve helper cleanup regression coverage içerir.
+- `tests/students/StudentsPageMultiPhone.test.tsx`
+  Multi-phone action label regression coverage içerir.
+- Scope dışı: schema/migration, PhoneRecord model/semantik, phone_status/is_wrong/call_outcome davranışı, X/dropdown/✓ davranışı, call log validation/write rules, import/export/backup ve WhatsApp değiştirilmemiştir.
 
