@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Phone Action Label Clarification / Helper Cleanup Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Reporting V2 Summary MVP Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -15,7 +15,7 @@ Son doğrulandı: Sprint 9.3A Çoklu Telefon Core Model
 - `src/app/router.tsx`
   Route tanımları ve sayfa yerleşimi.
 - `src/styles/global.css`
-  Genel uygulama stilleri, responsive polish kuralları, kısayol yardım barı görünümü, sağ drawer düşük riskli genişlik hafifletmesi ve Raporlar/Hatırlatmalar/Export/Settings polish stillerini içerir.
+  Genel uygulama stilleri, responsive polish kuralları, kısayol yardım barı görünümü, sağ drawer düşük riskli genişlik hafifletmesi ve Raporlar/Hatırlatmalar/Export/Settings polish stillerini içerir. `68d2899` itibarıyla Reporting V2 için ayrı `reporting-v2-*` sınıflarıyla özet kart grid'i, filtre hizası, tablo/panel düzeni ve günlük trend/kampanya kırılımı yerleşimi polish edilir.
 
 ## 2. Database / Backup
 
@@ -142,12 +142,14 @@ Son doğrulandı: Adaptive Summary Export Columns
 
 ## 9. Reports
 
-Son doğrulandı: Sprint 8.9
+Son doğrulandı: Reporting V2 Summary MVP
 
 - `src/features/reports/ReportsPage.tsx`
-  Günlük raporlar sayfası; seçilen gün diliyle günlük özet, son görüşmeler ve açık hatırlatma özeti gösterir.
+  Günlük raporlar sayfası; seçilen gün diliyle günlük özet, son görüşmeler ve açık hatırlatma özeti gösterir. `13c53e5` itibarıyla Reporting V2 read-only yönetici özeti, tarih aralığı, kampanya filtresi, özet metrik kartları, görüşme sonucu dağılımı, kampanya kırılımı ve günlük trend tablolarını render eder. `68d2899` itibarıyla Reporting V2 alanı ayrı profesyonel panel düzeni ve `reporting-v2-*` CSS sınıflarıyla polish edilir; günlük rapor alanı korunur.
 - `src/features/reports/services/dailyReportReader.ts`
   Seçilen gün için `call_logs` üzerinden günlük operasyon özetini üretir; `call_time` birincil, `created_at` fallback kullanır.
+- `src/features/reports/services/reportingV2Reader.ts`
+  Reporting V2 read-only summary servisidir. Aktif `call_logs` kayıtlarını kullanır, `deleted_at` kayıtları dışlar, tarih aralığını `call_time` / `created_at` fallback ve local day sınırlarıyla hesaplar. `İşlem gören tekil aday`, result distribution, kampanya kırılımı ve günlük trend modellerini üretir. Kampanya kırılımı adayın güncel `students.campaign_id` değerine dayanır; call log campaign snapshot üretmez.
 
 ## 10. Settings / Data Management
 
@@ -191,7 +193,11 @@ Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
 - `tests/reminders/RemindersPage.test.tsx`
   Reminder list UI'da phone context label/number görünürlüğünü, `phone_1` fallback'ini, `phone_2` davranışını ve `Aranacak telefon` başlığını test eder.
 - `tests/reports/*`
-  Günlük rapor metrikleri, call result kırılımları, tarih filtresi, son görüşmeler ve Raporlar sayfası smoke davranışları.
+  Günlük rapor metrikleri, call result kırılımları, tarih filtresi, son görüşmeler, Raporlar sayfası smoke davranışları ve Reporting V2 read-only özet davranışları.
+- `tests/reports/reportingV2Reader.test.ts`
+  Reporting V2 servisinin tarih aralığı boundary davranışını, `deleted_at` filtrelemesini, campaign filter/kırılımını, unique student sayımını, daily trend üretimini ve call_result tabanlı özet metriklerini test eder.
+- `tests/reports/ReportsPage.test.tsx`
+  Raporlar sayfasında günlük raporun korunmasını, Reporting V2 özet alanını, tarih aralığı/kampanya filtresi UI'sını ve görünür metrik/tablo etiketlerini test eder.
 - `tests/shortcuts/*`
   Kısayol registry, Türkçe label, çakışma/3 tuşu/riskli tuş validasyonları.
 - `tests/app/*`

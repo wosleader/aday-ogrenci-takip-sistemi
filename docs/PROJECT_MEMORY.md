@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Phone Action Label Clarification / Helper Cleanup Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Reporting V2 Summary MVP Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,12 +6,24 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Phone Action Label Clarification / Helper Cleanup Kapanisi
-- FILE_MAP: Phone Action Label Clarification / Helper Cleanup Kapanisi
-- DECISIONS: Phone Action Label Clarification / Helper Cleanup Kapanisi
-- Son güvenli HEAD/origin: c094741 chore: simplify phone result helper labels
+- PROJECT_MEMORY: Reporting V2 Summary MVP Kapanisi
+- FILE_MAP: Reporting V2 Summary MVP Kapanisi
+- DECISIONS: Reporting V2 Summary MVP Kapanisi
+- Son güvenli HEAD/origin: 68d2899 chore: polish reporting v2 layout
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
+
+## Latest Checkpoint - Reporting V2 Summary MVP
+
+- Reporting V2 Summary MVP iki commitlik zincirle tamamlandı: `13c53e5 feat: add reporting v2 summary` ve `68d2899 chore: polish reporting v2 layout`.
+- Raporlar sayfasındaki mevcut günlük rapor korunur; Reporting V2 ayrı read-only yönetici özeti olarak görünür.
+- Kaynak veri aktif `call_logs` kayıtlarıdır. `deleted_at` olan kayıtlar dışlanır. Tarih aralığı `call_time`, yoksa `created_at` üzerinden yerel gün başlangıç/bitiş sınırlarıyla hesaplanır.
+- `İşlem gören tekil aday`, seçili tarih aralığında en az bir aktif call log'u olan farklı aday sayısıdır.
+- `Randevu Verildi` ve `Kayıt Oldu` kartları CRM `call_result` sayımlarıdır; gerçek veli geldi/gelmedi, no-show, personel performansı veya kesin kayıt lifecycle metriki değildir.
+- Kampanya kırılımı adayın güncel `students.campaign_id` değerine göre hesaplanır. Call log üzerinde campaign snapshot yoktur; adayın kampanyası sonradan değişirse geçmiş aralık kırılımı da değişebilir. UI içinde bu not gösterilir.
+- Export/import/backup davranışı değişmedi. Schema/migration yapılmadı. Reporting V2 UI polish ayrı `reporting-v2-*` CSS sınıflarıyla yapıldı.
+- Validation: implementation phase reports/calls/exports/imports/settings focused testleri, full serial `51 files / 416 tests` ve build PASS. UI polish phase reports/calls/settings focused testleri ve build PASS. Bilinen Vite chunk-size warning devam eder.
+- VDS deploy sonrası kullanıcı smoke sonucunu sorun yok olarak bildirdi: `/demo` açıldı, Reports page açıldı, günlük rapor bozulmadı, Reporting V2 özet görünür, tarih aralığı ve kampanya filtresi çalışır, kampanya tablosu ve günlük trend görsel yerleşimi kabul edildi.
 
 ## 1. Proje Amacı
 

@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: c094741 chore: simplify phone result helper labels
-- Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi, tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i, iletişim geçmişi edit/void MVP'si ve phone action label/helper cleanup zinciri tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: 68d2899 chore: polish reporting v2 layout
+- Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi, tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i, iletişim geçmişi edit/void MVP'si, phone action label/helper cleanup ve Reporting V2 Summary MVP + UI polish zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Bu docs-only handoff sync tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: close phone action label cleanup
+- Önerilen docs commit: docs: close reporting v2 summary MVP
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -24,6 +24,20 @@
 - Bir önceki phone context persistence commit’i: 595979d feat: wire phone context persistence for calls and reminders
 - Working tree beklenen durumu: clean
 - GitHub/origin durumu: aktif branch `origin/sprint-9-2-multi-phone-architecture-plan` ile aynı son commit üzerinde görünür.
+
+## Latest Handoff Update - Reporting V2 Summary MVP
+
+- Current safe HEAD/origin: `68d2899 chore: polish reporting v2 layout`.
+- Implementation chain: `13c53e5 feat: add reporting v2 summary` followed by `68d2899 chore: polish reporting v2 layout`.
+- Reporting V2, Raporlar sayfasında mevcut günlük raporu bozmadan read-only yönetici özeti olarak eklendi. Günlük rapor alanı korunur.
+- Source of truth aktif `call_logs` kayıtlarıdır; `deleted_at` olan kayıtlar dışlanır. Tarih aralığı `call_time`, yoksa `created_at` üzerinden yerel gün sınırlarıyla hesaplanır.
+- `İşlem gören tekil aday`, seçili aralıkta aktif call log'u olan farklı aday sayısıdır. `Randevu Verildi` ve `Kayıt Oldu`, CRM `call_result` sayımlarıdır; gerçek lifecycle, gelen veli/no-show veya personel performansı değildir.
+- Kampanya kırılımı adayın güncel `students.campaign_id` değerine göre hesaplanır. Call log campaign snapshot yoktur; kampanya sonradan değişirse geçmiş rapor kırılımı da değişebilir. UI'da bu not korunur.
+- UI polish ayrı `reporting-v2-*` CSS sınıflarıyla yapıldı: özet kart grid'i, filtre hizası, görüşme sonucu dağılımı, kampanya tablosu ve günlük trend düzeni toparlandı.
+- Değişmeyenler: schema/migration yok, import/export/backup yok, WhatsApp yok, personnel/team metric yok, gerçek kayıt lifecycle/no-show yok.
+- Validation: implementation phase focused reports/calls/exports/imports/settings PASS, full serial `51 files / 416 tests` PASS, build PASS. UI polish phase reports/calls/settings PASS, build PASS. Bilinen Vite chunk-size warning devam eder.
+- VDS deploy ve kullanıcı smoke sonucu sorun yok olarak bildirildi: `/demo` ve Reports açılır, günlük rapor bozulmaz, Reporting V2 görünür, tarih aralığı/kampanya filtresi çalışır, kampanya tablosu ve günlük trend görsel olarak kabul edilir.
+- Next recommended action after this docs closure: Reporting V2 docs sonrası Obsidian shadow sync değerlendirilsin; ardından personel/team performance, gelen veli/no-show/appointment lifecycle veya export/report expansion ayrı discovery ile ele alınsın.
 
 ## Latest Handoff Update - Phone Action Label Clarification / Helper Cleanup
 

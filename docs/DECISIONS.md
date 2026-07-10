@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Phone Action Label Clarification / Helper Cleanup Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Reporting V2 Summary MVP Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -60,6 +60,18 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 ## Değişen Kararlar Nasıl Yazılır?
 
 Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden değişti” şeklinde kısa not eklenir.
+
+## Latest Decisions - Reporting V2 Summary MVP
+
+- [Reporting V2 Summary MVP] Raporlar sayfasındaki V2 alanı read-only yönetici özeti olarak kabul edilir. Günlük rapor korunur; Reporting V2 mevcut günlük raporun yerine geçmez.
+- [Reporting V2 Data Source] Reporting V2 metriklerinin kaynağı aktif `call_logs` kayıtlarıdır. `deleted_at` olan call log kayıtları dışlanır.
+- [Reporting V2 Date Range] Tarih aralığı `call_time`, yoksa `created_at` üzerinden ve local day start/end sınırlarıyla hesaplanır.
+- [Reporting V2 Unique Students] `İşlem gören tekil aday`, seçili tarih aralığında en az bir aktif call log'u olan farklı öğrenci/adayı ifade eder.
+- [Reporting V2 Result Counts] `Randevu Verildi` ve `Kayıt Oldu` metrikleri CRM `call_result` sayımlarıdır. Bunlar gerçek veli geldi/gelmedi, no-show, personel performansı veya kesin kayıt lifecycle metriği olarak yorumlanmaz.
+- [Reporting V2 Campaign Breakdown] Kampanya kırılımı adayın güncel `students.campaign_id` değerine göre hesaplanır. Call log üzerinde kampanya snapshot tutulmaz; adayın kampanyası sonradan değişirse geçmiş rapor kırılımı da değişebilir.
+- [Reporting V2 UI Note] Kampanya kırılımının güncel aday kampanyasına göre hesaplandığı bilgisi kullanıcıya UI notu olarak gösterilir.
+- [Reporting V2 Scope] Personnel/team performance, gelen veli/no-show, gerçek kayıt lifecycle, export/report expansion, schema/migration ve import/export/backup değişiklikleri bu MVP kapsamında değildir.
+- [Reporting V2 Polish] UI polish ayrı `reporting-v2-*` CSS sınıflarıyla yapılır; daily report alanı ve metric calculation logic değiştirilmez.
 
 ## Latest Decisions - Communication History Soft Delete
 
