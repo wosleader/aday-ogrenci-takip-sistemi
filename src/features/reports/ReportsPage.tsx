@@ -12,6 +12,7 @@ type ReportCard = {
   label: string;
   value: number;
   hint?: string;
+  ariaLabel?: string;
   tone?: "neutral" | "good" | "warning" | "danger";
 };
 
@@ -72,13 +73,17 @@ export function ReportsPage() {
       hint: "Seçilen aralıkta en az bir kaydı olan adaylar"
     },
     {
-      label: "CRM görüşme sonucu: Randevu Verildi",
+      label: "Randevu Verildi",
       value: v2Summary?.totals.appointmentResults ?? 0,
+      hint: "CRM görüşme sonucu",
+      ariaLabel: "CRM görüşme sonucu: Randevu Verildi",
       tone: "warning"
     },
     {
-      label: "CRM görüşme sonucu: Kayıt Oldu",
+      label: "Kayıt Oldu",
       value: v2Summary?.totals.registeredResults ?? 0,
+      hint: "CRM görüşme sonucu",
+      ariaLabel: "CRM görüşme sonucu: Kayıt Oldu",
       tone: "good"
     },
     { label: "Ulaşılamadı", value: v2Summary?.totals.notReached ?? 0, tone: "danger" },
@@ -108,14 +113,14 @@ export function ReportsPage() {
         ))}
       </div>
 
-      <section className="daily-report-section" aria-label="Raporlama V2 özeti">
-        <div className="daily-report-section-title">
+      <section className="reporting-v2-panel" aria-label="Raporlama V2 özeti">
+        <div className="reporting-v2-header">
           <div>
             <h2>Raporlama V2 özeti</h2>
             <p>Tarih aralığı ve kampanya kırılımıyla read-only yönetici özeti.</p>
           </div>
-          <div className="daily-reminder-pills">
-            <label className="daily-report-date">
+          <div className="reporting-v2-toolbar" aria-label="Raporlama V2 filtreleri">
+            <label className="reporting-v2-field">
               <span>Başlangıç tarihi</span>
               <input
                 aria-label="Raporlama V2 başlangıç tarihi"
@@ -124,7 +129,7 @@ export function ReportsPage() {
                 onChange={(event) => setV2FromDate(event.target.value)}
               />
             </label>
-            <label className="daily-report-date">
+            <label className="reporting-v2-field">
               <span>Bitiş tarihi</span>
               <input
                 aria-label="Raporlama V2 bitiş tarihi"
@@ -133,7 +138,7 @@ export function ReportsPage() {
                 onChange={(event) => setV2ToDate(event.target.value)}
               />
             </label>
-            <label className="daily-report-date">
+            <label className="reporting-v2-field reporting-v2-field-wide">
               <span>Kampanya filtresi</span>
               <select value={v2CampaignId} onChange={(event) => setV2CampaignId(event.target.value)}>
                 <option value="all">Tüm kampanyalar</option>
@@ -147,13 +152,13 @@ export function ReportsPage() {
           </div>
         </div>
 
-        <p className="daily-empty-value">
+        <p className="reporting-v2-note">
           Kampanya kırılımı adayın güncel kampanyasına göre hesaplanır.
         </p>
 
-        <div className="daily-report-grid" aria-label="Raporlama V2 kartları">
+        <div className="reporting-v2-metric-grid" aria-label="Raporlama V2 kartları">
           {v2Cards.map((card) => (
-            <div className={`daily-report-card ${card.tone ?? "neutral"}`} key={card.label}>
+            <div className={`reporting-v2-metric-card ${card.tone ?? "neutral"}`} key={card.label} aria-label={card.ariaLabel}>
               <span>{card.label}</span>
               <strong>{card.value}</strong>
               {card.hint ? <p>{card.hint}</p> : null}
@@ -161,86 +166,96 @@ export function ReportsPage() {
           ))}
         </div>
 
-        <div className="daily-call-table-wrap">
-          <table className="daily-call-table">
-            <caption>Görüşme sonucu dağılımı</caption>
-            <thead>
-              <tr>
-                <th>Görüşme sonucu</th>
-                <th>Kayıt sayısı</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(v2Summary?.byCallResult ?? []).map((row) => (
-                <tr key={row.callResult}>
-                  <td>{row.label}</td>
-                  <td>{row.count}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="daily-call-table-wrap">
-          <table className="daily-call-table">
-            <caption>Kampanya bazlı sonuç tablosu</caption>
-            <thead>
-              <tr>
-                <th>Kampanya</th>
-                <th>İşlem gören tekil aday</th>
-                <th>Toplam görüşme kaydı</th>
-                <th>Görüşüldü</th>
-                <th>Ulaşılamadı</th>
-                <th>CRM görüşme sonucu: Randevu Verildi</th>
-                <th>CRM görüşme sonucu: Kayıt Oldu</th>
-              </tr>
-            </thead>
-            <tbody>
-              {v2Summary?.byCampaign.length ? (
-                v2Summary.byCampaign.map((row) => (
-                  <tr key={`${row.campaignId ?? "default"}-${row.campaignName}`}>
-                    <td>{row.campaignName}</td>
-                    <td>{row.uniqueStudentsWithCallLogs}</td>
-                    <td>{row.totalCallLogs}</td>
-                    <td>{row.byCallResult.find((result) => result.callResult === "reached")?.count ?? 0}</td>
-                    <td>{row.byCallResult.find((result) => result.callResult === "not_reached")?.count ?? 0}</td>
-                    <td>{row.byCallResult.find((result) => result.callResult === "appointment")?.count ?? 0}</td>
-                    <td>{row.byCallResult.find((result) => result.callResult === "registered")?.count ?? 0}</td>
+        <div className="reporting-v2-content-grid">
+          <section className="reporting-v2-subpanel">
+            <h3>Görüşme sonucu dağılımı</h3>
+            <div className="reporting-v2-table-wrap">
+              <table className="reporting-v2-table reporting-v2-table-compact">
+                <thead>
+                  <tr>
+                    <th>Görüşme sonucu</th>
+                    <th>Kayıt sayısı</th>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={7}>Seçilen aralık için kampanya kırılımı yok.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody>
+                  {(v2Summary?.byCallResult ?? []).map((row) => (
+                    <tr key={row.callResult}>
+                      <td>{row.label}</td>
+                      <td>{row.count}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
 
-        <div className="daily-call-table-wrap">
-          <table className="daily-call-table">
-            <caption>Günlük trend</caption>
-            <thead>
-              <tr>
-                <th>Tarih</th>
-                <th>Toplam görüşme kaydı</th>
-                <th>İşlem gören tekil aday</th>
-                <th>CRM görüşme sonucu: Randevu Verildi</th>
-                <th>CRM görüşme sonucu: Kayıt Oldu</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(v2Summary?.dailyTrend ?? []).map((row) => (
-                <tr key={row.date}>
-                  <td>{row.date}</td>
-                  <td>{row.totalCallLogs}</td>
-                  <td>{row.uniqueStudentsWithCallLogs}</td>
-                  <td>{row.appointmentResults}</td>
-                  <td>{row.registeredResults}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="reporting-v2-side-stack">
+            <section className="reporting-v2-subpanel">
+              <h3>Kampanya bazlı sonuç tablosu</h3>
+              <div className="reporting-v2-table-wrap">
+                <table className="reporting-v2-table reporting-v2-campaign-table">
+                  <thead>
+                    <tr>
+                      <th>Kampanya</th>
+                      <th>Tekil aday</th>
+                      <th>Toplam kayıt</th>
+                      <th>Görüşüldü</th>
+                      <th>Ulaşılamadı</th>
+                      <th>Randevu Verildi</th>
+                      <th>Kayıt Oldu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {v2Summary?.byCampaign.length ? (
+                      v2Summary.byCampaign.map((row) => (
+                        <tr key={`${row.campaignId ?? "default"}-${row.campaignName}`}>
+                          <td title={row.campaignName}>{row.campaignName}</td>
+                          <td>{row.uniqueStudentsWithCallLogs}</td>
+                          <td>{row.totalCallLogs}</td>
+                          <td>{row.byCallResult.find((result) => result.callResult === "reached")?.count ?? 0}</td>
+                          <td>{row.byCallResult.find((result) => result.callResult === "not_reached")?.count ?? 0}</td>
+                          <td>{row.byCallResult.find((result) => result.callResult === "appointment")?.count ?? 0}</td>
+                          <td>{row.byCallResult.find((result) => result.callResult === "registered")?.count ?? 0}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={7}>Seçilen aralık için kampanya kırılımı yok.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className="reporting-v2-subpanel">
+              <h3>Günlük trend</h3>
+              <div className="reporting-v2-table-wrap">
+                <table className="reporting-v2-table reporting-v2-trend-table">
+                  <thead>
+                    <tr>
+                      <th>Tarih</th>
+                      <th>Toplam kayıt</th>
+                      <th>Tekil aday</th>
+                      <th>Randevu Verildi</th>
+                      <th>Kayıt Oldu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(v2Summary?.dailyTrend ?? []).map((row) => (
+                      <tr key={row.date}>
+                        <td>{row.date}</td>
+                        <td>{row.totalCallLogs}</td>
+                        <td>{row.uniqueStudentsWithCallLogs}</td>
+                        <td>{row.appointmentResults}</td>
+                        <td>{row.registeredResults}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
         </div>
       </section>
 

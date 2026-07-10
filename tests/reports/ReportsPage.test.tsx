@@ -122,8 +122,11 @@ describe("ReportsPage", () => {
     expect(screen.getByLabelText("Kampanya filtresi")).toBeInTheDocument();
     expect(screen.getAllByText("Toplam görüşme kaydı").length).toBeGreaterThan(0);
     expect(screen.getAllByText("İşlem gören tekil aday").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("CRM görüşme sonucu: Randevu Verildi").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("CRM görüşme sonucu: Kayıt Oldu").length).toBeGreaterThan(0);
+    expect(screen.getByLabelText("CRM görüşme sonucu: Randevu Verildi")).toBeInTheDocument();
+    expect(screen.getByLabelText("CRM görüşme sonucu: Kayıt Oldu")).toBeInTheDocument();
+    expect(screen.getAllByText("Randevu Verildi").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Kayıt Oldu").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("CRM görüşme sonucu").length).toBeGreaterThan(0);
     expect(screen.getByText("Görüşme sonucu dağılımı")).toBeInTheDocument();
     expect(screen.getByText("Kampanya bazlı sonuç tablosu")).toBeInTheDocument();
     expect(screen.getByText("Günlük trend")).toBeInTheDocument();
