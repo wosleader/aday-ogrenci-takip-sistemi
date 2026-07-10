@@ -40,6 +40,15 @@ function renderReportsPage(openStudentById = vi.fn()) {
 }
 
 async function seedDailyCall() {
+  const campaignId = await db.campaigns.add({
+    uuid: "campaign-report-page",
+    name: "YKS Kampanyası",
+    is_default: false,
+    is_active: true,
+    created_at: timestamp,
+    updated_at: timestamp,
+    sync_status: "local"
+  });
   const studentId = await db.students.add({
     uuid: "student-report-page",
     student_full_name: "AYSE YILMAZ",
@@ -48,7 +57,7 @@ async function seedDailyCall() {
     current_class: "11",
     student_group: "YKS",
     category: "YKS",
-    campaign_id: null,
+    campaign_id: campaignId,
     lifecycle_status: "candidate",
     last_call_result: "reached",
     created_at: timestamp,
@@ -104,6 +113,23 @@ describe("ReportsPage", () => {
     expect(screen.getByRole("link", { name: "Hatırlatmalar sayfasına git" })).toHaveAttribute("href", "/reminders");
   });
 
+  it("renders the Reporting V2 read-only summary controls and labels", () => {
+    renderReportsPage();
+
+    expect(screen.getByRole("heading", { name: "Raporlama V2 özeti" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Raporlama V2 başlangıç tarihi")).toBeInTheDocument();
+    expect(screen.getByLabelText("Raporlama V2 bitiş tarihi")).toBeInTheDocument();
+    expect(screen.getByLabelText("Kampanya filtresi")).toBeInTheDocument();
+    expect(screen.getAllByText("Toplam görüşme kaydı").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("İşlem gören tekil aday").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("CRM görüşme sonucu: Randevu Verildi").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("CRM görüşme sonucu: Kayıt Oldu").length).toBeGreaterThan(0);
+    expect(screen.getByText("Görüşme sonucu dağılımı")).toBeInTheDocument();
+    expect(screen.getByText("Kampanya bazlı sonuç tablosu")).toBeInTheDocument();
+    expect(screen.getByText("Günlük trend")).toBeInTheDocument();
+    expect(screen.getByText("Kampanya kırılımı adayın güncel kampanyasına göre hesaplanır.")).toBeInTheDocument();
+  });
+
   it("opens the selected student from the recent calls list", async () => {
     const studentId = await seedDailyCall();
     const openStudentById = vi.fn();
@@ -117,5 +143,17 @@ describe("ReportsPage", () => {
     await userEvent.click(screen.getByRole("button", { name: "Adayı Aç" }));
 
     expect(openStudentById).toHaveBeenCalledWith(studentId);
+  });
+
+  it("uses the Reporting V2 campaign filter without changing the daily report", async () => {
+    await seedDailyCall();
+    renderReportsPage();
+    fireEvent.change(screen.getByLabelText("Rapor tarihi"), { target: { value: "2026-05-10" } });
+
+    expect(await screen.findByText("YKS Kampanyası")).toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByLabelText("Kampanya filtresi"), "1");
+
+    expect(await screen.findByText("AYSE YILMAZ")).toBeInTheDocument();
+    expect(screen.getByText("Veli bilgi istedi")).toBeInTheDocument();
   });
 });

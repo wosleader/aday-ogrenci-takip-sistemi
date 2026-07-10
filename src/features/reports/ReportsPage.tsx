@@ -4,7 +4,9 @@ import { Link, useOutletContext } from "react-router-dom";
 import type { AppOutletContext } from "../../app/AppLayout";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/PageHeader";
+import { db } from "../../db/db";
 import { getTodayInputValue, readDailyReport } from "./services/dailyReportReader";
+import { readReportingV2Summary } from "./services/reportingV2Reader";
 
 type ReportCard = {
   label: string;
@@ -16,7 +18,25 @@ type ReportCard = {
 export function ReportsPage() {
   const { openStudentById } = useOutletContext<AppOutletContext>();
   const [selectedDate, setSelectedDate] = useState(() => getTodayInputValue());
+  const [v2FromDate, setV2FromDate] = useState(() => getTodayInputValue());
+  const [v2ToDate, setV2ToDate] = useState(() => getTodayInputValue());
+  const [v2CampaignId, setV2CampaignId] = useState("all");
   const report = useLiveQuery(() => readDailyReport(selectedDate), [selectedDate], undefined);
+  const campaignOptions = useLiveQuery(
+    () => db.campaigns.toArray(),
+    [],
+    []
+  ).filter((campaign) => !campaign.deleted_at && campaign.is_active && typeof campaign.id === "number");
+  const v2Summary = useLiveQuery(
+    () =>
+      readReportingV2Summary({
+        fromDate: v2FromDate,
+        toDate: v2ToDate,
+        campaignId: v2CampaignId === "all" ? null : Number(v2CampaignId)
+      }),
+    [v2FromDate, v2ToDate, v2CampaignId],
+    undefined
+  );
   const summary = report?.summary;
   const reminderSummary = report?.reminder_summary;
   const cards: ReportCard[] = [
@@ -39,6 +59,30 @@ export function ReportsPage() {
     { label: "Yanlış numara", value: summary?.wrong_number_count ?? 0, tone: "danger" },
     { label: "Süresi geçen hatırlatma", value: reminderSummary?.overdue ?? 0, tone: "danger" },
     { label: "Bugün aranacak hatırlatma", value: reminderSummary?.today ?? 0, tone: "warning" }
+  ];
+  const v2Cards: ReportCard[] = [
+    {
+      label: "Toplam görüşme kaydı",
+      value: v2Summary?.totals.totalCallLogs ?? 0,
+      hint: "Seçilen aralıkta aktif iletişim kayıtları"
+    },
+    {
+      label: "İşlem gören tekil aday",
+      value: v2Summary?.totals.uniqueStudentsWithCallLogs ?? 0,
+      hint: "Seçilen aralıkta en az bir kaydı olan adaylar"
+    },
+    {
+      label: "CRM görüşme sonucu: Randevu Verildi",
+      value: v2Summary?.totals.appointmentResults ?? 0,
+      tone: "warning"
+    },
+    {
+      label: "CRM görüşme sonucu: Kayıt Oldu",
+      value: v2Summary?.totals.registeredResults ?? 0,
+      tone: "good"
+    },
+    { label: "Ulaşılamadı", value: v2Summary?.totals.notReached ?? 0, tone: "danger" },
+    { label: "Görüşüldü", value: v2Summary?.totals.reached ?? 0, tone: "good" }
   ];
 
   return (
@@ -63,6 +107,142 @@ export function ReportsPage() {
           </div>
         ))}
       </div>
+
+      <section className="daily-report-section" aria-label="Raporlama V2 özeti">
+        <div className="daily-report-section-title">
+          <div>
+            <h2>Raporlama V2 özeti</h2>
+            <p>Tarih aralığı ve kampanya kırılımıyla read-only yönetici özeti.</p>
+          </div>
+          <div className="daily-reminder-pills">
+            <label className="daily-report-date">
+              <span>Başlangıç tarihi</span>
+              <input
+                aria-label="Raporlama V2 başlangıç tarihi"
+                type="date"
+                value={v2FromDate}
+                onChange={(event) => setV2FromDate(event.target.value)}
+              />
+            </label>
+            <label className="daily-report-date">
+              <span>Bitiş tarihi</span>
+              <input
+                aria-label="Raporlama V2 bitiş tarihi"
+                type="date"
+                value={v2ToDate}
+                onChange={(event) => setV2ToDate(event.target.value)}
+              />
+            </label>
+            <label className="daily-report-date">
+              <span>Kampanya filtresi</span>
+              <select value={v2CampaignId} onChange={(event) => setV2CampaignId(event.target.value)}>
+                <option value="all">Tüm kampanyalar</option>
+                {campaignOptions.map((campaign) => (
+                  <option value={campaign.id} key={campaign.id}>
+                    {campaign.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <p className="daily-empty-value">
+          Kampanya kırılımı adayın güncel kampanyasına göre hesaplanır.
+        </p>
+
+        <div className="daily-report-grid" aria-label="Raporlama V2 kartları">
+          {v2Cards.map((card) => (
+            <div className={`daily-report-card ${card.tone ?? "neutral"}`} key={card.label}>
+              <span>{card.label}</span>
+              <strong>{card.value}</strong>
+              {card.hint ? <p>{card.hint}</p> : null}
+            </div>
+          ))}
+        </div>
+
+        <div className="daily-call-table-wrap">
+          <table className="daily-call-table">
+            <caption>Görüşme sonucu dağılımı</caption>
+            <thead>
+              <tr>
+                <th>Görüşme sonucu</th>
+                <th>Kayıt sayısı</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(v2Summary?.byCallResult ?? []).map((row) => (
+                <tr key={row.callResult}>
+                  <td>{row.label}</td>
+                  <td>{row.count}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="daily-call-table-wrap">
+          <table className="daily-call-table">
+            <caption>Kampanya bazlı sonuç tablosu</caption>
+            <thead>
+              <tr>
+                <th>Kampanya</th>
+                <th>İşlem gören tekil aday</th>
+                <th>Toplam görüşme kaydı</th>
+                <th>Görüşüldü</th>
+                <th>Ulaşılamadı</th>
+                <th>CRM görüşme sonucu: Randevu Verildi</th>
+                <th>CRM görüşme sonucu: Kayıt Oldu</th>
+              </tr>
+            </thead>
+            <tbody>
+              {v2Summary?.byCampaign.length ? (
+                v2Summary.byCampaign.map((row) => (
+                  <tr key={`${row.campaignId ?? "default"}-${row.campaignName}`}>
+                    <td>{row.campaignName}</td>
+                    <td>{row.uniqueStudentsWithCallLogs}</td>
+                    <td>{row.totalCallLogs}</td>
+                    <td>{row.byCallResult.find((result) => result.callResult === "reached")?.count ?? 0}</td>
+                    <td>{row.byCallResult.find((result) => result.callResult === "not_reached")?.count ?? 0}</td>
+                    <td>{row.byCallResult.find((result) => result.callResult === "appointment")?.count ?? 0}</td>
+                    <td>{row.byCallResult.find((result) => result.callResult === "registered")?.count ?? 0}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7}>Seçilen aralık için kampanya kırılımı yok.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="daily-call-table-wrap">
+          <table className="daily-call-table">
+            <caption>Günlük trend</caption>
+            <thead>
+              <tr>
+                <th>Tarih</th>
+                <th>Toplam görüşme kaydı</th>
+                <th>İşlem gören tekil aday</th>
+                <th>CRM görüşme sonucu: Randevu Verildi</th>
+                <th>CRM görüşme sonucu: Kayıt Oldu</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(v2Summary?.dailyTrend ?? []).map((row) => (
+                <tr key={row.date}>
+                  <td>{row.date}</td>
+                  <td>{row.totalCallLogs}</td>
+                  <td>{row.uniqueStudentsWithCallLogs}</td>
+                  <td>{row.appointmentResults}</td>
+                  <td>{row.registeredResults}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <section className="daily-report-section">
         <div className="daily-report-section-title">
