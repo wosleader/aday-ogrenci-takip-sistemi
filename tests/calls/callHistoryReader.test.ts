@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { AppDatabase } from "../../src/db/db";
+import type { ReminderStatus } from "../../src/domain/constants/statuses";
 import type { CallLogRecord } from "../../src/domain/models/callLog";
+import type { ReminderRecord } from "../../src/domain/models/reminder";
 import type { StudentRecord } from "../../src/domain/models/student";
 import { readCallHistoryForStudent } from "../../src/features/calls/services/callHistoryReader";
 import { createSearchText, normalizeText } from "../../src/utils/normalizeText";
@@ -48,6 +50,23 @@ function callLog(studentId: number, overrides: Partial<CallLogRecord> = {}): Cal
     created_by: "agent",
     created_reminder_id: null,
     created_appointment_id: null,
+    sync_status: "local",
+    created_at: timestamp,
+    updated_at: timestamp,
+    deleted_at: null,
+    ...overrides
+  };
+}
+
+function reminder(studentId: number, status: ReminderStatus, overrides: Partial<ReminderRecord> = {}): ReminderRecord {
+  return {
+    uuid: crypto.randomUUID(),
+    student_id: studentId,
+    reminder_type: "call",
+    reminder_at: "2026-05-10T11:00:00.000Z",
+    status,
+    note: null,
+    is_default_time_assigned: false,
     sync_status: "local",
     created_at: timestamp,
     updated_at: timestamp,
@@ -178,6 +197,72 @@ describe("callHistoryReader", () => {
       const history = await readCallHistoryForStudent(studentId, database);
 
       expect(history.map((item) => item.phone_context_label)).toEqual(["Telefon 5 · Diğer", "Telefon 4 · Yakın"]);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it.each([
+    ["pending", true],
+    ["completed", false],
+    ["cancelled", false]
+  ] satisfies Array<[ReminderStatus, boolean]>)(
+    "exposes linked reminder completion state for %s reminders",
+    async (status, canComplete) => {
+      const database = await createDatabase();
+
+      try {
+        const studentId = await database.students.add(student());
+        const reminderId = await database.reminders.add(reminder(studentId, status));
+        await database.call_logs.add(
+          callLog(studentId, {
+            created_reminder_id: reminderId,
+            reminder_at: "2026-05-10T11:00:00.000Z"
+          })
+        );
+
+        const history = await readCallHistoryForStudent(studentId, database);
+
+        expect(history[0]).toMatchObject({
+          linked_reminder_id: reminderId,
+          linked_reminder_status: status,
+          linked_reminder_at: "2026-05-10T11:00:00.000Z",
+          canCompleteLinkedReminder: canComplete
+        });
+      } finally {
+        database.close();
+        await database.delete();
+      }
+    }
+  );
+
+  it("keeps unlinked and missing linked reminders safe for completion UI", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      await database.call_logs.bulkAdd([
+        callLog(studentId, { call_time: "2026-05-08T10:00:00.000Z" }),
+        callLog(studentId, {
+          call_time: "2026-05-08T11:00:00.000Z",
+          created_reminder_id: 999,
+          reminder_at: "2026-05-10T11:00:00.000Z"
+        })
+      ]);
+
+      const history = await readCallHistoryForStudent(studentId, database);
+
+      expect(history[0]).toMatchObject({
+        linked_reminder_id: 999,
+        linked_reminder_status: null,
+        canCompleteLinkedReminder: false
+      });
+      expect(history[1]).toMatchObject({
+        linked_reminder_id: null,
+        linked_reminder_status: null,
+        canCompleteLinkedReminder: false
+      });
     } finally {
       database.close();
       await database.delete();

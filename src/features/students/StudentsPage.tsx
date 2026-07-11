@@ -44,6 +44,7 @@ import {
   type ShortcutActionKey
 } from "../shortcuts/services/shortcutRegistry";
 import { readActiveOperationShortcuts } from "../shortcuts/services/shortcutSettings";
+import { completeReminder } from "../reminders/services/reminderLifecycle";
 import { deleteStudentWithRelations } from "./services/studentDelete";
 import {
   ALL_STUDENT_GROUPS_FILTER,
@@ -1330,6 +1331,7 @@ export function StudentsPage() {
   const [studentDeleteCandidate, setStudentDeleteCandidate] = useState<StudentListRow | null>(null);
   const [callLogDeleteCandidate, setCallLogDeleteCandidate] = useState<CallHistoryItem | null>(null);
   const [callLogEditCandidate, setCallLogEditCandidate] = useState<CallHistoryItem | null>(null);
+  const [linkedReminderCompleteCandidate, setLinkedReminderCompleteCandidate] = useState<CallHistoryItem | null>(null);
   const [callLogEditResult, setCallLogEditResult] = useState<CallResult>("not_called");
   const [callLogEditDate, setCallLogEditDate] = useState("");
   const [callLogEditTime, setCallLogEditTime] = useState("11:00");
@@ -1345,6 +1347,7 @@ export function StudentsPage() {
   const [isSavingCall, setIsSavingCall] = useState(false);
   const [isDeletingCallLog, setIsDeletingCallLog] = useState(false);
   const [isUpdatingCallLog, setIsUpdatingCallLog] = useState(false);
+  const [isCompletingLinkedReminder, setIsCompletingLinkedReminder] = useState(false);
   const [operationToast, setOperationToast] = useState<OperationToast | null>(null);
   const [whatsAppDraftContext, setWhatsAppDraftContext] = useState<WhatsAppDraftContext | null>(null);
   const [selectedWhatsAppTemplateId, setSelectedWhatsAppTemplateId] = useState(DEFAULT_WHATSAPP_TEMPLATE_ID);
@@ -2017,6 +2020,36 @@ export function StudentsPage() {
     }
   }
 
+  async function confirmCompleteLinkedReminder(historyItem: CallHistoryItem) {
+    if (isCompletingLinkedReminder) {
+      return;
+    }
+
+    if (!historyItem.linked_reminder_id) {
+      const message = "Tamamlanacak bağlı hatırlatma bulunamadı.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
+      return;
+    }
+
+    setIsCompletingLinkedReminder(true);
+    setActionMessage(null);
+
+    try {
+      await completeReminder(historyItem.linked_reminder_id);
+      setLinkedReminderCompleteCandidate(null);
+      const message = "Hatırlatma tamamlandı.";
+      setActionMessage(message);
+      showOperationToast(message, "success");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Hatırlatma tamamlanamadı.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
+    } finally {
+      setIsCompletingLinkedReminder(false);
+    }
+  }
+
   function openCallLogEditModal(historyItem: CallHistoryItem) {
     setCallLogEditCandidate(historyItem);
     setCallLogEditResult(historyItem.call_result as CallResult);
@@ -2415,6 +2448,37 @@ export function StudentsPage() {
                 type="button"
               >
                 {isDeletingCallLog ? "İşleniyor..." : "Geçersiz say / sil"}
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : null}
+      {linkedReminderCompleteCandidate ? (
+        <section
+          aria-labelledby="linked-reminder-complete-title"
+          aria-modal="true"
+          className="delete-confirm-backdrop"
+          role="dialog"
+        >
+          <div className="delete-confirm-modal">
+            <h2 id="linked-reminder-complete-title">Hatırlatma tamamlansın mı?</h2>
+            <p>
+              Bu görüşmeye bağlı açık hatırlatma tamamlandı olarak işaretlenecek. Görüşme kaydı silinmez.
+            </p>
+            <div className="delete-confirm-actions">
+              <button
+                disabled={isCompletingLinkedReminder}
+                onClick={() => setLinkedReminderCompleteCandidate(null)}
+                type="button"
+              >
+                İptal
+              </button>
+              <button
+                disabled={isCompletingLinkedReminder}
+                onClick={() => void confirmCompleteLinkedReminder(linkedReminderCompleteCandidate)}
+                type="button"
+              >
+                {isCompletingLinkedReminder ? "İşleniyor..." : "Hatırlatmayı tamamla"}
               </button>
             </div>
           </div>
@@ -3212,6 +3276,29 @@ export function StudentsPage() {
                           {formatShortDateTime(historyItem.call_time)} · {historyItem.call_result_label}
                         </span>
                         <span style={{ display: "inline-flex", gap: 4 }}>
+                          {historyItem.canCompleteLinkedReminder ? (
+                            <button
+                              aria-label="Hatırlatmayı tamamla"
+                              onClick={() => setLinkedReminderCompleteCandidate(historyItem)}
+                              style={{
+                                alignItems: "center",
+                                background: "transparent",
+                                border: "0",
+                                color: "#047857",
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                height: 20,
+                                justifyContent: "center",
+                                opacity: 0.72,
+                                padding: 0,
+                                width: 20
+                              }}
+                              title="Hatırlatmayı tamamla"
+                              type="button"
+                            >
+                              <Check aria-hidden="true" size={12} />
+                            </button>
+                          ) : null}
                           <button
                             aria-label="İletişim kaydını düzelt"
                             onClick={() => openCallLogEditModal(historyItem)}

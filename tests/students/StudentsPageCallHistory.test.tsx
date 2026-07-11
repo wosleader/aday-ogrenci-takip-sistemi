@@ -114,6 +114,46 @@ async function seedCallHistoryWithoutPhoneContext() {
   });
 }
 
+async function seedCallHistoryWithPendingReminder() {
+  const studentId = await seedStudent();
+  const reminderId = await db.reminders.add({
+    uuid: "linked-pending-reminder",
+    student_id: studentId,
+    reminder_type: "call",
+    reminder_at: "2026-05-11T11:00:00.000Z",
+    status: "pending",
+    note: "Açık hatırlatma",
+    is_default_time_assigned: false,
+    sync_status: "local",
+    created_at: now,
+    updated_at: now,
+    deleted_at: null
+  });
+  const callLogId = await db.call_logs.add({
+    uuid: "call-history-with-pending-reminder",
+    student_id: studentId,
+    phone_id: null,
+    phone_snapshot: null,
+    contacted_phone_id: null,
+    contacted_phone_number: null,
+    contacted_phone_label: null,
+    call_time: "2026-05-10T12:00:00.000Z",
+    call_result: "call_later",
+    note: "Hatırlatma bağlı görüşme.",
+    reminder_at: "2026-05-11T11:00:00.000Z",
+    next_action: "Tekrar arama",
+    created_by: "agent",
+    created_reminder_id: reminderId,
+    created_appointment_id: null,
+    sync_status: "local",
+    created_at: now,
+    updated_at: now,
+    deleted_at: null
+  });
+
+  await db.reminders.update(reminderId, { call_log_id: callLogId });
+}
+
 function StudentsPageHost() {
   const context: AppOutletContext = {
     globalSearch: "",
@@ -169,6 +209,7 @@ describe("StudentsPage call history phone context", () => {
     renderStudentsPage();
 
     expect(await screen.findByText("Telefon seçilmedi")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Hatırlatmayı tamamla" })).not.toBeInTheDocument();
   });
 
   it("requires confirmation before soft deleting a call history item from the drawer", async () => {
@@ -225,5 +266,41 @@ describe("StudentsPage call history phone context", () => {
     const callLog = await db.call_logs.where("uuid").equals("call-history-with-phone-context").first();
     expect(callLog?.note).toBe("Düzeltilmiş iletişim notu.");
     expect(callLog?.deleted_at).toBeNull();
+  });
+
+  it("completes a pending linked reminder from the call history row before soft delete", async () => {
+    const user = userEvent.setup();
+    await seedCallHistoryWithPendingReminder();
+
+    renderStudentsPage();
+
+    expect(await screen.findByText("Hatırlatma bağlı görüşme.")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Hatırlatmayı tamamla" }));
+
+    const completeDialog = screen.getByRole("dialog", { name: "Hatırlatma tamamlansın mı?" });
+    expect(
+      within(completeDialog).getByText("Bu görüşmeye bağlı açık hatırlatma tamamlandı olarak işaretlenecek. Görüşme kaydı silinmez.")
+    ).toBeInTheDocument();
+
+    await user.click(within(completeDialog).getByRole("button", { name: "Hatırlatmayı tamamla" }));
+
+    await waitFor(async () => {
+      expect((await db.reminders.where("uuid").equals("linked-pending-reminder").first())?.status).toBe("completed");
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "Hatırlatmayı tamamla" })).not.toBeInTheDocument();
+    });
+    expect(screen.getByText("Hatırlatma bağlı görüşme.")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "İletişim kaydını geçersiz say / sil" }));
+    await user.click(screen.getByRole("button", { name: "Geçersiz say / sil" }));
+
+    await waitFor(() => {
+      expect(screen.queryByText("Hatırlatma bağlı görüşme.")).not.toBeInTheDocument();
+    });
+
+    const callLog = await db.call_logs.where("uuid").equals("call-history-with-pending-reminder").first();
+    expect(callLog?.deleted_at).toBeTruthy();
   });
 });

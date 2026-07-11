@@ -1,6 +1,6 @@
 import type { AppDatabase } from "../../../db/db";
 import { db } from "../../../db/db";
-import { CALL_RESULTS } from "../../../domain/constants/statuses";
+import { CALL_RESULTS, type ReminderStatus } from "../../../domain/constants/statuses";
 import { createPhoneSnapshotDisplayLabel } from "./callLogPhoneContext";
 
 export type CallHistoryItem = {
@@ -18,6 +18,10 @@ export type CallHistoryItem = {
   phone_context_number?: string | null;
   note?: string | null;
   reminder_at?: string | null;
+  linked_reminder_id?: number | null;
+  linked_reminder_status?: ReminderStatus | null;
+  linked_reminder_at?: string | null;
+  canCompleteLinkedReminder: boolean;
   created_by?: string | null;
 };
 
@@ -26,6 +30,13 @@ export async function readCallHistoryForStudent(
   database: AppDatabase = db
 ): Promise<CallHistoryItem[]> {
   const logs = await database.call_logs.where("student_id").equals(studentId).toArray();
+  const reminderIds = [
+    ...new Set(
+      logs.flatMap((log) => (log.created_reminder_id && !log.deleted_at ? [log.created_reminder_id] : []))
+    )
+  ];
+  const linkedReminders = await Promise.all(reminderIds.map((reminderId) => database.reminders.get(reminderId)));
+  const remindersById = new Map(linkedReminders.flatMap((reminder) => (reminder?.id ? [[reminder.id, reminder]] : [])));
 
   return logs
     .filter((log) => !log.deleted_at && log.id)
@@ -35,6 +46,8 @@ export async function readCallHistoryForStudent(
       const snapshotNumber = log.phone_snapshot?.phone_number?.trim() || null;
       const legacyLabel = log.contacted_phone_label?.trim() || null;
       const legacyNumber = log.contacted_phone_number?.trim() || null;
+      const linkedReminder = log.created_reminder_id ? remindersById.get(log.created_reminder_id) : null;
+      const activeLinkedReminder = linkedReminder && !linkedReminder.deleted_at ? linkedReminder : null;
 
       return {
         call_log_id: log.id!,
@@ -51,6 +64,10 @@ export async function readCallHistoryForStudent(
         phone_context_number: snapshotNumber || legacyNumber,
         note: log.note ?? null,
         reminder_at: log.reminder_at ?? null,
+        linked_reminder_id: log.created_reminder_id ?? null,
+        linked_reminder_status: activeLinkedReminder?.status ?? null,
+        linked_reminder_at: activeLinkedReminder?.reminder_at ?? log.reminder_at ?? null,
+        canCompleteLinkedReminder: activeLinkedReminder?.status === "pending",
         created_by: log.created_by ?? "system"
       };
     });
