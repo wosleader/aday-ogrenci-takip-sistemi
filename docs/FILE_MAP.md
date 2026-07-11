@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Reporting V2 Summary MVP Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Linked Reminder Quick Complete Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -35,7 +35,7 @@ Son doğrulandı: Sprint 8.2
 Son doğrulandı: Phone-Level Outcome Read Model Pilot
 
 - `src/features/students/StudentsPage.tsx`
-  Aday Listesi, filtreler, sağ drawer, görüşme akışı, kompakt/açılır-kapanır kısayol yardım barı, call history UI ve sağ kişi kartı telefon alanını içerir. Sprint 9.3D-1 itibarıyla call history `phone_context_label` / `phone_context_number` display alanlarını gösterir. Sprint 9.3E-2 itibarıyla Telefon 1 / Telefon 2 aksiyonlu kartlarını korur, Telefon 3+ için readonly görünüm sunar, `+N numara daha göster` / `Daha az göster` interaction'ını yönetir ve `visible_phones` / `phones` / `hidden_phone_count` alanlarını tüketir. Sprint 9.3F-1 itibarıyla Telefon 3+ için call save selection, selected call phone state, `saveCallAndGoNext` içinde `contacted_phone_id` hesaplaması ve legacy Telefon 1/2 fallback davranışını taşır. Phone-Level Outcome Read Model Pilot itibarıyla Telefon 1/2 ve Telefon 3+ kartlarında `call_logs` kaynaklı read-only `Son sonuç` göstergesini render eder; schema, import/export ve `phone_status` semantiğini değiştirmez. `8f1f613` itibarıyla bağlantısız call history kayıtları için düzeltme/düzenle modalını ve `İletişim kaydını geçersiz say / sil` / `Geçersiz say / sil` soft delete aksiyon dilini sunar.
+  Aday Listesi, filtreler, sağ drawer, görüşme akışı, kompakt/açılır-kapanır kısayol yardım barı, call history UI ve sağ kişi kartı telefon alanını içerir. Sprint 9.3D-1 itibarıyla call history `phone_context_label` / `phone_context_number` display alanlarını gösterir. Sprint 9.3E-2 itibarıyla Telefon 1 / Telefon 2 aksiyonlu kartlarını korur, Telefon 3+ için readonly görünüm sunar, `+N numara daha göster` / `Daha az göster` interaction'ını yönetir ve `visible_phones` / `phones` / `hidden_phone_count` alanlarını tüketir. Sprint 9.3F-1 itibarıyla Telefon 3+ için call save selection, selected call phone state, `saveCallAndGoNext` içinde `contacted_phone_id` hesaplaması ve legacy Telefon 1/2 fallback davranışını taşır. Phone-Level Outcome Read Model Pilot itibarıyla Telefon 1/2 ve Telefon 3+ kartlarında `call_logs` kaynaklı read-only `Son sonuç` göstergesini render eder; schema, import/export ve `phone_status` semantiğini değiştirmez. `8f1f613` itibarıyla bağlantısız call history kayıtları için düzeltme/düzenle modalını ve `İletişim kaydını geçersiz say / sil` / `Geçersiz say / sil` soft delete aksiyon dilini sunar. `39e3840` itibarıyla pending reminder bağlantılı history satırında icon-only `Hatırlatmayı tamamla` aksiyonunu ve confirmation modalını render eder.
 - `src/features/students/services/studentListReader.ts`
   Aday liste satırlarını okuma, filtreleme, Sınıf/Şube helper’ları ve `StudentListRow` read model üretimi. Legacy `phone_1` / `phone_2` / `phone_count` alanlarını korur; Sprint 9.3E-1 itibarıyla sağ kişi kartı çoklu telefon hazırlığı için `phones`, `visible_phones` ve `hidden_phone_count` alanlarını taşır.
 - `src/features/students/services/studentPhoneStatus.ts`
@@ -58,11 +58,11 @@ Son doğrulandı: Phone-Level Outcome Read Model Pilot
 - `src/features/calls/services/callLogCorrection.ts`
   Bağlantısız iletişim geçmişi kayıtlarını düzeltir. Görüşme durumu, tarih/saat, not ve telefon bağlamını günceller; bağlı reminder/appointment kayıtlarını bloklar; PhoneRecord mutate etmeden öğrenci özetini aktif call log kayıtlarından yeniden hesaplatır.
 - `src/features/calls/services/callLogDeletion.ts`
-  İletişim geçmişi soft delete / geçersiz sayma akışı. `call_logs.deleted_at` / `updated_at` set eder, hard delete yapmaz, linked reminder/appointment guard'ını korur ve öğrenci özetini aktif call log kayıtlarından yeniden hesaplayan ortak helper'ı sağlar.
+  İletişim geçmişi soft delete / geçersiz sayma akışı. `call_logs.deleted_at` / `updated_at` set eder, hard delete yapmaz ve öğrenci özetini aktif call log kayıtlarından yeniden hesaplayan ortak helper'ı sağlar. `40cb62b` itibarıyla linked reminder/appointment guard'ı terminal status-aware çalışır: pending reminder bloklanır, completed/cancelled reminder soft delete edilebilir; pending/postponed appointment bloklanır, terminal appointment status'ları soft delete edilebilir.
 - `src/features/calls/services/callLogPhoneContext.ts`
   Call log telefon bağlamı display/fallback helper’ları; `phone_snapshot` varsa Telefon N / ilişki etiketi label’ı üretir, eski kayıtlarda güvenli fallback döner.
 - `src/features/calls/services/callHistoryReader.ts`
-  Sağ drawer iletişim geçmişi için call history read model üretir; Sprint 9.3C itibarıyla phone snapshot-first context display alanlarını ve legacy fallback'i taşır. Phone-Level Outcome Read Model Pilot itibarıyla `phone_id`, `phone_snapshot.phone_id` ve `contacted_phone_id` alanlarını read model'e taşır; sağ kart telefon bazlı son sonuç lookup'ı bu alanları kullanır.
+  Sağ drawer iletişim geçmişi için call history read model üretir; Sprint 9.3C itibarıyla phone snapshot-first context display alanlarını ve legacy fallback'i taşır. Phone-Level Outcome Read Model Pilot itibarıyla `phone_id`, `phone_snapshot.phone_id` ve `contacted_phone_id` alanlarını read model'e taşır; sağ kart telefon bazlı son sonuç lookup'ı bu alanları kullanır. `39e3840` itibarıyla linked reminder read model fields ve `canCompleteLinkedReminder` bilgisini taşır.
 
 ## 5. Reminders
 
@@ -74,6 +74,8 @@ Son doğrulandı: Sprint 9.3E-1 Right Card Multi-Phone Read Model
   Due/overdue reminder okuma ve alarm davranışı.
 - `src/features/reminders/services/reminderListReader.ts`
   Hatırlatmalar sayfası için reminder list read model üretir; Sprint 9.3C itibarıyla reminder phone snapshot context display alanlarını taşır ve mevcut `phone_1` / `phone_2` davranışını korur.
+- `src/features/reminders/services/reminderLifecycle.ts`
+  Pending reminder kayıtlarını completed statüsüne alan lifecycle helper'ını taşır; linked reminder quick complete akışı bu helper üzerinden çalışır.
 - `src/features/reminders/services/reminderDismissalStore.ts`
   Kapatılan reminder popup ve çan paneli geçmişi.
 - `src/features/reminders/services/reminderPopupViewModel.ts`
@@ -179,13 +181,15 @@ Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
 - `tests/students/StudentsPageShortcutHelp.test.tsx`
   Aday Listesi alt kısayol yardım barının kompakt/açık görünümünü, Göster/Gizle davranışını ve localStorage toleransını test eder.
 - `tests/students/StudentsPageCallHistory.test.tsx`
-  Call history UI'da phone context label/number görünürlüğünü, no-context fallback davranışını, düzeltme/düzenle modalını ve `Geçersiz Say / Sil` soft delete aksiyonunu test eder.
+  Call history UI'da phone context label/number görünürlüğünü, no-context fallback davranışını, düzeltme/düzenle modalını, `Geçersiz Say / Sil` soft delete aksiyonunu ve linked pending reminder için icon-only `Hatırlatmayı tamamla` confirmation akışını test eder.
 - `tests/students/StudentsPageMultiPhone.test.tsx`
   Sağ kişi kartında 5 telefonlu aday için Telefon 3+ readonly görünümü, expand/collapse davranışı, `hidden_phone_count` sıfır durumu, telefonsuz aday fallback'i ve Telefon 3+ için aksiyon butonu gösterilmemesini test eder.
 - `tests/students/StudentsPagePhoneSelection.test.tsx`
   Telefon 3+ seçimini, seçili Telefon 3+'ün call log context'e gitmesini, seçili aday değişince selected phone state reset davranışını ve Telefon 3+ status aksiyonlarının olmamasını test eder. Phone-Level Outcome Read Model Pilot itibarıyla call log olmayan telefonda `Son sonuç: Yok`, Telefon 1/2 ve Telefon 3+ için son call result label'ı ve aynı telefonda çoklu call log varsa en güncel sonucun gösterilmesini doğrular.
 - `tests/reminders/*`
-  Reminder alarm, dismissed store, popup view model ve reminder settings.
+  Reminder alarm, dismissed store, popup view model, reminder settings ve reminder lifecycle testleri.
+- `tests/reminders/reminderLifecycle.test.ts`
+  Pending reminder complete lifecycle helper'ını ve completed status transition davranışını test eder.
 - `tests/reminders/reminderPhoneContext.test.ts`
   Reminder telefon bağlamı helper’ını, eski kayıt fallback davranışını ve Türkçe relation label çıktısını test eder.
 - `tests/reminders/reminderListReader.test.ts`
@@ -216,10 +220,12 @@ Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
   Call writer, call history ve call save validation.
 - `tests/calls/callLogCorrection.test.ts`
   Bağlantısız call log düzeltme, linked reminder/appointment bloklama, aktif call loglardan student summary recompute ve PhoneRecord mutate edilmeme davranışlarını test eder.
+- `tests/calls/callLogDeletion.test.ts`
+  Soft delete, student summary recompute, terminal status-aware linked reminder/appointment delete policy, PhoneRecord değişmeme ve snapshot fallback davranışlarını test eder.
 - `tests/calls/callSaveValidation.test.ts`
   Görüşme kaydetme validation davranışını, çoklu telefon için genel görüşülen telefon seçimi mesajını ve mevcut call result/reminder/appointment uyarılarını test eder.
 - `tests/calls/callHistoryReader.test.ts`
-  Call history phone context snapshot, legacy fallback ve null context davranışını test eder.
+  Call history phone context snapshot, legacy fallback, null context, linked reminder read fields ve `canCompleteLinkedReminder` davranışını test eder.
 - `tests/calls/callLogWriter.test.ts`
   `writeCallLog` transaction davranışını; call log/reminder phone context persistence, legacy contacted phone alanları, null fallback, existing pending reminder update ve Türkçe relation label korunumunu test eder.
 - `tests/calls/callLogPhoneContext.test.ts`
@@ -319,13 +325,13 @@ Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
 Son dogrulandi: Communication History Soft Delete + Student Summary Recompute Pilot
 
 - `src/features/calls/services/callLogDeletion.ts`
-  Iletisim gecmisi kayitlari icin soft delete servisi. `call_logs.deleted_at` / `updated_at` set eder, hard delete kullanmaz, reminder/appointment baglantili kayitlari bloklar ve ogrenci son gorusme ozetini kalan aktif `call_logs` kayitlarindan yeniden hesaplar. `PhoneRecord` mutate etmez.
+  Iletisim gecmisi kayitlari icin soft delete servisi. `call_logs.deleted_at` / `updated_at` set eder, hard delete kullanmaz ve ogrenci son gorusme ozetini kalan aktif `call_logs` kayitlarindan yeniden hesaplar. `PhoneRecord` mutate etmez. Son linked policy: pending reminder bloklanir, completed/cancelled reminder soft delete edilebilir; pending/postponed appointment bloklanir, terminal appointment status'lari soft delete edilebilir.
 - `src/features/students/StudentsPage.tsx`
-  Sag drawer iletisim gecmisi satirlarinda kucuk silme aksiyonunu ve onay modalini render eder. Basarili soft delete sonrasi mevcut live query/read model akisi ile history ve telefon karti `Son sonuc` guncellenir.
+  Sag drawer iletisim gecmisi satirlarinda kucuk silme aksiyonunu, linked pending reminder icin icon-only complete aksiyonunu ve onay modallarini render eder. Basarili soft delete sonrasi mevcut live query/read model akisi ile history ve telefon karti `Son sonuc` guncellenir.
 - `tests/calls/callLogDeletion.test.ts`
-  Soft delete, student summary recompute, tum aktif loglar silinince safe clear, reminder/appointment bloklama, PhoneRecord degismeme ve snapshot fallback davranislarini test eder.
+  Soft delete, student summary recompute, tum aktif loglar silinince safe clear, terminal status-aware reminder/appointment policy, PhoneRecord degismeme ve snapshot fallback davranislarini test eder.
 - `tests/students/StudentsPageCallHistory.test.tsx`
-  Iletisim gecmisi UI'da delete button, confirmation required, cancel ve confirm sonrasi kaydin gorunur history'den kalkmasi davranislarini test eder.
+  Iletisim gecmisi UI'da delete button, confirmation required, cancel ve confirm sonrasi kaydin gorunur history'den kalkmasi davranislarini ve linked pending reminder quick complete akisini test eder.
 
 ## Latest File Map Addendum - Import AD/SOYAD Composition
 

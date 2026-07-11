@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 68d2899 chore: polish reporting v2 layout
-- Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi, tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i, iletişim geçmişi edit/void MVP'si, phone action label/helper cleanup ve Reporting V2 Summary MVP + UI polish zinciri tamamlandı ve pushlandı.
+- Son güvenli HEAD/origin: 39e3840 feat: complete linked reminders from call history
+- Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi, tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i, iletişim geçmişi edit/void MVP'si, phone action label/helper cleanup, Reporting V2 Summary MVP + UI polish, linked communication history terminal status-aware soft delete ve linked reminder quick complete zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Bu docs-only handoff sync tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: close reporting v2 summary MVP
+- Önerilen docs commit: docs: close linked reminder quick complete
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -24,6 +24,19 @@
 - Bir önceki phone context persistence commit’i: 595979d feat: wire phone context persistence for calls and reminders
 - Working tree beklenen durumu: clean
 - GitHub/origin durumu: aktif branch `origin/sprint-9-2-multi-phone-architecture-plan` ile aynı son commit üzerinde görünür.
+
+## Latest Handoff Update - Linked Reminder Quick Complete
+
+- Current safe HEAD/origin: `39e3840 feat: complete linked reminders from call history`.
+- Recent implementation chain: `40cb62b fix: allow voiding closed linked call logs` followed by `39e3840 feat: complete linked reminders from call history`.
+- Linked communication history delete policy status-aware hale geldi. Pending reminder bağlantılı call log doğrudan silinemez; completed/cancelled reminder bağlantılı call log soft delete edilebilir.
+- Pending appointment ve postponed appointment bağlantılı call log kayıtları bloklu kalır; terminal appointment status'ları soft delete edilebilir. Status source of truth'tur; yalnız tarih geçmişliği kriter değildir.
+- Sağ kart iletişim geçmişinde pending reminder bağlantılı satır küçük icon-only `Hatırlatmayı tamamla` aksiyonu gösterir. Aksiyon confirmation modal sonrası reminder `status` değerini `completed` yapar; call log'u silmez, link detach etmez, aday özetini değiştirmez.
+- Complete işleminden sonra mevcut delete guard doğal olarak aynı call log için `Geçersiz Say / Sil` akışına izin verir. Büyük yazılı yeşil button kullanılmaz; açıklama title/aria/confirmation üzerinde kalır.
+- Scope dışı/değişmeyenler: reminder cancel button, appointment quick action, Reminders sayfasına navigasyon, Students page state preservation, reminder/appointment lifecycle redesign, export/import/backup formatı, Reporting V2 metric calculation ve WhatsApp flow.
+- Validation: terminal status-aware delete policy phase calls 6/73, reminders 7/33, reports 3/22, exports 4/34 ve build PASS. Quick complete phase calls 6/77, reminders 8/37, students 10/90, reports 3/22 ve build PASS. Bilinen Vite chunk-size warning devam eder.
+- VDS deploy tamamlandı; kullanıcı smoke sonucunu `sıkıntı yok` olarak bildirdi. Öğrenci kartı icon-only complete action çalışır ve ardından delete flow çalışır.
+- Next safe backlog: Obsidian shadow sync; gerekirse linked reminder quick complete Obsidian shadow sync; reminder cancel button discovery; appointment quick action discovery; Reminders page navigation + Students state preservation UX discovery; reminder/appointment lifecycle redesign discovery; Reporting V2 future personnel/team, came/no-show ve lifecycle reports discovery.
 
 ## Latest Handoff Update - Reporting V2 Summary MVP
 

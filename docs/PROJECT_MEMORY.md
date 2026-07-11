@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Reporting V2 Summary MVP Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Linked Reminder Quick Complete Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,12 +6,23 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Reporting V2 Summary MVP Kapanisi
-- FILE_MAP: Reporting V2 Summary MVP Kapanisi
-- DECISIONS: Reporting V2 Summary MVP Kapanisi
-- Son güvenli HEAD/origin: 68d2899 chore: polish reporting v2 layout
+- PROJECT_MEMORY: Linked Reminder Quick Complete Kapanisi
+- FILE_MAP: Linked Reminder Quick Complete Kapanisi
+- DECISIONS: Linked Reminder Quick Complete Kapanisi
+- Son güvenli HEAD/origin: 39e3840 feat: complete linked reminders from call history
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
+
+## Latest Checkpoint - Linked Reminder Quick Complete
+
+- Linked communication history policy iki commitlik zincirle güncellendi: `40cb62b fix: allow voiding closed linked call logs` ve `39e3840 feat: complete linked reminders from call history`.
+- Pending reminder bağlantılı call log doğrudan silinemez; completed/cancelled reminder bağlantılı call log mevcut soft delete altyapısıyla `Geçersiz Say / Sil` yapılabilir.
+- Pending appointment ve postponed appointment bağlantılı call log kayıtları bloklu kalır; terminal appointment status'ları soft delete için uygundur. Kararda status source of truth kabul edilir, yalnız tarih geçmişliği yeterli kriter değildir.
+- Sağ kart iletişim geçmişinde pending reminder bağlantılı satırda küçük icon-only `Hatırlatmayı tamamla` aksiyonu görünür. Büyük yazılı yeşil buton kullanılmaz; anlam title/aria/confirmation üzerinden verilir.
+- Hatırlatma tamamlama aksiyonu reminder `status` değerini `completed` yapar; call log silmez, link detach etmez ve aday özetini değiştirmez. Sonrasında mevcut delete guard doğal olarak soft delete'e izin verir.
+- Confirmation modal kullanılır. Reminder cancel, appointment quick action, Reminders sayfasına navigasyon, Students page state preservation, reminder/appointment lifecycle redesign, export/import/backup formatı, Reporting V2 metrikleri ve WhatsApp akışları kapsam dışıdır.
+- Validation: terminal status-aware delete policy phase için calls 6 files / 73 tests, reminders 7 files / 33 tests, reports 3 files / 22 tests, exports 4 files / 34 tests ve build PASS. Quick complete phase için calls 6 files / 77 tests, reminders 8 files / 37 tests, students 10 files / 90 tests, reports 3 files / 22 tests ve build PASS. Bilinen Vite chunk-size warning devam eder.
+- `39e3840` VDS demo ortamına deploy edildi; kullanıcı smoke sonucunu `sıkıntı yok` olarak bildirdi. Smoke kapsamı: öğrenci kartında icon-only complete action çalışır ve sonrasında delete flow çalışır.
 
 ## Latest Checkpoint - Reporting V2 Summary MVP
 
@@ -125,7 +136,7 @@ Kısa özet:
 - Phone-level outcome/status yalnız telefon bağlamı varsa güncellenir; schema, import, export, backup/restore ve WhatsApp davranışı bu kural değişikliğinde değişmedi.
 - Bağlantısız iletişim geçmişi kayıtları sağ karttan düzeltilebilir/düzenlenebilir veya `Geçersiz Say / Sil` ile soft delete yapılabilir.
 - İletişim geçmişi edit/delete hard delete yapmaz; `call_logs.deleted_at` / `updated_at` kullanılır ve aday özeti aktif call log kayıtlarından yeniden hesaplanır.
-- `created_reminder_id` veya `created_appointment_id` taşıyan iletişim kayıtları edit/delete için bloklanır; reminder/randevu cascade, detach veya otomatik iptal yapılmaz.
+- Bağlantılı iletişim kayıtlarında edit bloklu kalır. Delete/void politikası status-aware hale gelmiştir: pending reminder bloklanır, completed/cancelled reminder soft delete edilebilir; pending/postponed appointment bloklanır, terminal appointment status'ları soft delete edilebilir. Reminder/appointment cascade, detach veya otomatik iptal yapılmaz.
 - İletişim geçmişi düzeltme sırasında `PhoneRecord` status/outcome alanları mutate edilmez.
 - Açıklama/not, `call_logs` ve reminder akışları korunur.
 - Sınıf / Şube filtresi pilot öncesi polish olarak eklendi.
@@ -140,6 +151,7 @@ Kısa özet:
 - Çan paneli kapatılmış reminder bilgilerini gösterir.
 - Çan panelinden aday açılabilir.
 - Panel geçmiş sınırı: 3 gün / 20 kayıt / panelde 10 görünür.
+- Sağ kart iletişim geçmişindeki pending reminder bağlantılı kayıtlar icon-only `Hatırlatmayı tamamla` aksiyonu sunar; aksiyon reminder'ı completed yapar, call log'u silmez/detach etmez ve aday özetini değiştirmez.
 
 ## 9. Export Kararları
 
@@ -706,7 +718,7 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - Implementation commit: `8f1f613 feat: allow correcting unlinked communication history`.
 - Bağlantısız iletişim geçmişi kayıtları sağ karttan düzeltilebilir/düzenlenebilir; görüşme durumu, not, tarih/saat ve telefon bağlamı güncellenebilir.
 - Bağlantısız iletişim kayıtları `Geçersiz Say / Sil` ile mevcut soft delete altyapısını kullanır. Hard delete yoktur; `call_logs.deleted_at` / `updated_at` set edilir.
-- `created_reminder_id` veya `created_appointment_id` bulunan kayıtlar edit/delete için bloklanır; reminder/appointment cascade, detach veya otomatik iptal yapılmaz.
+- O sprintte `created_reminder_id` veya `created_appointment_id` bulunan kayıtlar edit/delete için bloklanıyordu. Son linked policy ile delete/void tarafı terminal status-aware hale geldi; edit tarafında linked kayıt blokları korunur. Reminder/appointment cascade, detach veya otomatik iptal yapılmaz.
 - Edit/delete sonrası aday özeti aktif call log kayıtlarından yeniden hesaplanır. PhoneRecord status/outcome alanları mutate edilmez.
 - Reports/export aktif call log kayıtları üzerinden doğal güncellenir; backup ham tabloları koruduğu için soft-deleted kayıtlar yedekte kalır.
 - Validation: focused 3 files / 15 tests PASS; full serial 50 files / 402 tests PASS; standard full 50 files / 402 tests PASS; build PASS, bilinen Vite chunk-size warning dışında sorun yok; `git diff --check` PASS, yalnız LF -> CRLF çalışma kopyası uyarıları görüldü.

@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Reporting V2 Summary MVP Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Linked Reminder Quick Complete Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -61,6 +61,15 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 
 Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden değişti” şeklinde kısa not eklenir.
 
+## Latest Decisions - Linked Reminder Quick Complete
+
+- [Linked Communication History Delete Policy] Linked call log delete/void kararı artık terminal status-aware çalışır. Pending reminder bağlantılı call log doğrudan silinmez; completed/cancelled reminder bağlantılı call log soft delete edilebilir.
+- [Linked Appointment Delete Policy] Pending appointment ve postponed appointment bağlantılı call log kayıtları bloklu kalır; terminal appointment status'ları soft delete için uygundur. Status source of truth kabul edilir; yalnız date-only geçmişlik kriteri kullanılmaz.
+- [Linked Reminder Quick Complete] Sağ kart iletişim geçmişindeki pending reminder bağlantılı satır, küçük icon-only `Hatırlatmayı tamamla` aksiyonu gösterebilir.
+- [Linked Reminder Quick Complete] Aksiyon reminder `status` değerini `completed` yapar. Call log silinmez, link detach edilmez, aday özeti değiştirilmez; sonrasında mevcut delete guard doğal olarak soft delete'e izin verir.
+- [Linked Reminder UI] Büyük yazılı yeşil buton kullanılmaz. Anlam title/aria/confirmation modal üzerinden verilir; satır içinde ek açıklama metniyle kalabalık yaratılmaz.
+- [Linked Reminder Scope] Reminder cancel button, appointment quick action, Reminders sayfasına navigasyon, Students page state preservation, reminder/appointment lifecycle redesign, export/import/backup formatı, Reporting V2 metrikleri ve WhatsApp flow değişiklikleri kapsam dışıdır.
+
 ## Latest Decisions - Reporting V2 Summary MVP
 
 - [Reporting V2 Summary MVP] Raporlar sayfasındaki V2 alanı read-only yönetici özeti olarak kabul edilir. Günlük rapor korunur; Reporting V2 mevcut günlük raporun yerine geçmez.
@@ -84,7 +93,7 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Communication History Edit / Void MVP] Bağlantısız iletişim geçmişi kayıtları düzeltilebilir/düzenlenebilir. Düzeltme kapsamı görüşme durumu, not, tarih/saat ve telefon bağlamıyla sınırlıdır.
 - [Communication History Edit / Void MVP] Bağlantısız iletişim kayıtları `Geçersiz Say / Sil` ile mevcut soft delete altyapısını kullanır. Hard delete yapılmaz; `call_logs.deleted_at` ve `updated_at` set edilir.
 - [Communication History Edit / Void MVP] Edit/delete sonrası aday özeti aktif ve silinmemiş `call_logs` kayıtlarından yeniden hesaplanır. Aktif kayıt yoksa güvenli boş durum `not_called` / `null` olur.
-- [Communication History Edit / Void MVP] `created_reminder_id` veya `created_appointment_id` taşıyan call log kayıtları bu MVP'de edit/delete için bloklanır. Reminder/appointment cascade, detach, otomatik iptal veya lifecycle değişikliği yapılmaz.
+- [Communication History Edit / Void MVP] İlk MVP'de `created_reminder_id` veya `created_appointment_id` taşıyan call log kayıtları edit/delete için bloklanıyordu. Son linked delete policy delete/void tarafını terminal status-aware hale getirir; linked edit blokları, reminder/appointment cascade, detach, otomatik iptal ve lifecycle redesign kapsam dışı kalır.
 - [Communication History Edit / Void MVP] PhoneRecord `phone_status`, `is_wrong` ve `call_outcome` alanları edit/delete sırasında mutate edilmez; telefon bazlı durumlar ayrı model semantiğini korur.
 - [Communication History Edit / Void MVP] Reports/export aktif call log kayıtları üzerinden doğal güncellenir. Backup ham tabloları koruduğu için soft-deleted kayıtlar yedekte kalır. Schema/migration, import/export formatı, backup/restore formatı ve WhatsApp davranışı değişmez.
 
