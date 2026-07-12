@@ -102,6 +102,24 @@ describe("reminderLifecycle", () => {
     }
   });
 
+  it("completes only the requested reminder when multiple reminders are pending", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const firstReminderId = await database.reminders.add(reminder(studentId, { uuid: "first-pending-reminder" }));
+      const secondReminderId = await database.reminders.add(reminder(studentId, { uuid: "second-pending-reminder" }));
+
+      await completeReminder(firstReminderId, database);
+
+      expect((await database.reminders.get(firstReminderId))?.status).toBe("completed");
+      expect((await database.reminders.get(secondReminderId))?.status).toBe("pending");
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
   it("does not mutate a non-pending reminder", async () => {
     const database = await createDatabase();
 

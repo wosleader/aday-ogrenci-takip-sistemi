@@ -154,6 +154,67 @@ async function seedCallHistoryWithPendingReminder() {
   await db.reminders.update(reminderId, { call_log_id: callLogId });
 }
 
+async function seedCallHistoryWithSharedPendingReminder() {
+  const studentId = await seedStudent();
+  const reminderId = await db.reminders.add({
+    uuid: "shared-pending-reminder",
+    student_id: studentId,
+    reminder_type: "call",
+    reminder_at: "2026-05-11T11:00:00.000Z",
+    status: "pending",
+    note: "Paylaşılan açık hatırlatma",
+    is_default_time_assigned: false,
+    sync_status: "local",
+    created_at: now,
+    updated_at: now,
+    deleted_at: null
+  });
+  await db.call_logs.add({
+    uuid: "call-history-shared-reminder-old",
+    student_id: studentId,
+    phone_id: null,
+    phone_snapshot: null,
+    contacted_phone_id: null,
+    contacted_phone_number: null,
+    contacted_phone_label: null,
+    call_time: "2026-05-10T11:00:00.000Z",
+    call_result: "call_later",
+    note: "Eski hatırlatma satırı.",
+    reminder_at: "2026-05-11T11:00:00.000Z",
+    next_action: "Tekrar arama",
+    created_by: "agent",
+    created_reminder_id: reminderId,
+    created_appointment_id: null,
+    sync_status: "local",
+    created_at: now,
+    updated_at: now,
+    deleted_at: null
+  });
+  const ownerCallLogId = await db.call_logs.add({
+    uuid: "call-history-shared-reminder-owner",
+    student_id: studentId,
+    phone_id: null,
+    phone_snapshot: null,
+    contacted_phone_id: null,
+    contacted_phone_number: null,
+    contacted_phone_label: null,
+    call_time: "2026-05-10T12:00:00.000Z",
+    call_result: "call_later",
+    note: "Hatırlatma sahibi satır.",
+    reminder_at: "2026-05-11T11:00:00.000Z",
+    next_action: "Tekrar arama",
+    created_by: "agent",
+    created_reminder_id: reminderId,
+    created_appointment_id: null,
+    sync_status: "local",
+    created_at: now,
+    updated_at: now,
+    deleted_at: null
+  });
+
+  await db.reminders.update(reminderId, { call_log_id: ownerCallLogId });
+}
+
 function StudentsPageHost() {
   const context: AppOutletContext = {
     globalSearch: "",
@@ -302,5 +363,15 @@ describe("StudentsPage call history phone context", () => {
 
     const callLog = await db.call_logs.where("uuid").equals("call-history-with-pending-reminder").first();
     expect(callLog?.deleted_at).toBeTruthy();
+  });
+
+  it("shows linked reminder quick complete only on the owner history row", async () => {
+    await seedCallHistoryWithSharedPendingReminder();
+
+    renderStudentsPage();
+
+    expect(await screen.findByText("Hatırlatma sahibi satır.")).toBeInTheDocument();
+    expect(screen.getByText("Eski hatırlatma satırı.")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Hatırlatmayı tamamla" })).toHaveLength(1);
   });
 });

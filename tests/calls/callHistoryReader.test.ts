@@ -237,6 +237,142 @@ describe("callHistoryReader", () => {
     }
   );
 
+  it("exposes linked reminder completion only on the reminder owner call log", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const reminderId = await database.reminders.add(reminder(studentId, "pending"));
+      const firstCallLogId = await database.call_logs.add(
+        callLog(studentId, {
+          call_time: "2026-05-08T09:00:00.000Z",
+          created_reminder_id: reminderId,
+          note: "Eski tekrar arama kaydı"
+        })
+      );
+      const ownerCallLogId = await database.call_logs.add(
+        callLog(studentId, {
+          call_time: "2026-05-09T09:00:00.000Z",
+          created_reminder_id: reminderId,
+          note: "Hatırlatma sahibi kayıt"
+        })
+      );
+      const thirdCallLogId = await database.call_logs.add(
+        callLog(studentId, {
+          call_time: "2026-05-10T09:00:00.000Z",
+          created_reminder_id: reminderId,
+          note: "Daha yeni ama owner olmayan kayıt"
+        })
+      );
+      await database.reminders.update(reminderId, { call_log_id: ownerCallLogId });
+
+      const history = await readCallHistoryForStudent(studentId, database);
+      const completionByCallLogId = new Map(history.map((item) => [item.call_log_id, item.canCompleteLinkedReminder]));
+
+      expect(completionByCallLogId.get(firstCallLogId)).toBe(false);
+      expect(completionByCallLogId.get(ownerCallLogId)).toBe(true);
+      expect(completionByCallLogId.get(thirdCallLogId)).toBe(false);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("falls back to the latest active linked call log when reminder owner is missing", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const reminderId = await database.reminders.add(reminder(studentId, "pending"));
+      const firstCallLogId = await database.call_logs.add(
+        callLog(studentId, {
+          call_time: "2026-05-08T09:00:00.000Z",
+          created_reminder_id: reminderId
+        })
+      );
+      const latestCallLogId = await database.call_logs.add(
+        callLog(studentId, {
+          call_time: "2026-05-09T09:00:00.000Z",
+          created_reminder_id: reminderId
+        })
+      );
+
+      const history = await readCallHistoryForStudent(studentId, database);
+      const completionByCallLogId = new Map(history.map((item) => [item.call_log_id, item.canCompleteLinkedReminder]));
+
+      expect(completionByCallLogId.get(firstCallLogId)).toBe(false);
+      expect(completionByCallLogId.get(latestCallLogId)).toBe(true);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("uses created_at as the owner fallback when linked call_time is empty", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const reminderId = await database.reminders.add(reminder(studentId, "pending"));
+      const firstCallLogId = await database.call_logs.add(
+        callLog(studentId, {
+          call_time: "",
+          created_at: "2026-05-08T09:00:00.000Z",
+          created_reminder_id: reminderId
+        })
+      );
+      const latestCallLogId = await database.call_logs.add(
+        callLog(studentId, {
+          call_time: "",
+          created_at: "2026-05-09T09:00:00.000Z",
+          created_reminder_id: reminderId
+        })
+      );
+
+      const history = await readCallHistoryForStudent(studentId, database);
+      const completionByCallLogId = new Map(history.map((item) => [item.call_log_id, item.canCompleteLinkedReminder]));
+
+      expect(completionByCallLogId.get(firstCallLogId)).toBe(false);
+      expect(completionByCallLogId.get(latestCallLogId)).toBe(true);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("keeps each linked reminder scoped to its own owner call log", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const firstReminderId = await database.reminders.add(reminder(studentId, "pending"));
+      const secondReminderId = await database.reminders.add(reminder(studentId, "pending"));
+      const firstOwnerCallLogId = await database.call_logs.add(
+        callLog(studentId, {
+          call_time: "2026-05-08T09:00:00.000Z",
+          created_reminder_id: firstReminderId
+        })
+      );
+      const secondOwnerCallLogId = await database.call_logs.add(
+        callLog(studentId, {
+          call_time: "2026-05-09T09:00:00.000Z",
+          created_reminder_id: secondReminderId
+        })
+      );
+      await database.reminders.update(firstReminderId, { call_log_id: firstOwnerCallLogId });
+      await database.reminders.update(secondReminderId, { call_log_id: secondOwnerCallLogId });
+
+      const history = await readCallHistoryForStudent(studentId, database);
+      const completionByCallLogId = new Map(history.map((item) => [item.call_log_id, item.canCompleteLinkedReminder]));
+
+      expect(completionByCallLogId.get(firstOwnerCallLogId)).toBe(true);
+      expect(completionByCallLogId.get(secondOwnerCallLogId)).toBe(true);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
   it("keeps unlinked and missing linked reminders safe for completion UI", async () => {
     const database = await createDatabase();
 
