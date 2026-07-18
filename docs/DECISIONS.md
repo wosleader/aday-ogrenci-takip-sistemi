@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Linked Reminder Quick Complete Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Linked Reminder Owner Row Visibility Fix | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -60,6 +60,14 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 ## Değişen Kararlar Nasıl Yazılır?
 
 Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden değişti” şeklinde kısa not eklenir.
+
+## Latest Decisions - Linked Reminder Owner Row Visibility Fix
+
+- [Linked Reminder Owner Row Visibility] `Hatırlatmayı tamamla` aksiyonu aynı pending reminder'a bağlı geçmiş satırların tamamında değil, yalnız owner/current iletişim geçmişi satırında görünür.
+- [Linked Reminder Shared Reference] Aynı pending reminder birden fazla call log satırında referanslanabilir; çünkü `callLogWriter` aynı adayda mevcut pending reminder varsa yeni reminder oluşturmak yerine mevcut reminder'ı günceller. Bu davranış bu sprintte değiştirilmedi.
+- [Linked Reminder Owner Source] Owner önceliği `reminder.call_log_id` alanıdır. Bu alan eksik/stale ise read model aynı reminder id'ye bağlı aktif call loglar içinde latest `call_time`, sonra `created_at`, sonra `id` fallback'iyle owner satırı seçer.
+- [Linked Reminder Complete Semantics] `completeReminder` yalnız verilen reminder kaydını completed yapar; bulk update yapmaz. Bu helper, call log writer, delete guard, schema/import/export/backup ve WhatsApp davranışı değişmeden korunur.
+- [Linked Reminder Scope] Cancel reminder action, reminder lifecycle redesign ve strict-owner write model değişiklikleri backlog/discovery konusu olarak kalır; owner-row visibility fix için ek implementation gerekmedi.
 
 ## Latest Decisions - Linked Reminder Quick Complete
 

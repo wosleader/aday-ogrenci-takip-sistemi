@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 39e3840 feat: complete linked reminders from call history
+- Son güvenli HEAD/origin: 7636b57 fix: show linked reminder action only on owner history row
 - Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi, tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i, iletişim geçmişi edit/void MVP'si, phone action label/helper cleanup, Reporting V2 Summary MVP + UI polish, linked communication history terminal status-aware soft delete ve linked reminder quick complete zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Bu docs-only handoff sync tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: close linked reminder quick complete
+- Önerilen docs commit: docs: close linked reminder owner visibility fix
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -24,6 +24,19 @@
 - Bir önceki phone context persistence commit’i: 595979d feat: wire phone context persistence for calls and reminders
 - Working tree beklenen durumu: clean
 - GitHub/origin durumu: aktif branch `origin/sprint-9-2-multi-phone-architecture-plan` ile aynı son commit üzerinde görünür.
+
+## Latest Handoff Update - Linked Reminder Owner Row Visibility Fix
+
+- Current safe HEAD/origin: `7636b57 fix: show linked reminder action only on owner history row`.
+- Latest completed item: linked reminder owner-row visibility fix.
+- Aynı pending reminder birden fazla iletişim geçmişi satırında görünebilir; bunun nedeni `callLogWriter`ın aynı adayda mevcut pending reminder varsa yeni reminder oluşturmak yerine mevcut reminder'ı güncellemesi ve eski call logların `created_reminder_id` referansını koruyabilmesidir.
+- `callHistoryReader` artık `canCompleteLinkedReminder` değerini yalnız owner/current row için true üretir. Owner önceliği `reminder.call_log_id`; eksik/stale owner durumunda aynı reminder id'ye bağlı aktif call loglar içinde latest `call_time` / `created_at` / `id` fallback'i kullanılır.
+- `completeReminder`, `callLogWriter`, delete guard, schema, import/export, backup/restore ve WhatsApp davranışı değişmedi.
+- VDS deploy tamamlandı: VDS önce `39e3840` seviyesindeydi, `git pull` ile `39e3840..7636b57` fast-forward edildi, `npm ci` OK, `npm run build -- --base=/demo/` OK, `robocopy /MIR` OK ve `FAILED 0`.
+- VDS HEAD/origin `7636b57` olarak doğrulandı; kullanıcı smoke sonucu: `Hepsi ok devam`.
+- Strict-owner policy discovery sonradan yapıldı ancak ek implementation gerekmedi; canlıdaki sorun stale local/VDS ortamı ve owner-row fix'in VDS'de olmamasından kaynaklanıyordu.
+- Cancel reminder action backlog olarak kalır; bu sprintte uygulanmadı.
+- Beklenen working tree: tracked dosya değişikliği yok, yalnız `?? dev-server.log`.
 
 ## Latest Handoff Update - Linked Reminder Quick Complete
 

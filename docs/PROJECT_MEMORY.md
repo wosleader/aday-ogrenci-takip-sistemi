@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Linked Reminder Quick Complete Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Linked Reminder Owner Row Visibility Fix | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,12 +6,23 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Linked Reminder Quick Complete Kapanisi
-- FILE_MAP: Linked Reminder Quick Complete Kapanisi
-- DECISIONS: Linked Reminder Quick Complete Kapanisi
-- Son güvenli HEAD/origin: 39e3840 feat: complete linked reminders from call history
+- PROJECT_MEMORY: Linked Reminder Owner Row Visibility Fix
+- FILE_MAP: Linked Reminder Owner Row Visibility Fix
+- DECISIONS: Linked Reminder Owner Row Visibility Fix
+- Son güvenli HEAD/origin: 7636b57 fix: show linked reminder action only on owner history row
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
+
+## Latest Checkpoint - Linked Reminder Owner Row Visibility Fix
+
+- Linked reminder owner-row visibility fix tamamlandı: `7636b57 fix: show linked reminder action only on owner history row`.
+- Problem: aynı pending `created_reminder_id` birden fazla iletişim geçmişi satırında görünebildiği için eski linked satırlarda da `Hatırlatmayı tamamla` aksiyonu görünüyordu.
+- Kök neden `completeReminder` bulk update değildi; `completeReminder` yalnız verilen reminderId kaydını `completed` yapar. Yanıltıcı görünüm, `callLogWriter`ın aynı adayda mevcut pending reminder varsa yeni reminder oluşturmak yerine mevcut reminder'ı güncellemesi ve eski call logların `created_reminder_id` referansını koruyabilmesiydi.
+- `callHistoryReader` artık `canCompleteLinkedReminder` değerini yalnız owner/current row için true üretir. Owner önceliği `reminder.call_log_id` alanıdır; eksik/stale durumda aynı reminder id'ye bağlı aktif call loglar içinde latest `call_time`, sonra `created_at`, sonra `id` fallback'i kullanılır.
+- Eski linked satırlarda quick complete action görünmez; sadece güncel/owner satırda görünür.
+- `callLogWriter`, `completeReminder`, delete guard, schema, import/export, backup/restore ve WhatsApp davranışı değişmedi.
+- VDS önce `39e3840` seviyesindeydi; `git pull` ile `39e3840..7636b57` fast-forward edildi. `npm ci`, `npm run build -- --base=/demo/` ve `robocopy /MIR` OK; robocopy `FAILED 0`; VDS HEAD/origin `7636b57`.
+- Kullanıcı smoke sonucu: `Hepsi ok devam`.
 
 ## Latest Checkpoint - Linked Reminder Quick Complete
 

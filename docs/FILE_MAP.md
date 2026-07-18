@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Linked Reminder Quick Complete Kapanisi | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Linked Reminder Owner Row Visibility Fix | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -62,7 +62,7 @@ Son doğrulandı: Phone-Level Outcome Read Model Pilot
 - `src/features/calls/services/callLogPhoneContext.ts`
   Call log telefon bağlamı display/fallback helper’ları; `phone_snapshot` varsa Telefon N / ilişki etiketi label’ı üretir, eski kayıtlarda güvenli fallback döner.
 - `src/features/calls/services/callHistoryReader.ts`
-  Sağ drawer iletişim geçmişi için call history read model üretir; Sprint 9.3C itibarıyla phone snapshot-first context display alanlarını ve legacy fallback'i taşır. Phone-Level Outcome Read Model Pilot itibarıyla `phone_id`, `phone_snapshot.phone_id` ve `contacted_phone_id` alanlarını read model'e taşır; sağ kart telefon bazlı son sonuç lookup'ı bu alanları kullanır. `39e3840` itibarıyla linked reminder read model fields ve `canCompleteLinkedReminder` bilgisini taşır.
+  Sağ drawer iletişim geçmişi için call history read model üretir; Sprint 9.3C itibarıyla phone snapshot-first context display alanlarını ve legacy fallback'i taşır. Phone-Level Outcome Read Model Pilot itibarıyla `phone_id`, `phone_snapshot.phone_id` ve `contacted_phone_id` alanlarını read model'e taşır; sağ kart telefon bazlı son sonuç lookup'ı bu alanları kullanır. `39e3840` itibarıyla linked reminder read model fields ve `canCompleteLinkedReminder` bilgisini taşır. `7636b57` itibarıyla `canCompleteLinkedReminder` yalnız owner/current linked reminder history satırında true olur; owner önceliği `reminder.call_log_id`, fallback latest active linked call log sıralamasıdır.
 
 ## 5. Reminders
 
@@ -695,6 +695,20 @@ Son doğrulandı: `cf47e2d feat: import explicit guardian phone relations`
 - `tests/imports/importWriter.test.ts`
   Veli telefonunun Veli guardian kaydına bağlanmasını ve Veli adı yoksa fake guardian oluşturulmadan `guardian_id: null` kalmasını doğrular.
 - Scope dışı: export/backup, StudentsPage, WhatsApp, schema/db ve package/config değişmemiştir.
+
+## Latest File Map Addendum - Linked Reminder Owner Row Visibility Fix
+
+Son doğrulandı: `7636b57 fix: show linked reminder action only on owner history row`
+
+- `src/features/calls/services/callHistoryReader.ts`
+  Linked reminder read model owner-row visibility kararını uygular. `canCompleteLinkedReminder` yalnız owner/current row için true olur; owner önceliği `reminder.call_log_id`, fallback ise aynı reminder id'ye bağlı aktif call loglar içinde latest `call_time`, sonra `created_at`, sonra `id` sıralamasıdır.
+- `tests/calls/callHistoryReader.test.ts`
+  Owner-row visibility, `reminder.call_log_id` önceliği, latest active linked call log fallback'i, completed/cancelled/missing reminder durumları ve eski linked satırlarda quick complete action görünmemesi davranışlarını doğrular.
+- `tests/reminders/reminderLifecycle.test.ts`
+  `completeReminder` helper'ının yalnız verilen reminder kaydını completed yaptığını, bulk update yapmadığını koruyan regresyonu içerir.
+- `tests/students/StudentsPageCallHistory.test.tsx`
+  Sağ kart iletişim geçmişinde `Hatırlatmayı tamamla` aksiyonunun yalnız owner/current history satırında göründüğünü; eski shared reminder referanslı satırlarda görünmediğini doğrular.
+- Scope dışı: `callLogWriter`, `completeReminder`, delete guard, schema/db, import/export, backup/restore, WhatsApp, package/config ve VDS komutları değiştirilmemiştir.
 
 ## Latest File Map Addendum - Guardian Phone Import E2E
 
