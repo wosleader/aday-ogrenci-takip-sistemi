@@ -21,6 +21,10 @@ export const CALL_RESULTS = {
 
 export type CallResult = keyof typeof CALL_RESULTS;
 
+export function isReminderCallResult(callResult: CallResult): boolean {
+  return callResult === "call_later";
+}
+
 export const REMINDER_STATUSES = {
   pending: "Bekliyor",
   completed: "Tamamlandı",

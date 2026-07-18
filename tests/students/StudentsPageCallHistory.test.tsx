@@ -230,7 +230,7 @@ function StudentsPageHost() {
 }
 
 function renderStudentsPage() {
-  render(
+  return render(
     <MemoryRouter initialEntries={["/students"]}>
       <Routes>
         <Route element={<StudentsPageHost />}>
@@ -363,6 +363,81 @@ describe("StudentsPage call history phone context", () => {
 
     const callLog = await db.call_logs.where("uuid").equals("call-history-with-pending-reminder").first();
     expect(callLog?.deleted_at).toBeTruthy();
+  });
+
+  it("creates a reminder only for call_later from the drawer form", async () => {
+    const user = userEvent.setup();
+    await seedStudent();
+
+    const view = renderStudentsPage();
+
+    expect(await screen.findByText("Aday genel görüşme sonucu")).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByDisplayValue("Görüşüldü"), "call_later");
+
+    const dateInput = view.container.querySelector('input[type="date"]') as HTMLInputElement | null;
+    expect(dateInput).not.toBeNull();
+    await user.type(dateInput!, "2026-05-14");
+    await user.click(screen.getByRole("button", { name: /Kaydet ve sonrakine geç/ }));
+
+    await waitFor(async () => {
+      expect(await db.reminders.count()).toBe(1);
+    });
+
+    const reminder = await db.reminders.toCollection().first();
+    const callLog = await db.call_logs.toCollection().first();
+    expect(reminder).toMatchObject({
+      status: "pending",
+      reminder_at: "2026-05-14T08:00:00.000Z"
+    });
+    expect(callLog).toMatchObject({
+      call_result: "call_later",
+      created_reminder_id: reminder?.id
+    });
+  });
+
+  it("does not reopen a completed linked reminder when saving a non-reminder result after quick complete", async () => {
+    const user = userEvent.setup();
+    await seedCallHistoryWithPendingReminder();
+
+    renderStudentsPage();
+
+    expect(await screen.findByText("Hatırlatma bağlı görüşme.")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Hatırlatmayı tamamla" }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: "Hatırlatma tamamlansın mı?" })).getByRole("button", {
+        name: "Hatırlatmayı tamamla"
+      })
+    );
+
+    await waitFor(async () => {
+      expect((await db.reminders.where("uuid").equals("linked-pending-reminder").first())?.status).toBe("completed");
+    });
+
+    await user.selectOptions(screen.getByDisplayValue("Görüşüldü"), "not_interested");
+    await user.click(screen.getByRole("button", { name: /Kaydet ve sonrakine geç/ }));
+
+    await waitFor(async () => {
+      expect((await db.call_logs.toArray()).some((log) => log.call_result === "not_interested")).toBe(true);
+    });
+
+    const reminders = await db.reminders.toArray();
+    const latestCallLog = (await db.call_logs.toArray()).sort((left, right) => right.created_at.localeCompare(left.created_at))[0];
+
+    expect(reminders).toHaveLength(1);
+    expect(reminders[0]).toMatchObject({
+      uuid: "linked-pending-reminder",
+      status: "completed",
+      reminder_at: "2026-05-11T11:00:00.000Z"
+    });
+    expect(latestCallLog).toMatchObject({
+      call_result: "not_interested",
+      reminder_at: null,
+      next_action: null,
+      created_reminder_id: null
+    });
+    expect(screen.queryByRole("button", { name: "Hatırlatmayı tamamla" })).not.toBeInTheDocument();
   });
 
   it("shows linked reminder quick complete only on the owner history row", async () => {

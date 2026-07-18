@@ -6,7 +6,7 @@ import { Bell, Check, ChevronsRight, Copy, MoreVertical, Pencil, Trash2, X } fro
 import type { AppOutletContext } from "../../app/AppLayout";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/EmptyState";
-import { CALL_RESULTS, LIFE_CYCLE_STATUSES, type CallResult } from "../../domain/constants/statuses";
+import { CALL_RESULTS, LIFE_CYCLE_STATUSES, isReminderCallResult, type CallResult } from "../../domain/constants/statuses";
 import {
   getPhoneCallOutcomeLabel,
   PHONE_CALL_OUTCOME_OPTIONS,
@@ -1677,8 +1677,26 @@ export function StudentsPage() {
   }
 
   function setCallResultByShortcut(result: CallResult) {
-    setCallResult(result);
+    updateCallResult(result);
     setActionMessage(`${CALL_RESULTS[result]} seçildi. Kaydetmek için Ctrl+S kullanın.`);
+  }
+
+  function updateCallResult(result: CallResult) {
+    setCallResult(result);
+
+    if (isReminderCallResult(result)) {
+      setReminderTime((current) => current || "11:00");
+      return;
+    }
+
+    if (result === "appointment") {
+      setReminderDate("");
+      setReminderTime("11:00");
+      return;
+    }
+
+    setReminderDate("");
+    setReminderTime("");
   }
 
   function markPhoneByShortcut(slot: "phone_1" | "phone_2") {
@@ -2038,6 +2056,8 @@ export function StudentsPage() {
     try {
       await completeReminder(historyItem.linked_reminder_id);
       setLinkedReminderCompleteCandidate(null);
+      setReminderDate("");
+      setReminderTime("");
       const message = "Hatırlatma tamamlandı.";
       setActionMessage(message);
       showOperationToast(message, "success");
@@ -2191,7 +2211,7 @@ export function StudentsPage() {
     setActionMessage(null);
 
     try {
-      const reminderAt = mergeReminderDateTime(reminderDate, reminderTime);
+      const reminderAt = isReminderCallResult(callResult) ? mergeReminderDateTime(reminderDate, reminderTime) : null;
 
       await writeCallLog({
         student_id: selectedRow.student_id,
@@ -3217,7 +3237,7 @@ export function StudentsPage() {
 
               <div>
                 <label className="form-label">Aday genel görüşme sonucu</label>
-                <select value={callResult} onChange={(event) => setCallResult(event.target.value as CallResult)}>
+                <select value={callResult} onChange={(event) => updateCallResult(event.target.value as CallResult)}>
                   {Object.entries(CALL_RESULTS).map(([key, label]) => (
                     <option key={key} value={key}>
                       {label}
@@ -3236,13 +3256,17 @@ export function StudentsPage() {
                 />
               </div>
 
-              <div>
-                <label className="form-label">Tekrar arama</label>
-                <div className="row2">
-                  <input type="date" value={reminderDate} onChange={(event) => setReminderDate(event.target.value)} />
-                  <input type="time" value={reminderTime} onChange={(event) => setReminderTime(event.target.value)} />
+              {isReminderCallResult(callResult) || callResult === "appointment" ? (
+                <div>
+                  <label className="form-label">
+                    {isReminderCallResult(callResult) ? "Tekrar arama" : "Randevu tarih/saat"}
+                  </label>
+                  <div className="row2">
+                    <input type="date" value={reminderDate} onChange={(event) => setReminderDate(event.target.value)} />
+                    <input type="time" value={reminderTime} onChange={(event) => setReminderTime(event.target.value)} />
+                  </div>
                 </div>
-              </div>
+              ) : null}
 
               <button className="save-btn" disabled={isSavingCall} onClick={() => void saveCallAndGoNext()} type="button">
                 <ChevronsRight aria-hidden="true" size={16} />

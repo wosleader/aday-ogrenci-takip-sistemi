@@ -1,6 +1,6 @@
 import type { AppDatabase } from "../../../db/db";
 import { db } from "../../../db/db";
-import type { CallResult, LifecycleStatus } from "../../../domain/constants/statuses";
+import { isReminderCallResult, type CallResult, type LifecycleStatus } from "../../../domain/constants/statuses";
 import type { PhoneRecord } from "../../../domain/models/phone";
 import { nowIso } from "../../../utils/dateTime";
 import { createUuid } from "../../../utils/id";
@@ -175,6 +175,7 @@ export async function writeCallLog(
       );
       const phoneSnapshot = contactedPhone ? createPhoneSnapshot(contactedPhone) : null;
       const trimmedNote = input.note?.trim() || null;
+      const callLogReminderAt = isReminderCallResult(input.call_result) ? input.reminder_at ?? null : null;
       const callLogId = await database.call_logs.add({
         uuid: createUuid(),
         student_id: student.id,
@@ -187,8 +188,8 @@ export async function writeCallLog(
         call_time: timestamp,
         call_result: input.call_result,
         note: trimmedNote,
-        reminder_at: input.reminder_at ?? null,
-        next_action: input.reminder_at ? "Tekrar arama" : null,
+        reminder_at: callLogReminderAt,
+        next_action: callLogReminderAt ? "Tekrar arama" : null,
         created_by: input.created_by ?? "system",
         created_reminder_id: null,
         created_appointment_id: null,
@@ -207,7 +208,7 @@ export async function writeCallLog(
       let reminderId: number | null = null;
       let updatedExistingReminder = false;
 
-      if (input.reminder_at) {
+      if (callLogReminderAt) {
         const existingReminder = (
           await database.reminders.where("student_id").equals(student.id).toArray()
         ).find((reminder) => isActive(reminder) && reminder.reminder_type === "call" && reminder.status === "pending");
@@ -216,7 +217,7 @@ export async function writeCallLog(
           reminderId = existingReminder.id;
           updatedExistingReminder = true;
           await database.reminders.update(existingReminder.id, {
-            reminder_at: input.reminder_at,
+            reminder_at: callLogReminderAt,
             call_log_id: callLogId,
             phone_id: contactedPhone?.id ?? null,
             phone_snapshot: phoneSnapshot,
@@ -232,7 +233,7 @@ export async function writeCallLog(
             phone_id: contactedPhone?.id ?? null,
             phone_snapshot: phoneSnapshot,
             reminder_type: "call",
-            reminder_at: input.reminder_at,
+            reminder_at: callLogReminderAt,
             status: "pending",
             note: trimmedNote,
             is_default_time_assigned: false,

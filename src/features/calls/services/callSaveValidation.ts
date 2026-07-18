@@ -1,4 +1,4 @@
-import type { CallResult } from "../../../domain/constants/statuses";
+import { isReminderCallResult, type CallResult } from "../../../domain/constants/statuses";
 import type { PhoneStatus } from "../../../domain/models/phone";
 
 export const DO_NOT_CALL_DEFAULT_NOTE = "Veli/öğrenci ilgilenmiyor";
@@ -139,7 +139,7 @@ function validatePhoneSelection(input: CallSaveValidationInput): CallSaveValidat
 export function validateCallSave(input: CallSaveValidationInput): CallSaveValidationResult {
   const trimmedNote = input.note?.trim() ?? "";
 
-  if (input.call_result === "call_later" && !hasDateTime(input)) {
+  if (isReminderCallResult(input.call_result) && !hasDateTime(input)) {
     return {
       ok: false,
       severity: "error",

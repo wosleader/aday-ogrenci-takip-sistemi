@@ -609,6 +609,86 @@ describe("callLogWriter", () => {
     }
   });
 
+  it.each([
+    "not_interested",
+    "do_not_call",
+    "registered",
+    "reached",
+    "not_reached",
+    "wrong_number",
+    "appointment",
+    "not_called"
+  ] as const)("ignores stale reminder date for %s", async (callResult) => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const phoneId = await database.phones.add(phone(studentId));
+
+      const result = await writeCallLog(
+        {
+          student_id: studentId,
+          contacted_phone_id: callResult === "wrong_number" || callResult === "reached" ? phoneId : null,
+          call_result: callResult,
+          reminder_at: "2026-05-16T11:00:00.000Z"
+        },
+        { database }
+      );
+      const callLog = await database.call_logs.get(result.call_log_id);
+
+      expect(result.created_reminder_id).toBeNull();
+      expect(result.updated_existing_reminder).toBe(false);
+      expect(await database.reminders.count()).toBe(0);
+      expect(callLog).toMatchObject({
+        call_result: callResult,
+        reminder_at: null,
+        next_action: null,
+        created_reminder_id: null
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("does not update an existing pending reminder from a non-reminder result with stale reminder date", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const reminderId = await database.reminders.add(reminder(studentId));
+
+      const result = await writeCallLog(
+        {
+          student_id: studentId,
+          call_result: "not_interested",
+          reminder_at: "2026-05-16T11:00:00.000Z"
+        },
+        { database }
+      );
+      const callLog = await database.call_logs.get(result.call_log_id);
+      const existingReminder = await database.reminders.get(reminderId);
+
+      expect(result.created_reminder_id).toBeNull();
+      expect(result.updated_existing_reminder).toBe(false);
+      expect(await database.reminders.count()).toBe(1);
+      expect(existingReminder).toMatchObject({
+        reminder_at: "2026-05-12T11:00:00.000Z",
+        status: "pending"
+      });
+      expect(existingReminder?.call_log_id).toBeUndefined();
+      expect(callLog).toMatchObject({
+        call_result: "not_interested",
+        reminder_at: null,
+        next_action: null,
+        created_reminder_id: null
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
   it("updates existing pending reminder phone context from the contacted phone", async () => {
     const database = await createDatabase();
 

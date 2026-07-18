@@ -159,6 +159,17 @@ describe("callSaveValidation", () => {
     });
   });
 
+  it("allows stale reminder date and time for non-reminder results without changing validation", () => {
+    expect(
+      validateCallSave({
+        call_result: "not_interested",
+        reminder_date: "2026-05-12",
+        reminder_time: "11:00",
+        phones: [phone1, phone2]
+      })
+    ).toEqual({ ok: true, note: "" });
+  });
+
   it("adds an automatic note for do_not_call when note is empty", () => {
     expect(validateCallSave({ call_result: "do_not_call", contacted_phone_id: 1, phones: [phone1] })).toEqual({
       ok: true,
