@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Linked Reminder Owner Row Visibility Fix | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Stale Reminder Date Guard Fix | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -60,6 +60,15 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 ## Değişen Kararlar Nasıl Yazılır?
 
 Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden değişti” şeklinde kısa not eklenir.
+
+## Latest Decisions - Stale Reminder Date Guard Fix
+
+- [Call Reminder Creation Guard] Call reminder create/update yalnız `call_later` sonucu için yapılır.
+- [Call Reminder Creation Guard] Non-reminder call result kayıtları stale `reminder_at` taşısa bile call reminder create/update yapmamalıdır.
+- [Call Reminder Creation Guard] Service layer, UI state'e güvenmeden reminder creation guard'ını uygular; `callLogWriter` non-`call_later` sonuçlarda `created_reminder_id`, `reminder_at` ve `next_action` alanlarını null bırakır.
+- [Stale Reminder Form State] UI, `call_later` dışına geçerken stale `reminderDate` / `reminderTime` state'ini temizlemelidir. Linked quick complete sonrası aynı state temizlenir.
+- [Scope Boundary] Existing pending reminder, terminal/non-reminder result ile otomatik cancelled veya completed yapılmaz. Appointment lifecycle redesign ve every-call-later-creates-separate-reminder product change bu fix'in kapsamı değildir.
+- [Pending Reminder Edit UX Backlog] Communication history üzerinden linked/pending reminder tarih/saat/içerik düzenleme problemi çözülmedi. Mevcut `Düzelt` kısıtı reminder-only editler için fazla geniş olabilir; implementation öncesi ayrı discovery gerekir.
 
 ## Latest Decisions - Linked Reminder Owner Row Visibility Fix
 

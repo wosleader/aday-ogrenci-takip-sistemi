@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 7636b57 fix: show linked reminder action only on owner history row
+- Son güvenli HEAD/origin: 37d1fd5 fix: guard reminder creation to call later
 - Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi, tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i, iletişim geçmişi edit/void MVP'si, phone action label/helper cleanup, Reporting V2 Summary MVP + UI polish, linked communication history terminal status-aware soft delete ve linked reminder quick complete zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Bu docs-only handoff sync tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: close linked reminder owner visibility fix
+- Önerilen docs commit: docs: close stale reminder guard fix
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -24,6 +24,20 @@
 - Bir önceki phone context persistence commit’i: 595979d feat: wire phone context persistence for calls and reminders
 - Working tree beklenen durumu: clean
 - GitHub/origin durumu: aktif branch `origin/sprint-9-2-multi-phone-architecture-plan` ile aynı son commit üzerinde görünür.
+
+## Latest Handoff Update - Stale Reminder Date Guard Fix
+
+- Current safe HEAD/origin: `37d1fd5 fix: guard reminder creation to call later`.
+- Latest completed item: Stale reminder date guard fix.
+- VDS deploy `37d1fd5` seviyesine tamamlandı; kullanıcı QA sonucunu `QA geçti kanka.` olarak bildirdi.
+- No open bug in stale reminder reopen chain: linked quick complete sonrası veya non-`call_later` görüşme sonucu kaydında stale reminder tarih/saat bilgisinden yeni/pending reminder create/update yapılmamalıdır.
+- `callLogWriter` reminder create/update işlemini yalnız `call_later` için yapar; non-reminder resultlarda stale `reminder_at` gelse bile `created_reminder_id`, `reminder_at` ve `next_action` call log'a taşınmaz.
+- `StudentsPage` non-`call_later` result geçişinde ve linked quick complete sonrası `reminderDate` / `reminderTime` state'ini temizler.
+- `call_later` reminder davranışı korunur. Appointment lifecycle redesign yapılmadı. Existing pending reminder terminal/non-reminder result ile otomatik completed/cancelled yapılmadı.
+- Scope dışı/değişmeyenler: schema/migration, import/export, backup/restore, WhatsApp, Reporting V2, appointment lifecycle redesign ve every-call-later-creates-separate-reminder product change.
+- Next open/backlog item: pending/linked reminder edit UX discovery. Kullanıcı, `Sonra Aranacak` için reminder kurduktan sonra tarih/saat/içerik düzeltmek istediğinde mevcut `Düzelt` kısıtının fazla geniş olabileceğini bildirdi.
+- Cancel reminder action hâlâ backlog / not implemented. Reminder reschedule/ertele hâlâ backlog / not implemented.
+- Beklenen working tree: tracked dosya değişikliği yok, yalnız `?? dev-server.log`.
 
 ## Latest Handoff Update - Linked Reminder Owner Row Visibility Fix
 

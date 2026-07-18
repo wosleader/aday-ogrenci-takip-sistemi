@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Linked Reminder Owner Row Visibility Fix | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Stale Reminder Date Guard Fix | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -695,6 +695,26 @@ Son doğrulandı: `cf47e2d feat: import explicit guardian phone relations`
 - `tests/imports/importWriter.test.ts`
   Veli telefonunun Veli guardian kaydına bağlanmasını ve Veli adı yoksa fake guardian oluşturulmadan `guardian_id: null` kalmasını doğrular.
 - Scope dışı: export/backup, StudentsPage, WhatsApp, schema/db ve package/config değişmemiştir.
+
+## Latest File Map Addendum - Stale Reminder Date Guard Fix
+
+Son doğrulandı: `37d1fd5 fix: guard reminder creation to call later`
+
+- `src/domain/constants/statuses.ts`
+  `isReminderCallResult` helper'ını taşır. Şu an call reminder create/update için reminder result yalnız `call_later` kabul edilir.
+- `src/features/calls/services/callLogWriter.ts`
+  Reminder create/update service guard'ını uygular. Non-`call_later` sonuçlarda stale `reminder_at` gelse bile reminder oluşturmaz/güncellemez; call log üzerinde `created_reminder_id`, `reminder_at` ve `next_action` null kalır.
+- `src/features/calls/services/callSaveValidation.ts`
+  Reminder-aware validation davranışını `isReminderCallResult` helper'ı üzerinden kurar; `call_later` tarih/saat zorunluluğu korunur, non-reminder sonuçlar stale reminder tarih/saat yüzünden bloklanmaz.
+- `src/features/students/StudentsPage.tsx`
+  Sağ kart görüşme formunda non-`call_later` result geçişinde stale `reminderDate` / `reminderTime` state'ini temizler. Linked quick complete sonrası aynı state temizlenir. `saveCallAndGoNext`, reminder payload'ını yalnız `call_later` için üretir.
+- `tests/calls/callLogWriter.test.ts`
+  Writer service guard kapsamını, non-reminder sonuçlarda stale reminder date ignore davranışını ve mevcut pending reminder'ın non-reminder sonuçla güncellenmemesini doğrular.
+- `tests/calls/callSaveValidation.test.ts`
+  `call_later` tarih/saat validasyonu korunurken non-reminder sonuçlarda stale reminder date/time'ın validation'ı bozmadığını doğrular.
+- `tests/students/StudentsPageCallHistory.test.tsx`
+  Drawer formdan yalnız `call_later` için reminder oluştuğunu ve linked quick complete sonrası non-reminder kayıtla completed reminder'ın yeniden açılmadığını doğrular.
+- Scope dışı: appointment lifecycle redesign, existing pending reminder auto-cancel/auto-complete, import/export, backup/restore, WhatsApp, Reporting V2, schema/db ve VDS komutları değiştirilmemiştir.
 
 ## Latest File Map Addendum - Linked Reminder Owner Row Visibility Fix
 

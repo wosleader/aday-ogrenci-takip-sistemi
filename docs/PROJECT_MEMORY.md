@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Linked Reminder Owner Row Visibility Fix | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Stale Reminder Date Guard Fix | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,12 +6,25 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Linked Reminder Owner Row Visibility Fix
-- FILE_MAP: Linked Reminder Owner Row Visibility Fix
-- DECISIONS: Linked Reminder Owner Row Visibility Fix
-- Son güvenli HEAD/origin: 7636b57 fix: show linked reminder action only on owner history row
+- PROJECT_MEMORY: Stale Reminder Date Guard Fix
+- FILE_MAP: Stale Reminder Date Guard Fix
+- DECISIONS: Stale Reminder Date Guard Fix
+- Son güvenli HEAD/origin: 37d1fd5 fix: guard reminder creation to call later
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
+
+## Latest Checkpoint - Stale Reminder Date Guard Fix
+
+- Stale Reminder Date Guard Fix tamamlandı: `37d1fd5 fix: guard reminder creation to call later`.
+- Problem: Daha önce hatırlatma atanmış adayda reminder tamamlandıktan sonra, formdaki eski `reminderDate` / `reminderTime` state'i kalabiliyor ve non-reminder görüşme sonucu seçilse bile `reminder_at` tekrar write payload'una gidebiliyordu.
+- Kök neden: `StudentsPage` aynı adayda linked quick complete sonrası reminder tarih/saat state'ini temizlemiyordu; `saveCallAndGoNext` her result için `reminder_at` hesaplayabiliyordu; `callLogWriter` ise `input.reminder_at` varsa `call_result` değerine bakmadan pending reminder create/update yapıyordu.
+- `isReminderCallResult` helper eklendi. Call reminder create/update artık yalnız `call_later` için yapılır.
+- Non-reminder resultlarda stale `reminder_at` writer'a gitmez veya service guard tarafından ignore edilir; `created_reminder_id`, `reminder_at` ve `next_action` call log üzerinde null kalır.
+- `StudentsPage`, `call_later` dışına geçişte stale `reminderDate` / `reminderTime` state'ini temizler. Linked quick complete sonrası aynı state temizlenir.
+- `call_later` reminder davranışı korunur. Appointment lifecycle redesign yapılmadı. Existing pending reminder terminal/non-reminder result ile otomatik completed/cancelled yapılmadı.
+- Schema, import/export, backup/restore, WhatsApp ve Reporting V2 davranışı değişmedi.
+- VDS deploy edildi ve QA geçti. Kullanıcı QA sonucu: `QA geçti kanka.`
+- Backlog/discovery notu: pending/linked reminder düzenleme UX problemi açık kaldı. Kullanıcı, `Sonra Aranacak` için reminder kurduktan sonra tarih/saat/içerik düzeltmek istediğinde `Düzelt` aksiyonunun bu aşamada düzeltilemez dediğini ve tamamla/sil/baştan oluşturmak zorunda kaldığını bildirdi. Bu ayrı discovery konusudur; bu kapanışta implementation yapılmadı.
 
 ## Latest Checkpoint - Linked Reminder Owner Row Visibility Fix
 
