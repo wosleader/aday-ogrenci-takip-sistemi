@@ -185,6 +185,53 @@ describe("backup and restore hardening", () => {
     }
   });
 
+  it("preserves pending reminder edit audit payloads across full backup restore", async () => {
+    const sourceDatabase = await createDatabase();
+    const targetDatabase = await createDatabase();
+    const oldValue = JSON.stringify({
+      reminder_at: "2026-05-12T11:00:00.000Z",
+      note: "İlk açıklama",
+      owner_call_log_id: 42
+    });
+    const newValue = JSON.stringify({
+      reminder_at: "2026-05-13T09:30:00.000Z",
+      note: "Güncellenen açıklama",
+      owner_call_log_id: 42
+    });
+
+    try {
+      await sourceDatabase.audit_logs.add({
+        entity_type: "reminder",
+        entity_id: 7,
+        action_type: "update",
+        field_name: "pending_reminder_edit",
+        old_value: oldValue,
+        new_value: newValue,
+        note: "Açık arama hatırlatmasının tarih/saat veya not bilgisi güncellendi.",
+        performed_by: "agent",
+        created_at: "2026-05-12T09:00:00.000Z"
+      });
+
+      const snapshot = await createBackupSnapshot(sourceDatabase);
+      await restoreSystemBackup(snapshot, RESTORE_SYSTEM_BACKUP_CONFIRMATION, { database: targetDatabase });
+      const [restoredAudit] = await targetDatabase.audit_logs.toArray();
+
+      expect(snapshot.tables.audit_logs).toHaveLength(1);
+      expect(restoredAudit).toMatchObject({
+        entity_type: "reminder",
+        entity_id: 7,
+        field_name: "pending_reminder_edit",
+        old_value: oldValue,
+        new_value: newValue
+      });
+    } finally {
+      sourceDatabase.close();
+      targetDatabase.close();
+      await sourceDatabase.delete();
+      await targetDatabase.delete();
+    }
+  });
+
   it("preserves guardian relations and relation-aware phone metadata across backup restore", async () => {
     const sourceDatabase = await createDatabase();
     const targetDatabase = await createDatabase();

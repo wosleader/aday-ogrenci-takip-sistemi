@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,6 +8,13 @@ import { StudentsPage } from "../../src/features/students/StudentsPage";
 import { createSearchText, normalizeText } from "../../src/utils/normalizeText";
 
 const now = "2026-05-10T10:00:00.000Z";
+
+function formatReminderEditTimestamp(value: string): string {
+  const date = new Date(value);
+  const pad = (part: number) => String(part).padStart(2, "0");
+
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
 
 async function seedStudent() {
   const studentId = await db.students.add({
@@ -56,7 +63,7 @@ async function seedStudent() {
   return studentId;
 }
 
-async function seedCallHistoryWithPhoneContext() {
+async function seedCallHistoryWithPhoneContext(note = "Öğrenci telefonu üzerinden görüşüldü.") {
   const studentId = await seedStudent();
 
   await db.call_logs.add({
@@ -75,7 +82,7 @@ async function seedCallHistoryWithPhoneContext() {
     contacted_phone_label: "Telefon 1",
     call_time: "2026-05-10T12:00:00.000Z",
     call_result: "reached",
-    note: "Öğrenci telefonu üzerinden görüşüldü.",
+    note,
     reminder_at: null,
     next_action: null,
     created_by: "agent",
@@ -215,6 +222,80 @@ async function seedCallHistoryWithSharedPendingReminder() {
   await db.reminders.update(reminderId, { call_log_id: ownerCallLogId });
 }
 
+async function seedTerminalReminderWithEditAudit(status: "completed" | "cancelled") {
+  await seedCallHistoryWithPendingReminder();
+  const reminder = await db.reminders.where("uuid").equals("linked-pending-reminder").first();
+  const ownerCallLog = await db.call_logs.where("uuid").equals("call-history-with-pending-reminder").first();
+  const editedAt = "2026-05-12T10:00:00.000Z";
+
+  await db.reminders.update(reminder!.id!, {
+    note: "Güncellenmiş terminal reminder notu",
+    status,
+    updated_at: editedAt
+  });
+  await db.call_logs.update(ownerCallLog!.id!, { note: "Güncellenmiş terminal reminder notu" });
+  await db.audit_logs.add({
+    entity_type: "reminder",
+    entity_id: reminder!.id!,
+    action_type: "update",
+    field_name: "pending_reminder_edit",
+    old_value: JSON.stringify({
+      reminder_at: "2026-05-11T11:00:00.000Z",
+      note: "Açık hatırlatma",
+      owner_call_log_id: ownerCallLog!.id
+    }),
+    new_value: JSON.stringify({
+      reminder_at: reminder!.reminder_at,
+      note: "Güncellenmiş terminal reminder notu",
+      owner_call_log_id: ownerCallLog!.id
+    }),
+    performed_by: "İpek",
+    created_at: editedAt
+  });
+
+  return editedAt;
+}
+
+async function seedCallHistoryWithAppointment(status: "pending" | "attended" | "missed" | "cancelled" | "registered") {
+  const studentId = await seedStudent();
+  const appointmentId = await db.appointments.add({
+    uuid: `linked-appointment-${status}`,
+    student_id: studentId,
+    guardian_id: null,
+    appointment_at: "2026-05-11T11:00:00.000Z",
+    status,
+    campaign_id: null,
+    note: "Bağlı randevu",
+    sync_status: "local",
+    created_at: now,
+    updated_at: now,
+    deleted_at: null
+  });
+  const callLogId = await db.call_logs.add({
+    uuid: `call-history-with-${status}-appointment`,
+    student_id: studentId,
+    phone_id: null,
+    phone_snapshot: null,
+    contacted_phone_id: null,
+    contacted_phone_number: null,
+    contacted_phone_label: null,
+    call_time: "2026-05-10T12:00:00.000Z",
+    call_result: "appointment",
+    note: "Randevu bağlı görüşme.",
+    reminder_at: null,
+    next_action: null,
+    created_by: "agent",
+    created_reminder_id: null,
+    created_appointment_id: appointmentId,
+    sync_status: "local",
+    created_at: now,
+    updated_at: now,
+    deleted_at: null
+  });
+
+  return { appointmentId, callLogId, studentId };
+}
+
 function StudentsPageHost() {
   const context: AppOutletContext = {
     globalSearch: "",
@@ -264,6 +345,23 @@ describe("StudentsPage call history phone context", () => {
     expect(screen.getByText("Öğrenci telefonu üzerinden görüşüldü.")).toBeInTheDocument();
   });
 
+  it("keeps long history note text intact inside the semantic timeline content wrapper", async () => {
+    const longToken = "a".repeat(240);
+    const longUrl = `https://example.test/${"path".repeat(60)}`;
+    const note = `İlk satır.\n${longToken}\n${longUrl}\nSon satır.`;
+    await seedCallHistoryWithPhoneContext(note);
+
+    renderStudentsPage();
+
+    const noteElement = await screen.findByText((_, element) => element?.textContent === note);
+
+    expect(noteElement).toHaveClass("tl-text");
+    expect(noteElement.textContent).toBe(note);
+    expect(noteElement.closest(".tl-content")).toContainElement(noteElement);
+    expect(screen.getByRole("button", { name: "İletişim kaydını düzelt" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "İletişim kaydını geçersiz say / sil" })).toBeInTheDocument();
+  });
+
   it("keeps the no-phone fallback when call history has no phone context", async () => {
     await seedCallHistoryWithoutPhoneContext();
 
@@ -271,6 +369,7 @@ describe("StudentsPage call history phone context", () => {
 
     expect(await screen.findByText("Telefon seçilmedi")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Hatırlatmayı tamamla" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Hatırlatmayı düzenle" })).not.toBeInTheDocument();
   });
 
   it("requires confirmation before soft deleting a call history item from the drawer", async () => {
@@ -329,13 +428,495 @@ describe("StudentsPage call history phone context", () => {
     expect(callLog?.deleted_at).toBeNull();
   });
 
-  it("completes a pending linked reminder from the call history row before soft delete", async () => {
+  it.each(["completed", "cancelled"] as const)(
+    "opens a note-only correction modal for a %s linked reminder",
+    async (status) => {
+      const user = userEvent.setup();
+      const editedAt = await seedTerminalReminderWithEditAudit(status);
+      const originalCallLog = await db.call_logs.where("uuid").equals("call-history-with-pending-reminder").first();
+      const originalStudent = await db.students.get(originalCallLog!.student_id);
+
+      renderStudentsPage();
+
+      await screen.findByText("Güncellenmiş terminal reminder notu");
+      await user.click(screen.getByRole("button", { name: "İletişim kaydını düzelt" }));
+
+      const dialog = await screen.findByRole("dialog", { name: "İletişim kaydı düzelt" });
+      const resultInput = within(dialog).getByLabelText("Görüşme Durumu");
+      const dateInput = within(dialog).getByLabelText("Tarih");
+      const timeInput = within(dialog).getByLabelText("Saat");
+      const phoneInput = within(dialog).getByLabelText("Telefon bağlamı");
+      const noteInput = within(dialog).getByLabelText("Not");
+
+      expect(
+        within(dialog).getByText("Bağlı kayıt tamamlandığı için yalnız açıklama notu düzeltilebilir.")
+      ).toBeInTheDocument();
+      expect(resultInput).toBeDisabled();
+      expect(dateInput).toBeDisabled();
+      expect(timeInput).toBeDisabled();
+      expect(phoneInput).toBeDisabled();
+      expect(noteInput).not.toBeDisabled();
+
+      await user.clear(noteInput);
+      await user.type(noteInput, "Terminal görüşme notu düzeltildi.");
+      await user.click(within(dialog).getByRole("button", { name: "Kaydet" }));
+
+      await waitFor(() => {
+        expect(screen.getByText("Terminal görüşme notu düzeltildi.")).toBeInTheDocument();
+      });
+
+      const updatedCallLog = await db.call_logs.where("uuid").equals("call-history-with-pending-reminder").first();
+      const reminder = await db.reminders.where("uuid").equals("linked-pending-reminder").first();
+      const correctionAudit = (await db.audit_logs.where("entity_id").equals(updatedCallLog!.id!).toArray()).find(
+        (record) => record.field_name === "call_log_correction"
+      );
+
+      expect(updatedCallLog).toMatchObject({
+        note: "Terminal görüşme notu düzeltildi.",
+        call_time: originalCallLog?.call_time,
+        call_result: originalCallLog?.call_result,
+        created_reminder_id: originalCallLog?.created_reminder_id
+      });
+      expect(reminder?.status).toBe(status);
+      expect(await db.students.get(updatedCallLog!.student_id)).toEqual(originalStudent);
+      expect(correctionAudit).toMatchObject({ field_name: "call_log_correction", performed_by: "agent" });
+      expect(
+        screen.getByRole("button", { name: new RegExp(`Tekrar düzenlendi: ${formatReminderEditTimestamp(editedAt)}`) })
+      ).toBeInTheDocument();
+    }
+  );
+
+  it("blocks normal correction for a pending linked reminder without opening the modal", async () => {
     const user = userEvent.setup();
     await seedCallHistoryWithPendingReminder();
 
     renderStudentsPage();
 
+    await screen.findByText("Hatırlatma bağlı görüşme.");
+    await user.click(screen.getByRole("button", { name: "İletişim kaydını düzelt" }));
+
+    expect(await screen.findByText("Bu görüşmeye bağlı aktif bir hatırlatma bulunuyor. Normal düzeltme yerine Hatırlatmayı düzenle işlemini kullanın.")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "İletişim kaydı düzelt" })).not.toBeInTheDocument();
+  });
+
+  it("blocks normal correction for an active linked appointment without opening the modal", async () => {
+    const user = userEvent.setup();
+    await seedCallHistoryWithAppointment("pending");
+
+    renderStudentsPage();
+
+    await screen.findByText("Randevu bağlı görüşme.");
+    await user.click(screen.getByRole("button", { name: "İletişim kaydını düzelt" }));
+
+    expect(await screen.findByText("Bu görüşmeye bağlı aktif bir etkinlik bulunuyor. Etkinlik tamamlanmadan normal düzeltme yapılamaz.")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "İletişim kaydı düzelt" })).not.toBeInTheDocument();
+  });
+
+  it("opens a note-only correction modal for a terminal appointment", async () => {
+    const user = userEvent.setup();
+    const { appointmentId, callLogId } = await seedCallHistoryWithAppointment("attended");
+    const appointmentBefore = await db.appointments.get(appointmentId);
+    const callLogBefore = await db.call_logs.get(callLogId);
+
+    renderStudentsPage();
+
+    await screen.findByText("Randevu bağlı görüşme.");
+    await user.click(screen.getByRole("button", { name: "İletişim kaydını düzelt" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "İletişim kaydı düzelt" });
+    expect(within(dialog).getByLabelText("Görüşme Durumu")).toBeDisabled();
+    expect(within(dialog).getByLabelText("Tarih")).toBeDisabled();
+    expect(within(dialog).getByLabelText("Saat")).toBeDisabled();
+    expect(within(dialog).getByLabelText("Telefon bağlamı")).toBeDisabled();
+    const noteInput = within(dialog).getByLabelText("Not");
+    await user.clear(noteInput);
+    await user.type(noteInput, "Terminal randevu notu düzeltildi.");
+    await user.click(within(dialog).getByRole("button", { name: "Kaydet" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Terminal randevu notu düzeltildi.")).toBeInTheDocument();
+    });
+
+    expect(await db.call_logs.get(callLogId)).toMatchObject({
+      note: "Terminal randevu notu düzeltildi.",
+      call_time: callLogBefore?.call_time,
+      call_result: callLogBefore?.call_result,
+      created_appointment_id: appointmentId
+    });
+    expect(await db.appointments.get(appointmentId)).toEqual(appointmentBefore);
+  });
+
+  it("shows the data-check message when a linked reminder record is missing", async () => {
+    const user = userEvent.setup();
+    await seedCallHistoryWithPendingReminder();
+    const reminder = await db.reminders.where("uuid").equals("linked-pending-reminder").first();
+    await db.reminders.delete(reminder!.id!);
+
+    renderStudentsPage();
+
+    await screen.findByText("Hatırlatma bağlı görüşme.");
+    await user.click(screen.getByRole("button", { name: "İletişim kaydını düzelt" }));
+
+    expect(await screen.findByText("Bağlı kayıt bulunamadı. Düzeltme yapılamadı; veri kontrolü gerekli.")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "İletişim kaydı düzelt" })).not.toBeInTheDocument();
+  });
+
+  it("replaces the owner history note after updating a pending reminder", async () => {
+    const user = userEvent.setup();
+    await seedCallHistoryWithPendingReminder();
+    const originalCallLog = await db.call_logs.where("uuid").equals("call-history-with-pending-reminder").first();
+
+    renderStudentsPage();
+
     expect(await screen.findByText("Hatırlatma bağlı görüşme.")).toBeInTheDocument();
+    expect(screen.queryByText(/^Tekrar düzenlendi:/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Hatırlatmayı tamamla" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Hatırlatmayı düzenle" }));
+
+    const dialog = screen.getByRole("dialog", { name: "Hatırlatmayı düzenle" });
+    const dateInput = within(dialog).getByLabelText("Tarih") as HTMLInputElement;
+    const timeInput = within(dialog).getByLabelText("Saat") as HTMLInputElement;
+    const noteInput = within(dialog).getByLabelText("Hatırlatma notu") as HTMLTextAreaElement;
+    const initialReminderAt = new Date("2026-05-11T11:00:00.000Z");
+
+    expect(dateInput.value).toBe(initialReminderAt.toISOString().slice(0, 10));
+    expect(timeInput.value).toBe(initialReminderAt.toTimeString().slice(0, 5));
+    expect(noteInput.value).toBe("Açık hatırlatma");
+
+    await user.clear(dateInput);
+    await user.type(dateInput, "2026-05-15");
+    await user.clear(timeInput);
+    await user.type(timeInput, "15:45");
+    await user.clear(noteInput);
+    await user.type(noteInput, "Güncellenmiş reminder notu");
+    await user.click(within(dialog).getByRole("button", { name: "Hatırlatmayı güncelle" }));
+
+    const expectedReminderAt = new Date("2026-05-15T15:45:00").toISOString();
+    const expectedReminderLabel = new Intl.DateTimeFormat("tr-TR", {
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    }).format(new Date(expectedReminderAt));
+
+    await waitFor(async () => {
+      expect(await db.reminders.where("uuid").equals("linked-pending-reminder").first()).toMatchObject({
+        reminder_at: expectedReminderAt,
+        note: "Güncellenmiş reminder notu",
+        status: "pending"
+      });
+    });
+    const editAudit = (await db.audit_logs.where("entity_id").equals(
+      (await db.reminders.where("uuid").equals("linked-pending-reminder").first())?.id ?? -1
+    ).toArray()).find((audit) => audit.field_name === "pending_reminder_edit");
+
+    expect(await screen.findByText("Güncellenmiş reminder notu")).toBeInTheDocument();
+    expect(screen.queryByText("Hatırlatma bağlı görüşme.")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Hatırlatma notu:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Görüşme notu:/)).not.toBeInTheDocument();
+    expect(editAudit?.created_at).toBeTruthy();
+    const reminderEditPreviewTrigger = screen.getByRole("button", {
+      name: new RegExp(`Tekrar düzenlendi: ${formatReminderEditTimestamp(editAudit!.created_at)}`)
+    });
+    const reminderEditPreviewWrapper = reminderEditPreviewTrigger.parentElement;
+    const originalInnerHeight = window.innerHeight;
+    const originalInnerWidth = window.innerWidth;
+    const triggerRect = {
+      bottom: 114,
+      height: 14,
+      left: 300,
+      right: 460,
+      top: 100,
+      width: 160,
+      x: 300,
+      y: 100
+    };
+
+    expect(reminderEditPreviewTrigger).toBeInTheDocument();
+    expect(reminderEditPreviewWrapper).toHaveStyle({ display: "inline-flex", position: "relative" });
+    expect(reminderEditPreviewTrigger.closest(".tl-author")).toBeInTheDocument();
+    expect(reminderEditPreviewTrigger).toHaveStyle({
+      background: "transparent",
+      padding: "0px"
+    });
+    expect(reminderEditPreviewTrigger).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText(`Tekrar arama: ${expectedReminderLabel}`)).not.toBeInTheDocument();
+    expect(screen.queryByText("Açık hatırlatma")).not.toBeInTheDocument();
+    expect(screen.queryByText("agent")).not.toBeInTheDocument();
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+
+    Object.defineProperty(window, "innerHeight", { configurable: true, value: 600 });
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 800 });
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+      if (this === reminderEditPreviewTrigger) {
+        return triggerRect as DOMRect;
+      }
+
+      if (this.getAttribute("role") === "tooltip") {
+        return {
+          bottom: 140,
+          height: 140,
+          left: 0,
+          right: 320,
+          top: 0,
+          width: 320,
+          x: 0,
+          y: 0
+        } as DOMRect;
+      }
+
+      return {
+        bottom: 0,
+        height: 0,
+        left: 0,
+        right: 0,
+        top: 0,
+        width: 0,
+        x: 0,
+        y: 0
+      } as DOMRect;
+    });
+    vi.useFakeTimers();
+
+    try {
+      fireEvent.pointerEnter(reminderEditPreviewTrigger);
+      expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(69);
+      });
+      expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1);
+      });
+
+      const tooltip = screen.getByRole("tooltip");
+      expect(tooltip).toHaveTextContent(`Önceki tarih/saat: ${formatReminderEditTimestamp("2026-05-11T11:00:00.000Z")}`);
+      expect(tooltip).toHaveTextContent("Önceki not: Açık hatırlatma");
+      expect(tooltip).not.toHaveTextContent("Düzenleyen:");
+      expect(tooltip.parentElement).toBe(document.body);
+      expect(reminderEditPreviewWrapper).not.toContainElement(tooltip);
+      expect(tooltip).toHaveAttribute("data-placement", "bottom");
+      expect(tooltip).toHaveStyle({ left: "300px", pointerEvents: "none", position: "fixed", top: "120px", zIndex: "100" });
+      expect(reminderEditPreviewTrigger).toHaveAttribute("aria-describedby", tooltip.id);
+      expect(reminderEditPreviewTrigger).toHaveAttribute("aria-expanded", "true");
+      expect(reminderEditPreviewWrapper?.querySelector('[aria-hidden="true"]')).toBeNull();
+
+      fireEvent.pointerLeave(reminderEditPreviewTrigger);
+      expect(screen.getByRole("tooltip")).toBeInTheDocument();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(159);
+      });
+      expect(screen.getByRole("tooltip")).toBeInTheDocument();
+
+      fireEvent.pointerEnter(reminderEditPreviewTrigger);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(160);
+      });
+      expect(screen.getByRole("tooltip")).toBeInTheDocument();
+
+      fireEvent.pointerLeave(reminderEditPreviewTrigger);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(160);
+      });
+      expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+
+      triggerRect.top = 530;
+      triggerRect.bottom = 544;
+      triggerRect.y = 530;
+      fireEvent.pointerEnter(reminderEditPreviewTrigger);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(70);
+      });
+      expect(screen.getByRole("tooltip")).toHaveAttribute("data-placement", "top");
+      expect(screen.getByRole("tooltip")).toHaveStyle({ top: "384px" });
+
+      triggerRect.left = -40;
+      triggerRect.right = 120;
+      triggerRect.x = -40;
+      fireEvent(window, new Event("resize"));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(20);
+      });
+      expect(screen.getByRole("tooltip")).toHaveStyle({ left: "8px" });
+
+      triggerRect.left = 760;
+      triggerRect.right = 920;
+      triggerRect.x = 760;
+      fireEvent(window, new Event("scroll", { bubbles: true }));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(20);
+      });
+      expect(screen.getByRole("tooltip")).toHaveStyle({ left: "472px" });
+
+      await act(async () => {
+        reminderEditPreviewTrigger.focus();
+      });
+      expect(screen.getByRole("tooltip")).toBeInTheDocument();
+      await act(async () => {
+        reminderEditPreviewTrigger.blur();
+      });
+      expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+
+      fireEvent.click(reminderEditPreviewTrigger);
+      expect(screen.getByRole("tooltip")).toBeInTheDocument();
+      expect(screen.getByRole("tooltip")).toHaveStyle({ pointerEvents: "auto" });
+      fireEvent.pointerLeave(reminderEditPreviewTrigger);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(160);
+      });
+      expect(screen.getByRole("tooltip")).toBeInTheDocument();
+
+      fireEvent.click(reminderEditPreviewTrigger);
+      expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+
+      fireEvent.click(reminderEditPreviewTrigger);
+      expect(screen.getByRole("tooltip")).toBeInTheDocument();
+      fireEvent.keyDown(reminderEditPreviewTrigger, { key: "Escape" });
+      expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+      Object.defineProperty(window, "innerHeight", { configurable: true, value: originalInnerHeight });
+      Object.defineProperty(window, "innerWidth", { configurable: true, value: originalInnerWidth });
+    }
+
+    expect(screen.getAllByText("Hatırlatma güncellendi.").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "Hatırlatmayı tamamla" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Hatırlatmayı düzenle" })).toBeInTheDocument();
+
+    const updatedOwnerCallLog = await db.call_logs.where("uuid").equals("call-history-with-pending-reminder").first();
+    expect(updatedOwnerCallLog).toMatchObject({
+      note: "Güncellenmiş reminder notu",
+      call_result: originalCallLog?.call_result,
+      call_time: originalCallLog?.call_time,
+      created_at: originalCallLog?.created_at,
+      reminder_at: originalCallLog?.reminder_at,
+      next_action: originalCallLog?.next_action,
+      created_reminder_id: originalCallLog?.created_reminder_id,
+      phone_id: originalCallLog?.phone_id,
+      phone_snapshot: originalCallLog?.phone_snapshot,
+      updated_at: originalCallLog?.updated_at
+    });
+  });
+
+  it.each(["completed", "cancelled"] as const)(
+    "keeps the reminder edit preview and hides actions for a %s owner reminder",
+    async (status) => {
+      const editedAt = await seedTerminalReminderWithEditAudit(status);
+
+      renderStudentsPage();
+
+      expect(await screen.findByText("Güncellenmiş terminal reminder notu")).toBeInTheDocument();
+      expect(screen.queryByText("Açık hatırlatma")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Hatırlatmayı tamamla" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Hatırlatmayı düzenle" })).not.toBeInTheDocument();
+
+      const previewTrigger = screen.getByRole("button", {
+        name: new RegExp(`Tekrar düzenlendi: ${formatReminderEditTimestamp(editedAt)}`)
+      });
+
+      await act(async () => {
+        fireEvent.focus(previewTrigger);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole("tooltip")).toHaveTextContent(
+          `Önceki tarih/saat: ${formatReminderEditTimestamp("2026-05-11T11:00:00.000Z")}`
+        );
+        expect(screen.getByRole("tooltip")).toHaveTextContent("Önceki not: Açık hatırlatma");
+      });
+      expect(screen.getByRole("tooltip").parentElement).toBe(document.body);
+    }
+  );
+
+  it("cleans reminder audit tooltip timers, listeners, and portal content on unmount", async () => {
+    await seedCallHistoryWithPendingReminder();
+    const reminder = await db.reminders.where("uuid").equals("linked-pending-reminder").first();
+    const ownerCallLog = await db.call_logs.where("uuid").equals("call-history-with-pending-reminder").first();
+
+    await db.audit_logs.add({
+      entity_type: "reminder",
+      entity_id: reminder!.id!,
+      action_type: "update",
+      field_name: "pending_reminder_edit",
+      old_value: JSON.stringify({
+        reminder_at: "2026-05-11T11:00:00.000Z",
+        note: "Açık hatırlatma",
+        owner_call_log_id: ownerCallLog!.id
+      }),
+      new_value: JSON.stringify({
+        reminder_at: reminder!.reminder_at,
+        note: reminder!.note,
+        owner_call_log_id: ownerCallLog!.id
+      }),
+      note: null,
+      performed_by: "agent",
+      created_at: "2026-05-12T10:00:00.000Z"
+    });
+
+    const view = renderStudentsPage();
+    const trigger = await screen.findByRole("button", { name: /Tekrar düzenlendi:/ });
+    const addEventListener = vi.spyOn(window, "addEventListener");
+    const removeEventListener = vi.spyOn(window, "removeEventListener");
+    vi.useFakeTimers();
+
+    try {
+      fireEvent.pointerEnter(trigger);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(70);
+      });
+
+      expect(screen.getByRole("tooltip")).toBeInTheDocument();
+      expect(addEventListener).toHaveBeenCalledWith("resize", expect.any(Function));
+      expect(addEventListener).toHaveBeenCalledWith("scroll", expect.any(Function), true);
+
+      fireEvent.pointerLeave(trigger);
+      view.unmount();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(200);
+      });
+
+      expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+      expect(removeEventListener).toHaveBeenCalledWith("resize", expect.any(Function));
+      expect(removeEventListener).toHaveBeenCalledWith("scroll", expect.any(Function), true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("completes a pending linked reminder from the call history row before soft delete", async () => {
+    const user = userEvent.setup();
+    await seedCallHistoryWithPendingReminder();
+    const reminder = await db.reminders.where("uuid").equals("linked-pending-reminder").first();
+    const ownerCallLog = await db.call_logs.where("uuid").equals("call-history-with-pending-reminder").first();
+    const editedAt = "2026-05-12T10:00:00.000Z";
+
+    await db.call_logs.update(ownerCallLog!.id!, { note: "Güncellenmiş reminder notu" });
+    await db.audit_logs.add({
+      entity_type: "reminder",
+      entity_id: reminder!.id!,
+      action_type: "update",
+      field_name: "pending_reminder_edit",
+      old_value: JSON.stringify({
+        reminder_at: "2026-05-11T11:00:00.000Z",
+        note: "Açık hatırlatma",
+        owner_call_log_id: ownerCallLog!.id
+      }),
+      new_value: JSON.stringify({
+        reminder_at: reminder!.reminder_at,
+        note: "Güncellenmiş reminder notu",
+        owner_call_log_id: ownerCallLog!.id
+      }),
+      performed_by: "İpek",
+      created_at: editedAt
+    });
+
+    renderStudentsPage();
+
+    expect(await screen.findByText("Güncellenmiş reminder notu")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Hatırlatmayı tamamla" }));
 
@@ -352,13 +933,24 @@ describe("StudentsPage call history phone context", () => {
     await waitFor(() => {
       expect(screen.queryByRole("button", { name: "Hatırlatmayı tamamla" })).not.toBeInTheDocument();
     });
-    expect(screen.getByText("Hatırlatma bağlı görüşme.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Hatırlatmayı düzenle" })).not.toBeInTheDocument();
+    expect(screen.getByText("Güncellenmiş reminder notu")).toBeInTheDocument();
+    const previewTrigger = screen.getByRole("button", {
+      name: new RegExp(`Tekrar düzenlendi: ${formatReminderEditTimestamp(editedAt)}`)
+    });
+
+    await act(async () => {
+      fireEvent.focus(previewTrigger);
+    });
+    await waitFor(() => {
+      expect(screen.getByRole("tooltip")).toHaveTextContent("Önceki not: Açık hatırlatma");
+    });
 
     await user.click(screen.getByRole("button", { name: "İletişim kaydını geçersiz say / sil" }));
     await user.click(screen.getByRole("button", { name: "Geçersiz say / sil" }));
 
     await waitFor(() => {
-      expect(screen.queryByText("Hatırlatma bağlı görüşme.")).not.toBeInTheDocument();
+      expect(screen.queryByText("Güncellenmiş reminder notu")).not.toBeInTheDocument();
     });
 
     const callLog = await db.call_logs.where("uuid").equals("call-history-with-pending-reminder").first();
@@ -442,11 +1034,40 @@ describe("StudentsPage call history phone context", () => {
 
   it("shows linked reminder quick complete only on the owner history row", async () => {
     await seedCallHistoryWithSharedPendingReminder();
+    const reminder = await db.reminders.where("uuid").equals("shared-pending-reminder").first();
+    const ownerCallLog = await db.call_logs.where("uuid").equals("call-history-shared-reminder-owner").first();
+
+    await db.audit_logs.add({
+      entity_type: "reminder",
+      entity_id: reminder!.id!,
+      action_type: "update",
+      field_name: "pending_reminder_edit",
+      old_value: JSON.stringify({
+        reminder_at: "2026-05-11T11:00:00.000Z",
+        note: "Eski owner notu",
+        owner_call_log_id: ownerCallLog!.id
+      }),
+      new_value: JSON.stringify({
+        reminder_at: reminder!.reminder_at,
+        note: reminder!.note,
+        owner_call_log_id: ownerCallLog!.id
+      }),
+      created_at: "2026-05-12T10:00:00.000Z"
+    });
 
     renderStudentsPage();
 
     expect(await screen.findByText("Hatırlatma sahibi satır.")).toBeInTheDocument();
     expect(screen.getByText("Eski hatırlatma satırı.")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Hatırlatmayı tamamla" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Hatırlatmayı düzenle" })).toHaveLength(1);
+
+    const ownerHistoryRow = screen.getByText("Hatırlatma sahibi satır.").closest(".tl-item") as HTMLElement | null;
+    const oldHistoryRow = screen.getByText("Eski hatırlatma satırı.").closest(".tl-item") as HTMLElement | null;
+
+    expect(ownerHistoryRow).not.toBeNull();
+    expect(oldHistoryRow).not.toBeNull();
+    expect(within(ownerHistoryRow!).getByRole("button", { name: /Tekrar düzenlendi:/ })).toBeInTheDocument();
+    expect(within(oldHistoryRow!).queryByRole("button", { name: /Tekrar düzenlendi:/ })).not.toBeInTheDocument();
   });
 });

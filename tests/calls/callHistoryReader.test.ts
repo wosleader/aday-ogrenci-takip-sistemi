@@ -4,10 +4,23 @@ import type { ReminderStatus } from "../../src/domain/constants/statuses";
 import type { CallLogRecord } from "../../src/domain/models/callLog";
 import type { ReminderRecord } from "../../src/domain/models/reminder";
 import type { StudentRecord } from "../../src/domain/models/student";
-import { readCallHistoryForStudent } from "../../src/features/calls/services/callHistoryReader";
+import { normalizeVisibleActorLabel, readCallHistoryForStudent } from "../../src/features/calls/services/callHistoryReader";
 import { createSearchText, normalizeText } from "../../src/utils/normalizeText";
 
 const timestamp = "2026-05-08T09:00:00.000Z";
+
+describe("normalizeVisibleActorLabel", () => {
+  it.each(["agent", "Agent", " AGENT ", "system", "SYSTEM", "unknown", "", "   ", null, undefined])(
+    "hides technical actor label %p",
+    (value) => {
+      expect(normalizeVisibleActorLabel(value)).toBeNull();
+    }
+  );
+
+  it("preserves a meaningful trimmed actor label", () => {
+    expect(normalizeVisibleActorLabel("  Ayşe Yılmaz  ")).toBe("Ayşe Yılmaz");
+  });
+});
 
 async function createDatabase() {
   const database = new AppDatabase(`test-call-history-${crypto.randomUUID()}`);
@@ -208,27 +221,56 @@ describe("callHistoryReader", () => {
     ["completed", false],
     ["cancelled", false]
   ] satisfies Array<[ReminderStatus, boolean]>)(
-    "exposes linked reminder completion state for %s reminders",
+    "keeps reminder edit audit metadata while exposing completion only for %s reminders",
     async (status, canComplete) => {
       const database = await createDatabase();
 
       try {
         const studentId = await database.students.add(student());
-        const reminderId = await database.reminders.add(reminder(studentId, status));
-        await database.call_logs.add(
+        const reminderId = await database.reminders.add(
+          reminder(studentId, status, {
+            reminder_at: "2026-05-12T13:30:00.000Z",
+            note: "Güncel reminder notu"
+          })
+        );
+        const callLogId = await database.call_logs.add(
           callLog(studentId, {
             created_reminder_id: reminderId,
             reminder_at: "2026-05-10T11:00:00.000Z"
           })
         );
+        await database.reminders.update(reminderId, { call_log_id: callLogId });
+
+        await database.audit_logs.add({
+          entity_type: "reminder",
+          entity_id: reminderId,
+          action_type: "update",
+          field_name: "pending_reminder_edit",
+          old_value: JSON.stringify({
+            reminder_at: "2026-05-10T11:00:00.000Z",
+            note: "Önceki not",
+            owner_call_log_id: callLogId
+          }),
+          new_value: JSON.stringify({
+            reminder_at: "2026-05-12T13:30:00.000Z",
+            note: "Güncel reminder notu",
+            owner_call_log_id: callLogId
+          }),
+          created_at: "2026-05-10T12:00:00.000Z"
+        });
 
         const history = await readCallHistoryForStudent(studentId, database);
 
         expect(history[0]).toMatchObject({
           linked_reminder_id: reminderId,
           linked_reminder_status: status,
-          linked_reminder_at: "2026-05-10T11:00:00.000Z",
-          canCompleteLinkedReminder: canComplete
+          linked_reminder_at: "2026-05-12T13:30:00.000Z",
+          linked_reminder_note: "Güncel reminder notu",
+          linked_reminder_last_edited_at: "2026-05-10T12:00:00.000Z",
+          linked_reminder_previous_at: "2026-05-10T11:00:00.000Z",
+          linked_reminder_previous_note: "Önceki not",
+          canCompleteLinkedReminder: canComplete,
+          canEditLinkedReminder: canComplete
         });
       } finally {
         database.close();
@@ -268,17 +310,269 @@ describe("callHistoryReader", () => {
 
       const history = await readCallHistoryForStudent(studentId, database);
       const completionByCallLogId = new Map(history.map((item) => [item.call_log_id, item.canCompleteLinkedReminder]));
+      const editByCallLogId = new Map(history.map((item) => [item.call_log_id, item.canEditLinkedReminder]));
 
       expect(completionByCallLogId.get(firstCallLogId)).toBe(false);
       expect(completionByCallLogId.get(ownerCallLogId)).toBe(true);
       expect(completionByCallLogId.get(thirdCallLogId)).toBe(false);
+      expect(editByCallLogId.get(firstCallLogId)).toBe(false);
+      expect(editByCallLogId.get(ownerCallLogId)).toBe(true);
+      expect(editByCallLogId.get(thirdCallLogId)).toBe(false);
     } finally {
       database.close();
       await database.delete();
     }
   });
 
-  it("falls back to the latest active linked call log when reminder owner is missing", async () => {
+  it("returns the latest valid pending reminder edit preview on only the owner history row", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const reminderId = await database.reminders.add(reminder(studentId, "pending"));
+      const sharedCallLogId = await database.call_logs.add(
+        callLog(studentId, {
+          call_time: "2026-05-08T09:00:00.000Z",
+          created_reminder_id: reminderId,
+          note: "Eski shared not"
+        })
+      );
+      const ownerCallLogId = await database.call_logs.add(
+        callLog(studentId, {
+          call_time: "2026-05-08T10:00:00.000Z",
+          created_reminder_id: reminderId,
+          note: "Güncel görünür not"
+        })
+      );
+      await database.reminders.update(reminderId, { call_log_id: ownerCallLogId });
+      await database.audit_logs.bulkAdd([
+        {
+          entity_type: "reminder",
+          entity_id: reminderId,
+          action_type: "create",
+          created_at: "2026-05-08T10:30:00.000Z"
+        },
+        {
+          entity_type: "reminder",
+          entity_id: reminderId,
+          action_type: "update",
+          field_name: "other_reminder_update",
+          created_at: "2026-05-08T10:45:00.000Z"
+        },
+        {
+          entity_type: "reminder",
+          entity_id: reminderId,
+          action_type: "update",
+          field_name: "pending_reminder_edit",
+          old_value: JSON.stringify({
+            reminder_at: "2026-05-08T09:00:00.000Z",
+            note: "İlk düzenleme öncesi",
+            owner_call_log_id: ownerCallLogId
+          }),
+          new_value: JSON.stringify({
+            reminder_at: "2026-05-08T11:00:00.000Z",
+            note: "Birinci düzenleme",
+            owner_call_log_id: ownerCallLogId
+          }),
+          performed_by: "agent",
+          created_at: "2026-05-08T11:00:00.000Z"
+        },
+        {
+          entity_type: "reminder",
+          entity_id: reminderId,
+          action_type: "update",
+          field_name: "pending_reminder_edit",
+          old_value: JSON.stringify({
+            reminder_at: "2026-05-08T11:00:00.000Z",
+            note: "İkinci düzenleme öncesi",
+            owner_call_log_id: ownerCallLogId
+          }),
+          new_value: JSON.stringify({
+            reminder_at: "2026-05-08T12:00:00.000Z",
+            note: "Ara düzenleme",
+            owner_call_log_id: ownerCallLogId
+          }),
+          performed_by: "agent",
+          created_at: "2026-05-08T12:00:00.000Z"
+        },
+        {
+          entity_type: "reminder",
+          entity_id: reminderId,
+          action_type: "update",
+          field_name: "pending_reminder_edit",
+          old_value: JSON.stringify({
+            reminder_at: "2026-05-08T11:00:00.000Z",
+            note: "Son düzenleme öncesi",
+            owner_call_log_id: ownerCallLogId
+          }),
+          new_value: JSON.stringify({
+            reminder_at: "2026-05-08T12:00:00.000Z",
+            note: "Güncel görünür not",
+            owner_call_log_id: ownerCallLogId
+          }),
+          performed_by: "İpek",
+          created_at: "2026-05-08T12:00:00.000Z"
+        },
+        {
+          entity_type: "reminder",
+          entity_id: reminderId,
+          action_type: "update",
+          field_name: "pending_reminder_edit",
+          old_value: JSON.stringify({
+            reminder_at: "2026-05-08T12:00:00.000Z",
+            note: "Bu satır görünmemeli",
+            owner_call_log_id: sharedCallLogId
+          }),
+          new_value: JSON.stringify({
+            reminder_at: "2026-05-08T13:00:00.000Z",
+            note: "Bu satır görünmemeli",
+            owner_call_log_id: sharedCallLogId
+          }),
+          performed_by: "Başka kullanıcı",
+          created_at: "2026-05-08T13:00:00.000Z"
+        }
+      ]);
+
+      const history = await readCallHistoryForStudent(studentId, database);
+      const historyByCallLogId = new Map(history.map((item) => [item.call_log_id, item]));
+
+      expect(historyByCallLogId.get(ownerCallLogId)).toMatchObject({
+        note: "Güncel görünür not",
+        linked_reminder_last_edited_at: "2026-05-08T12:00:00.000Z",
+        linked_reminder_previous_at: "2026-05-08T11:00:00.000Z",
+        linked_reminder_previous_note: "Son düzenleme öncesi",
+        linked_reminder_last_editor: "İpek"
+      });
+      expect(historyByCallLogId.get(sharedCallLogId)).toMatchObject({
+        note: "Eski shared not",
+        linked_reminder_last_edited_at: null,
+        linked_reminder_previous_at: null,
+        linked_reminder_previous_note: null,
+        linked_reminder_last_editor: null
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("uses the latest valid legacy audit payload when a newer payload is malformed", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const reminderId = await database.reminders.add(reminder(studentId, "pending"));
+      const ownerCallLogId = await database.call_logs.add(
+        callLog(studentId, { created_reminder_id: reminderId, note: "Güncel not" })
+      );
+      await database.reminders.update(reminderId, { call_log_id: ownerCallLogId });
+      await database.audit_logs.bulkAdd([
+        {
+          entity_type: "reminder",
+          entity_id: reminderId,
+          action_type: "update",
+          field_name: "pending_reminder_edit",
+          old_value: JSON.stringify({ reminder_at: "2026-05-08T09:00:00.000Z", note: "Eski not" }),
+          created_at: "2026-05-08T11:00:00.000Z"
+        },
+        {
+          entity_type: "reminder",
+          entity_id: reminderId,
+          action_type: "update",
+          field_name: "pending_reminder_edit",
+          old_value: "{bozuk-json",
+          created_at: "2026-05-08T12:00:00.000Z"
+        }
+      ]);
+
+      const [historyItem] = await readCallHistoryForStudent(studentId, database);
+
+      expect(historyItem).toMatchObject({
+        call_log_id: ownerCallLogId,
+        linked_reminder_last_edited_at: "2026-05-08T11:00:00.000Z",
+        linked_reminder_previous_at: "2026-05-08T09:00:00.000Z",
+        linked_reminder_previous_note: "Eski not",
+        linked_reminder_last_editor: null
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("hides edit preview when the only audit payload is malformed", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const reminderId = await database.reminders.add(reminder(studentId, "completed"));
+      const ownerCallLogId = await database.call_logs.add(
+        callLog(studentId, { created_reminder_id: reminderId, note: "Güncel not" })
+      );
+      await database.reminders.update(reminderId, { call_log_id: ownerCallLogId });
+      await database.audit_logs.add({
+        entity_type: "reminder",
+        entity_id: reminderId,
+        action_type: "update",
+        field_name: "pending_reminder_edit",
+        old_value: "{bozuk-json",
+        created_at: "2026-05-08T12:00:00.000Z"
+      });
+
+      const [historyItem] = await readCallHistoryForStudent(studentId, database);
+
+      expect(historyItem).toMatchObject({
+        call_log_id: ownerCallLogId,
+        canCompleteLinkedReminder: false,
+        canEditLinkedReminder: false,
+        linked_reminder_last_edited_at: null,
+        linked_reminder_previous_at: null,
+        linked_reminder_previous_note: null
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("hides edit preview for a soft-deleted linked reminder", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const reminderId = await database.reminders.add(reminder(studentId, "cancelled", { deleted_at: timestamp }));
+      const ownerCallLogId = await database.call_logs.add(
+        callLog(studentId, { created_reminder_id: reminderId, note: "Güncel not" })
+      );
+      await database.reminders.update(reminderId, { call_log_id: ownerCallLogId });
+      await database.audit_logs.add({
+        entity_type: "reminder",
+        entity_id: reminderId,
+        action_type: "update",
+        field_name: "pending_reminder_edit",
+        old_value: JSON.stringify({
+          reminder_at: "2026-05-08T09:00:00.000Z",
+          note: "Önceki not",
+          owner_call_log_id: ownerCallLogId
+        }),
+        created_at: "2026-05-08T12:00:00.000Z"
+      });
+
+      const [historyItem] = await readCallHistoryForStudent(studentId, database);
+
+      expect(historyItem).toMatchObject({
+        linked_reminder_status: null,
+        canCompleteLinkedReminder: false,
+        canEditLinkedReminder: false,
+        linked_reminder_last_edited_at: null
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("does not infer a reminder owner when reminder.call_log_id is missing", async () => {
     const database = await createDatabase();
 
     try {
@@ -301,14 +595,14 @@ describe("callHistoryReader", () => {
       const completionByCallLogId = new Map(history.map((item) => [item.call_log_id, item.canCompleteLinkedReminder]));
 
       expect(completionByCallLogId.get(firstCallLogId)).toBe(false);
-      expect(completionByCallLogId.get(latestCallLogId)).toBe(true);
+      expect(completionByCallLogId.get(latestCallLogId)).toBe(false);
     } finally {
       database.close();
       await database.delete();
     }
   });
 
-  it("uses created_at as the owner fallback when linked call_time is empty", async () => {
+  it("does not use call chronology as a reminder owner fallback", async () => {
     const database = await createDatabase();
 
     try {
@@ -333,7 +627,7 @@ describe("callHistoryReader", () => {
       const completionByCallLogId = new Map(history.map((item) => [item.call_log_id, item.canCompleteLinkedReminder]));
 
       expect(completionByCallLogId.get(firstCallLogId)).toBe(false);
-      expect(completionByCallLogId.get(latestCallLogId)).toBe(true);
+      expect(completionByCallLogId.get(latestCallLogId)).toBe(false);
     } finally {
       database.close();
       await database.delete();
@@ -392,12 +686,59 @@ describe("callHistoryReader", () => {
       expect(history[0]).toMatchObject({
         linked_reminder_id: 999,
         linked_reminder_status: null,
-        canCompleteLinkedReminder: false
+        linked_reminder_note: null,
+        linked_reminder_last_edited_at: null,
+        canCompleteLinkedReminder: false,
+        canEditLinkedReminder: false
       });
       expect(history[1]).toMatchObject({
         linked_reminder_id: null,
         linked_reminder_status: null,
-        canCompleteLinkedReminder: false
+        linked_reminder_note: null,
+        linked_reminder_last_edited_at: null,
+        canCompleteLinkedReminder: false,
+        canEditLinkedReminder: false
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("does not expose reminder editing for an appointment-linked history row", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const reminderId = await database.reminders.add(reminder(studentId, "pending"));
+      const callLogId = await database.call_logs.add(
+        callLog(studentId, {
+          created_reminder_id: reminderId,
+          created_appointment_id: 88
+        })
+      );
+      await database.reminders.update(reminderId, { call_log_id: callLogId });
+      await database.audit_logs.add({
+        entity_type: "reminder",
+        entity_id: reminderId,
+        action_type: "update",
+        field_name: "pending_reminder_edit",
+        old_value: JSON.stringify({
+          reminder_at: "2026-05-08T09:00:00.000Z",
+          note: "Önceki not",
+          owner_call_log_id: callLogId
+        }),
+        created_at: "2026-05-08T12:00:00.000Z"
+      });
+
+      const history = await readCallHistoryForStudent(studentId, database);
+
+      expect(history[0]).toMatchObject({
+        canCompleteLinkedReminder: true,
+        canEditLinkedReminder: false,
+        linked_reminder_last_edited_at: null,
+        linked_reminder_previous_at: null,
+        linked_reminder_previous_note: null
       });
     } finally {
       database.close();

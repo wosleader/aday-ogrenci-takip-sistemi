@@ -3,6 +3,7 @@ import { AppDatabase } from "../../src/db/db";
 import type { PhoneRecord } from "../../src/domain/models/phone";
 import type { StudentRecord } from "../../src/domain/models/student";
 import { readDetailedExportData } from "../../src/features/exports/services/exportDataReader";
+import { createDetailedExportSheet, createSummaryConversationReportSheet } from "../../src/features/exports/services/exportMapper";
 import { createSearchText, normalizeText } from "../../src/utils/normalizeText";
 
 const timestamp = "2026-05-08T09:00:00";
@@ -96,8 +97,28 @@ describe("exportDataReader", () => {
         updated_at: timestamp,
         deleted_at: null
       });
+      await database.audit_logs.add({
+        entity_type: "reminder",
+        entity_id: 1,
+        action_type: "update",
+        field_name: "pending_reminder_edit",
+        old_value: JSON.stringify({
+          reminder_at: "2026-05-11T10:00:00",
+          note: "Exporta girmemesi gereken önceki not",
+          owner_call_log_id: 42
+        }),
+        new_value: JSON.stringify({
+          reminder_at: "2026-05-12T11:00:00",
+          note: "Güncel not",
+          owner_call_log_id: 42
+        }),
+        created_at: timestamp
+      });
 
       const data = await readDetailedExportData({ database });
+      const detailedSheet = createDetailedExportSheet(data);
+      const summarySheet = createSummaryConversationReportSheet(data);
+      const normalExportOutput = JSON.stringify([detailedSheet, summarySheet]);
 
       expect(data.bundles).toHaveLength(1);
       expect(data.bundles[0]).toMatchObject({
@@ -106,6 +127,10 @@ describe("exportDataReader", () => {
       });
       expect(data.bundles[0].phone_1?.phone_number).toBe("05321234567");
       expect(data.bundles[0].call_logs).toHaveLength(1);
+      expect(data).not.toHaveProperty("audit_logs");
+      expect(normalExportOutput).not.toContain("pending_reminder_edit");
+      expect(normalExportOutput).not.toContain("Exporta girmemesi gereken önceki not");
+      expect(normalExportOutput).not.toContain("owner_call_log_id");
     } finally {
       database.close();
       await database.delete();

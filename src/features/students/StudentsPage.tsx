@@ -1,8 +1,18 @@
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties
+} from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Bell, Check, ChevronsRight, Copy, MoreVertical, Pencil, Trash2, X } from "lucide-react";
+import { Bell, CalendarClock, Check, ChevronsRight, Copy, MoreVertical, Pencil, Trash2, X } from "lucide-react";
 import type { AppOutletContext } from "../../app/AppLayout";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/EmptyState";
@@ -13,9 +23,17 @@ import {
   PHONE_CALL_OUTCOME_LABELS,
   type PhoneCallOutcome
 } from "../../domain/models/phone";
-import { updateCallLogCorrection } from "../calls/services/callLogCorrection";
+import {
+  getCallLogCorrectionPolicy,
+  updateCallLogCorrection,
+  type CallLogCorrectionMode
+} from "../calls/services/callLogCorrection";
 import { softDeleteCallLogAndRecomputeStudentSummary } from "../calls/services/callLogDeletion";
-import { readCallHistoryForStudent, type CallHistoryItem } from "../calls/services/callHistoryReader";
+import {
+  normalizeVisibleActorLabel,
+  readCallHistoryForStudent,
+  type CallHistoryItem
+} from "../calls/services/callHistoryReader";
 import { writeCallLog } from "../calls/services/callLogWriter";
 import { validateCallSave } from "../calls/services/callSaveValidation";
 import { saveFilteredExportSnapshot } from "../exports/services/exportSelection";
@@ -44,7 +62,7 @@ import {
   type ShortcutActionKey
 } from "../shortcuts/services/shortcutRegistry";
 import { readActiveOperationShortcuts } from "../shortcuts/services/shortcutSettings";
-import { completeReminder } from "../reminders/services/reminderLifecycle";
+import { completeReminder, updatePendingReminder } from "../reminders/services/reminderLifecycle";
 import { deleteStudentWithRelations } from "./services/studentDelete";
 import {
   ALL_STUDENT_GROUPS_FILTER,
@@ -220,6 +238,356 @@ function mergeReminderDateTime(dateValue: string, timeValue: string): string | n
   }
 
   return new Date(`${dateValue}T${timeValue || "11:00"}:00`).toISOString();
+}
+
+function formatReminderEditDateTime(value?: string | null): string {
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const pad = (part: number) => String(part).padStart(2, "0");
+
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+type ReminderEditPreviewProps = {
+  editedAt: string;
+  previousAt?: string | null;
+  previousNote?: string | null;
+  lastEditor?: string | null;
+};
+
+type ReminderEditTooltipPlacement = {
+  isMeasured: boolean;
+  left: number;
+  maxHeight: number;
+  placement: "bottom" | "top";
+  top: number;
+};
+
+const REMINDER_EDIT_TOOLTIP_CLOSE_DELAY_MS = 160;
+const REMINDER_EDIT_TOOLTIP_GAP = 6;
+const REMINDER_EDIT_TOOLTIP_OPEN_DELAY_MS = 70;
+const REMINDER_EDIT_TOOLTIP_PREFERRED_MAX_WIDTH = 320;
+const REMINDER_EDIT_TOOLTIP_VIEWPORT_MARGIN = 8;
+const REMINDER_EDIT_TOOLTIP_MIN_MAX_HEIGHT = 48;
+
+function clamp(value: number, minimum: number, maximum: number): number {
+  return Math.min(Math.max(value, minimum), Math.max(minimum, maximum));
+}
+
+function requestTooltipAnimationFrame(callback: FrameRequestCallback): number {
+  return typeof window.requestAnimationFrame === "function"
+    ? window.requestAnimationFrame(callback)
+    : window.setTimeout(() => callback(Date.now()), 0);
+}
+
+function cancelTooltipAnimationFrame(frame: number): void {
+  if (typeof window.cancelAnimationFrame === "function") {
+    window.cancelAnimationFrame(frame);
+    return;
+  }
+
+  window.clearTimeout(frame);
+}
+
+function ReminderEditPreview({ editedAt, previousAt, previousNote, lastEditor }: ReminderEditPreviewProps) {
+  const [isHovering, setIsHovering] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const [isPinned, setIsPinned] = useState<boolean | null>(null);
+  const [tooltipPlacement, setTooltipPlacement] = useState<ReminderEditTooltipPlacement | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
+  const openTimerRef = useRef<number | null>(null);
+  const placementFrameRef = useRef<number | null>(null);
+  const pinnedRef = useRef<boolean | null>(null);
+  const tooltipRef = useRef<HTMLSpanElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const tooltipId = useId();
+  const hasPreview = Boolean(previousAt || previousNote || lastEditor);
+  const label = `Tekrar düzenlendi: ${formatReminderEditDateTime(editedAt)}`;
+  const isPreviewOpen = isPinned ?? (isHovering || isFocused);
+
+  const clearOpenTimer = useCallback(() => {
+    if (openTimerRef.current !== null) {
+      window.clearTimeout(openTimerRef.current);
+      openTimerRef.current = null;
+    }
+  }, []);
+
+  const clearCloseTimer = useCallback(() => {
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  }, []);
+
+  const updateTooltipPlacement = useCallback(() => {
+    const trigger = triggerRef.current;
+    const tooltip = tooltipRef.current;
+
+    if (!trigger || !tooltip || !trigger.isConnected) {
+      return;
+    }
+
+    const triggerRect = trigger.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+    const naturalHeight = Math.max(
+      tooltipRect.height || tooltip.scrollHeight || REMINDER_EDIT_TOOLTIP_MIN_MAX_HEIGHT,
+      REMINDER_EDIT_TOOLTIP_MIN_MAX_HEIGHT
+    );
+    const availableWidth = Math.max(1, viewportWidth - REMINDER_EDIT_TOOLTIP_VIEWPORT_MARGIN * 2);
+    const tooltipWidth = Math.min(
+      Math.max(tooltipRect.width || tooltip.scrollWidth || REMINDER_EDIT_TOOLTIP_PREFERRED_MAX_WIDTH, 1),
+      availableWidth
+    );
+    const spaceBelow = Math.max(
+      0,
+      viewportHeight - triggerRect.bottom - REMINDER_EDIT_TOOLTIP_VIEWPORT_MARGIN - REMINDER_EDIT_TOOLTIP_GAP
+    );
+    const spaceAbove = Math.max(0, triggerRect.top - REMINDER_EDIT_TOOLTIP_VIEWPORT_MARGIN - REMINDER_EDIT_TOOLTIP_GAP);
+    const placement: ReminderEditTooltipPlacement["placement"] =
+      spaceBelow >= naturalHeight
+        ? "bottom"
+        : spaceAbove >= naturalHeight
+          ? "top"
+          : spaceAbove > spaceBelow
+            ? "top"
+            : "bottom";
+    const availableHeight = placement === "top" ? spaceAbove : spaceBelow;
+    const maxHeight = Math.min(
+      naturalHeight,
+      Math.max(REMINDER_EDIT_TOOLTIP_MIN_MAX_HEIGHT, availableHeight || Math.max(spaceAbove, spaceBelow))
+    );
+    const preferredTop =
+      placement === "top"
+        ? triggerRect.top - REMINDER_EDIT_TOOLTIP_GAP - maxHeight
+        : triggerRect.bottom + REMINDER_EDIT_TOOLTIP_GAP;
+    const top = clamp(
+      preferredTop,
+      REMINDER_EDIT_TOOLTIP_VIEWPORT_MARGIN,
+      viewportHeight - REMINDER_EDIT_TOOLTIP_VIEWPORT_MARGIN - maxHeight
+    );
+    const left = clamp(
+      triggerRect.left,
+      REMINDER_EDIT_TOOLTIP_VIEWPORT_MARGIN,
+      viewportWidth - REMINDER_EDIT_TOOLTIP_VIEWPORT_MARGIN - tooltipWidth
+    );
+
+    setTooltipPlacement((current) => {
+      const next = { isMeasured: true, left, maxHeight, placement, top };
+
+      return current &&
+        current.left === next.left &&
+        current.maxHeight === next.maxHeight &&
+        current.placement === next.placement &&
+        current.top === next.top &&
+        current.isMeasured === next.isMeasured
+        ? current
+        : next;
+    });
+  }, []);
+
+  const scheduleTooltipPlacement = useCallback(() => {
+    if (placementFrameRef.current !== null) {
+      return;
+    }
+
+    placementFrameRef.current = requestTooltipAnimationFrame(() => {
+      placementFrameRef.current = null;
+      updateTooltipPlacement();
+    });
+  }, [updateTooltipPlacement]);
+
+  function resetDismissedPreview() {
+    setIsPinned((current) => {
+      const next = current === false ? null : current;
+      pinnedRef.current = next;
+      return next;
+    });
+  }
+
+  function clearTooltipTimers() {
+    clearOpenTimer();
+    clearCloseTimer();
+  }
+
+  function handlePointerEnter() {
+    clearCloseTimer();
+    resetDismissedPreview();
+    clearOpenTimer();
+    openTimerRef.current = window.setTimeout(() => {
+      openTimerRef.current = null;
+      setIsHovering(true);
+    }, REMINDER_EDIT_TOOLTIP_OPEN_DELAY_MS);
+  }
+
+  function handlePointerLeave() {
+    clearOpenTimer();
+
+    if (pinnedRef.current === true) {
+      return;
+    }
+
+    clearCloseTimer();
+    closeTimerRef.current = window.setTimeout(() => {
+      closeTimerRef.current = null;
+
+      if (pinnedRef.current !== true) {
+        setIsHovering(false);
+      }
+    }, REMINDER_EDIT_TOOLTIP_CLOSE_DELAY_MS);
+  }
+
+  useEffect(() => () => {
+    clearTooltipTimers();
+
+    if (placementFrameRef.current !== null) {
+      cancelTooltipAnimationFrame(placementFrameRef.current);
+    }
+  }, [clearCloseTimer, clearOpenTimer]);
+
+  useLayoutEffect(() => {
+    if (!isPreviewOpen) {
+      setTooltipPlacement(null);
+      return;
+    }
+
+    updateTooltipPlacement();
+  }, [isPreviewOpen, updateTooltipPlacement]);
+
+  useEffect(() => {
+    if (!isPreviewOpen) {
+      return;
+    }
+
+    function reposition() {
+      scheduleTooltipPlacement();
+    }
+
+    window.addEventListener("resize", reposition);
+    window.addEventListener("scroll", reposition, true);
+
+    return () => {
+      window.removeEventListener("resize", reposition);
+      window.removeEventListener("scroll", reposition, true);
+
+      if (placementFrameRef.current !== null) {
+        cancelTooltipAnimationFrame(placementFrameRef.current);
+        placementFrameRef.current = null;
+      }
+    };
+  }, [isPreviewOpen, scheduleTooltipPlacement]);
+
+  if (!hasPreview) {
+    return <div className="tl-author">{label}</div>;
+  }
+
+  return (
+    <div className="tl-author">
+      <span style={{ display: "inline-flex", position: "relative" }}>
+        <button
+          ref={triggerRef}
+          aria-describedby={isPreviewOpen ? tooltipId : undefined}
+          aria-expanded={isPreviewOpen}
+          aria-label={`${label}. Önceki değerleri göster.`}
+          onBlur={() => {
+            clearOpenTimer();
+
+            if (pinnedRef.current !== true) {
+              setIsFocused(false);
+              setIsHovering(false);
+            }
+          }}
+          onClick={() => {
+            clearTooltipTimers();
+            setIsPinned((current) => {
+              const next = current === true ? false : true;
+              pinnedRef.current = next;
+              return next;
+            });
+          }}
+          onFocus={() => {
+            clearTooltipTimers();
+            resetDismissedPreview();
+            setIsFocused(true);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              event.stopPropagation();
+              clearTooltipTimers();
+              setIsHovering(false);
+              setIsFocused(false);
+              pinnedRef.current = false;
+              setIsPinned(false);
+            }
+          }}
+          onPointerEnter={handlePointerEnter}
+          onPointerLeave={handlePointerLeave}
+          style={{
+            background: "transparent",
+            border: 0,
+            color: "inherit",
+            cursor: "help",
+            font: "inherit",
+            fontWeight: "normal",
+            lineHeight: 1.35,
+            padding: 0,
+            textAlign: "left"
+          }}
+          type="button"
+        >
+          {label}
+        </button>
+      </span>
+      {isPreviewOpen && typeof document !== "undefined"
+        ? createPortal(
+            <span
+              ref={tooltipRef}
+              data-placement={tooltipPlacement?.placement ?? "pending"}
+              id={tooltipId}
+              role="tooltip"
+              style={{
+                backgroundColor: "#334155",
+                borderRadius: 6,
+                boxShadow: "0 8px 20px rgba(15, 23, 42, 0.18)",
+                color: "#f8fafc",
+                display: "grid",
+                fontSize: 11,
+                gap: 4,
+                left: tooltipPlacement?.left ?? 0,
+                lineHeight: 1.35,
+                maxHeight: tooltipPlacement?.maxHeight ?? "calc(100vh - 16px)",
+                maxWidth: `min(${REMINDER_EDIT_TOOLTIP_PREFERRED_MAX_WIDTH}px, calc(100vw - ${REMINDER_EDIT_TOOLTIP_VIEWPORT_MARGIN * 2}px))`,
+                overflowWrap: "anywhere",
+                overflowY: "auto",
+                padding: "7px 9px",
+                pointerEvents: isPinned === true ? "auto" : "none",
+                position: "fixed",
+                top: tooltipPlacement?.top ?? 0,
+                visibility: tooltipPlacement?.isMeasured ? "visible" : "hidden",
+                whiteSpace: "normal",
+                width: `min(${REMINDER_EDIT_TOOLTIP_PREFERRED_MAX_WIDTH}px, calc(100vw - ${REMINDER_EDIT_TOOLTIP_VIEWPORT_MARGIN * 2}px))`,
+                zIndex: 100
+              }}
+            >
+              {previousAt ? <span>Önceki tarih/saat: {formatReminderEditDateTime(previousAt)}</span> : null}
+              {previousNote ? <span>Önceki not: {previousNote}</span> : null}
+              {lastEditor ? <span>Düzenleyen: {lastEditor}</span> : null}
+            </span>,
+            document.body
+          )
+        : null}
+    </div>
+  );
 }
 
 function getEditableCallHistoryPhoneId(historyItem: CallHistoryItem, selectedRow?: StudentListRow | null): string {
@@ -1331,7 +1699,12 @@ export function StudentsPage() {
   const [studentDeleteCandidate, setStudentDeleteCandidate] = useState<StudentListRow | null>(null);
   const [callLogDeleteCandidate, setCallLogDeleteCandidate] = useState<CallHistoryItem | null>(null);
   const [callLogEditCandidate, setCallLogEditCandidate] = useState<CallHistoryItem | null>(null);
+  const [callLogEditMode, setCallLogEditMode] = useState<CallLogCorrectionMode>("full");
   const [linkedReminderCompleteCandidate, setLinkedReminderCompleteCandidate] = useState<CallHistoryItem | null>(null);
+  const [linkedReminderEditCandidate, setLinkedReminderEditCandidate] = useState<CallHistoryItem | null>(null);
+  const [linkedReminderEditDate, setLinkedReminderEditDate] = useState("");
+  const [linkedReminderEditTime, setLinkedReminderEditTime] = useState("11:00");
+  const [linkedReminderEditNote, setLinkedReminderEditNote] = useState("");
   const [callLogEditResult, setCallLogEditResult] = useState<CallResult>("not_called");
   const [callLogEditDate, setCallLogEditDate] = useState("");
   const [callLogEditTime, setCallLogEditTime] = useState("11:00");
@@ -1348,6 +1721,7 @@ export function StudentsPage() {
   const [isDeletingCallLog, setIsDeletingCallLog] = useState(false);
   const [isUpdatingCallLog, setIsUpdatingCallLog] = useState(false);
   const [isCompletingLinkedReminder, setIsCompletingLinkedReminder] = useState(false);
+  const [isUpdatingLinkedReminder, setIsUpdatingLinkedReminder] = useState(false);
   const [operationToast, setOperationToast] = useState<OperationToast | null>(null);
   const [whatsAppDraftContext, setWhatsAppDraftContext] = useState<WhatsAppDraftContext | null>(null);
   const [selectedWhatsAppTemplateId, setSelectedWhatsAppTemplateId] = useState(DEFAULT_WHATSAPP_TEMPLATE_ID);
@@ -1537,6 +1911,8 @@ export function StudentsPage() {
     setSelectedCallPhoneId(null);
     setCallLogDeleteCandidate(null);
     setCallLogEditCandidate(null);
+    setLinkedReminderCompleteCandidate(null);
+    setLinkedReminderEditCandidate(null);
     setWhatsAppDraftContext(null);
     setWhatsAppDraftBody("");
     setWhatsAppDraftMessage(null);
@@ -2070,18 +2446,92 @@ export function StudentsPage() {
     }
   }
 
-  function openCallLogEditModal(historyItem: CallHistoryItem) {
-    setCallLogEditCandidate(historyItem);
-    setCallLogEditResult(historyItem.call_result as CallResult);
-    setCallLogEditDate(toDateInputValue(historyItem.call_time));
-    setCallLogEditTime(toTimeInputValue(historyItem.call_time));
-    setCallLogEditPhoneId(getEditableCallHistoryPhoneId(historyItem, selectedRow));
-    setCallLogEditNote(historyItem.note ?? "");
+  function openLinkedReminderEditModal(historyItem: CallHistoryItem) {
+    if (!historyItem.linked_reminder_id || !historyItem.canEditLinkedReminder) {
+      const message = "Güncellenecek açık hatırlatma bulunamadı.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
+      return;
+    }
+
+    setLinkedReminderEditCandidate(historyItem);
+    setLinkedReminderEditDate(toDateInputValue(historyItem.linked_reminder_at));
+    setLinkedReminderEditTime(toTimeInputValue(historyItem.linked_reminder_at));
+    setLinkedReminderEditNote(historyItem.linked_reminder_note ?? "");
     setActionMessage(null);
+  }
+
+  function closeLinkedReminderEditModal() {
+    setLinkedReminderEditCandidate(null);
+    setLinkedReminderEditDate("");
+    setLinkedReminderEditTime("11:00");
+    setLinkedReminderEditNote("");
+  }
+
+  async function confirmUpdateLinkedReminder() {
+    if (!linkedReminderEditCandidate?.linked_reminder_id || isUpdatingLinkedReminder) {
+      return;
+    }
+
+    const reminderAt = mergeReminderDateTime(linkedReminderEditDate, linkedReminderEditTime);
+
+    if (!reminderAt) {
+      const message = "Hatırlatma tarih/saat bilgisi geçersiz.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
+      return;
+    }
+
+    setIsUpdatingLinkedReminder(true);
+    setActionMessage(null);
+
+    try {
+      await updatePendingReminder(linkedReminderEditCandidate.linked_reminder_id, {
+        reminder_at: reminderAt,
+        note: linkedReminderEditNote,
+        performed_by: "agent"
+      });
+      closeLinkedReminderEditModal();
+      const message = "Hatırlatma güncellendi.";
+      setActionMessage(message);
+      showOperationToast(message, "success");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Hatırlatma güncellenemedi.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
+    } finally {
+      setIsUpdatingLinkedReminder(false);
+    }
+  }
+
+  async function openCallLogEditModal(historyItem: CallHistoryItem) {
+    try {
+      const policy = await getCallLogCorrectionPolicy(historyItem.call_log_id);
+
+      if (policy.mode !== "full" && policy.mode !== "note_only") {
+        setActionMessage(policy.message);
+        showOperationToast(policy.message, "error");
+        return;
+      }
+
+      setCallLogEditCandidate(historyItem);
+      setCallLogEditMode(policy.mode);
+      setCallLogEditResult(historyItem.call_result as CallResult);
+      setCallLogEditDate(toDateInputValue(historyItem.call_time));
+      setCallLogEditTime(toTimeInputValue(historyItem.call_time));
+      setCallLogEditPhoneId(getEditableCallHistoryPhoneId(historyItem, selectedRow));
+      setCallLogEditNote(historyItem.note ?? "");
+      setActionMessage(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "İletişim kaydı düzeltilemedi.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
+    }
   }
 
   function closeCallLogEditModal() {
     setCallLogEditCandidate(null);
+    setCallLogEditMode("full");
     setCallLogEditNote("");
   }
 
@@ -2090,7 +2540,10 @@ export function StudentsPage() {
       return;
     }
 
-    const correctedCallTime = mergeReminderDateTime(callLogEditDate, callLogEditTime);
+    const correctedCallTime =
+      callLogEditMode === "note_only"
+        ? callLogEditCandidate.call_time
+        : mergeReminderDateTime(callLogEditDate, callLogEditTime);
 
     if (!correctedCallTime) {
       const message = "Görüşme tarihi/saat bilgisi geçersiz.";
@@ -2103,7 +2556,7 @@ export function StudentsPage() {
     setActionMessage(null);
 
     try {
-      await updateCallLogCorrection({
+      const correction = await updateCallLogCorrection({
         call_log_id: callLogEditCandidate.call_log_id,
         call_result: callLogEditResult,
         call_time: correctedCallTime,
@@ -2111,7 +2564,10 @@ export function StudentsPage() {
         note: callLogEditNote
       });
       closeCallLogEditModal();
-      const message = "İletişim kaydı düzeltildi. Son görüşme bilgisi aktif kayıtlara göre güncellendi.";
+      const message =
+        correction.correction_mode === "note_only"
+          ? "Açıklama notu düzeltildi. Görüşme bilgileri değiştirilmedi."
+          : "İletişim kaydı düzeltildi. Son görüşme bilgisi aktif kayıtlara göre güncellendi.";
       setActionMessage(message);
       showOperationToast(message, "success");
     } catch (error) {
@@ -2504,6 +2960,63 @@ export function StudentsPage() {
           </div>
         </section>
       ) : null}
+      {linkedReminderEditCandidate ? (
+        <section
+          aria-labelledby="linked-reminder-edit-title"
+          aria-modal="true"
+          className="delete-confirm-backdrop"
+          role="dialog"
+        >
+          <div className="delete-confirm-modal" style={{ maxWidth: 520 }}>
+            <h2 id="linked-reminder-edit-title">Hatırlatmayı düzenle</h2>
+            <div style={{ display: "grid", gap: 10 }}>
+              <div style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr" }}>
+                <label style={{ display: "grid", gap: 4 }}>
+                  <span>Tarih</span>
+                  <input
+                    disabled={isUpdatingLinkedReminder}
+                    onChange={(event) => setLinkedReminderEditDate(event.target.value)}
+                    required
+                    type="date"
+                    value={linkedReminderEditDate}
+                  />
+                </label>
+                <label style={{ display: "grid", gap: 4 }}>
+                  <span>Saat</span>
+                  <input
+                    disabled={isUpdatingLinkedReminder}
+                    onChange={(event) => setLinkedReminderEditTime(event.target.value)}
+                    required
+                    type="time"
+                    value={linkedReminderEditTime}
+                  />
+                </label>
+              </div>
+              <label style={{ display: "grid", gap: 4 }}>
+                <span>Hatırlatma notu</span>
+                <textarea
+                  disabled={isUpdatingLinkedReminder}
+                  onChange={(event) => setLinkedReminderEditNote(event.target.value)}
+                  rows={3}
+                  value={linkedReminderEditNote}
+                />
+              </label>
+            </div>
+            <div className="delete-confirm-actions" style={{ marginTop: 16 }}>
+              <button disabled={isUpdatingLinkedReminder} onClick={closeLinkedReminderEditModal} type="button">
+                Vazgeç
+              </button>
+              <button
+                disabled={isUpdatingLinkedReminder}
+                onClick={() => void confirmUpdateLinkedReminder()}
+                type="button"
+              >
+                {isUpdatingLinkedReminder ? "Güncelleniyor..." : "Hatırlatmayı güncelle"}
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : null}
       {callLogEditCandidate ? (
         <section
           aria-labelledby="call-log-edit-title"
@@ -2513,14 +3026,14 @@ export function StudentsPage() {
         >
           <div className="delete-confirm-modal" style={{ maxWidth: 560 }}>
             <h2 id="call-log-edit-title">İletişim kaydı düzelt</h2>
-            <p style={{ marginBottom: 12 }}>
-              Bağlı hatırlatma/randevu içeren kayıtlar bu aşamada düzeltilemez.
-            </p>
+            {callLogEditMode === "note_only" ? (
+              <p style={{ marginBottom: 12 }}>Bağlı kayıt tamamlandığı için yalnız açıklama notu düzeltilebilir.</p>
+            ) : null}
             <div style={{ display: "grid", gap: 10 }}>
               <label style={{ display: "grid", gap: 4 }}>
                 <span>Görüşme Durumu</span>
                 <select
-                  disabled={isUpdatingCallLog}
+                  disabled={isUpdatingCallLog || callLogEditMode === "note_only"}
                   onChange={(event) => setCallLogEditResult(event.target.value as CallResult)}
                   value={callLogEditResult}
                 >
@@ -2535,7 +3048,7 @@ export function StudentsPage() {
                 <label style={{ display: "grid", gap: 4 }}>
                   <span>Tarih</span>
                   <input
-                    disabled={isUpdatingCallLog}
+                    disabled={isUpdatingCallLog || callLogEditMode === "note_only"}
                     onChange={(event) => setCallLogEditDate(event.target.value)}
                     type="date"
                     value={callLogEditDate}
@@ -2544,7 +3057,7 @@ export function StudentsPage() {
                 <label style={{ display: "grid", gap: 4 }}>
                   <span>Saat</span>
                   <input
-                    disabled={isUpdatingCallLog}
+                    disabled={isUpdatingCallLog || callLogEditMode === "note_only"}
                     onChange={(event) => setCallLogEditTime(event.target.value)}
                     type="time"
                     value={callLogEditTime}
@@ -2554,7 +3067,7 @@ export function StudentsPage() {
               <label style={{ display: "grid", gap: 4 }}>
                 <span>Telefon bağlamı</span>
                 <select
-                  disabled={isUpdatingCallLog}
+                  disabled={isUpdatingCallLog || callLogEditMode === "note_only"}
                   onChange={(event) => setCallLogEditPhoneId(event.target.value)}
                   value={callLogEditPhoneId}
                 >
@@ -3278,7 +3791,7 @@ export function StudentsPage() {
                 {selectedRow.general_note?.trim() ? (
                   <div className="tl-item">
                     <div className="tl-dot amber" />
-                    <div>
+                    <div className="tl-content">
                       <div className="tl-date">Excel'den aktarılan not</div>
                       <div className="tl-text">{drawerNotePreview(selectedRow.general_note)}</div>
                       <div className="tl-author">
@@ -3288,10 +3801,14 @@ export function StudentsPage() {
                     </div>
                   </div>
                 ) : null}
-                {(callHistory ?? []).map((historyItem) => (
+                {(callHistory ?? []).map((historyItem) => {
+                  const displayedReminderAt = historyItem.linked_reminder_at ?? historyItem.reminder_at;
+                  const visibleCreatedBy = normalizeVisibleActorLabel(historyItem.created_by);
+
+                  return (
                   <div className="tl-item" key={historyItem.call_log_id}>
                     <div className="tl-dot" />
-                    <div>
+                    <div className="tl-content">
                       <div
                         className="tl-date"
                         style={{ alignItems: "center", display: "flex", gap: 6, justifyContent: "space-between" }}
@@ -3323,9 +3840,32 @@ export function StudentsPage() {
                               <Check aria-hidden="true" size={12} />
                             </button>
                           ) : null}
+                          {historyItem.canEditLinkedReminder ? (
+                            <button
+                              aria-label="Hatırlatmayı düzenle"
+                              onClick={() => openLinkedReminderEditModal(historyItem)}
+                              style={{
+                                alignItems: "center",
+                                background: "transparent",
+                                border: "0",
+                                color: "#2563eb",
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                height: 20,
+                                justifyContent: "center",
+                                opacity: 0.72,
+                                padding: 0,
+                                width: 20
+                              }}
+                              title="Hatırlatmayı düzenle"
+                              type="button"
+                            >
+                              <CalendarClock aria-hidden="true" size={12} />
+                            </button>
+                          ) : null}
                           <button
                             aria-label="İletişim kaydını düzelt"
-                            onClick={() => openCallLogEditModal(historyItem)}
+                            onClick={() => void openCallLogEditModal(historyItem)}
                             style={{
                               alignItems: "center",
                               background: "transparent",
@@ -3374,13 +3914,22 @@ export function StudentsPage() {
                         ) ?? "Telefon seçilmedi"}
                       </div>
                       {historyItem.note ? <div className="tl-text">{historyItem.note}</div> : null}
-                      {historyItem.reminder_at ? (
-                        <div className="tl-author">Tekrar arama: {formatShortDateTime(historyItem.reminder_at)}</div>
+                      {historyItem.linked_reminder_last_edited_at ? (
+                        <ReminderEditPreview
+                          editedAt={historyItem.linked_reminder_last_edited_at}
+                          lastEditor={normalizeVisibleActorLabel(historyItem.linked_reminder_last_editor)}
+                          previousAt={historyItem.linked_reminder_previous_at}
+                          previousNote={historyItem.linked_reminder_previous_note}
+                        />
                       ) : null}
-                      <div className="tl-author">{historyItem.created_by ?? "system"}</div>
+                      {!historyItem.linked_reminder_last_edited_at && displayedReminderAt ? (
+                        <div className="tl-author">Tekrar arama: {formatShortDateTime(displayedReminderAt)}</div>
+                      ) : null}
+                      {visibleCreatedBy ? <div className="tl-author">{visibleCreatedBy}</div> : null}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
                 {!selectedRow.general_note?.trim() && !(callHistory ?? []).length ? (
                   <p className="drawer-empty-state">Henüz açıklama/geçmiş yok.</p>
                 ) : null}
