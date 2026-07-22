@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Stale Reminder Date Guard Fix | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Pending Linked Reminder Edit | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -61,14 +61,24 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 
 Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden değişti” şeklinde kısa not eklenir.
 
-## Latest Decisions - Stale Reminder Date Guard Fix
+## Latest Decisions - Pending Linked Reminder Edit
+
+- [Pending Linked Reminder Edit] Hatırlatma düzenleme aksiyonu yalnız gerçek owner/current call-log satırında görünür. Pending call reminder için tarih, saat ve not düzenlenebilir; shared/eski history satırları değişmez.
+- [Reminder Edit Integrity] Reminder edit, reminder tarih/saat/notunu ve owner call-log görünür notunu aynı transaction içinde günceller. Tarihsel call-log snapshot'ı, reminder linkleri ve diğer shared call-log satırları korunur.
+- [Reminder Edit Audit] Her başarılı reminder edit, `pending_reminder_edit` marker'lı append-only reminder audit üretir. Preview gerçek owner satırında pending, completed ve cancelled durumlarında kalır; deleted reminder veya appointment-linked satır preview üretmez.
+- [Reminder Lifecycle] Pending reminder edit/complete edilebilir. Completed/cancelled reminder tekrar pending yapılmaz, edit/complete aksiyonu göstermez; audit preview korunur.
+- [Lifecycle-Aware Correction] Bağımsız call log full correction alır. Active linked reminder/appointment normal correction için blokludur. Terminal linked reminder/appointment yalnız note-only correction alır; missing entity ve conflict dependency fail-closed'dur.
+- [Note-Only Boundary] Note-only correction call time, result, phone context, dependency linkleri, reminder/appointment lifecycle'i veya student summary alanlarını değiştiremez. Service-level policy ve save-time yeniden doğrulama ana güvenlik katmanıdır.
+- [Correction Audit / Export / Backup] Başarılı full veya note-only correction `call_log_correction` marker'lı append-only audit üretir; mutation ve audit aynı transaction içindedir. Normal export audit payloadlarını içermez; Full System Backup audit kayıtlarını korur.
+
+## Previous Decisions - Stale Reminder Date Guard Fix
 
 - [Call Reminder Creation Guard] Call reminder create/update yalnız `call_later` sonucu için yapılır.
 - [Call Reminder Creation Guard] Non-reminder call result kayıtları stale `reminder_at` taşısa bile call reminder create/update yapmamalıdır.
 - [Call Reminder Creation Guard] Service layer, UI state'e güvenmeden reminder creation guard'ını uygular; `callLogWriter` non-`call_later` sonuçlarda `created_reminder_id`, `reminder_at` ve `next_action` alanlarını null bırakır.
 - [Stale Reminder Form State] UI, `call_later` dışına geçerken stale `reminderDate` / `reminderTime` state'ini temizlemelidir. Linked quick complete sonrası aynı state temizlenir.
 - [Scope Boundary] Existing pending reminder, terminal/non-reminder result ile otomatik cancelled veya completed yapılmaz. Appointment lifecycle redesign ve every-call-later-creates-separate-reminder product change bu fix'in kapsamı değildir.
-- [Pending Reminder Edit UX Backlog] Communication history üzerinden linked/pending reminder tarih/saat/içerik düzenleme problemi çözülmedi. Mevcut `Düzelt` kısıtı reminder-only editler için fazla geniş olabilir; implementation öncesi ayrı discovery gerekir.
+- [Historical Pending Reminder Edit UX Backlog] Bu önceki backlog `93b4471` ile çözüldü. Güncel owner-only edit, audit preview ve lifecycle-aware correction kararları üstteki Pending Linked Reminder Edit bölümündedir.
 
 ## Latest Decisions - Linked Reminder Owner Row Visibility Fix
 

@@ -696,7 +696,35 @@ Son doğrulandı: `cf47e2d feat: import explicit guardian phone relations`
   Veli telefonunun Veli guardian kaydına bağlanmasını ve Veli adı yoksa fake guardian oluşturulmadan `guardian_id: null` kalmasını doğrular.
 - Scope dışı: export/backup, StudentsPage, WhatsApp, schema/db ve package/config değişmemiştir.
 
-## Latest File Map Addendum - Stale Reminder Date Guard Fix
+## Latest File Map Addendum - Pending Linked Reminder Edit
+
+Son doğrulandı: `93b4471 feat: edit pending linked reminders`
+
+- `src/features/calls/services/callHistoryReader.ts`
+  Strict owner/current reminder kararını, append-only reminder edit audit preview alanlarını ve shared/eski/deleted/appointment-linked satırlarda fail-closed görünürlüğü taşır.
+- `src/features/calls/services/callLogCorrection.ts`
+  Lifecycle-aware correction policy'nin service otoritesidir: full, note-only ve blocked sonuçları üretir; dependency durumunu transaction içinde yeniden okur ve correction auditini atomik yazar.
+- `src/features/reminders/services/reminderLifecycle.ts`
+  Pending call reminder tarih/saat/not editini gerçek owner call log ile aynı transaction içinde uygular ve `pending_reminder_edit` auditini append-only ekler.
+- `src/features/students/StudentsPage.tsx`
+  Owner-row reminder edit modalı, persistent audit preview tooltip'i, lifecycle-aware correction modal politikası ve uzun history notu görünümünü render eder.
+- `src/styles/global.css`
+  Reminder audit tooltip portalı ile timeline note wrap/overflow desteğini taşır; drawer'a geniş kapsamlı overflow gizleme eklemez.
+- `tests/calls/callHistoryReader.test.ts`
+  Owner/shared ayrımı, terminal preview kalıcılığı, malformed audit fallback'i, actor filtreleme ve reminder/appointment görünürlük sınırlarını doğrular.
+- `tests/calls/callLogCorrection.test.ts`
+  Correction lifecycle matrisi, note-only service guard, audit append-only/rollback, missing/conflict fail-closed ve export/backup kapsamını doğrular.
+- `tests/exports/exportDataReader.test.ts`
+  Normal exportun reminder/correction audit payloadlarını okumadığını doğrular.
+- `tests/reminders/reminderLifecycle.test.ts`
+  Owner-only pending reminder editini, audit transaction rollback'ını ve terminal/invalid lifecycle guard'larını doğrular.
+- `tests/settings/backupRestore.test.ts`
+  Full System Backup/restore akışında audit verisinin korunmasını doğrular.
+- `tests/students/StudentsPageCallHistory.test.tsx`
+  Reminder edit UI, audit tooltip portal/delay/focus/placement davranışı, terminal note-only correction ve action görünürlük regresyonlarını doğrular.
+- Scope dışı: schema/migration, import/export formatı, WhatsApp, package/config ve VDS servis yapılandırması değiştirilmemiştir.
+
+## Previous File Map Addendum - Stale Reminder Date Guard Fix
 
 Son doğrulandı: `37d1fd5 fix: guard reminder creation to call later`
 

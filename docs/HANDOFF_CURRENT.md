@@ -4,11 +4,12 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Son güvenli HEAD/origin: 37d1fd5 fix: guard reminder creation to call later
+- Son güvenli HEAD/origin: 93b4471 feat: edit pending linked reminders
 - Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi, tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i, iletişim geçmişi edit/void MVP'si, phone action label/helper cleanup, Reporting V2 Summary MVP + UI polish, linked communication history terminal status-aware soft delete ve linked reminder quick complete zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
-- Bu docs-only handoff sync tamamlanınca Strategy AI onayı sonrası docs commit değerlendirilecektir.
-- Önerilen docs commit: docs: close stale reminder guard fix
+- Pending linked reminder edit implementation, tests/build, Strategy Review, feature commit/push, Windows VDS deploy ve canlı QA tamamlandı. Tracked WIP yoktur.
+- Bu docs closure tamamlanınca exact-path stage ve Strategy AI onayı sonrası docs commit/push değerlendirilecektir.
+- Önerilen docs commit: docs: close pending linked reminder edit
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -25,7 +26,19 @@
 - Working tree beklenen durumu: clean
 - GitHub/origin durumu: aktif branch `origin/sprint-9-2-multi-phone-architecture-plan` ile aynı son commit üzerinde görünür.
 
-## Latest Handoff Update - Stale Reminder Date Guard Fix
+## Latest Handoff Update - Pending Linked Reminder Edit
+
+- Current safe HEAD/origin: `93b4471 feat: edit pending linked reminders`; branch `sprint-9-2-multi-phone-architecture-plan`, ahead/behind `0/0`.
+- Durum: Implementation PASS; Tests/build PASS (`52` files / `507` tests); Strategy Review PASS WITH NOTES; feature commit PASS; push/origin PASS; VDS deploy PASS; live smoke/QA PASS; docs closure IN PROGRESS; Obsidian sync PENDING.
+- Non-blocking review notları: correction audit için doğrudan backup → restore → payload roundtrip testi ve correction/deletion için ortak lifecycle policy discovery ileride değerlendirilebilir; commit/deploy kapanışını engellemez.
+- Pending linked reminder edit yalnız owner/current history satırında görünür. Tarih, saat ve not güncellenir; history snapshot/linkleri korunur; edit audit preview pending/completed/cancelled owner satırda kalır.
+- Correction policy: unlinked call log full correction; active linked reminder/appointment block; terminal linked dependency note-only; missing/conflicting link fail-closed. Service guard ana otoritedir; UI tek güvenlik katmanı değildir.
+- Windows VDS repo `C:\Sites\aday-ogrenci-takip-sistemi` fast-forward ile `37d1fd5`ten `93b4471`e alındı. Build: `$env:VITE_ENABLE_PILOT_SEED = "true"`; `npm.cmd run build -- --base=/demo/`; ardından environment temizliği. Statik yayın `C:\Sites\netvadi-demo` altında Caddy ile yapıldı; restart gerekmedi. Backup: `C:\Backups\netvadi-demo_20260722_123851`.
+- Public endpoint `https://netvadi.com/demo/`; index, JS, CSS ve `harita.html` HTTP 200 verdi. `harita.html` SHA256 değeri deploy öncesi/sonrası aynıdır: `BB1C59773E707B22A37779E439383457C6200CC3B32666F7F2C8EE3C290ED1BA`.
+- Kullanıcı canlı QA sonucu PASS: pending reminder oluşturma/edit, audit preview, quick complete, completed reminder note-only correction, unlinked correction regresyonu ve export davranışı kabul edildi.
+- Beklenen working tree: tracked değişiklik yok; yalnız `?? dev-server.log`. Sıradaki tek zincir: docs closure commit/push → Obsidian vault güncellemesi → Drive shadow doğrulaması → final checkpoint kapanışı.
+
+## Previous Handoff Update - Stale Reminder Date Guard Fix
 
 - Current safe HEAD/origin: `37d1fd5 fix: guard reminder creation to call later`.
 - Latest completed item: Stale reminder date guard fix.
@@ -35,7 +48,7 @@
 - `StudentsPage` non-`call_later` result geçişinde ve linked quick complete sonrası `reminderDate` / `reminderTime` state'ini temizler.
 - `call_later` reminder davranışı korunur. Appointment lifecycle redesign yapılmadı. Existing pending reminder terminal/non-reminder result ile otomatik completed/cancelled yapılmadı.
 - Scope dışı/değişmeyenler: schema/migration, import/export, backup/restore, WhatsApp, Reporting V2, appointment lifecycle redesign ve every-call-later-creates-separate-reminder product change.
-- Next open/backlog item: pending/linked reminder edit UX discovery. Kullanıcı, `Sonra Aranacak` için reminder kurduktan sonra tarih/saat/içerik düzeltmek istediğinde mevcut `Düzelt` kısıtının fazla geniş olabileceğini bildirdi.
+- Historical backlog: pending/linked reminder edit UX discovery bu checkpoint anında açık durumdaydı; ihtiyaç `93b4471` ile çözüldü.
 - Cancel reminder action hâlâ backlog / not implemented. Reminder reschedule/ertele hâlâ backlog / not implemented.
 - Beklenen working tree: tracked dosya değişikliği yok, yalnız `?? dev-server.log`.
 

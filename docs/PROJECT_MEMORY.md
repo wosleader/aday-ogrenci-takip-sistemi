@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Stale Reminder Date Guard Fix | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Pending Linked Reminder Edit | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,14 +6,30 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Stale Reminder Date Guard Fix
-- FILE_MAP: Stale Reminder Date Guard Fix
-- DECISIONS: Stale Reminder Date Guard Fix
-- Son güvenli HEAD/origin: 37d1fd5 fix: guard reminder creation to call later
+- PROJECT_MEMORY: Pending Linked Reminder Edit
+- FILE_MAP: Pending Linked Reminder Edit
+- DECISIONS: Pending Linked Reminder Edit
+- Son güvenli HEAD/origin: 93b4471 feat: edit pending linked reminders
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
 
-## Latest Checkpoint - Stale Reminder Date Guard Fix
+## Latest Checkpoint - Pending Linked Reminder Edit
+
+- Pending linked reminder edit tamamlandı: `93b4471 feat: edit pending linked reminders`.
+- Pending reminder yalnız gerçek owner/current call-log satırından tarih, saat ve not olarak düzenlenebilir. Shared/eski history satırları, tarihsel call-log snapshot'ı ve dependency linkleri korunur.
+- Her başarılı reminder edit append-only audit üretir. Audit preview owner satırda pending, completed ve cancelled durumlarında kalır; edit/complete aksiyonları yalnız pending owner satırında görünür.
+- Call-log correction lifecycle-aware çalışır: bağımsız kayıt full correction, active reminder/appointment block, terminal dependency note-only correction, missing/conflicting link fail-closed. Note-only işlem call time, result, phone context, dependency linkleri veya student summary alanlarını değiştirmez.
+- Reminder edit ve correction auditleri transaction içinde append-only yazılır. Normal export audit payloadlarını içermez; Full System Backup audit kayıtlarını korur.
+- Tooltip `document.body` portalı, adaptive placement ve delayed close ile çalışır. Uzun history notları wrap edilir; yatay overflow oluşturmaz.
+- Validation: `52` test dosyası / `507` test PASS, build PASS, `git diff --check` PASS. Strategy Review: `PASS WITH NOTES`; BLOCKER/HIGH/MEDIUM yoktur.
+- Non-blocking review notları: correction audit için doğrudan backup → restore → payload roundtrip testi ileride eklenebilir; correction/deletion terminal lifecycle listeleri için ortak policy discovery gelecekte değerlendirilebilir.
+- Windows VDS deploy tarihi: 22 Temmuz 2026. VDS kaynak repo `C:\Sites\aday-ogrenci-takip-sistemi`, canlı statik klasör `C:\Sites\netvadi-demo`, public endpoint `https://netvadi.com/demo/`.
+- Production build komutu: `$env:VITE_ENABLE_PILOT_SEED = "true"`; `npm.cmd run build -- --base=/demo/`; ardından `Remove-Item Env:\VITE_ENABLE_PILOT_SEED`. Build `/demo/` base ile PASS verdi; Caddy statik yayın yaptı ve restart gerekmedi.
+- Canlıya `index-0qULszKd.js`, `index-fsXbIQqU.css` ve `xlsx-B7Fe_CV5.js` çıktı. Public index, JS, CSS ve `harita.html` HTTP 200 verdi. `harita.html` korundu; SHA256: `BB1C59773E707B22A37779E439383457C6200CC3B32666F7F2C8EE3C290ED1BA`.
+- Deploy yedeği: `C:\Backups\netvadi-demo_20260722_123851`. Kullanıcı canlı QA sonucunu PASS olarak onayladı.
+- Feature commit/push/deploy/QA tamamlandı; repo docs closure aşamasındadır. Working tree'de yalnız `?? dev-server.log` yerel runtime çıktısı bulunur.
+
+## Previous Checkpoint - Stale Reminder Date Guard Fix
 
 - Stale Reminder Date Guard Fix tamamlandı: `37d1fd5 fix: guard reminder creation to call later`.
 - Problem: Daha önce hatırlatma atanmış adayda reminder tamamlandıktan sonra, formdaki eski `reminderDate` / `reminderTime` state'i kalabiliyor ve non-reminder görüşme sonucu seçilse bile `reminder_at` tekrar write payload'una gidebiliyordu.
@@ -24,7 +40,7 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - `call_later` reminder davranışı korunur. Appointment lifecycle redesign yapılmadı. Existing pending reminder terminal/non-reminder result ile otomatik completed/cancelled yapılmadı.
 - Schema, import/export, backup/restore, WhatsApp ve Reporting V2 davranışı değişmedi.
 - VDS deploy edildi ve QA geçti. Kullanıcı QA sonucu: `QA geçti kanka.`
-- Backlog/discovery notu: pending/linked reminder düzenleme UX problemi açık kaldı. Kullanıcı, `Sonra Aranacak` için reminder kurduktan sonra tarih/saat/içerik düzeltmek istediğinde `Düzelt` aksiyonunun bu aşamada düzeltilemez dediğini ve tamamla/sil/baştan oluşturmak zorunda kaldığını bildirdi. Bu ayrı discovery konusudur; bu kapanışta implementation yapılmadı.
+- Historical backlog notu: pending/linked reminder düzenleme UX problemi bu checkpoint anında açıktı. Bu ihtiyaç `93b4471` ile owner-only edit, audit preview ve lifecycle-aware correction olarak çözüldü.
 
 ## Latest Checkpoint - Linked Reminder Owner Row Visibility Fix
 
