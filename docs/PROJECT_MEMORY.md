@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Pending Linked Reminder Edit | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Pending Linked Reminder Edit final closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,16 +6,20 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Pending Linked Reminder Edit
+- PROJECT_MEMORY: Pending Linked Reminder Edit final closure
 - FILE_MAP: Pending Linked Reminder Edit
 - DECISIONS: Pending Linked Reminder Edit
-- Son güvenli HEAD/origin: 93b4471 feat: edit pending linked reminders
+- Latest closed product checkpoint: `e3f14aa docs: close pending linked reminder edit`
+- Implementation: `93b4471 feat: edit pending linked reminders`
+- Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
 
 ## Latest Checkpoint - Pending Linked Reminder Edit
 
-- Pending linked reminder edit tamamlandı: `93b4471 feat: edit pending linked reminders`.
+- Latest closed product checkpoint: `e3f14aa docs: close pending linked reminder edit`.
+- Implementation: `93b4471 feat: edit pending linked reminders`.
+- Docs closure ve docs commit/push: PASS. Obsidian sync: PASS — kullanıcı paketi uyguladığını bildirdi. Drive shadow: TEYİT EDİLEMEDİ.
 - Pending reminder yalnız gerçek owner/current call-log satırından tarih, saat ve not olarak düzenlenebilir. Shared/eski history satırları, tarihsel call-log snapshot'ı ve dependency linkleri korunur.
 - Her başarılı reminder edit append-only audit üretir. Audit preview owner satırda pending, completed ve cancelled durumlarında kalır; edit/complete aksiyonları yalnız pending owner satırında görünür.
 - Call-log correction lifecycle-aware çalışır: bağımsız kayıt full correction, active reminder/appointment block, terminal dependency note-only correction, missing/conflicting link fail-closed. Note-only işlem call time, result, phone context, dependency linkleri veya student summary alanlarını değiştirmez.
@@ -27,7 +31,7 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - Production build komutu: `$env:VITE_ENABLE_PILOT_SEED = "true"`; `npm.cmd run build -- --base=/demo/`; ardından `Remove-Item Env:\VITE_ENABLE_PILOT_SEED`. Build `/demo/` base ile PASS verdi; Caddy statik yayın yaptı ve restart gerekmedi.
 - Canlıya `index-0qULszKd.js`, `index-fsXbIQqU.css` ve `xlsx-B7Fe_CV5.js` çıktı. Public index, JS, CSS ve `harita.html` HTTP 200 verdi. `harita.html` korundu; SHA256: `BB1C59773E707B22A37779E439383457C6200CC3B32666F7F2C8EE3C290ED1BA`.
 - Deploy yedeği: `C:\Backups\netvadi-demo_20260722_123851`. Kullanıcı canlı QA sonucunu PASS olarak onayladı.
-- Feature commit/push/deploy/QA tamamlandı; repo docs closure aşamasındadır. Working tree'de yalnız `?? dev-server.log` yerel runtime çıktısı bulunur.
+- Feature commit/push, VDS deploy, canlı QA, docs closure ve docs commit/push tamamlandı. Aktif tracked WIP yoktur; yalnız `?? dev-server.log` yerel runtime çıktısı bulunur.
 
 ## Previous Checkpoint - Stale Reminder Date Guard Fix
 
