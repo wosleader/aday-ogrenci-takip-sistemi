@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Pending Linked Reminder Edit | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Linked Call Reminder Cancellation Policy | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -60,6 +60,19 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 ## Değişen Kararlar Nasıl Yazılır?
 
 Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden değişti” şeklinde kısa not eklenir.
+
+## Latest Decisions - Linked Call Reminder Cancellation Policy
+
+- [Cancellation Scope] Hatırlatma iptali yalnız `pending`, `reminder_type: call`, bağlı call-log'u bulunan ve gerçek owner/current history satırından erişilen reminder için uygulanacaktır. Completed/cancelled, bağlantısız, call dışı, tarihsel/shared reference reminder'lar; RemindersPage doğrudan aksiyonu, reminder reopen, appointment lifecycle ve genel lifecycle refactor kapsam dışıdır.
+- [Owner / Current Integrity] Owner, kullanıcı rolü değil veri sahipliğidir. `reminder.call_log_id` ↔ owner call log ↔ `created_reminder_id` bağlantısı tutarlı ve tekil doğrulanmalıdır. UI yalnız gerçek owner/current satırda aksiyon gösterir; servis katmanı aynı bağlantıyı yeniden doğrular. Missing, conflicting veya ambiguous dependency fail-closed'dur.
+- [Appointment Boundary] Owner call log üzerinde appointment bulunması tek başına reminder cancellation'ı bloklamaz. Cancellation yalnız reminder status'unu değiştirir; appointment, call log ve student summary mutate edilmez. Ancak dependency bütünlüğü belirsizse işlem fail-closed'dur. Appointment lifecycle ayrı discovery konusudur.
+- [Cancellation Reason] İptal nedeni opsiyonel kısa metindir. Değer trim edilir; boş/whitespace değer `null` kabul edilir. Neden reminder ana modeline yeni alan olarak eklenmez, append-only audit payload'ında saklanır. Implementation mevcut reusable input uzunluk kuralını doğrular.
+- [Cancellation UI] MVP yüzeyi StudentsPage iletişim geçmişindeki gerçek owner/current reminder satırıdır. Aksiyon metni `Hatırlatmayı İptal Et`; tooltip ve aria-label `Hatırlatmayı iptal et` olur. Confirmation modal başlığı `Hatırlatma iptal edilsin mi?`; açıklaması görüşme kaydı ve varsa randevunun silinmeyeceğini açıklar. İkincil eylem `Vazgeç`, birincil/destructive eylem `Hatırlatmayı İptal Et` olur. Mevcut completion modalının vazgeçme eylemi de implementation sırasında `İptal` yerine `Vazgeç` olarak netleştirilecektir.
+- [Cancellation Lifecycle] Yalnız `pending → cancelled` izinlidir. `completed → cancelled`, `cancelled → pending`, `cancelled → completed` ve tekrar cancellation reddedilir; cancelled reminder edit veya reopen almaz. Yeni bir `call_later` gerektiğinde mevcut writer kurallarıyla yeni reminder oluşturulur. Cancellation reminder veya call-log deletion değildir.
+- [Cancellation Audit / Transaction] Cancellation, mevcut audit şemasında append-only `action_type: update` ve `field_name: pending_reminder_cancel` biçiminde kaydedilecektir. Audit en az reminder/student/owner call-log bağlamını, önceki-yeni status'u, schedule bilgisini, opsiyonel nedeni, actor'ü ve zamanı taşır. Reminder update ile audit, Dexie `reminders + call_logs + audit_logs` transaction'ında atomik olmalıdır; audit yazılamazsa cancellation rollback olur. Cancellation audit preview bu MVP'de history'ye eklenmez; mevcut edit audit preview korunur.
+- [Backup / Export / Reporting] Schema/migration gerekmez. Full System Backup cancelled status ve audit'i korur; restore mevcut reminder status modelini kullanır. Pending reader/list/alarm/count yalnız pending kayıtları göstermeye devam eder. Normal export audit payload'ını taşımaz; call log yerinde kaldığından yeni KPI veya raporlama metriği eklenmez.
+- [Shared Terminal Policy Debt] Correction ve deletion servislerindeki terminal status listesi tekrarı teknik borçtur; ikisi de `cancelled` durumunu terminal kabul eder. Bu dar cancellation implementation'ını bloklamaz ve bu sprintte refactor edilmez. Konu ileride `Shared Terminal Dependency Policy Discovery` altında ele alınır.
+- [Decision State] Discovery COMPLETE; Product decision APPROVED; Implementation NOT STARTED. Sıradaki görev yalnız `MOD: Implementation — Cancel Pending Linked Call Reminder` olmalıdır.
 
 ## Latest Decisions - Pending Linked Reminder Edit
 
