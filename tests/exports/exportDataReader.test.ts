@@ -137,6 +137,65 @@ describe("exportDataReader", () => {
     }
   });
 
+  it("omits cancelled reminders and their cancellation audit payload from the normal export", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student("Ayşe Yılmaz"));
+      const reminderId = await database.reminders.add({
+        uuid: crypto.randomUUID(),
+        student_id: studentId,
+        reminder_type: "call",
+        reminder_at: "2026-05-12T11:00:00",
+        status: "cancelled",
+        note: "İptal edilen takip",
+        is_default_time_assigned: false,
+        sync_status: "local",
+        created_at: timestamp,
+        updated_at: timestamp,
+        deleted_at: null
+      });
+      await database.call_logs.add({
+        uuid: crypto.randomUUID(),
+        student_id: studentId,
+        call_time: "2026-05-10T11:00:00",
+        call_result: "call_later",
+        note: "Görüşme kaydı korunur",
+        sync_status: "local",
+        created_at: timestamp,
+        updated_at: timestamp,
+        deleted_at: null
+      });
+      await database.audit_logs.add({
+        entity_type: "reminder",
+        entity_id: reminderId,
+        action_type: "update",
+        field_name: "pending_reminder_cancel",
+        old_value: JSON.stringify({ previous_status: "pending" }),
+        new_value: JSON.stringify({
+          new_status: "cancelled",
+          cancellation_reason: "Bu neden exporta girmemeli"
+        }),
+        created_at: timestamp
+      });
+
+      const data = await readDetailedExportData({ database });
+      const normalExportOutput = JSON.stringify([
+        createDetailedExportSheet(data),
+        createSummaryConversationReportSheet(data)
+      ]);
+
+      expect(data.bundles).toHaveLength(1);
+      expect(data.bundles[0].pending_reminder).toBeNull();
+      expect(data.bundles[0].call_logs).toHaveLength(1);
+      expect(normalExportOutput).not.toContain("pending_reminder_cancel");
+      expect(normalExportOutput).not.toContain("Bu neden exporta girmemeli");
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
   it("reads Veli, Anne and Baba guardians by relation instead of creation order", async () => {
     const database = await createDatabase();
 

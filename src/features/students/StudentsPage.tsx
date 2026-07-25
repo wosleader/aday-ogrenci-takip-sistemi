@@ -12,7 +12,7 @@ import {
 import { createPortal } from "react-dom";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Bell, CalendarClock, Check, ChevronsRight, Copy, MoreVertical, Pencil, Trash2, X } from "lucide-react";
+import { Ban, Bell, CalendarClock, Check, ChevronsRight, Copy, MoreVertical, Pencil, Trash2, X } from "lucide-react";
 import type { AppOutletContext } from "../../app/AppLayout";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/EmptyState";
@@ -62,7 +62,11 @@ import {
   type ShortcutActionKey
 } from "../shortcuts/services/shortcutRegistry";
 import { readActiveOperationShortcuts } from "../shortcuts/services/shortcutSettings";
-import { completeReminder, updatePendingReminder } from "../reminders/services/reminderLifecycle";
+import {
+  cancelPendingLinkedCallReminder,
+  completeReminder,
+  updatePendingReminder
+} from "../reminders/services/reminderLifecycle";
 import { deleteStudentWithRelations } from "./services/studentDelete";
 import {
   ALL_STUDENT_GROUPS_FILTER,
@@ -1705,6 +1709,8 @@ export function StudentsPage() {
   const [linkedReminderEditDate, setLinkedReminderEditDate] = useState("");
   const [linkedReminderEditTime, setLinkedReminderEditTime] = useState("11:00");
   const [linkedReminderEditNote, setLinkedReminderEditNote] = useState("");
+  const [linkedReminderCancelCandidate, setLinkedReminderCancelCandidate] = useState<CallHistoryItem | null>(null);
+  const [linkedReminderCancelReason, setLinkedReminderCancelReason] = useState("");
   const [callLogEditResult, setCallLogEditResult] = useState<CallResult>("not_called");
   const [callLogEditDate, setCallLogEditDate] = useState("");
   const [callLogEditTime, setCallLogEditTime] = useState("11:00");
@@ -1722,6 +1728,7 @@ export function StudentsPage() {
   const [isUpdatingCallLog, setIsUpdatingCallLog] = useState(false);
   const [isCompletingLinkedReminder, setIsCompletingLinkedReminder] = useState(false);
   const [isUpdatingLinkedReminder, setIsUpdatingLinkedReminder] = useState(false);
+  const [isCancellingLinkedReminder, setIsCancellingLinkedReminder] = useState(false);
   const [operationToast, setOperationToast] = useState<OperationToast | null>(null);
   const [whatsAppDraftContext, setWhatsAppDraftContext] = useState<WhatsAppDraftContext | null>(null);
   const [selectedWhatsAppTemplateId, setSelectedWhatsAppTemplateId] = useState(DEFAULT_WHATSAPP_TEMPLATE_ID);
@@ -1913,6 +1920,8 @@ export function StudentsPage() {
     setCallLogEditCandidate(null);
     setLinkedReminderCompleteCandidate(null);
     setLinkedReminderEditCandidate(null);
+    setLinkedReminderCancelCandidate(null);
+    setLinkedReminderCancelReason("");
     setWhatsAppDraftContext(null);
     setWhatsAppDraftBody("");
     setWhatsAppDraftMessage(null);
@@ -2446,6 +2455,54 @@ export function StudentsPage() {
     }
   }
 
+  function openLinkedReminderCancelModal(historyItem: CallHistoryItem) {
+    if (!historyItem.linked_reminder_id || !historyItem.canCancelLinkedReminder) {
+      const message = "İptal edilecek açık hatırlatma bulunamadı.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
+      return;
+    }
+
+    setLinkedReminderCancelCandidate(historyItem);
+    setLinkedReminderCancelReason("");
+    setActionMessage(null);
+  }
+
+  function closeLinkedReminderCancelModal() {
+    setLinkedReminderCancelCandidate(null);
+    setLinkedReminderCancelReason("");
+  }
+
+  async function confirmCancelLinkedReminder() {
+    if (!linkedReminderCancelCandidate?.linked_reminder_id || isCancellingLinkedReminder) {
+      return;
+    }
+
+    setIsCancellingLinkedReminder(true);
+    setActionMessage(null);
+
+    try {
+      await cancelPendingLinkedCallReminder(linkedReminderCancelCandidate.linked_reminder_id, {
+        owner_call_log_id: linkedReminderCancelCandidate.call_log_id,
+        cancellation_reason: linkedReminderCancelReason,
+        performed_by: "agent"
+      });
+      closeLinkedReminderCancelModal();
+      setReminderDate("");
+      setReminderTime("");
+      setReminderTick(Date.now());
+      const message = "Hatırlatma iptal edildi.";
+      setActionMessage(message);
+      showOperationToast(message, "success");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Hatırlatma iptal edilemedi.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
+    } finally {
+      setIsCancellingLinkedReminder(false);
+    }
+  }
+
   function openLinkedReminderEditModal(historyItem: CallHistoryItem) {
     if (!historyItem.linked_reminder_id || !historyItem.canEditLinkedReminder) {
       const message = "Güncellenecek açık hatırlatma bulunamadı.";
@@ -2947,7 +3004,7 @@ export function StudentsPage() {
                 onClick={() => setLinkedReminderCompleteCandidate(null)}
                 type="button"
               >
-                İptal
+                Vazgeç
               </button>
               <button
                 disabled={isCompletingLinkedReminder}
@@ -2955,6 +3012,41 @@ export function StudentsPage() {
                 type="button"
               >
                 {isCompletingLinkedReminder ? "İşleniyor..." : "Hatırlatmayı tamamla"}
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : null}
+      {linkedReminderCancelCandidate ? (
+        <section
+          aria-labelledby="linked-reminder-cancel-title"
+          aria-modal="true"
+          className="delete-confirm-backdrop"
+          role="dialog"
+        >
+          <div className="delete-confirm-modal" style={{ maxWidth: 520 }}>
+            <h2 id="linked-reminder-cancel-title">Hatırlatma iptal edilsin mi?</h2>
+            <p>Bu görüşmeye bağlı açık hatırlatma iptal edilecek. Görüşme kaydı ve varsa randevu silinmeyecek.</p>
+            <label style={{ display: "grid", gap: 4 }}>
+              <span>İptal nedeni (isteğe bağlı)</span>
+              <textarea
+                disabled={isCancellingLinkedReminder}
+                onChange={(event) => setLinkedReminderCancelReason(event.target.value)}
+                placeholder="Hatırlatmanın neden iptal edildiğini yazabilirsiniz."
+                rows={3}
+                value={linkedReminderCancelReason}
+              />
+            </label>
+            <div className="delete-confirm-actions" style={{ marginTop: 16 }}>
+              <button disabled={isCancellingLinkedReminder} onClick={closeLinkedReminderCancelModal} type="button">
+                Vazgeç
+              </button>
+              <button
+                disabled={isCancellingLinkedReminder}
+                onClick={() => void confirmCancelLinkedReminder()}
+                type="button"
+              >
+                {isCancellingLinkedReminder ? "İşleniyor..." : "Hatırlatmayı İptal Et"}
               </button>
             </div>
           </div>
@@ -3861,6 +3953,29 @@ export function StudentsPage() {
                               type="button"
                             >
                               <CalendarClock aria-hidden="true" size={12} />
+                            </button>
+                          ) : null}
+                          {historyItem.canCancelLinkedReminder ? (
+                            <button
+                              aria-label="Hatırlatmayı iptal et"
+                              onClick={() => openLinkedReminderCancelModal(historyItem)}
+                              style={{
+                                alignItems: "center",
+                                background: "transparent",
+                                border: "0",
+                                color: "#b45309",
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                height: 20,
+                                justifyContent: "center",
+                                opacity: 0.72,
+                                padding: 0,
+                                width: 20
+                              }}
+                              title="Hatırlatmayı iptal et"
+                              type="button"
+                            >
+                              <Ban aria-hidden="true" size={12} />
                             </button>
                           ) : null}
                           <button

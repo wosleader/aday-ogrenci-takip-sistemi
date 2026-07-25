@@ -191,7 +191,7 @@ describe("reminderListReader", () => {
     }
   });
 
-  it("excludes completed, deleted, non-call and deleted-student reminders", async () => {
+  it("excludes completed, cancelled, deleted, non-call and deleted-student reminders", async () => {
     const database = await createDatabase();
 
     try {
@@ -200,6 +200,7 @@ describe("reminderListReader", () => {
       await database.reminders.bulkAdd([
         reminder(activeStudentId, "2026-05-10T13:00:00.000Z"),
         reminder(activeStudentId, "2026-05-10T13:30:00.000Z", { status: "completed" }),
+        reminder(activeStudentId, "2026-05-10T13:45:00.000Z", { status: "cancelled" }),
         reminder(activeStudentId, "2026-05-10T14:00:00.000Z", { deleted_at: now }),
         reminder(activeStudentId, "2026-05-10T14:30:00.000Z", { reminder_type: "follow_up" }),
         reminder(deletedStudentId, "2026-05-10T15:00:00.000Z")

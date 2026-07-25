@@ -270,7 +270,8 @@ describe("callHistoryReader", () => {
           linked_reminder_previous_at: "2026-05-10T11:00:00.000Z",
           linked_reminder_previous_note: "Önceki not",
           canCompleteLinkedReminder: canComplete,
-          canEditLinkedReminder: canComplete
+          canEditLinkedReminder: canComplete,
+          canCancelLinkedReminder: canComplete
         });
       } finally {
         database.close();
@@ -279,7 +280,7 @@ describe("callHistoryReader", () => {
     }
   );
 
-  it("exposes linked reminder completion only on the reminder owner call log", async () => {
+  it("exposes cancellation only on the modern owner when historical rows share its reminder reference", async () => {
     const database = await createDatabase();
 
     try {
@@ -311,6 +312,7 @@ describe("callHistoryReader", () => {
       const history = await readCallHistoryForStudent(studentId, database);
       const completionByCallLogId = new Map(history.map((item) => [item.call_log_id, item.canCompleteLinkedReminder]));
       const editByCallLogId = new Map(history.map((item) => [item.call_log_id, item.canEditLinkedReminder]));
+      const cancellationByCallLogId = new Map(history.map((item) => [item.call_log_id, item.canCancelLinkedReminder]));
 
       expect(completionByCallLogId.get(firstCallLogId)).toBe(false);
       expect(completionByCallLogId.get(ownerCallLogId)).toBe(true);
@@ -318,6 +320,188 @@ describe("callHistoryReader", () => {
       expect(editByCallLogId.get(firstCallLogId)).toBe(false);
       expect(editByCallLogId.get(ownerCallLogId)).toBe(true);
       expect(editByCallLogId.get(thirdCallLogId)).toBe(false);
+      expect(cancellationByCallLogId.get(firstCallLogId)).toBe(false);
+      expect(cancellationByCallLogId.get(ownerCallLogId)).toBe(true);
+      expect(cancellationByCallLogId.get(thirdCallLogId)).toBe(false);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("exposes cancellation for a safe legacy owner with a prior reminder edit audit", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const reminderId = await database.reminders.add(reminder(studentId, "pending", { note: "Güncel legacy notu" }));
+      const ownerCallLogId = await database.call_logs.add(
+        callLog(studentId, {
+          call_result: "call_later",
+          note: "Eski bağlı hatırlatma satırı.",
+          reminder_at: "2026-05-10T11:00:00.000Z",
+          created_reminder_id: null
+        })
+      );
+      await database.reminders.update(reminderId, { call_log_id: ownerCallLogId });
+      await database.audit_logs.add({
+        entity_type: "reminder",
+        entity_id: reminderId,
+        action_type: "update",
+        field_name: "pending_reminder_edit",
+        old_value: JSON.stringify({
+          reminder_at: "2026-05-10T11:00:00.000Z",
+          note: "Önceki legacy notu",
+          owner_call_log_id: ownerCallLogId
+        }),
+        new_value: JSON.stringify({
+          reminder_at: "2026-05-12T13:30:00.000Z",
+          note: "Güncel legacy notu",
+          owner_call_log_id: ownerCallLogId
+        }),
+        created_at: "2026-05-10T12:00:00.000Z"
+      });
+
+      const [historyItem] = await readCallHistoryForStudent(studentId, database);
+
+      expect(historyItem).toMatchObject({
+        call_log_id: ownerCallLogId,
+        linked_reminder_id: reminderId,
+        linked_reminder_status: "pending",
+        canCompleteLinkedReminder: false,
+        canEditLinkedReminder: false,
+        canCancelLinkedReminder: true
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("fails closed when two pending legacy reminders point to the same owner call log", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const firstReminderId = await database.reminders.add(reminder(studentId, "pending"));
+      const ownerCallLogId = await database.call_logs.add(
+        callLog(studentId, { call_result: "call_later", created_reminder_id: null })
+      );
+      await database.reminders.update(firstReminderId, { call_log_id: ownerCallLogId });
+      await database.reminders.add(reminder(studentId, "pending", { call_log_id: ownerCallLogId }));
+
+      const [historyItem] = await readCallHistoryForStudent(studentId, database);
+
+      expect(historyItem).toMatchObject({
+        call_log_id: ownerCallLogId,
+        linked_reminder_id: null,
+        canCancelLinkedReminder: false
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("fails closed when a modern owner and a pending legacy reminder point to the same call log", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const modernReminderId = await database.reminders.add(reminder(studentId, "pending"));
+      const ownerCallLogId = await database.call_logs.add(
+        callLog(studentId, { call_result: "call_later", created_reminder_id: modernReminderId })
+      );
+      await database.reminders.update(modernReminderId, { call_log_id: ownerCallLogId });
+      await database.reminders.add(reminder(studentId, "pending", { call_log_id: ownerCallLogId }));
+
+      const [historyItem] = await readCallHistoryForStudent(studentId, database);
+
+      expect(historyItem).toMatchObject({
+        call_log_id: ownerCallLogId,
+        linked_reminder_id: modernReminderId,
+        canCancelLinkedReminder: false
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("keeps a single legacy owner eligible when a second terminal reminder points to it", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const reminderId = await database.reminders.add(reminder(studentId, "pending"));
+      const ownerCallLogId = await database.call_logs.add(
+        callLog(studentId, { call_result: "call_later", created_reminder_id: null })
+      );
+      await database.reminders.update(reminderId, { call_log_id: ownerCallLogId });
+      await database.reminders.add(reminder(studentId, "completed", { call_log_id: ownerCallLogId }));
+
+      const [historyItem] = await readCallHistoryForStudent(studentId, database);
+
+      expect(historyItem).toMatchObject({
+        linked_reminder_id: reminderId,
+        canCancelLinkedReminder: true
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("fails closed for a legacy owner with a conflicting back-link but keeps historical references non-owning", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const conflictingReminderId = await database.reminders.add(reminder(studentId, "pending"));
+      const otherReminderId = await database.reminders.add(reminder(studentId, "pending"));
+      const conflictingOwnerCallLogId = await database.call_logs.add(
+        callLog(studentId, { note: "Çelişkili legacy owner.", created_reminder_id: otherReminderId })
+      );
+      await database.reminders.update(conflictingReminderId, { call_log_id: conflictingOwnerCallLogId });
+
+      const sharedReminderId = await database.reminders.add(reminder(studentId, "pending"));
+      const legacyOwnerCallLogId = await database.call_logs.add(
+        callLog(studentId, { note: "Paylaşılan legacy owner.", created_reminder_id: null })
+      );
+      const sharedHistoricalCallLogId = await database.call_logs.add(
+        callLog(studentId, { note: "Paylaşılan tarihsel satır.", created_reminder_id: sharedReminderId })
+      );
+      await database.reminders.update(sharedReminderId, { call_log_id: legacyOwnerCallLogId });
+
+      const history = await readCallHistoryForStudent(studentId, database);
+      const historyByCallLogId = new Map(history.map((item) => [item.call_log_id, item]));
+
+      expect(historyByCallLogId.get(conflictingOwnerCallLogId)?.canCancelLinkedReminder).toBe(false);
+      expect(historyByCallLogId.get(legacyOwnerCallLogId)?.canCancelLinkedReminder).toBe(true);
+      expect(historyByCallLogId.get(sharedHistoricalCallLogId)?.canCancelLinkedReminder).toBe(false);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("does not expose cancellation for a linked reminder that is not a call reminder", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const reminderId = await database.reminders.add(reminder(studentId, "pending", { reminder_type: "follow_up" }));
+      const callLogId = await database.call_logs.add(callLog(studentId, { created_reminder_id: reminderId }));
+      await database.reminders.update(reminderId, { call_log_id: callLogId });
+
+      const [historyItem] = await readCallHistoryForStudent(studentId, database);
+
+      expect(historyItem).toMatchObject({
+        linked_reminder_id: reminderId,
+        canCompleteLinkedReminder: false,
+        canEditLinkedReminder: false,
+        canCancelLinkedReminder: false
+      });
     } finally {
       database.close();
       await database.delete();

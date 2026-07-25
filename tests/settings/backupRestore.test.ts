@@ -232,6 +232,78 @@ describe("backup and restore hardening", () => {
     }
   });
 
+  it("preserves a cancelled reminder and its cancellation audit payload across full backup restore", async () => {
+    const sourceDatabase = await createDatabase();
+    const targetDatabase = await createDatabase();
+    const cancellationReason = "Takip gerekmiyor";
+
+    try {
+      const studentId = await sourceDatabase.students.add(student("İptal Edilen Hatırlatma"));
+      const reminderId = await sourceDatabase.reminders.add({
+        uuid: crypto.randomUUID(),
+        student_id: studentId,
+        call_log_id: 42,
+        reminder_type: "call",
+        reminder_at: "2026-05-13T09:30:00.000Z",
+        status: "cancelled",
+        note: "Açık reminder notu",
+        is_default_time_assigned: false,
+        sync_status: "local",
+        created_at: timestamp,
+        updated_at: "2026-05-12T10:00:00.000Z",
+        deleted_at: null
+      });
+      const oldValue = JSON.stringify({
+        reminder_id: reminderId,
+        student_id: studentId,
+        owner_call_log_id: 42,
+        previous_status: "pending",
+        reminder_at: "2026-05-13T09:30:00.000Z"
+      });
+      const newValue = JSON.stringify({
+        reminder_id: reminderId,
+        student_id: studentId,
+        owner_call_log_id: 42,
+        new_status: "cancelled",
+        reminder_at: "2026-05-13T09:30:00.000Z",
+        cancellation_reason: cancellationReason
+      });
+      await sourceDatabase.audit_logs.add({
+        entity_type: "reminder",
+        entity_id: reminderId,
+        action_type: "update",
+        field_name: "pending_reminder_cancel",
+        old_value: oldValue,
+        new_value: newValue,
+        note: "Açık arama hatırlatması iptal edildi.",
+        performed_by: "agent",
+        created_at: "2026-05-12T10:00:00.000Z"
+      });
+
+      const snapshot = await createBackupSnapshot(sourceDatabase);
+      await restoreSystemBackup(snapshot, RESTORE_SYSTEM_BACKUP_CONFIRMATION, { database: targetDatabase });
+      const restoredReminder = await targetDatabase.reminders.get(reminderId);
+      const [restoredAudit] = await targetDatabase.audit_logs.toArray();
+
+      expect(restoredReminder).toMatchObject({
+        id: reminderId,
+        status: "cancelled",
+        reminder_at: "2026-05-13T09:30:00.000Z"
+      });
+      expect(restoredAudit).toMatchObject({
+        field_name: "pending_reminder_cancel",
+        old_value: oldValue,
+        new_value: newValue
+      });
+      expect(JSON.parse(restoredAudit?.new_value ?? "{}")).toMatchObject({ cancellation_reason: cancellationReason });
+    } finally {
+      sourceDatabase.close();
+      targetDatabase.close();
+      await sourceDatabase.delete();
+      await targetDatabase.delete();
+    }
+  });
+
   it("preserves guardian relations and relation-aware phone metadata across backup restore", async () => {
     const sourceDatabase = await createDatabase();
     const targetDatabase = await createDatabase();

@@ -2,6 +2,7 @@ import type { AppDatabase } from "../../../db/db";
 import { db } from "../../../db/db";
 import type { AuditLogRecord } from "../../../domain/models/auditLog";
 import { CALL_RESULTS, type ReminderStatus } from "../../../domain/constants/statuses";
+import { resolveLinkedCallReminderOwner } from "../../reminders/services/reminderLifecycle";
 import { createPhoneSnapshotDisplayLabel } from "./callLogPhoneContext";
 
 export type CallHistoryItem = {
@@ -29,19 +30,25 @@ export type CallHistoryItem = {
   linked_reminder_last_editor?: string | null;
   canCompleteLinkedReminder: boolean;
   canEditLinkedReminder: boolean;
+  canCancelLinkedReminder: boolean;
   created_by?: string | null;
 };
 
 type LinkedCallLogCandidate = {
   id?: number;
+  student_id: number;
   created_reminder_id?: number | null;
   deleted_at?: string | null;
 };
 
 type LinkedReminderCandidate = {
   id?: number;
+  student_id: number;
   call_log_id?: number | null;
   reminder_type?: string;
+  reminder_at?: string;
+  status?: ReminderStatus;
+  note?: string | null;
   deleted_at?: string | null;
 };
 
@@ -141,14 +148,45 @@ export async function readCallHistoryForStudent(
   database: AppDatabase = db
 ): Promise<CallHistoryItem[]> {
   const logs = await database.call_logs.where("student_id").equals(studentId).toArray();
+  const studentReminders = await database.reminders.where("student_id").equals(studentId).toArray();
+  const reminderOwnershipCandidates = await database.reminders.toArray();
+  const activeCallLogIds = new Set(
+    logs.flatMap((log) => (log.id && !log.deleted_at ? [log.id] : []))
+  );
   const reminderIds = [
     ...new Set(
-      logs.flatMap((log) => (log.created_reminder_id && !log.deleted_at ? [log.created_reminder_id] : []))
+      [
+        ...logs.flatMap((log) => (log.created_reminder_id && !log.deleted_at ? [log.created_reminder_id] : [])),
+        ...studentReminders.flatMap((reminder) =>
+          reminder.id && reminder.call_log_id && activeCallLogIds.has(reminder.call_log_id) ? [reminder.id] : []
+        )
+      ]
     )
   ];
   const linkedReminders = reminderIds.length ? await database.reminders.bulkGet(reminderIds) : [];
   const remindersById = new Map(linkedReminders.flatMap((reminder) => (reminder?.id ? [[reminder.id, reminder]] : [])));
   const reminderOwnerCallLogIds = createReminderOwnerCallLogIds(logs, remindersById);
+
+  const reminderCancellationOwners = new Map<number, number>();
+  const remindersByOwnerCallLogId = new Map<number, LinkedReminderCandidate>();
+
+  for (const reminder of linkedReminders) {
+    if (!reminder?.id) {
+      continue;
+    }
+
+    const ownership = resolveLinkedCallReminderOwner(
+      reminder,
+      logs,
+      reminderOwnershipCandidates
+    );
+
+    if (ownership) {
+      reminderCancellationOwners.set(reminder.id, ownership.owner_call_log_id);
+      remindersByOwnerCallLogId.set(ownership.owner_call_log_id, reminder);
+    }
+  }
+
   const reminderIdsSet = new Set(reminderIds);
   const reminderEditAudits = new Map<number, LatestReminderEditAudit>();
 
@@ -223,7 +261,9 @@ export async function readCallHistoryForStudent(
       const snapshotNumber = log.phone_snapshot?.phone_number?.trim() || null;
       const legacyLabel = log.contacted_phone_label?.trim() || null;
       const legacyNumber = log.contacted_phone_number?.trim() || null;
-      const linkedReminder = log.created_reminder_id ? remindersById.get(log.created_reminder_id) : null;
+      const linkedReminder =
+        (log.created_reminder_id ? remindersById.get(log.created_reminder_id) : null) ??
+        remindersByOwnerCallLogId.get(log.id!);
       const activeLinkedReminder = linkedReminder && !linkedReminder.deleted_at ? linkedReminder : null;
       const linkedReminderOwnerCallLogId = log.created_reminder_id
         ? reminderOwnerCallLogIds.get(log.created_reminder_id)
@@ -240,6 +280,9 @@ export async function readCallHistoryForStudent(
         isLinkedReminderOwner && !log.created_appointment_id && log.created_reminder_id
           ? reminderEditAudits.get(log.created_reminder_id) ?? null
           : null;
+      const cancellationOwnerCallLogId = linkedReminder?.id
+        ? reminderCancellationOwners.get(linkedReminder.id) ?? null
+        : null;
 
       return {
         call_log_id: log.id!,
@@ -256,7 +299,7 @@ export async function readCallHistoryForStudent(
         phone_context_number: snapshotNumber || legacyNumber,
         note: log.note ?? null,
         reminder_at: log.reminder_at ?? null,
-        linked_reminder_id: log.created_reminder_id ?? null,
+        linked_reminder_id: linkedReminder?.id ?? log.created_reminder_id ?? null,
         linked_reminder_status: activeLinkedReminder?.status ?? null,
         linked_reminder_at: activeLinkedReminder?.reminder_at ?? log.reminder_at ?? null,
         linked_reminder_note: activeLinkedReminder?.note ?? null,
@@ -266,6 +309,10 @@ export async function readCallHistoryForStudent(
         linked_reminder_last_editor: reminderEditAudit?.last_editor ?? null,
         canCompleteLinkedReminder: isPendingLinkedReminderOwner,
         canEditLinkedReminder,
+        canCancelLinkedReminder:
+          activeLinkedReminder?.status === "pending" &&
+          activeLinkedReminder.reminder_type === "call" &&
+          cancellationOwnerCallLogId === log.id,
         created_by: normalizeVisibleActorLabel(log.created_by)
       };
     });

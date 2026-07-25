@@ -89,7 +89,8 @@ describe("reminderAlarmReader", () => {
       await database.phones.add(phone(studentId));
       await database.reminders.bulkAdd([
         reminder(studentId, "2026-05-09T10:00:00.000Z"),
-        reminder(studentId, "2026-05-10T10:00:00.000Z")
+        reminder(studentId, "2026-05-10T10:00:00.000Z"),
+        reminder(studentId, "2026-05-09T09:30:00.000Z", { status: "cancelled" })
       ]);
 
       const alerts = await readDueReminderAlerts("2026-05-09T10:05:00.000Z", database);

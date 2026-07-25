@@ -6,7 +6,11 @@ import type { ReminderRecord } from "../../src/domain/models/reminder";
 import type { StudentRecord } from "../../src/domain/models/student";
 import { softDeleteCallLogAndRecomputeStudentSummary } from "../../src/features/calls/services/callLogDeletion";
 import { readDueReminderAlerts } from "../../src/features/reminders/services/reminderAlarmReader";
-import { completeReminder, updatePendingReminder } from "../../src/features/reminders/services/reminderLifecycle";
+import {
+  cancelPendingLinkedCallReminder,
+  completeReminder,
+  updatePendingReminder
+} from "../../src/features/reminders/services/reminderLifecycle";
 import { readReminderTaskRows } from "../../src/features/reminders/services/reminderListReader";
 import { createSearchText, normalizeText } from "../../src/utils/normalizeText";
 
@@ -88,6 +92,21 @@ async function createLinkedReminder(
   const reminderId = await database.reminders.add(reminder(studentId, reminderOverrides));
   const callLogId = await database.call_logs.add(
     callLog(studentId, { created_reminder_id: reminderId, ...callLogOverrides })
+  );
+  await database.reminders.update(reminderId, { call_log_id: callLogId });
+
+  return { reminderId, callLogId };
+}
+
+async function createLegacyLinkedReminder(
+  database: AppDatabase,
+  studentId: number,
+  reminderOverrides: Partial<ReminderRecord> = {},
+  callLogOverrides: Partial<CallLogRecord> = {}
+) {
+  const reminderId = await database.reminders.add(reminder(studentId, reminderOverrides));
+  const callLogId = await database.call_logs.add(
+    callLog(studentId, { ...callLogOverrides, created_reminder_id: null })
   );
   await database.reminders.update(reminderId, { call_log_id: callLogId });
 
@@ -367,6 +386,408 @@ describe("reminderLifecycle", () => {
       ).rejects.toThrow("bağlı görüşme kaydı");
 
       expect(await database.reminders.get(reminderId)).toEqual(originalReminder);
+      expect(await database.audit_logs.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("cancels only a valid owner-linked pending call reminder, preserves related records, and appends an audit", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const { reminderId, callLogId } = await createLinkedReminder(database, studentId, {}, { note: "Açık owner notu" });
+      const appointmentId = await database.appointments.add({
+        uuid: crypto.randomUUID(),
+        student_id: studentId,
+        guardian_id: null,
+        appointment_at: "2026-05-13T10:00:00.000Z",
+        status: "pending",
+        campaign_id: null,
+        note: "Randevu korunmalı",
+        sync_status: "local",
+        created_at: timestamp,
+        updated_at: timestamp,
+        deleted_at: null
+      });
+      await database.call_logs.update(callLogId, { created_appointment_id: appointmentId });
+      await updatePendingReminder(
+        reminderId,
+        { reminder_at: "2026-05-13T09:30:00.000Z", note: "Önceki edit audit", performed_by: "test-agent" },
+        database
+      );
+      const reminderBefore = await database.reminders.get(reminderId);
+      const callLogBefore = await database.call_logs.get(callLogId);
+      const studentBefore = await database.students.get(studentId);
+      const appointmentBefore = await database.appointments.get(appointmentId);
+
+      const result = await cancelPendingLinkedCallReminder(
+        reminderId,
+        {
+          owner_call_log_id: callLogId,
+          cancellation_reason: "  Yanlış takip zamanı  ",
+          performed_by: "test-agent"
+        },
+        database
+      );
+      const reminderAfter = await database.reminders.get(reminderId);
+      const auditLogs = await database.audit_logs.where("entity_id").equals(reminderId).toArray();
+      const cancellationAudit = auditLogs.find((audit) => audit.field_name === "pending_reminder_cancel");
+
+      expect(result).toEqual({
+        reminder_id: reminderId,
+        student_id: studentId,
+        owner_call_log_id: callLogId,
+        previous_status: "pending",
+        status: "cancelled",
+        cancellation_reason: "Yanlış takip zamanı"
+      });
+      expect(reminderAfter).toMatchObject({
+        uuid: reminderBefore?.uuid,
+        student_id: studentId,
+        call_log_id: callLogId,
+        reminder_at: "2026-05-13T09:30:00.000Z",
+        note: "Önceki edit audit",
+        status: "cancelled"
+      });
+      expect(reminderAfter?.updated_at).not.toBe(reminderBefore?.updated_at);
+      expect(await database.call_logs.get(callLogId)).toEqual(callLogBefore);
+      expect(await database.students.get(studentId)).toEqual(studentBefore);
+      expect(await database.appointments.get(appointmentId)).toEqual(appointmentBefore);
+      expect(auditLogs.filter((audit) => audit.field_name === "pending_reminder_edit")).toHaveLength(1);
+      expect(cancellationAudit).toMatchObject({
+        entity_type: "reminder",
+        entity_id: reminderId,
+        action_type: "update",
+        field_name: "pending_reminder_cancel",
+        performed_by: "test-agent"
+      });
+      expect(JSON.parse(cancellationAudit?.old_value ?? "{}")).toMatchObject({
+        reminder_id: reminderId,
+        student_id: studentId,
+        owner_call_log_id: callLogId,
+        previous_status: "pending",
+        reminder_at: "2026-05-13T09:30:00.000Z"
+      });
+      expect(JSON.parse(cancellationAudit?.new_value ?? "{}")).toMatchObject({
+        reminder_id: reminderId,
+        student_id: studentId,
+        owner_call_log_id: callLogId,
+        new_status: "cancelled",
+        reminder_at: "2026-05-13T09:30:00.000Z",
+        cancellation_reason: "Yanlış takip zamanı"
+      });
+      expect(await readReminderTaskRows("2026-05-12T09:00:00.000Z", database)).toEqual([]);
+      expect(await readDueReminderAlerts("2026-05-14T09:00:00.000Z", database)).toEqual([]);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("cancels a safe legacy owner without backfilling its call-log link", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const { reminderId, callLogId } = await createLegacyLinkedReminder(
+        database,
+        studentId,
+        { note: "Eski açık reminder notu" },
+        { note: "Eski reminder sahibi satırı" }
+      );
+      const appointmentId = await database.appointments.add({
+        uuid: crypto.randomUUID(),
+        student_id: studentId,
+        guardian_id: null,
+        appointment_at: "2026-05-13T10:00:00.000Z",
+        status: "pending",
+        campaign_id: null,
+        note: "Randevu korunmalı",
+        sync_status: "local",
+        created_at: timestamp,
+        updated_at: timestamp,
+        deleted_at: null
+      });
+      await database.call_logs.update(callLogId, { created_appointment_id: appointmentId });
+      const callLogBefore = await database.call_logs.get(callLogId);
+      const appointmentBefore = await database.appointments.get(appointmentId);
+
+      const result = await cancelPendingLinkedCallReminder(
+        reminderId,
+        {
+          owner_call_log_id: callLogId,
+          cancellation_reason: "  Eski takip artık gerekmiyor  ",
+          performed_by: "test-agent"
+        },
+        database
+      );
+      const cancellationAudit = (await database.audit_logs.where("entity_id").equals(reminderId).toArray()).find(
+        (audit) => audit.field_name === "pending_reminder_cancel"
+      );
+
+      expect(result).toMatchObject({
+        reminder_id: reminderId,
+        owner_call_log_id: callLogId,
+        status: "cancelled",
+        cancellation_reason: "Eski takip artık gerekmiyor"
+      });
+      expect((await database.reminders.get(reminderId))?.status).toBe("cancelled");
+      expect(await database.call_logs.get(callLogId)).toEqual(callLogBefore);
+      expect((await database.call_logs.get(callLogId))?.created_reminder_id).toBeNull();
+      expect(await database.appointments.get(appointmentId)).toEqual(appointmentBefore);
+      expect(JSON.parse(cancellationAudit?.new_value ?? "{}")).toMatchObject({
+        owner_call_log_id: callLogId,
+        new_status: "cancelled",
+        cancellation_reason: "Eski takip artık gerekmiyor"
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("rejects two pending legacy reminders that point to one owner without mutation or audit", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const { reminderId: firstReminderId, callLogId } = await createLegacyLinkedReminder(database, studentId);
+      const secondReminderId = await database.reminders.add(reminder(studentId, { call_log_id: callLogId }));
+      const ownerCallLogBefore = await database.call_logs.get(callLogId);
+
+      await expect(
+        cancelPendingLinkedCallReminder(firstReminderId, { owner_call_log_id: callLogId }, database)
+      ).rejects.toThrow("çelişkili");
+      await expect(
+        cancelPendingLinkedCallReminder(secondReminderId, { owner_call_log_id: callLogId }, database)
+      ).rejects.toThrow("çelişkili");
+
+      expect((await database.reminders.get(firstReminderId))?.status).toBe("pending");
+      expect((await database.reminders.get(secondReminderId))?.status).toBe("pending");
+      expect(await database.call_logs.get(callLogId)).toEqual(ownerCallLogBefore);
+      expect(await database.audit_logs.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("rejects a modern owner when a pending legacy reminder also points to it", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const { reminderId: modernReminderId, callLogId } = await createLinkedReminder(database, studentId);
+      const legacyReminderId = await database.reminders.add(reminder(studentId, { call_log_id: callLogId }));
+      const ownerCallLogBefore = await database.call_logs.get(callLogId);
+
+      await expect(
+        cancelPendingLinkedCallReminder(modernReminderId, { owner_call_log_id: callLogId }, database)
+      ).rejects.toThrow("çelişkili");
+      await expect(
+        cancelPendingLinkedCallReminder(legacyReminderId, { owner_call_log_id: callLogId }, database)
+      ).rejects.toThrow("çelişkili");
+
+      expect((await database.reminders.get(modernReminderId))?.status).toBe("pending");
+      expect((await database.reminders.get(legacyReminderId))?.status).toBe("pending");
+      expect(await database.call_logs.get(callLogId)).toEqual(ownerCallLogBefore);
+      expect(await database.audit_logs.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("cancels a modern owner with historical references while rejecting a shared history row", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const { reminderId, callLogId } = await createLinkedReminder(database, studentId);
+      const sharedCallLogId = await database.call_logs.add(callLog(studentId, { created_reminder_id: reminderId }));
+      const secondSharedCallLogId = await database.call_logs.add(callLog(studentId, { created_reminder_id: reminderId }));
+      const appointmentId = await database.appointments.add({
+        uuid: crypto.randomUUID(),
+        student_id: studentId,
+        guardian_id: null,
+        appointment_at: "2026-05-13T10:00:00.000Z",
+        status: "pending",
+        campaign_id: null,
+        note: "Randevu korunmalı",
+        sync_status: "local",
+        created_at: timestamp,
+        updated_at: timestamp,
+        deleted_at: null
+      });
+      await database.call_logs.update(callLogId, { created_appointment_id: appointmentId });
+      const ownerBefore = await database.call_logs.get(callLogId);
+      const sharedBefore = await database.call_logs.get(sharedCallLogId);
+      const secondSharedBefore = await database.call_logs.get(secondSharedCallLogId);
+      const appointmentBefore = await database.appointments.get(appointmentId);
+
+      await expect(
+        cancelPendingLinkedCallReminder(reminderId, { owner_call_log_id: sharedCallLogId }, database)
+      ).rejects.toThrow("yalnız güncel sahibi");
+
+      await expect(cancelPendingLinkedCallReminder(reminderId, { owner_call_log_id: callLogId }, database)).resolves.toMatchObject({
+        reminder_id: reminderId,
+        owner_call_log_id: callLogId,
+        status: "cancelled"
+      });
+
+      expect((await database.reminders.get(reminderId))?.status).toBe("cancelled");
+      expect(await database.call_logs.get(callLogId)).toEqual(ownerBefore);
+      expect(await database.call_logs.get(sharedCallLogId)).toEqual(sharedBefore);
+      expect(await database.call_logs.get(secondSharedCallLogId)).toEqual(secondSharedBefore);
+      expect(await database.appointments.get(appointmentId)).toEqual(appointmentBefore);
+      expect(await database.audit_logs.where("entity_id").equals(reminderId).count()).toBe(1);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("fails closed for a legacy owner with a conflicting reciprocal link without a mutation or audit", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const { reminderId, callLogId } = await createLegacyLinkedReminder(database, studentId);
+      const otherReminderId = await database.reminders.add(reminder(studentId));
+      await database.call_logs.update(callLogId, { created_reminder_id: otherReminderId });
+
+      await expect(
+        cancelPendingLinkedCallReminder(reminderId, { owner_call_log_id: callLogId }, database)
+      ).rejects.toThrow("çelişkili");
+      expect((await database.reminders.get(reminderId))?.status).toBe("pending");
+      expect(await database.audit_logs.count()).toBe(0);
+
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("normalizes an empty cancellation reason and rejects a second terminal cancellation without a new audit", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const { reminderId, callLogId } = await createLinkedReminder(database, studentId);
+
+      const result = await cancelPendingLinkedCallReminder(
+        reminderId,
+        { owner_call_log_id: callLogId, cancellation_reason: "   " },
+        database
+      );
+      expect(result.cancellation_reason).toBeNull();
+
+      await expect(
+        cancelPendingLinkedCallReminder(reminderId, { owner_call_log_id: callLogId }, database)
+      ).rejects.toThrow("Yalnızca açık hatırlatmalar");
+      expect(await database.audit_logs.count()).toBe(1);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("fails closed for missing, terminal, non-call, unlinked, missing-owner, and student-mismatched reminders", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const otherStudentId = await database.students.add(student());
+      const completedReminderId = await database.reminders.add(reminder(studentId, { status: "completed" }));
+      const nonCallReminderId = await database.reminders.add(reminder(studentId, { reminder_type: "follow_up" }));
+      const unlinkedReminderId = await database.reminders.add(reminder(studentId));
+      const missingOwnerReminderId = await database.reminders.add(reminder(studentId, { call_log_id: 99999 }));
+      const { reminderId: mismatchedReminderId, callLogId: mismatchedCallLogId } = await createLinkedReminder(database, studentId);
+      await database.call_logs.update(mismatchedCallLogId, { student_id: otherStudentId });
+
+      await expect(cancelPendingLinkedCallReminder(99999, { owner_call_log_id: 1 }, database)).rejects.toThrow(
+        "Güncellenecek hatırlatma bulunamadı"
+      );
+      await expect(
+        cancelPendingLinkedCallReminder(completedReminderId, { owner_call_log_id: 1 }, database)
+      ).rejects.toThrow("Yalnızca açık hatırlatmalar");
+      await expect(
+        cancelPendingLinkedCallReminder(nonCallReminderId, { owner_call_log_id: 1 }, database)
+      ).rejects.toThrow("Yalnızca arama hatırlatmaları");
+      await expect(
+        cancelPendingLinkedCallReminder(unlinkedReminderId, { owner_call_log_id: 1 }, database)
+      ).rejects.toThrow("bağlı görüşme kaydı bulunamadı");
+      await expect(
+        cancelPendingLinkedCallReminder(missingOwnerReminderId, { owner_call_log_id: 99999 }, database)
+      ).rejects.toThrow("bağlı görüşme kaydı güncellenemedi");
+      await expect(
+        cancelPendingLinkedCallReminder(mismatchedReminderId, { owner_call_log_id: mismatchedCallLogId }, database)
+      ).rejects.toThrow("bağlı görüşme kaydı güncellenemedi");
+
+      expect((await database.reminders.get(completedReminderId))?.status).toBe("completed");
+      expect((await database.reminders.get(nonCallReminderId))?.status).toBe("pending");
+      expect((await database.reminders.get(unlinkedReminderId))?.status).toBe("pending");
+      expect((await database.reminders.get(missingOwnerReminderId))?.status).toBe("pending");
+      expect((await database.reminders.get(mismatchedReminderId))?.status).toBe("pending");
+      expect(await database.audit_logs.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("fails closed and rolls back cancellation when ownership validation or audit persistence fails", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const { reminderId, callLogId } = await createLinkedReminder(database, studentId);
+      const otherReminderId = await database.reminders.add(reminder(studentId));
+      await database.call_logs.update(callLogId, { created_reminder_id: otherReminderId });
+
+      await expect(
+        cancelPendingLinkedCallReminder(reminderId, { owner_call_log_id: callLogId }, database)
+      ).rejects.toThrow("bağlı görüşme kaydı");
+      expect((await database.reminders.get(reminderId))?.status).toBe("pending");
+      expect(await database.audit_logs.count()).toBe(0);
+
+      await database.call_logs.update(callLogId, { created_reminder_id: reminderId });
+      const reminderBefore = await database.reminders.get(reminderId);
+      database.audit_logs.hook("creating", () => {
+        throw new Error("Cancellation audit yazılamadı.");
+      });
+
+      await expect(
+        cancelPendingLinkedCallReminder(reminderId, { owner_call_log_id: callLogId }, database)
+      ).rejects.toThrow("Cancellation audit yazılamadı");
+      expect(await database.reminders.get(reminderId)).toEqual(reminderBefore);
+      expect(await database.audit_logs.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("rolls back a safe legacy cancellation when the audit cannot be persisted", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const { reminderId, callLogId } = await createLegacyLinkedReminder(database, studentId);
+      const reminderBefore = await database.reminders.get(reminderId);
+      const callLogBefore = await database.call_logs.get(callLogId);
+      database.audit_logs.hook("creating", () => {
+        throw new Error("Legacy cancellation audit yazılamadı.");
+      });
+
+      await expect(
+        cancelPendingLinkedCallReminder(reminderId, { owner_call_log_id: callLogId }, database)
+      ).rejects.toThrow("Legacy cancellation audit yazılamadı");
+      expect(await database.reminders.get(reminderId)).toEqual(reminderBefore);
+      expect(await database.call_logs.get(callLogId)).toEqual(callLogBefore);
       expect(await database.audit_logs.count()).toBe(0);
     } finally {
       database.close();

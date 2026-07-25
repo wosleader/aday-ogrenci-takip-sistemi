@@ -161,6 +161,46 @@ async function seedCallHistoryWithPendingReminder() {
   await db.reminders.update(reminderId, { call_log_id: callLogId });
 }
 
+async function seedCallHistoryWithLegacyPendingReminder() {
+  const studentId = await seedStudent();
+  const reminderId = await db.reminders.add({
+    uuid: "legacy-linked-pending-reminder",
+    student_id: studentId,
+    reminder_type: "call",
+    reminder_at: "2026-05-11T11:00:00.000Z",
+    status: "pending",
+    note: "Eski açık hatırlatma",
+    is_default_time_assigned: false,
+    sync_status: "local",
+    created_at: now,
+    updated_at: now,
+    deleted_at: null
+  });
+  const callLogId = await db.call_logs.add({
+    uuid: "call-history-with-legacy-pending-reminder",
+    student_id: studentId,
+    phone_id: null,
+    phone_snapshot: null,
+    contacted_phone_id: null,
+    contacted_phone_number: null,
+    contacted_phone_label: null,
+    call_time: "2026-05-10T12:00:00.000Z",
+    call_result: "call_later",
+    note: "Eski hatırlatma bağlı görüşme.",
+    reminder_at: "2026-05-11T11:00:00.000Z",
+    next_action: "Tekrar arama",
+    created_by: "agent",
+    created_reminder_id: null,
+    created_appointment_id: null,
+    sync_status: "local",
+    created_at: now,
+    updated_at: now,
+    deleted_at: null
+  });
+
+  await db.reminders.update(reminderId, { call_log_id: callLogId });
+}
+
 async function seedCallHistoryWithSharedPendingReminder() {
   const studentId = await seedStudent();
   const reminderId = await db.reminders.add({
@@ -924,6 +964,7 @@ describe("StudentsPage call history phone context", () => {
     expect(
       within(completeDialog).getByText("Bu görüşmeye bağlı açık hatırlatma tamamlandı olarak işaretlenecek. Görüşme kaydı silinmez.")
     ).toBeInTheDocument();
+    expect(within(completeDialog).getByRole("button", { name: "Vazgeç" })).toBeInTheDocument();
 
     await user.click(within(completeDialog).getByRole("button", { name: "Hatırlatmayı tamamla" }));
 
@@ -955,6 +996,186 @@ describe("StudentsPage call history phone context", () => {
 
     const callLog = await db.call_logs.where("uuid").equals("call-history-with-pending-reminder").first();
     expect(callLog?.deleted_at).toBeTruthy();
+  });
+
+  it("cancels a pending linked reminder only through the owner row and keeps the call history record", async () => {
+    const user = userEvent.setup();
+    await seedCallHistoryWithPendingReminder();
+    const reminder = await db.reminders.where("uuid").equals("linked-pending-reminder").first();
+    const callLog = await db.call_logs.where("uuid").equals("call-history-with-pending-reminder").first();
+
+    renderStudentsPage();
+
+    const cancelButton = await screen.findByRole("button", { name: "Hatırlatmayı iptal et" });
+    expect(cancelButton).toHaveAttribute("title", "Hatırlatmayı iptal et");
+    await user.click(cancelButton);
+
+    const cancelDialog = screen.getByRole("dialog", { name: "Hatırlatma iptal edilsin mi?" });
+    expect(
+      within(cancelDialog).getByText("Bu görüşmeye bağlı açık hatırlatma iptal edilecek. Görüşme kaydı ve varsa randevu silinmeyecek.")
+    ).toBeInTheDocument();
+    const reasonInput = within(cancelDialog).getByLabelText("İptal nedeni (isteğe bağlı)") as HTMLTextAreaElement;
+    expect(reasonInput).toHaveAttribute("placeholder", "Hatırlatmanın neden iptal edildiğini yazabilirsiniz.");
+    expect(within(cancelDialog).getByRole("button", { name: "Vazgeç" })).toBeInTheDocument();
+    await user.click(within(cancelDialog).getByRole("button", { name: "Vazgeç" }));
+
+    expect((await db.reminders.get(reminder!.id!))?.status).toBe("pending");
+    expect(screen.queryByRole("dialog", { name: "Hatırlatma iptal edilsin mi?" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Hatırlatmayı iptal et" }));
+    await user.type(screen.getByLabelText("İptal nedeni (isteğe bağlı)"), "  Takip gerekmiyor  ");
+    await user.click(screen.getByRole("button", { name: "Hatırlatmayı İptal Et" }));
+
+    await waitFor(async () => {
+      expect((await db.reminders.get(reminder!.id!))?.status).toBe("cancelled");
+    });
+    const cancellationAudit = (await db.audit_logs.where("entity_id").equals(reminder!.id!).toArray()).find(
+      (audit) => audit.field_name === "pending_reminder_cancel"
+    );
+
+    expect(JSON.parse(cancellationAudit?.new_value ?? "{}")).toMatchObject({
+      owner_call_log_id: callLog!.id,
+      new_status: "cancelled",
+      cancellation_reason: "Takip gerekmiyor"
+    });
+    expect(await db.call_logs.get(callLog!.id!)).toMatchObject({
+      deleted_at: null,
+      note: "Hatırlatma bağlı görüşme."
+    });
+    expect(await screen.findByText("Hatırlatma iptal edildi.")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "Hatırlatma iptal edilsin mi?" })).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "Hatırlatmayı iptal et" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Hatırlatmayı tamamla" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Hatırlatmayı düzenle" })).not.toBeInTheDocument();
+    });
+    expect(screen.getByText("Hatırlatma bağlı görüşme.")).toBeInTheDocument();
+  });
+
+  it("shows and completes cancellation for a safe legacy owner without backfilling its call-log link", async () => {
+    const user = userEvent.setup();
+    await seedCallHistoryWithLegacyPendingReminder();
+    const reminder = await db.reminders.where("uuid").equals("legacy-linked-pending-reminder").first();
+    const callLog = await db.call_logs.where("uuid").equals("call-history-with-legacy-pending-reminder").first();
+
+    await db.audit_logs.add({
+      entity_type: "reminder",
+      entity_id: reminder!.id!,
+      action_type: "update",
+      field_name: "pending_reminder_edit",
+      old_value: JSON.stringify({
+        reminder_at: "2026-05-11T10:00:00.000Z",
+        note: "Eski legacy notu",
+        owner_call_log_id: callLog!.id
+      }),
+      new_value: JSON.stringify({
+        reminder_at: reminder!.reminder_at,
+        note: reminder!.note,
+        owner_call_log_id: callLog!.id
+      }),
+      created_at: "2026-05-12T10:00:00.000Z"
+    });
+
+    renderStudentsPage();
+
+    await user.click(await screen.findByRole("button", { name: "Hatırlatmayı iptal et" }));
+    expect(screen.getByRole("dialog", { name: "Hatırlatma iptal edilsin mi?" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Hatırlatmayı İptal Et" }));
+
+    await waitFor(async () => {
+      expect((await db.reminders.get(reminder!.id!))?.status).toBe("cancelled");
+    });
+    expect((await db.call_logs.get(callLog!.id!))?.created_reminder_id).toBeNull();
+    expect(await screen.findByText("Hatırlatma iptal edildi.")).toBeInTheDocument();
+  });
+
+  it("hides cancellation when two pending legacy reminders point to the same owner", async () => {
+    await seedCallHistoryWithLegacyPendingReminder();
+    const reminder = await db.reminders.where("uuid").equals("legacy-linked-pending-reminder").first();
+    const callLog = await db.call_logs.where("uuid").equals("call-history-with-legacy-pending-reminder").first();
+
+    await db.reminders.add({
+      uuid: "duplicate-legacy-linked-pending-reminder",
+      student_id: reminder!.student_id,
+      call_log_id: callLog!.id,
+      reminder_type: "call",
+      reminder_at: "2026-05-11T11:00:00.000Z",
+      status: "pending",
+      note: "Çelişkili ikinci legacy hatırlatma",
+      is_default_time_assigned: false,
+      sync_status: "local",
+      created_at: now,
+      updated_at: now,
+      deleted_at: null
+    });
+
+    renderStudentsPage();
+
+    expect(await screen.findByText("Eski hatırlatma bağlı görüşme.")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "Hatırlatmayı iptal et" })).not.toBeInTheDocument();
+    });
+  });
+
+  it("shows cancellation only for a legacy owner when an active historical row shares the reminder reference", async () => {
+    const user = userEvent.setup();
+    await seedCallHistoryWithLegacyPendingReminder();
+    const reminder = await db.reminders.where("uuid").equals("legacy-linked-pending-reminder").first();
+    const studentId = reminder!.student_id;
+
+    await db.call_logs.add({
+      uuid: "call-history-legacy-shared-reference",
+      student_id: studentId,
+      phone_id: null,
+      phone_snapshot: null,
+      contacted_phone_id: null,
+      contacted_phone_number: null,
+      contacted_phone_label: null,
+      call_time: "2026-05-10T11:00:00.000Z",
+      call_result: "call_later",
+      note: "Tarihsel paylaşılan hatırlatma satırı.",
+      reminder_at: "2026-05-11T11:00:00.000Z",
+      next_action: "Tekrar arama",
+      created_by: "agent",
+      created_reminder_id: reminder!.id,
+      created_appointment_id: null,
+      sync_status: "local",
+      created_at: now,
+      updated_at: now,
+      deleted_at: null
+    });
+
+    renderStudentsPage();
+
+    expect(await screen.findByText("Eski hatırlatma bağlı görüşme.")).toBeInTheDocument();
+    expect(screen.getByText("Tarihsel paylaşılan hatırlatma satırı.")).toBeInTheDocument();
+    const ownerHistoryRow = screen.getByText("Eski hatırlatma bağlı görüşme.").closest(".tl-item") as HTMLElement | null;
+    const historicalHistoryRow = screen
+      .getByText("Tarihsel paylaşılan hatırlatma satırı.")
+      .closest(".tl-item") as HTMLElement | null;
+
+    expect(ownerHistoryRow).not.toBeNull();
+    expect(historicalHistoryRow).not.toBeNull();
+    expect(within(ownerHistoryRow!).getByRole("button", { name: "Hatırlatmayı iptal et" })).toBeInTheDocument();
+    expect(within(historicalHistoryRow!).queryByRole("button", { name: "Hatırlatmayı iptal et" })).not.toBeInTheDocument();
+
+    await user.click(within(ownerHistoryRow!).getByRole("button", { name: "Hatırlatmayı iptal et" }));
+    expect(screen.getByRole("dialog", { name: "Hatırlatma iptal edilsin mi?" })).toBeInTheDocument();
+  });
+
+  it("shows a fail-closed error when a reminder becomes terminal while its cancellation modal is open", async () => {
+    const user = userEvent.setup();
+    await seedCallHistoryWithPendingReminder();
+    const reminder = await db.reminders.where("uuid").equals("linked-pending-reminder").first();
+
+    renderStudentsPage();
+
+    await user.click(await screen.findByRole("button", { name: "Hatırlatmayı iptal et" }));
+    await db.reminders.update(reminder!.id!, { status: "completed" });
+    await user.click(screen.getByRole("button", { name: "Hatırlatmayı İptal Et" }));
+
+    expect(await screen.findByText("Yalnızca açık hatırlatmalar güncellenebilir.")).toBeInTheDocument();
+    expect((await db.reminders.get(reminder!.id!))?.status).toBe("completed");
   });
 
   it("creates a reminder only for call_later from the drawer form", async () => {
@@ -1030,9 +1251,10 @@ describe("StudentsPage call history phone context", () => {
       created_reminder_id: null
     });
     expect(screen.queryByRole("button", { name: "Hatırlatmayı tamamla" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Hatırlatmayı iptal et" })).not.toBeInTheDocument();
   });
 
-  it("shows linked reminder quick complete only on the owner history row", async () => {
+  it("keeps quick complete, edit, and cancellation on only the owner row with a shared reminder reference", async () => {
     await seedCallHistoryWithSharedPendingReminder();
     const reminder = await db.reminders.where("uuid").equals("shared-pending-reminder").first();
     const ownerCallLog = await db.call_logs.where("uuid").equals("call-history-shared-reminder-owner").first();
@@ -1061,6 +1283,7 @@ describe("StudentsPage call history phone context", () => {
     expect(screen.getByText("Eski hatırlatma satırı.")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Hatırlatmayı tamamla" })).toHaveLength(1);
     expect(screen.getAllByRole("button", { name: "Hatırlatmayı düzenle" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Hatırlatmayı iptal et" })).toHaveLength(1);
 
     const ownerHistoryRow = screen.getByText("Hatırlatma sahibi satır.").closest(".tl-item") as HTMLElement | null;
     const oldHistoryRow = screen.getByText("Eski hatırlatma satırı.").closest(".tl-item") as HTMLElement | null;
@@ -1069,5 +1292,7 @@ describe("StudentsPage call history phone context", () => {
     expect(oldHistoryRow).not.toBeNull();
     expect(within(ownerHistoryRow!).getByRole("button", { name: /Tekrar düzenlendi:/ })).toBeInTheDocument();
     expect(within(oldHistoryRow!).queryByRole("button", { name: /Tekrar düzenlendi:/ })).not.toBeInTheDocument();
+    expect(within(ownerHistoryRow!).getByRole("button", { name: "Hatırlatmayı iptal et" })).toBeInTheDocument();
+    expect(within(oldHistoryRow!).queryByRole("button", { name: "Hatırlatmayı iptal et" })).not.toBeInTheDocument();
   });
 });
