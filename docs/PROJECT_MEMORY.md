@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Linked Call Reminder Cancellation Policy | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Cancel Pending Linked Call Reminder | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,26 +6,29 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Linked Call Reminder Cancellation Policy
-- FILE_MAP: Pending Linked Reminder Edit
-- DECISIONS: Linked Call Reminder Cancellation Policy
-- Latest closed product checkpoint: `e3f14aa docs: close pending linked reminder edit`
-- Implementation: `93b4471 feat: edit pending linked reminders`
+- PROJECT_MEMORY: Cancel Pending Linked Call Reminder
+- FILE_MAP: Cancel Pending Linked Call Reminder
+- DECISIONS: Cancel Pending Linked Call Reminder
+- Latest closed product checkpoint: `e15a051 feat: cancel pending linked reminders`
+- Implementation: `e15a051 feat: cancel pending linked reminders`
 - Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
 
-## Latest Decision - Linked Call Reminder Cancellation Policy
+## Latest Checkpoint - Cancel Pending Linked Call Reminder
 
-- Discovery COMPLETE ve product decision APPROVED; implementation NOT STARTED. Aktif kod WIP yoktur. Son kapanmış ürün checkpoint'i `e3f14aa` olarak kalır; başlangıç terminal HEAD'i `48e56be` idi ve her yeni iş öncesi Git ile doğrulanmalıdır.
-- Yalnız gerçek owner/current history satırındaki bağlı `pending` `call` reminder iptal edilecektir. Owner kullanıcı rolü değil, `reminder.call_log_id` ↔ owner call log ↔ `created_reminder_id` veri bağlantısının doğrulanmasıdır; missing/conflicting/ambiguous link fail-closed'dur.
-- Reminder cancellation yalnız `pending → cancelled` transition'ıdır. Reminder veya call log silinmez; appointment, call log, student summary ve PhoneRecord mutate edilmez. Owner call logdaki appointment tek başına blok değildir; dependency bütünlüğü belirsizse işlem bloklanır. Appointment lifecycle kapsam dışıdır.
-- İptal nedeni opsiyonel kısa metindir; trim edilmiş boş değer `null` sayılır ve reminder modeline değil append-only audit payload'ına yazılır. Audit, reminder status update ile Dexie transaction'ında atomik olmalıdır.
-- UI yalnız StudentsPage history owner satırında `Hatırlatmayı İptal Et` aksiyonuyla açılır. Tooltip/aria `Hatırlatmayı iptal et`; confirmation modalında `Vazgeç` ve `Hatırlatmayı İptal Et` kullanılır. Açıklama görüşme kaydı ve varsa randevunun silinmeyeceğini belirtir. Mevcut completion modalındaki vazgeçme eylemi implementation sırasında `Vazgeç` olarak netleştirilecektir.
-- Pending reader/list/alarm/count yalnız pending reminder'ları göstermeye devam eder. Full System Backup cancelled status ve audit'i korur; normal export audit payload'ını taşımaz; yeni KPI/schema/migration gerekmez. Shared terminal status helper refactor'u ayrı discovery konusudur.
-- Sıradaki tek doğru iş: `MOD: Implementation — Cancel Pending Linked Call Reminder`.
+- Feature tamamlandı ve origin'e pushlandı: `e15a051 feat: cancel pending linked reminders`. Repo docs closure bu aşamada review/commit bekler; yeni docs commit hash'i önceden yazılmaz.
+- Cancellation yalnız gerçek owner/current history satırında görünür. Authoritative yön `reminder.call_log_id → owner call log`dur; başka call log'lardaki aynı `created_reminder_id` değerleri tarihsel/shared reference olabilir ve owner cancellation'ı bloklamaz.
+- Modern reciprocal owner `created_reminder_id === reminder.id` ile doğrulanır. Güvenli legacy owner `null/undefined` back-link ile kabul edilebilir; başka reminder ID'si, student mismatch, silinmiş owner veya birden fazla aktif pending reminder aynı owner'ı gösterirse işlem fail-closed'dur.
+- Lifecycle yalnız `pending → cancelled`dır. Reminder silinmez; call log, student, appointment ve PhoneRecord mutate edilmez. Reopen veya `cancelled → pending` yoktur.
+- UI StudentsPage history owner satırında `Hatırlatmayı İptal Et` aksiyonunu gösterir. Tooltip/aria `Hatırlatmayı iptal et`; modal `Hatırlatma iptal edilsin mi?`, optional neden, `Vazgeç` ve `Hatırlatmayı İptal Et` aksiyonlarını kullanır. Completion modalının ikincil aksiyonu da `Vazgeç` olarak netleştirilmiştir.
+- `pending_reminder_cancel` audit marker'ı reminder status update ile aynı Dexie transaction'ında append-only yazılır. Pending reader/list/alarm yalnız pending kayıtları gösterir; normal export audit payload'ı taşımaz, Full System Backup cancelled status ve audit'i korur.
+- Validation: Strategy Review `PASS WITH NOTES`, manuel QA `PASS`, `52` test dosyası / `530` test PASS, build PASS, `git diff --check` PASS. `NO MIGRATION`; `NO BACKFILL`.
+- Non-blocking teknik not: duplicate-owner doğrulaması reminder tablosunun tamamını okur; veri hacmi anlamlı büyürse ayrı performance discovery konusu olarak değerlendirilir.
+- Ayrı deferred UX işi: iletişim geçmişi action bar için görünür `✓` ve diğer aksiyonların `⋯` menüsünde toplanması. Bu feature'ın kapsamı veya eksik işi değildir.
+- Sonraki kapı: repo docs review → exact-path docs commit/push → deployment preparation → Windows VDS deployment → live QA → deployment/live-QA closure → Obsidian shadow → Drive shadow verification.
 
-## Latest Checkpoint - Pending Linked Reminder Edit
+## Previous Checkpoint - Pending Linked Reminder Edit
 
 - Latest closed product checkpoint: `e3f14aa docs: close pending linked reminder edit`.
 - Implementation: `93b4471 feat: edit pending linked reminders`.

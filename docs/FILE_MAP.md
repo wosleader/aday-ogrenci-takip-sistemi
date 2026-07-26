@@ -35,7 +35,7 @@ Son doğrulandı: Sprint 8.2
 Son doğrulandı: Phone-Level Outcome Read Model Pilot
 
 - `src/features/students/StudentsPage.tsx`
-  Aday Listesi, filtreler, sağ drawer, görüşme akışı, kompakt/açılır-kapanır kısayol yardım barı, call history UI ve sağ kişi kartı telefon alanını içerir. Sprint 9.3D-1 itibarıyla call history `phone_context_label` / `phone_context_number` display alanlarını gösterir. Sprint 9.3E-2 itibarıyla Telefon 1 / Telefon 2 aksiyonlu kartlarını korur, Telefon 3+ için readonly görünüm sunar, `+N numara daha göster` / `Daha az göster` interaction'ını yönetir ve `visible_phones` / `phones` / `hidden_phone_count` alanlarını tüketir. Sprint 9.3F-1 itibarıyla Telefon 3+ için call save selection, selected call phone state, `saveCallAndGoNext` içinde `contacted_phone_id` hesaplaması ve legacy Telefon 1/2 fallback davranışını taşır. Phone-Level Outcome Read Model Pilot itibarıyla Telefon 1/2 ve Telefon 3+ kartlarında `call_logs` kaynaklı read-only `Son sonuç` göstergesini render eder; schema, import/export ve `phone_status` semantiğini değiştirmez. `8f1f613` itibarıyla bağlantısız call history kayıtları için düzeltme/düzenle modalını ve `İletişim kaydını geçersiz say / sil` / `Geçersiz say / sil` soft delete aksiyon dilini sunar. `39e3840` itibarıyla pending reminder bağlantılı history satırında icon-only `Hatırlatmayı tamamla` aksiyonunu ve confirmation modalını render eder.
+  Aday Listesi, filtreler, sağ drawer, görüşme akışı, kompakt/açılır-kapanır kısayol yardım barı, call history UI ve sağ kişi kartı telefon alanını içerir. Sprint 9.3D-1 itibarıyla call history `phone_context_label` / `phone_context_number` display alanlarını gösterir. Sprint 9.3E-2 itibarıyla Telefon 1 / Telefon 2 aksiyonlu kartlarını korur, Telefon 3+ için readonly görünüm sunar, `+N numara daha göster` / `Daha az göster` interaction'ını yönetir ve `visible_phones` / `phones` / `hidden_phone_count` alanlarını tüketir. Sprint 9.3F-1 itibarıyla Telefon 3+ için call save selection, selected call phone state, `saveCallAndGoNext` içinde `contacted_phone_id` hesaplaması ve legacy Telefon 1/2 fallback davranışını taşır. Phone-Level Outcome Read Model Pilot itibarıyla Telefon 1/2 ve Telefon 3+ kartlarında `call_logs` kaynaklı read-only `Son sonuç` göstergesini render eder; schema, import/export ve `phone_status` semantiğini değiştirmez. `8f1f613` itibarıyla bağlantısız call history kayıtları için düzeltme/düzenle modalını ve `İletişim kaydını geçersiz say / sil` / `Geçersiz say / sil` soft delete aksiyon dilini sunar. `39e3840` itibarıyla pending reminder bağlantılı history satırında icon-only `Hatırlatmayı tamamla` aksiyonunu ve confirmation modalını render eder. `e15a051` itibarıyla yalnız canonical owner satırında `Hatırlatmayı iptal et` aksiyonunu, optional nedenli confirmation modalını ve `Vazgeç` ikincil eylemini render eder; shared/tarihsel satırlar aksiyon almaz.
 - `src/features/students/services/studentListReader.ts`
   Aday liste satırlarını okuma, filtreleme, Sınıf/Şube helper’ları ve `StudentListRow` read model üretimi. Legacy `phone_1` / `phone_2` / `phone_count` alanlarını korur; Sprint 9.3E-1 itibarıyla sağ kişi kartı çoklu telefon hazırlığı için `phones`, `visible_phones` ve `hidden_phone_count` alanlarını taşır.
 - `src/features/students/services/studentPhoneStatus.ts`
@@ -62,7 +62,7 @@ Son doğrulandı: Phone-Level Outcome Read Model Pilot
 - `src/features/calls/services/callLogPhoneContext.ts`
   Call log telefon bağlamı display/fallback helper’ları; `phone_snapshot` varsa Telefon N / ilişki etiketi label’ı üretir, eski kayıtlarda güvenli fallback döner.
 - `src/features/calls/services/callHistoryReader.ts`
-  Sağ drawer iletişim geçmişi için call history read model üretir; Sprint 9.3C itibarıyla phone snapshot-first context display alanlarını ve legacy fallback'i taşır. Phone-Level Outcome Read Model Pilot itibarıyla `phone_id`, `phone_snapshot.phone_id` ve `contacted_phone_id` alanlarını read model'e taşır; sağ kart telefon bazlı son sonuç lookup'ı bu alanları kullanır. `39e3840` itibarıyla linked reminder read model fields ve `canCompleteLinkedReminder` bilgisini taşır. `7636b57` itibarıyla `canCompleteLinkedReminder` yalnız owner/current linked reminder history satırında true olur; owner önceliği `reminder.call_log_id`, fallback latest active linked call log sıralamasıdır.
+  Sağ drawer iletişim geçmişi için call history read model üretir; Sprint 9.3C itibarıyla phone snapshot-first context display alanlarını ve legacy fallback'i taşır. Phone-Level Outcome Read Model Pilot itibarıyla `phone_id`, `phone_snapshot.phone_id` ve `contacted_phone_id` alanlarını read model'e taşır; sağ kart telefon bazlı son sonuç lookup'ı bu alanları kullanır. `39e3840` itibarıyla linked reminder read model fields ve `canCompleteLinkedReminder` bilgisini taşır. `7636b57` itibarıyla `canCompleteLinkedReminder` yalnız owner/current linked reminder history satırında true olur. `e15a051` itibarıyla `canCancelLinkedReminder` canonical `reminder.call_log_id` owner'ını çözer; aynı reminder ID'sini taşıyan shared/tarihsel call log satırlarını cancellation owner saymaz ve duplicate pending owner durumunda fail-closed döner.
 
 ## 5. Reminders
 
@@ -75,7 +75,7 @@ Son doğrulandı: Sprint 9.3E-1 Right Card Multi-Phone Read Model
 - `src/features/reminders/services/reminderListReader.ts`
   Hatırlatmalar sayfası için reminder list read model üretir; Sprint 9.3C itibarıyla reminder phone snapshot context display alanlarını taşır ve mevcut `phone_1` / `phone_2` davranışını korur.
 - `src/features/reminders/services/reminderLifecycle.ts`
-  Pending reminder kayıtlarını completed statüsüne alan lifecycle helper'ını taşır; linked reminder quick complete akışı bu helper üzerinden çalışır.
+  Pending reminder kayıtlarını completed statüsüne alan lifecycle helper'ını taşır; linked reminder quick complete akışı bu helper üzerinden çalışır. `e15a051` ile pending linked call reminder cancellation, owner resolver, `pending → cancelled` transaction'ı ve `pending_reminder_cancel` audit append işlemini taşır; call log, student ve appointment mutate edilmez.
 - `src/features/reminders/services/reminderDismissalStore.ts`
   Kapatılan reminder popup ve çan paneli geçmişi.
 - `src/features/reminders/services/reminderPopupViewModel.ts`
@@ -181,7 +181,7 @@ Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
 - `tests/students/StudentsPageShortcutHelp.test.tsx`
   Aday Listesi alt kısayol yardım barının kompakt/açık görünümünü, Göster/Gizle davranışını ve localStorage toleransını test eder.
 - `tests/students/StudentsPageCallHistory.test.tsx`
-  Call history UI'da phone context label/number görünürlüğünü, no-context fallback davranışını, düzeltme/düzenle modalını, `Geçersiz Say / Sil` soft delete aksiyonunu ve linked pending reminder için icon-only `Hatırlatmayı tamamla` confirmation akışını test eder.
+  Call history UI'da phone context label/number görünürlüğünü, no-context fallback davranışını, düzeltme/düzenle modalını, `Geçersiz Say / Sil` soft delete aksiyonunu, linked pending reminder için icon-only `Hatırlatmayı tamamla` ve owner-only `Hatırlatmayı iptal et` confirmation akışlarını test eder.
 - `tests/students/StudentsPageMultiPhone.test.tsx`
   Sağ kişi kartında 5 telefonlu aday için Telefon 3+ readonly görünümü, expand/collapse davranışı, `hidden_phone_count` sıfır durumu, telefonsuz aday fallback'i ve Telefon 3+ için aksiyon butonu gösterilmemesini test eder.
 - `tests/students/StudentsPagePhoneSelection.test.tsx`
@@ -189,11 +189,11 @@ Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
 - `tests/reminders/*`
   Reminder alarm, dismissed store, popup view model, reminder settings ve reminder lifecycle testleri.
 - `tests/reminders/reminderLifecycle.test.ts`
-  Pending reminder complete lifecycle helper'ını ve completed status transition davranışını test eder.
+  Pending reminder complete lifecycle helper'ını, cancellation transaction/audit rollback'ını, modern/legacy owner ve shared-reference fail-closed davranışlarını test eder.
 - `tests/reminders/reminderPhoneContext.test.ts`
   Reminder telefon bağlamı helper’ını, eski kayıt fallback davranışını ve Türkçe relation label çıktısını test eder.
 - `tests/reminders/reminderListReader.test.ts`
-  Reminder list phone context snapshot/null fallback ve mevcut `phone_1` / `phone_2` regression davranışlarını test eder.
+  Reminder list phone context snapshot/null fallback, mevcut `phone_1` / `phone_2` regression davranışı ve cancelled reminder'ın pending listeden dışlanmasını test eder.
 - `tests/reminders/RemindersPage.test.tsx`
   Reminder list UI'da phone context label/number görünürlüğünü, `phone_1` fallback'ini, `phone_2` davranışını ve `Aranacak telefon` başlığını test eder.
 - `tests/reports/*`
@@ -696,7 +696,29 @@ Son doğrulandı: `cf47e2d feat: import explicit guardian phone relations`
   Veli telefonunun Veli guardian kaydına bağlanmasını ve Veli adı yoksa fake guardian oluşturulmadan `guardian_id: null` kalmasını doğrular.
 - Scope dışı: export/backup, StudentsPage, WhatsApp, schema/db ve package/config değişmemiştir.
 
-## Latest File Map Addendum - Pending Linked Reminder Edit
+## Latest File Map Addendum - Cancel Pending Linked Call Reminder
+
+Son doğrulandı: `e15a051 feat: cancel pending linked reminders`
+
+- `src/features/reminders/services/reminderLifecycle.ts`
+  Canonical owner resolver'ı ve pending linked call reminder cancellation transaction'ını taşır. `reminder.call_log_id` owner yönüdür; shared/tarihsel call-log reference'ları owner conflict değildir, fakat aynı owner'a bağlı birden fazla aktif pending reminder fail-closed'dur. Cancellation yalnız reminder status/updated_at değerini değiştirir ve `pending_reminder_cancel` auditini atomik ekler.
+- `src/features/calls/services/callHistoryReader.ts`
+  Owner/current history satırına `canCancelLinkedReminder` üretir. Modern reciprocal ve güvenli legacy owner'ı destekler; shared/tarihsel satırlar action almaz.
+- `src/features/students/StudentsPage.tsx`
+  Owner satırında `Hatırlatmayı iptal et` icon aksiyonunu ve optional nedenli confirmation modalını render eder. Call log veya randevu silinmeyeceğini açıklar; completion modalının vazgeçme metni de `Vazgeç`dir.
+- `tests/calls/callHistoryReader.test.ts`
+  Modern/legacy owner, birden fazla shared reference, conflicting reciprocal ve duplicate pending owner visibility kurallarını doğrular.
+- `tests/reminders/reminderLifecycle.test.ts`
+  Owner cancellation success, shared row rejection, duplicate-owner fail-closed, audit rollback ve call log/appointment korunumu regresyonlarını doğrular.
+- `tests/students/StudentsPageCallHistory.test.tsx`
+  Owner satırında cancellation ikon/modal görünürlüğünü, shared satırda aksiyonun olmamasını ve existing complete/edit/delete akışlarının korunmasını doğrular.
+- `tests/reminders/reminderListReader.test.ts` ve `tests/reminders/reminderAlarmReader.test.ts`
+  Cancelled reminder'ın pending list/alarm kaynaklarından dışlandığını doğrular.
+- `tests/exports/exportDataReader.test.ts` ve `tests/settings/backupRestore.test.ts`
+  Normal exportun cancellation audit payloadını taşımadığını, Full System Backup/restore'un cancelled status ile audit payloadını koruduğunu doğrular.
+- Scope dışı: schema/migration, backfill, RemindersPage aksiyonu, appointment lifecycle, import/export formatı, package/config ve VDS deployment değişmemiştir.
+
+## Previous File Map Addendum - Pending Linked Reminder Edit
 
 Son doğrulandı: `93b4471 feat: edit pending linked reminders`
 

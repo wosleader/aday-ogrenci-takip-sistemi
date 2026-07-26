@@ -4,14 +4,14 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Latest closed product checkpoint: `e3f14aa docs: close pending linked reminder edit`
-- Implementation: `93b4471 feat: edit pending linked reminders`
+- Latest closed product checkpoint: `e15a051 feat: cancel pending linked reminders`
+- Implementation: `e15a051 feat: cancel pending linked reminders`
 - Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi, tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i, iletişim geçmişi edit/void MVP'si, phone action label/helper cleanup, Reporting V2 Summary MVP + UI polish, linked communication history terminal status-aware soft delete ve linked reminder quick complete zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
-- Pending linked reminder edit implementation, tests/build, Strategy Review, feature commit/push, Windows VDS deploy, canlı QA, docs closure ve docs commit/push tamamlandı. Aktif implementation veya docs WIP yoktur.
-- Obsidian sync: PASS — kullanıcı paketi uyguladığını bildirdi. Drive shadow: TEYİT EDİLEMEDİ.
-- Linked call reminder cancellation discovery COMPLETE ve product decision APPROVED; implementation NOT STARTED. Aktif kod WIP yoktur. Sıradaki tek doğru iş: `MOD: Implementation — Cancel Pending Linked Call Reminder`.
+- Pending linked reminder edit kapanışı tamamlandı. Cancel pending linked reminder implementation, tests/build, Strategy Review, manuel QA ve feature commit/push tamamlandı. Bu feature için repo docs closure review/commit bekler; deployment ve live QA henüz bu feature için yapılmadı.
+- Önceki checkpoint'in Obsidian sync sonucu PASS olarak bildirilmişti. Bu feature için Obsidian/Drive shadow güncellemesi bu taskta yapılmadı.
+- Pending linked call reminder cancellation tamamlandı: gerçek owner/current history satırında iptal aksiyonu görünür; shared/tarihsel referans satırlarında görünmez. `pending → cancelled` dışında lifecycle transition yoktur; call log, student ve appointment korunur.
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
 - Önceki import UI progressive disclosure commit: 0c40524 feat: collapse long import review lists
@@ -28,17 +28,19 @@
 - Working tree beklenen durumu: clean
 - GitHub/origin durumu: aktif branch `origin/sprint-9-2-multi-phone-architecture-plan` ile aynı son commit üzerinde görünür.
 
-## Latest Decision - Linked Call Reminder Cancellation Policy
+## Latest Checkpoint - Cancel Pending Linked Call Reminder
 
-- Kapsam yalnız gerçek owner/current history satırındaki bağlı `pending` `call` reminder'dır. Completed/cancelled, bağlantısız, call dışı, tarihsel/shared reference reminder'lar; RemindersPage doğrudan aksiyonu, reminder reopen, appointment lifecycle ve genel lifecycle refactor kapsam dışıdır.
-- Owner kullanıcı rolü değildir: `reminder.call_log_id` ↔ owner call log ↔ `created_reminder_id` bağlantısı servis katmanında yeniden doğrulanır. Missing/conflicting/ambiguous bağlantı fail-closed'dur.
+- Feature commit/push: `e15a051 feat: cancel pending linked reminders`; HEAD/origin yeni iş öncesi Git ile doğrulanmalıdır.
+- Kapsam yalnız gerçek owner/current history satırındaki bağlı `pending` `call` reminder'dır. Completed/cancelled, bağlantısız, call dışı ve shared/tarihsel reference satırları aksiyon almaz; RemindersPage doğrudan aksiyonu, reopen, appointment lifecycle ve genel lifecycle refactor kapsam dışıdır.
+- Owner kullanıcı rolü değildir: `reminder.call_log_id → owner call log` authoritative yönüdür. Modern reciprocal link, güvenli legacy fallback ve aynı owner'a bağlı tek aktif pending reminder kuralı servis katmanında yeniden doğrulanır. Shared/tarihsel `created_reminder_id` referansları owner cancellation'ı bloklamaz; missing/conflicting/ambiguous bağlantı fail-closed'dur.
 - Appointment owner call logda bulunsa bile tek başına cancellation'ı bloklamaz. Cancellation sadece reminder'ı `pending → cancelled` yapar; appointment, call log ve student summary değişmez. Reminder veya görüşme kaydı silinmez.
 - İptal nedeni opsiyoneldir; trim edilmiş boş değer `null` sayılır ve reminder modeline yeni alan eklemeden append-only audit payload'ında tutulur. Reminder status update ve audit, Dexie transaction'ında atomik olmalıdır.
-- UI MVP yalnız StudentsPage history owner satırıdır: `Hatırlatmayı İptal Et`, tooltip/aria `Hatırlatmayı iptal et`, modal `Hatırlatma iptal edilsin mi?`, ikincil eylem `Vazgeç`, birincil eylem `Hatırlatmayı İptal Et`. Açıklama görüşme kaydı ve varsa randevunun silinmeyeceğini söyler. Mevcut completion modalının vazgeçme eylemi implementation sırasında `Vazgeç` olarak netleştirilecektir.
-- Pending reader/list/alarm/count davranışı korunur; Full System Backup cancelled status ve audit'i saklar, normal export audit payload'ını taşımaz. Schema/migration, KPI ve shared terminal policy refactor bu implementation'ın kapsamı dışındadır.
-- Son kapanmış ürün checkpoint'i `e3f14aa`; bu docs decision closure için başlangıç terminal HEAD'i `48e56be` idi. Yeni docs commit hash'i önceden yazılmaz; yeni iş öncesi terminal Git durumu doğrulanır.
+- UI StudentsPage history owner satırıdır: `Hatırlatmayı İptal Et`, tooltip/aria `Hatırlatmayı iptal et`, modal `Hatırlatma iptal edilsin mi?`, ikincil eylem `Vazgeç`, birincil eylem `Hatırlatmayı İptal Et`. Açıklama görüşme kaydı ve varsa randevunun silinmeyeceğini söyler. Completion modalının ikincil eylemi `Vazgeç` olarak netleştirildi.
+- Pending reader/list/alarm/count davranışı korunur; Full System Backup cancelled status ve audit'i saklar, normal export audit payload'ını taşımaz. `NO MIGRATION`; `NO BACKFILL`. Duplicate-owner doğrulamasının full reminder scan maliyeti non-blocking performance notudur.
+- Validation: Strategy Review `PASS WITH NOTES`, manuel QA `PASS`, tests `52` files / `530` tests PASS, build PASS. Repo docs closure review/commit ardından deployment preparation, Windows VDS deployment ve live QA gelecektir.
+- Ayrı deferred UX işi: görünür `✓` ve diğer history aksiyonlarını `⋯` menüsünde toplama fikri; bu checkpoint'e dahil değildir.
 
-## Latest Handoff Update - Pending Linked Reminder Edit
+## Previous Handoff Update - Pending Linked Reminder Edit
 
 - Latest closed product checkpoint: `e3f14aa docs: close pending linked reminder edit`; branch `sprint-9-2-multi-phone-architecture-plan`.
 - Implementation: `93b4471 feat: edit pending linked reminders`.
@@ -63,7 +65,7 @@
 - `call_later` reminder davranışı korunur. Appointment lifecycle redesign yapılmadı. Existing pending reminder terminal/non-reminder result ile otomatik completed/cancelled yapılmadı.
 - Scope dışı/değişmeyenler: schema/migration, import/export, backup/restore, WhatsApp, Reporting V2, appointment lifecycle redesign ve every-call-later-creates-separate-reminder product change.
 - Historical backlog: pending/linked reminder edit UX discovery bu checkpoint anında açık durumdaydı; ihtiyaç `93b4471` ile çözüldü.
-- Cancel reminder action hâlâ backlog / not implemented. Reminder reschedule/ertele hâlâ backlog / not implemented.
+- Historical scope: Bu checkpoint anında cancel reminder action backlog / not implemented idi; ihtiyaç daha sonra `e15a051` ile çözüldü. Reminder reschedule/ertele hâlâ backlog / not implemented.
 - Beklenen working tree: tracked dosya değişikliği yok, yalnız `?? dev-server.log`.
 
 ## Latest Handoff Update - Linked Reminder Owner Row Visibility Fix
@@ -76,7 +78,7 @@
 - VDS deploy tamamlandı: VDS önce `39e3840` seviyesindeydi, `git pull` ile `39e3840..7636b57` fast-forward edildi, `npm ci` OK, `npm run build -- --base=/demo/` OK, `robocopy /MIR` OK ve `FAILED 0`.
 - VDS HEAD/origin `7636b57` olarak doğrulandı; kullanıcı smoke sonucu: `Hepsi ok devam`.
 - Strict-owner policy discovery sonradan yapıldı ancak ek implementation gerekmedi; canlıdaki sorun stale local/VDS ortamı ve owner-row fix'in VDS'de olmamasından kaynaklanıyordu.
-- Cancel reminder action backlog olarak kalır; bu sprintte uygulanmadı.
+- Historical scope: Cancel reminder action bu sprintte backlog olarak kalmıştı; ihtiyaç daha sonra `e15a051` ile uygulandı.
 - Beklenen working tree: tracked dosya değişikliği yok, yalnız `?? dev-server.log`.
 
 ## Latest Handoff Update - Linked Reminder Quick Complete
@@ -87,10 +89,10 @@
 - Pending appointment ve postponed appointment bağlantılı call log kayıtları bloklu kalır; terminal appointment status'ları soft delete edilebilir. Status source of truth'tur; yalnız tarih geçmişliği kriter değildir.
 - Sağ kart iletişim geçmişinde pending reminder bağlantılı satır küçük icon-only `Hatırlatmayı tamamla` aksiyonu gösterir. Aksiyon confirmation modal sonrası reminder `status` değerini `completed` yapar; call log'u silmez, link detach etmez, aday özetini değiştirmez.
 - Complete işleminden sonra mevcut delete guard doğal olarak aynı call log için `Geçersiz Say / Sil` akışına izin verir. Büyük yazılı yeşil button kullanılmaz; açıklama title/aria/confirmation üzerinde kalır.
-- Scope dışı/değişmeyenler: reminder cancel button, appointment quick action, Reminders sayfasına navigasyon, Students page state preservation, reminder/appointment lifecycle redesign, export/import/backup formatı, Reporting V2 metric calculation ve WhatsApp flow.
+- Historical scope/değişmeyenler: reminder cancel button bu quick-complete sprintinde yoktu ve daha sonra `e15a051` ile ayrı feature olarak eklendi; appointment quick action, Reminders sayfasına navigasyon, Students page state preservation, reminder/appointment lifecycle redesign, export/import/backup formatı, Reporting V2 metric calculation ve WhatsApp flow değişmedi.
 - Validation: terminal status-aware delete policy phase calls 6/73, reminders 7/33, reports 3/22, exports 4/34 ve build PASS. Quick complete phase calls 6/77, reminders 8/37, students 10/90, reports 3/22 ve build PASS. Bilinen Vite chunk-size warning devam eder.
 - VDS deploy tamamlandı; kullanıcı smoke sonucunu `sıkıntı yok` olarak bildirdi. Öğrenci kartı icon-only complete action çalışır ve ardından delete flow çalışır.
-- Next safe backlog: Obsidian shadow sync; gerekirse linked reminder quick complete Obsidian shadow sync; reminder cancel button discovery; appointment quick action discovery; Reminders page navigation + Students state preservation UX discovery; reminder/appointment lifecycle redesign discovery; Reporting V2 future personnel/team, came/no-show ve lifecycle reports discovery.
+- Historical next backlog: Obsidian shadow sync; gerekirse linked reminder quick complete Obsidian shadow sync; reminder cancel button discovery daha sonra tamamlandı; appointment quick action discovery; Reminders page navigation + Students state preservation UX discovery; reminder/appointment lifecycle redesign discovery; Reporting V2 future personnel/team, came/no-show ve lifecycle reports discovery.
 
 ## Latest Handoff Update - Reporting V2 Summary MVP
 
