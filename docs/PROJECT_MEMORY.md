@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Cancel Pending Linked Call Reminder | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Appointment Model C+ product decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,19 +6,29 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Cancel Pending Linked Call Reminder
+- PROJECT_MEMORY: Appointment Model C+ product decision
 - FILE_MAP: Cancel Pending Linked Call Reminder
-- DECISIONS: Cancel Pending Linked Call Reminder
-- Latest closed product checkpoint: `e15a051 feat: cancel pending linked reminders`
-- Implementation: `e15a051 feat: cancel pending linked reminders`
-- Current implementation/deployment checkpoint: `a2743a3 docs: close pending reminder cancellation`
+- DECISIONS: Appointment Model C+ product decision
+- Latest closed product checkpoint: `a8c1b09 docs: close reminder cancellation deployment`
+- Previous implementation: `e15a051 feat: cancel pending linked reminders`
+- New active feature: `Appointment Model C+ — Gerçek randevu + veliye mesaj görevi + randevu alarmı`.
+- Product decision: APPROVED. Implementation başlamadı; migration/backfill yetkilendirilmedi ve önce implementation architecture discovery/test planning gerekir.
 - Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
 
+## Current Product Decision - Appointment Model C+
+
+- `call_later` mevcut pending `call` reminder, alarm/list ve edit/complete/cancel/delete lifecycle'ı ile aynen korunur.
+- `appointment` sonucunda ayrı sahte `call` reminder oluşturulmaz. Karar sonrası gerçek appointment, owner call log ve modern ters link ile canonical planlı etkinlik olacaktır; tarih/saat ve not kalıcı saklanacaktır.
+- Pending appointment iki ayrı takip üretir: veliye manuel mesaj gönder görevi ve randevu saati alarmı. Mesaj görevinin tamamlanması appointment'ı veya randevu alarmını kapatmaz.
+- Veli mesaj görevi Europe/Istanbul yerel saatine göre: randevu saati 12.00 öncesiyse 24 saat, 12.00 ve sonrasındaysa 22 saat öncedir; hesaplanan saat 19.00'dan sonraysa aynı gün 19.00'a sabitlenir. Geç oluşturulmuş gelecekteki appointment için geçmişte kalan görev hemen due/overdue görünür.
+- Reschedule aynı appointment'ı günceller, yeni mesaj görevini hesaplar ve önceki görevi geçersiz kılar. `completed`, `no_show` veya `cancelled` appointment pending mesaj görevini kapatır; reopen yoktur.
+- Veli mesaj görevi normal exporta girmez. Full System Backup appointment, mesaj-görevi durumu ve audit'i korumalıdır. Historical appointment backfill yoktur; migration/backfill kararı implementation discovery olmadan verilmez.
+
 ## Latest Checkpoint - Cancel Pending Linked Call Reminder
 
-- Feature ve ilk repo docs closure tamamlandı/pushlandı: `e15a051 feat: cancel pending linked reminders`, `a2743a3 docs: close pending reminder cancellation`. Windows VDS static deployment ve feature-specific live QA PASS; bu deployment/live-QA repo docs closure review/commit bekler, yeni docs commit hash'i önceden yazılmaz.
+- Feature, repo docs, Windows VDS deployment ve feature-specific live QA tamamlandı/pushlandı: `e15a051 feat: cancel pending linked reminders`, `a2743a3 docs: close pending reminder cancellation`, `a8c1b09 docs: close reminder cancellation deployment`. Obsidian closure tamamlandı; Drive doğrulaması tamamlandı. Bu checkpoint aktif WIP/backlog değildir.
 - Cancellation yalnız gerçek owner/current history satırında görünür. Authoritative yön `reminder.call_log_id → owner call log`dur; başka call log'lardaki aynı `created_reminder_id` değerleri tarihsel/shared reference olabilir ve owner cancellation'ı bloklamaz.
 - Modern reciprocal owner `created_reminder_id === reminder.id` ile doğrulanır. Güvenli legacy owner `null/undefined` back-link ile kabul edilebilir; başka reminder ID'si, student mismatch, silinmiş owner veya birden fazla aktif pending reminder aynı owner'ı gösterirse işlem fail-closed'dur.
 - Lifecycle yalnız `pending → cancelled`dır. Reminder silinmez; call log, student, appointment ve PhoneRecord mutate edilmez. Reopen veya `cancelled → pending` yoktur.
