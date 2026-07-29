@@ -11,22 +11,26 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - DECISIONS: Cancel Pending Linked Call Reminder
 - Latest closed product checkpoint: `e15a051 feat: cancel pending linked reminders`
 - Implementation: `e15a051 feat: cancel pending linked reminders`
+- Current implementation/deployment checkpoint: `a2743a3 docs: close pending reminder cancellation`
 - Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
 
 ## Latest Checkpoint - Cancel Pending Linked Call Reminder
 
-- Feature tamamlandı ve origin'e pushlandı: `e15a051 feat: cancel pending linked reminders`. Repo docs closure bu aşamada review/commit bekler; yeni docs commit hash'i önceden yazılmaz.
+- Feature ve ilk repo docs closure tamamlandı/pushlandı: `e15a051 feat: cancel pending linked reminders`, `a2743a3 docs: close pending reminder cancellation`. Windows VDS static deployment ve feature-specific live QA PASS; bu deployment/live-QA repo docs closure review/commit bekler, yeni docs commit hash'i önceden yazılmaz.
 - Cancellation yalnız gerçek owner/current history satırında görünür. Authoritative yön `reminder.call_log_id → owner call log`dur; başka call log'lardaki aynı `created_reminder_id` değerleri tarihsel/shared reference olabilir ve owner cancellation'ı bloklamaz.
 - Modern reciprocal owner `created_reminder_id === reminder.id` ile doğrulanır. Güvenli legacy owner `null/undefined` back-link ile kabul edilebilir; başka reminder ID'si, student mismatch, silinmiş owner veya birden fazla aktif pending reminder aynı owner'ı gösterirse işlem fail-closed'dur.
 - Lifecycle yalnız `pending → cancelled`dır. Reminder silinmez; call log, student, appointment ve PhoneRecord mutate edilmez. Reopen veya `cancelled → pending` yoktur.
 - UI StudentsPage history owner satırında `Hatırlatmayı İptal Et` aksiyonunu gösterir. Tooltip/aria `Hatırlatmayı iptal et`; modal `Hatırlatma iptal edilsin mi?`, optional neden, `Vazgeç` ve `Hatırlatmayı İptal Et` aksiyonlarını kullanır. Completion modalının ikincil aksiyonu da `Vazgeç` olarak netleştirilmiştir.
 - `pending_reminder_cancel` audit marker'ı reminder status update ile aynı Dexie transaction'ında append-only yazılır. Pending reader/list/alarm yalnız pending kayıtları gösterir; normal export audit payload'ı taşımaz, Full System Backup cancelled status ve audit'i korur.
 - Validation: Strategy Review `PASS WITH NOTES`, manuel QA `PASS`, `52` test dosyası / `530` test PASS, build PASS, `git diff --check` PASS. `NO MIGRATION`; `NO BACKFILL`.
+- Deployment: VDS repo `a2743a3` ve origin ile senkron kaldı. Pilot seed flag ile `/demo/` base build PASS verdi; `C:\Backups\netvadi-demo_20260726_045705` static-root backup'ı doğrulandı. `robocopy /MIR /XF "harita.html"` deploy PASS (exit code `3`), Caddy restart edilmedi; index/CSS/JS ve `https://netvadi.com/demo/harita.html` HTTP 200 verdi. `harita.html` deploy öncesi/sonrası SHA256 değeri `BB1C59773E707B22A37779E439383457C6200CC3B32666F7F2C8EE3C290ED1BA` olarak korundu; rollback gerekmedi.
+- Live QA: owner/current satırdaki cancellation, modalın `Vazgeç` akışı, başarılı cancellation sonrası görüşme kaydının korunması, pending list/alarmdan düşme, yenileme sonrası persistence ve belirgin edit/complete/delete regresyonu PASS. Shared/tarihsel owner senaryosu için önceki gerçek veri QA ve otomatik regresyon kapsamı geçerlidir; canlıda gereksiz destructive shared-history kaydı oluşturulmadı.
 - Non-blocking teknik not: duplicate-owner doğrulaması reminder tablosunun tamamını okur; veri hacmi anlamlı büyürse ayrı performance discovery konusu olarak değerlendirilir.
 - Ayrı deferred UX işi: iletişim geçmişi action bar için görünür `✓` ve diğer aksiyonların `⋯` menüsünde toplanması. Bu feature'ın kapsamı veya eksik işi değildir.
-- Sonraki kapı: repo docs review → exact-path docs commit/push → deployment preparation → Windows VDS deployment → live QA → deployment/live-QA closure → Obsidian shadow → Drive shadow verification.
+- Non-blocking maintenance: `npm ci` audit çıktısındaki `2 low` / `7 high` vulnerability ile yaklaşık `905 kB` minified ana JS chunk bu feature deployment blocker'ı değildir; ayrı dependency security ve bundle/performance discovery konusudur. Eski docs arşivindeki `Latest` başlıkları da ayrı docs-hijyen işidir.
+- Sonraki kapı: deployment/live-QA repo docs review → exact-path docs commit/push → Obsidian shadow update → Drive shadow verification → feature final closure. Obsidian ve Drive shadow henüz tamamlanmış değildir.
 
 ## Previous Checkpoint - Pending Linked Reminder Edit
 

@@ -6,11 +6,12 @@
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
 - Latest closed product checkpoint: `e15a051 feat: cancel pending linked reminders`
 - Implementation: `e15a051 feat: cancel pending linked reminders`
+- Current implementation/deployment checkpoint: `a2743a3 docs: close pending reminder cancellation`
 - Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi, tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i, iletişim geçmişi edit/void MVP'si, phone action label/helper cleanup, Reporting V2 Summary MVP + UI polish, linked communication history terminal status-aware soft delete ve linked reminder quick complete zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
-- Pending linked reminder edit kapanışı tamamlandı. Cancel pending linked reminder implementation, tests/build, Strategy Review, manuel QA ve feature commit/push tamamlandı. Bu feature için repo docs closure review/commit bekler; deployment ve live QA henüz bu feature için yapılmadı.
-- Önceki checkpoint'in Obsidian sync sonucu PASS olarak bildirilmişti. Bu feature için Obsidian/Drive shadow güncellemesi bu taskta yapılmadı.
+- Pending linked reminder edit kapanışı tamamlandı. Cancel pending linked reminder implementation, tests/build, Strategy Review, manuel QA, feature commit/push, Windows VDS deployment ve feature-specific live QA tamamlandı. Bu deployment/live-QA repo docs closure review/commit bekler.
+- Bu feature için Obsidian shadow henüz güncellenmedi; Drive shadow henüz doğrulanmadı.
 - Pending linked call reminder cancellation tamamlandı: gerçek owner/current history satırında iptal aksiyonu görünür; shared/tarihsel referans satırlarında görünmez. `pending → cancelled` dışında lifecycle transition yoktur; call log, student ve appointment korunur.
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
@@ -37,7 +38,11 @@
 - İptal nedeni opsiyoneldir; trim edilmiş boş değer `null` sayılır ve reminder modeline yeni alan eklemeden append-only audit payload'ında tutulur. Reminder status update ve audit, Dexie transaction'ında atomik olmalıdır.
 - UI StudentsPage history owner satırıdır: `Hatırlatmayı İptal Et`, tooltip/aria `Hatırlatmayı iptal et`, modal `Hatırlatma iptal edilsin mi?`, ikincil eylem `Vazgeç`, birincil eylem `Hatırlatmayı İptal Et`. Açıklama görüşme kaydı ve varsa randevunun silinmeyeceğini söyler. Completion modalının ikincil eylemi `Vazgeç` olarak netleştirildi.
 - Pending reader/list/alarm/count davranışı korunur; Full System Backup cancelled status ve audit'i saklar, normal export audit payload'ını taşımaz. `NO MIGRATION`; `NO BACKFILL`. Duplicate-owner doğrulamasının full reminder scan maliyeti non-blocking performance notudur.
-- Validation: Strategy Review `PASS WITH NOTES`, manuel QA `PASS`, tests `52` files / `530` tests PASS, build PASS. Repo docs closure review/commit ardından deployment preparation, Windows VDS deployment ve live QA gelecektir.
+- Validation: Strategy Review `PASS WITH NOTES`, manuel QA `PASS`, tests `52` files / `530` tests PASS, build PASS. Windows VDS deployment ve feature-specific live QA PASS; deployment/live-QA repo docs closure review/commit bekler.
+- Deployment/live QA: `a2743a3` VDS'de origin ile senkron ve temiz working tree ile deploy edildi. Pilot seed flag + `/demo/` build PASS; deploy öncesi backup `C:\Backups\netvadi-demo_20260726_045705` doğrulandı. Static deploy `robocopy /MIR /XF "harita.html"` ile PASS (exit code `3`); Caddy restart edilmedi. `https://netvadi.com/demo/`, `harita.html`, CSS ve JS HTTP 200; `harita.html` SHA256 değeri `BB1C59773E707B22A37779E439383457C6200CC3B32666F7F2C8EE3C290ED1BA` olarak korundu. Rollback gerekmedi.
+- Canlı QA PASS: owner/current satır cancellation, `Vazgeç` ile mutation'sız kapanış, başarılı cancellation sonrası call log korunumu, pending list/alarmdan düşme, yenileme sonrası persistence ve görünür edit/complete/delete regresyon kontrolü kabul edildi. Shared/tarihsel owner davranışı için önceki gerçek veri QA ve otomatik regresyon testleri geçerlidir; canlıda gereksiz destructive shared-history senaryosu oluşturulmadı.
+- Non-blocking maintenance: `npm ci` audit çıktısındaki `2 low` / `7 high` vulnerability, yaklaşık `905 kB` minified ana JS chunk, duplicate-owner full-table scan, action-menu UX (`✓` + `⋯`) ve eski `Latest` docs başlıkları ayrı backlog/discovery işidir; bu deployment blocker değildir.
+- Sonraki kapılar: deployment/live-QA docs review → exact-path docs commit/push → Obsidian shadow update → Drive shadow verification → feature final closure.
 - Ayrı deferred UX işi: görünür `✓` ve diğer history aksiyonlarını `⋯` menüsünde toplama fikri; bu checkpoint'e dahil değildir.
 
 ## Previous Handoff Update - Pending Linked Reminder Edit
