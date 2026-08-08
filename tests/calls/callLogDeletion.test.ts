@@ -336,6 +336,146 @@ describe("callLogDeletion", () => {
     }
   );
 
+  it("blocks deletion for a modern pending appointment owner", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const callLogId = await database.call_logs.add(callLog(studentId, { call_result: "appointment" }));
+      const appointmentId = await database.appointments.add(
+        appointment(studentId, "pending", { call_log_id: callLogId })
+      );
+      await database.call_logs.update(callLogId, { created_appointment_id: appointmentId });
+
+      await expect(softDeleteCallLogAndRecomputeStudentSummary(callLogId, database)).rejects.toThrow(
+        "aktif/işlenmemiş bir randevu"
+      );
+      expect((await database.call_logs.get(callLogId))?.deleted_at).toBeNull();
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("fails closed when a pending forward owner is missing the call-log back-link", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const callLogId = await database.call_logs.add(callLog(studentId, { call_result: "appointment" }));
+      await database.appointments.add(appointment(studentId, "pending", { call_log_id: callLogId }));
+
+      await expect(softDeleteCallLogAndRecomputeStudentSummary(callLogId, database)).rejects.toThrow(
+        "Bağlı kayıtlar güvenle doğrulanamadı"
+      );
+      expect((await database.call_logs.get(callLogId))?.deleted_at).toBeNull();
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("fails closed when a pending forward owner conflicts with the call-log back-link", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const callLogId = await database.call_logs.add(callLog(studentId, { call_result: "appointment" }));
+      await database.appointments.add(appointment(studentId, "pending", { call_log_id: callLogId }));
+      const conflictingAppointmentId = await database.appointments.add(appointment(studentId, "completed"));
+      await database.call_logs.update(callLogId, { created_appointment_id: conflictingAppointmentId });
+
+      await expect(softDeleteCallLogAndRecomputeStudentSummary(callLogId, database)).rejects.toThrow(
+        "Bağlı kayıtlar güvenle doğrulanamadı"
+      );
+      expect((await database.call_logs.get(callLogId))?.deleted_at).toBeNull();
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("fails closed when multiple pending forward owners share a call log", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const callLogId = await database.call_logs.add(callLog(studentId, { call_result: "appointment" }));
+      await database.appointments.bulkAdd([
+        appointment(studentId, "pending", { call_log_id: callLogId }),
+        appointment(studentId, "pending", { call_log_id: callLogId })
+      ]);
+
+      await expect(softDeleteCallLogAndRecomputeStudentSummary(callLogId, database)).rejects.toThrow(
+        "Bağlı kayıtlar güvenle doğrulanamadı"
+      );
+      expect((await database.call_logs.get(callLogId))?.deleted_at).toBeNull();
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("fails closed when a pending forward owner belongs to another student", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const otherStudentId = await database.students.add(student({ student_full_name: "Başka Aday" }));
+      const callLogId = await database.call_logs.add(callLog(studentId, { call_result: "appointment" }));
+      await database.appointments.add(appointment(otherStudentId, "pending", { call_log_id: callLogId }));
+
+      await expect(softDeleteCallLogAndRecomputeStudentSummary(callLogId, database)).rejects.toThrow(
+        "Bağlı kayıtlar güvenle doğrulanamadı"
+      );
+      expect((await database.call_logs.get(callLogId))?.deleted_at).toBeNull();
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it.each(["completed", "no_show"] satisfies AppointmentStatus[])(
+    "soft deletes a call log linked to canonical terminal %s appointment",
+    async (status) => {
+      const database = await createDatabase();
+
+      try {
+        const studentId = await database.students.add(student({ last_call_result: "appointment" }));
+        const callLogId = await database.call_logs.add(callLog(studentId, { call_result: "appointment" }));
+        const appointmentId = await database.appointments.add(
+          appointment(studentId, status, { call_log_id: callLogId })
+        );
+        await database.call_logs.update(callLogId, { created_appointment_id: appointmentId });
+
+        await softDeleteCallLogAndRecomputeStudentSummary(callLogId, database);
+        expect((await database.call_logs.get(callLogId))?.deleted_at).toBeTruthy();
+      } finally {
+        database.close();
+        await database.delete();
+      }
+    }
+  );
+
+  it("fails closed when a modern appointment reciprocal link is broken", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const callLogId = await database.call_logs.add(callLog(studentId, { call_result: "appointment" }));
+      const appointmentId = await database.appointments.add(
+        appointment(studentId, "completed", { call_log_id: callLogId + 1 })
+      );
+      await database.call_logs.update(callLogId, { created_appointment_id: appointmentId });
+
+      await expect(softDeleteCallLogAndRecomputeStudentSummary(callLogId, database)).rejects.toThrow("aktif bağlı iş");
+      expect((await database.call_logs.get(callLogId))?.deleted_at).toBeNull();
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
   it.each(["attended", "missed", "cancelled", "registered"] satisfies AppointmentStatus[])(
     "soft deletes a call log linked to a terminal %s appointment without mutating the appointment",
     async (status) => {

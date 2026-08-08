@@ -8,4 +8,8 @@ export type AppointmentRecord = BaseEntity & {
   status: AppointmentStatus;
   campaign_id?: number | null;
   note?: string | null;
+  call_log_id?: number | null;
+  guardian_message_due_at?: string | null;
+  guardian_message_sent_at?: string | null;
+  guardian_message_generation?: number | null;
 };

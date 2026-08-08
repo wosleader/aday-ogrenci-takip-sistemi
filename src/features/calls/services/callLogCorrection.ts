@@ -4,6 +4,7 @@ import type { AppointmentStatus, CallResult, ReminderStatus } from "../../../dom
 import type { CallLogRecord } from "../../../domain/models/callLog";
 import type { PhoneRecord } from "../../../domain/models/phone";
 import { nowIso } from "../../../utils/dateTime";
+import { assertPendingAppointmentOwnerLinkIntegrity } from "../../appointments/services/appointmentOwnerIntegrity";
 import { createPhoneSnapshot } from "../../students/services/phoneCompatibility";
 import {
   areAllPhonesInvalidOrWrong,
@@ -62,7 +63,14 @@ function isTerminalReminderStatus(status: ReminderStatus): boolean {
 }
 
 function isTerminalAppointmentStatus(status: AppointmentStatus): boolean {
-  return status === "attended" || status === "missed" || status === "cancelled" || status === "registered";
+  return (
+    status === "completed" ||
+    status === "no_show" ||
+    status === "cancelled" ||
+    status === "attended" ||
+    status === "missed" ||
+    status === "registered"
+  );
 }
 
 function resolveCurrentContactedPhoneId(callLog: ActiveCallLog): number | null {
@@ -73,6 +81,12 @@ async function resolveCallLogCorrectionPolicy(
   callLog: ActiveCallLog,
   database: AppDatabase
 ): Promise<CallLogCorrectionPolicy> {
+  try {
+    await assertPendingAppointmentOwnerLinkIntegrity(database, callLog);
+  } catch {
+    return { mode: "blocked_conflict", message: CONFLICTING_DEPENDENCY_MESSAGE };
+  }
+
   if (callLog.created_reminder_id && callLog.created_appointment_id) {
     return { mode: "blocked_conflict", message: CONFLICTING_DEPENDENCY_MESSAGE };
   }
@@ -110,6 +124,13 @@ async function resolveCallLogCorrectionPolicy(
     }
 
     if (appointment.deleted_at || appointment.student_id !== callLog.student_id) {
+      return { mode: "blocked_conflict", message: CONFLICTING_DEPENDENCY_MESSAGE };
+    }
+
+    if (
+      appointment.call_log_id != null &&
+      (appointment.call_log_id !== callLog.id || callLog.call_result !== "appointment")
+    ) {
       return { mode: "blocked_conflict", message: CONFLICTING_DEPENDENCY_MESSAGE };
     }
 
@@ -261,6 +282,10 @@ export async function updateCallLogCorrection(
     const activeCallLog = callLog as ActiveCallLog;
     const policy = await resolveCallLogCorrectionPolicy(activeCallLog, database);
     assertCorrectionPolicyAllowsSave(policy);
+
+    if (activeCallLog.call_result !== "appointment" && input.call_result === "appointment") {
+      throw new Error("Randevu yalnız randevu oluşturma akışından kaydedilebilir.");
+    }
 
     const timestamp = nowIso();
     const oldAuditValue = createCorrectionAuditValue(activeCallLog, policy.mode);

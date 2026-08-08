@@ -3,6 +3,7 @@ import { db } from "../../../db/db";
 import type { AppointmentStatus, ReminderStatus } from "../../../domain/constants/statuses";
 import type { CallLogRecord } from "../../../domain/models/callLog";
 import { nowIso } from "../../../utils/dateTime";
+import { assertPendingAppointmentOwnerLinkIntegrity } from "../../appointments/services/appointmentOwnerIntegrity";
 
 export type SoftDeleteCallLogResult = {
   call_log_id: number;
@@ -29,10 +30,19 @@ function isTerminalReminderStatus(status: ReminderStatus): boolean {
 }
 
 function isTerminalAppointmentStatus(status: AppointmentStatus): boolean {
-  return status === "attended" || status === "missed" || status === "cancelled" || status === "registered";
+  return (
+    status === "completed" ||
+    status === "no_show" ||
+    status === "cancelled" ||
+    status === "attended" ||
+    status === "missed" ||
+    status === "registered"
+  );
 }
 
 async function assertCallLogCanBeSoftDeleted(callLog: ActiveCallLog, database: AppDatabase): Promise<void> {
+  await assertPendingAppointmentOwnerLinkIntegrity(database, callLog);
+
   if (callLog.created_reminder_id) {
     const reminder = await database.reminders.get(callLog.created_reminder_id);
 
@@ -51,6 +61,13 @@ async function assertCallLogCanBeSoftDeleted(callLog: ActiveCallLog, database: A
     const appointment = await database.appointments.get(callLog.created_appointment_id);
 
     if (!appointment || appointment.deleted_at) {
+      throw new Error("Bu kayıt aktif bağlı iş içerdiği için silinemez.");
+    }
+
+    if (
+      appointment.student_id !== callLog.student_id ||
+      (appointment.call_log_id != null && (appointment.call_log_id !== callLog.id || callLog.call_result !== "appointment"))
+    ) {
       throw new Error("Bu kayıt aktif bağlı iş içerdiği için silinemez.");
     }
 

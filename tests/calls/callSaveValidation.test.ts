@@ -85,7 +85,25 @@ describe("callSaveValidation", () => {
     });
   });
 
-  it("warns twice before allowing an appointment in the past", () => {
+  it("rejects an invalid appointment date and time", () => {
+    expect(
+      validateCallSave({
+        call_result: "appointment",
+        reminder_date: "2026-02-31",
+        reminder_time: "25:00",
+        now: "2026-02-10T10:00:00Z",
+        note: "Randevu notu",
+        contacted_phone_id: 1,
+        phones: [phone1]
+      })
+    ).toEqual({
+      ok: false,
+      severity: "error",
+      message: "Randevu tarihi/saat bilgisi geçersiz."
+    });
+  });
+
+  it("rejects an appointment in the past", () => {
     const input = {
       call_result: "appointment" as const,
       reminder_date: "2026-05-09",
@@ -96,23 +114,28 @@ describe("callSaveValidation", () => {
       phones: [phone1]
     };
 
-    expect(validateCallSave({ ...input, past_appointment_confirm_count: 0 })).toEqual({
+    expect(validateCallSave(input)).toEqual({
       ok: false,
-      severity: "warning",
-      confirmation_required: true,
-      confirmation_type: "past_appointment",
-      message: "Randevu tarihi geçmişte görünüyor. Bilerek kaydetmek istiyorsanız tekrar Kaydet'e basın."
+      severity: "error",
+      message: "Randevu tarihi/saat bilgisi gelecekte olmalıdır."
     });
-    expect(validateCallSave({ ...input, past_appointment_confirm_count: 1 })).toEqual({
+  });
+
+  it("rejects an appointment scheduled exactly at now", () => {
+    expect(
+      validateCallSave({
+        call_result: "appointment",
+        reminder_date: "2026-05-10",
+        reminder_time: "13:00",
+        now: "2026-05-10T10:00:00.000Z",
+        note: "Randevu notu",
+        contacted_phone_id: 1,
+        phones: [phone1]
+      })
+    ).toEqual({
       ok: false,
-      severity: "warning",
-      confirmation_required: true,
-      confirmation_type: "past_appointment",
-      message: "Randevu tarihi hâlâ geçmişte. Yine de kaydetmek için bir kez daha Kaydet'e basın."
-    });
-    expect(validateCallSave({ ...input, past_appointment_confirm_count: 2 })).toEqual({
-      ok: true,
-      note: "Randevu notu"
+      severity: "error",
+      message: "Randevu tarihi/saat bilgisi gelecekte olmalıdır."
     });
   });
 
@@ -130,13 +153,12 @@ describe("callSaveValidation", () => {
     ).toEqual({ ok: true, note: "Randevu notu" });
   });
 
-  it("checks missing appointment date before past-date confirmation", () => {
+  it("checks missing appointment date before other appointment validation", () => {
     expect(
       validateCallSave({
         call_result: "appointment",
         reminder_time: "11:00",
         now: "2026-05-10T10:00:00",
-        past_appointment_confirm_count: 2,
         note: "Randevu notu",
         contacted_phone_id: 1,
         phones: [phone1]

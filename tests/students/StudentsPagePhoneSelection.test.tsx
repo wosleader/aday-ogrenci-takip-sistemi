@@ -1093,6 +1093,37 @@ describe("StudentsPage phone selection", () => {
     expect(student?.last_contacted_phone_id).toBeNull();
   });
 
+  it("writes the appointment form date/time as an Istanbul appointment payload without a call reminder", async () => {
+    const user = userEvent.setup();
+    const studentId = await seedStudentWithPhones("MELIS KAYA", "appointment-payload");
+
+    renderStudentsPage();
+
+    await screen.findByText("Telefon 3");
+    await user.selectOptions(getCallResultSelect(), "appointment");
+    fireEvent.change(document.querySelector('input[type="date"]') as HTMLInputElement, { target: { value: "2099-05-11" } });
+    fireEvent.change(document.querySelector('input[type="time"]') as HTMLInputElement, { target: { value: "12:00" } });
+    await user.type(screen.getByPlaceholderText("Yeni görüşme notu yazın..."), "Randevu notu");
+    await user.click(screen.getByRole("button", { name: /Kaydet ve sonrakine geç/ }));
+
+    expect(await screen.findByText("Görüşme kaydedildi. Liste sonuna geldiniz.")).toBeInTheDocument();
+    const callLog = await db.call_logs.where("student_id").equals(studentId).first();
+    const appointment = await db.appointments.get(callLog?.created_appointment_id!);
+
+    expect(callLog).toMatchObject({
+      call_result: "appointment",
+      reminder_at: null,
+      created_reminder_id: null,
+      created_appointment_id: appointment?.id
+    });
+    expect(appointment).toMatchObject({
+      appointment_at: "2099-05-11T09:00:00.000Z",
+      call_log_id: callLog?.id,
+      status: "pending"
+    });
+    expect(await db.reminders.count()).toBe(0);
+  });
+
   it("allows general Yanlış Numara without selected phone when all phones are already invalid", async () => {
     const user = userEvent.setup();
     const studentId = await seedStudentWithPhones("MELIS KAYA", "all-invalid-wrong-number");

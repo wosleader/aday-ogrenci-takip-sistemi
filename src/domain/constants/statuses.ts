@@ -42,10 +42,12 @@ export type ReminderType = keyof typeof REMINDER_TYPES;
 
 export const APPOINTMENT_STATUSES = {
   pending: "Bekliyor",
+  completed: "Geldi",
+  no_show: "Gelmedi",
+  cancelled: "İptal",
   attended: "Geldi",
   missed: "Gelmedi",
   postponed: "Ertelendi",
-  cancelled: "İptal",
   registered: "Kayıt Oldu"
 } as const;
 

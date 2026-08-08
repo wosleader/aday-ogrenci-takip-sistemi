@@ -98,6 +98,8 @@ const LIFECYCLE_LABELS: Record<string, string> = {
 
 const APPOINTMENT_LABELS: Record<string, string> = {
   pending: "Bekliyor",
+  completed: "Geldi",
+  no_show: "Gelmedi",
   attended: "Geldi",
   missed: "Gelmedi",
   postponed: "Ertelendi",

@@ -439,7 +439,14 @@ describe("callLogWriter", () => {
         })
       ]);
 
-      const result = await writeCallLog({ student_id: studentId, call_result: "appointment" }, { database });
+      const result = await writeCallLog(
+        {
+          student_id: studentId,
+          call_result: "appointment",
+          appointment_at: "2099-05-12T11:00:00.000Z"
+        },
+        { database }
+      );
       const callLog = await database.call_logs.get(result.call_log_id);
 
       expect(callLog).toMatchObject({
@@ -630,7 +637,8 @@ describe("callLogWriter", () => {
           student_id: studentId,
           contacted_phone_id: callResult === "wrong_number" || callResult === "reached" ? phoneId : null,
           call_result: callResult,
-          reminder_at: "2026-05-16T11:00:00.000Z"
+          reminder_at: "2026-05-16T11:00:00.000Z",
+          appointment_at: callResult === "appointment" ? "2099-05-16T11:00:00.000Z" : null
         },
         { database }
       );
@@ -780,6 +788,176 @@ describe("callLogWriter", () => {
       expect(reminderRecord?.phone_id).toBeNull();
       expect(reminderRecord?.phone_snapshot).toBeNull();
       expect(reminderRecord?.reminder_at).toBe("2026-05-16T11:00:00.000Z");
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("creates a canonical pending appointment with reciprocal links, guardian due state, and audit", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const result = await writeCallLog(
+        {
+          student_id: studentId,
+          call_result: "appointment",
+          appointment_at: "2099-05-11T09:00:00.000Z",
+          note: "Veliye bilgi verildi.",
+          created_by: "agent"
+        },
+        { database }
+      );
+      const callLog = await database.call_logs.get(result.call_log_id);
+      const appointment = await database.appointments.get(result.created_appointment_id!);
+      const audit = (await database.audit_logs.where("entity_id").equals(result.created_appointment_id!).toArray()).find(
+        (record) => record.field_name === "appointment_create"
+      );
+
+      expect(result.created_reminder_id).toBeNull();
+      expect(result.created_appointment_id).toBeTruthy();
+      expect(await database.reminders.count()).toBe(0);
+      expect(callLog).toMatchObject({
+        call_result: "appointment",
+        created_reminder_id: null,
+        created_appointment_id: result.created_appointment_id
+      });
+      expect(appointment).toMatchObject({
+        student_id: studentId,
+        call_log_id: result.call_log_id,
+        appointment_at: "2099-05-11T09:00:00.000Z",
+        status: "pending",
+        guardian_message_due_at: "2099-05-10T11:00:00.000Z",
+        guardian_message_sent_at: null,
+        guardian_message_generation: 1
+      });
+      expect(JSON.parse(audit?.new_value ?? "{}")).toMatchObject({
+        appointment_id: result.created_appointment_id,
+        owner_call_log_id: result.call_log_id,
+        initial_status: "pending",
+        guardian_message_generation: 1
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("rejects missing, invalid, and past appointment timestamps before writing records", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+
+      for (const appointmentAt of [null, "invalid", "2020-05-11T09:00:00.000Z"]) {
+        await expect(
+          writeCallLog({ student_id: studentId, call_result: "appointment", appointment_at: appointmentAt }, { database })
+        ).rejects.toThrow("Randevu tarihi/saat bilgisi");
+      }
+
+      expect(await database.call_logs.count()).toBe(0);
+      expect(await database.appointments.count()).toBe(0);
+      expect(await database.audit_logs.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("ignores a stale appointment timestamp for a non-appointment result", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const result = await writeCallLog(
+        {
+          student_id: studentId,
+          call_result: "not_interested",
+          appointment_at: "2099-05-11T09:00:00.000Z"
+        },
+        { database }
+      );
+
+      expect((await database.call_logs.get(result.call_log_id))?.created_appointment_id).toBeNull();
+      expect(await database.appointments.count()).toBe(0);
+      expect(await database.reminders.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it.each([
+    ["appointment add", { failAfterAppointmentAddForTest: true }, "Test appointment create rollback"],
+    ["reciprocal link", { failAfterAppointmentLinkForTest: true }, "Test reciprocal link rollback"]
+  ])("rolls back every record when %s creation fails", async (_step, failureOptions, errorMessage) => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+
+      await expect(
+        writeCallLog(
+          {
+            student_id: studentId,
+            call_result: "appointment",
+            appointment_at: "2099-05-11T09:00:00.000Z"
+          },
+          { database, ...failureOptions }
+        )
+      ).rejects.toThrow(errorMessage);
+
+      expect(await database.call_logs.count()).toBe(0);
+      expect(await database.appointments.count()).toBe(0);
+      expect(await database.reminders.count()).toBe(0);
+      expect(await database.audit_logs.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("fails closed for a duplicate pending appointment owner while allowing a different owner", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      await database.appointments.add({
+        uuid: crypto.randomUUID(),
+        student_id: studentId,
+        guardian_id: null,
+        appointment_at: "2099-05-12T09:00:00.000Z",
+        status: "pending",
+        campaign_id: null,
+        note: null,
+        call_log_id: 1,
+        guardian_message_due_at: "2099-05-11T11:00:00.000Z",
+        guardian_message_sent_at: null,
+        guardian_message_generation: 1,
+        sync_status: "local",
+        created_at: timestamp,
+        updated_at: timestamp,
+        deleted_at: null
+      });
+
+      await expect(
+        writeCallLog(
+          { student_id: studentId, call_result: "appointment", appointment_at: "2099-05-13T09:00:00.000Z" },
+          { database }
+        )
+      ).rejects.toThrow("zaten açık bir randevu");
+      expect(await database.call_logs.count()).toBe(0);
+      expect(await database.appointments.count()).toBe(1);
+
+      await database.appointments.update(1, { call_log_id: 999 });
+      const result = await writeCallLog(
+        { student_id: studentId, call_result: "appointment", appointment_at: "2099-05-13T09:00:00.000Z" },
+        { database }
+      );
+
+      expect(result.created_appointment_id).toBeTruthy();
+      expect(await database.appointments.count()).toBe(2);
     } finally {
       database.close();
       await database.delete();

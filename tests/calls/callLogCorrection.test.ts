@@ -523,7 +523,7 @@ describe("callLogCorrection", () => {
     }
   );
 
-  it.each(["attended", "missed", "cancelled", "registered"] satisfies AppointmentStatus[])(
+  it.each(["attended", "missed", "cancelled", "registered", "completed", "no_show"] satisfies AppointmentStatus[])(
     "permits note-only correction for a terminal %s appointment",
     async (status) => {
       const database = await createDatabase();
@@ -549,6 +549,127 @@ describe("callLogCorrection", () => {
       }
     }
   );
+
+  it("fails closed for a broken modern appointment reciprocal link", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const callLogId = await database.call_logs.add(callLog(studentId, { call_result: "appointment" }));
+      const appointmentId = await database.appointments.add(
+        appointment(studentId, "completed", { call_log_id: callLogId + 1 })
+      );
+      await database.call_logs.update(callLogId, { created_appointment_id: appointmentId });
+
+      await expect(getCallLogCorrectionPolicy(callLogId, database)).resolves.toMatchObject({ mode: "blocked_conflict" });
+      expect(await database.audit_logs.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("rejects converting a normal call log to appointment without creating C+ appointment state", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const callLogId = await database.call_logs.add(callLog(studentId, { call_result: "not_reached" }));
+      const before = await database.call_logs.get(callLogId);
+
+      await expect(
+        updateCallLogCorrection(correctionInput(callLogId, { call_result: "appointment" }), database)
+      ).rejects.toThrow("Randevu yalnız randevu oluşturma akışından");
+
+      expect(await database.call_logs.get(callLogId)).toEqual(before);
+      expect(await database.appointments.count()).toBe(0);
+      expect(await database.audit_logs.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it.each([
+    ["missing back-link", async (database: AppDatabase, studentId: number, callLogId: number) => {
+      await database.appointments.add(appointment(studentId, "pending", { call_log_id: callLogId }));
+    }],
+    ["conflicting back-link", async (database: AppDatabase, studentId: number, callLogId: number) => {
+      await database.appointments.add(appointment(studentId, "pending", { call_log_id: callLogId }));
+      const conflictingAppointmentId = await database.appointments.add(appointment(studentId, "completed"));
+      await database.call_logs.update(callLogId, { created_appointment_id: conflictingAppointmentId });
+    }],
+    ["duplicate forward owners", async (database: AppDatabase, studentId: number, callLogId: number) => {
+      await database.appointments.bulkAdd([
+        appointment(studentId, "pending", { call_log_id: callLogId }),
+        appointment(studentId, "pending", { call_log_id: callLogId })
+      ]);
+    }]
+  ])("fails closed for a pending forward owner with %s", async (_label, setup) => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const callLogId = await database.call_logs.add(callLog(studentId, { call_result: "appointment" }));
+      await setup(database, studentId, callLogId);
+      const before = await database.call_logs.get(callLogId);
+
+      await expect(updateCallLogCorrection(correctionInput(callLogId, { call_result: "appointment" }), database)).rejects.toThrow(
+        "Bağlı kayıtlar güvenle doğrulanamadı"
+      );
+
+      expect(await database.call_logs.get(callLogId)).toEqual(before);
+      expect(await database.audit_logs.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("fails closed for a pending forward owner with a student mismatch", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const otherStudentId = await database.students.add(student({ student_full_name: "Başka Aday" }));
+      const callLogId = await database.call_logs.add(callLog(studentId, { call_result: "appointment" }));
+      await database.appointments.add(appointment(otherStudentId, "pending", { call_log_id: callLogId }));
+      const before = await database.call_logs.get(callLogId);
+
+      await expect(updateCallLogCorrection(correctionInput(callLogId, { call_result: "appointment" }), database)).rejects.toThrow(
+        "Bağlı kayıtlar güvenle doğrulanamadı"
+      );
+
+      expect(await database.call_logs.get(callLogId)).toEqual(before);
+      expect(await database.audit_logs.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("rejects changing a pending appointment owner to a non-appointment result", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const callLogId = await database.call_logs.add(callLog(studentId, { call_result: "appointment" }));
+      const appointmentId = await database.appointments.add(appointment(studentId, "pending", { call_log_id: callLogId }));
+      await database.call_logs.update(callLogId, { created_appointment_id: appointmentId });
+      const before = await database.call_logs.get(callLogId);
+
+      await expect(updateCallLogCorrection(correctionInput(callLogId, { call_result: "reached" }), database)).rejects.toThrow(
+        "aktif bir etkinlik"
+      );
+
+      expect(await database.call_logs.get(callLogId)).toEqual(before);
+      expect((await database.appointments.get(appointmentId))?.status).toBe("pending");
+      expect(await database.audit_logs.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
 
   it("rejects non-note changes for a terminal dependency even when UI restrictions are bypassed", async () => {
     const database = await createDatabase();

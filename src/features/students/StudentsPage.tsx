@@ -36,6 +36,7 @@ import {
 } from "../calls/services/callHistoryReader";
 import { writeCallLog } from "../calls/services/callLogWriter";
 import { validateCallSave } from "../calls/services/callSaveValidation";
+import { createIstanbulAppointmentAt } from "../appointments/services/guardianMessageDueTime";
 import { saveFilteredExportSnapshot } from "../exports/services/exportSelection";
 import {
   createReminderPopupModel,
@@ -1737,7 +1738,6 @@ export function StudentsPage() {
   const [whatsAppDraftVisibleStatus, setWhatsAppDraftVisibleStatus] = useState<WhatsAppDraftVisibleStatus | null>(null);
   const [isWhatsAppDraftBusy, setIsWhatsAppDraftBusy] = useState(false);
   const [allowAppointmentWithoutNote, setAllowAppointmentWithoutNote] = useState(false);
-  const [pastAppointmentConfirmCount, setPastAppointmentConfirmCount] = useState(0);
   const [dismissedReminderKeys, setDismissedReminderKeys] = useState(() => readPersistedDismissedReminderKeys());
   const [chimedReminderIds, setChimedReminderIds] = useState<number[]>([]);
   const [reminderTick, setReminderTick] = useState(() => Date.now());
@@ -1998,10 +1998,6 @@ export function StudentsPage() {
   useEffect(() => {
     setAllowAppointmentWithoutNote(false);
   }, [selectedRow?.student_id, callResult, newNote, reminderDate, reminderTime]);
-
-  useEffect(() => {
-    setPastAppointmentConfirmCount(0);
-  }, [selectedRow?.student_id, callResult, reminderDate, reminderTime]);
 
   function showOperationToast(message: string, type: OperationToast["type"] = "warning") {
     setOperationToast({
@@ -2699,7 +2695,6 @@ export function StudentsPage() {
       reminder_time: reminderTime,
       contacted_phone_id: contactedPhoneId ?? null,
       allow_appointment_without_note: allowAppointmentWithoutNote,
-      past_appointment_confirm_count: pastAppointmentConfirmCount,
       phones: createCallSaveValidationPhones(selectedRow)
     });
 
@@ -2708,10 +2703,6 @@ export function StudentsPage() {
       showOperationToast(validation.message, validation.severity);
 
       if (validation.confirmation_required) {
-        if (validation.confirmation_type === "past_appointment") {
-          setPastAppointmentConfirmCount((current) => current + 1);
-        }
-
         if (validation.confirmation_type === "appointment_note") {
           setAllowAppointmentWithoutNote(true);
         }
@@ -2725,6 +2716,8 @@ export function StudentsPage() {
 
     try {
       const reminderAt = isReminderCallResult(callResult) ? mergeReminderDateTime(reminderDate, reminderTime) : null;
+      const appointmentAt =
+        callResult === "appointment" ? createIstanbulAppointmentAt(reminderDate, reminderTime) : null;
 
       await writeCallLog({
         student_id: selectedRow.student_id,
@@ -2733,6 +2726,7 @@ export function StudentsPage() {
         call_result: callResult,
         note: validation.note,
         reminder_at: reminderAt,
+        appointment_at: appointmentAt,
         campaign_id: selectedRow.campaign_id ?? null,
         created_by: "agent"
       });
@@ -2740,7 +2734,6 @@ export function StudentsPage() {
       setNewNote("");
       setSelectedCallPhoneId(null);
       setAllowAppointmentWithoutNote(false);
-      setPastAppointmentConfirmCount(0);
 
       const currentIndex = visibleRows.findIndex((row) => row.student_id === selectedRow.student_id);
       const nextRow = currentIndex >= 0 ? visibleRows[currentIndex + 1] : null;

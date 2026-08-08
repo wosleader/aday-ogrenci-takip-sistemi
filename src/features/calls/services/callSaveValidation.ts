@@ -1,5 +1,6 @@
 import { isReminderCallResult, type CallResult } from "../../../domain/constants/statuses";
 import type { PhoneStatus } from "../../../domain/models/phone";
+import { createIstanbulAppointmentAt } from "../../appointments/services/guardianMessageDueTime";
 
 export const DO_NOT_CALL_DEFAULT_NOTE = "Veli/öğrenci ilgilenmiyor";
 
@@ -17,7 +18,6 @@ export type CallSaveValidationInput = {
   contacted_phone_id?: number | null;
   phones: CallSaveValidationPhone[];
   allow_appointment_without_note?: boolean;
-  past_appointment_confirm_count?: number;
   now?: string | Date;
 };
 
@@ -31,7 +31,7 @@ export type CallSaveValidationResult =
       message: string;
       severity: "warning" | "error";
       confirmation_required?: boolean;
-      confirmation_type?: "appointment_note" | "past_appointment";
+      confirmation_type?: "appointment_note";
     };
 
 const CALL_RESULTS_REQUIRING_PHONE_SELECTION = new Set<CallResult>(["reached", "wrong_number"]);
@@ -49,9 +49,13 @@ function createAppointmentDate(input: CallSaveValidationInput): Date | null {
     return null;
   }
 
-  const date = new Date(`${input.reminder_date}T${input.reminder_time}:00`);
+  try {
+    const date = new Date(createIstanbulAppointmentAt(input.reminder_date ?? "", input.reminder_time ?? ""));
 
-  return Number.isNaN(date.getTime()) ? null : date;
+    return Number.isNaN(date.getTime()) ? null : date;
+  } catch {
+    return null;
+  }
 }
 
 function isPastAppointment(input: CallSaveValidationInput): boolean {
@@ -62,7 +66,7 @@ function isPastAppointment(input: CallSaveValidationInput): boolean {
     return false;
   }
 
-  return appointmentDate.getTime() < now.getTime();
+  return appointmentDate.getTime() <= now.getTime();
 }
 
 export function isSelectableCallPhone(phone: CallSaveValidationPhone): boolean {
@@ -156,21 +160,20 @@ export function validateCallSave(input: CallSaveValidationInput): CallSaveValida
       };
     }
 
-    if (isPastAppointment(input)) {
-      const confirmCount = input.past_appointment_confirm_count ?? 0;
+    if (!createAppointmentDate(input)) {
+      return {
+        ok: false,
+        severity: "error",
+        message: "Randevu tarihi/saat bilgisi geçersiz."
+      };
+    }
 
-      if (confirmCount < 2) {
-        return {
-          ok: false,
-          severity: "warning",
-          confirmation_required: true,
-          confirmation_type: "past_appointment",
-          message:
-            confirmCount === 0
-              ? "Randevu tarihi geçmişte görünüyor. Bilerek kaydetmek istiyorsanız tekrar Kaydet'e basın."
-              : "Randevu tarihi hâlâ geçmişte. Yine de kaydetmek için bir kez daha Kaydet'e basın."
-        };
-      }
+    if (isPastAppointment(input)) {
+      return {
+        ok: false,
+        severity: "error",
+        message: "Randevu tarihi/saat bilgisi gelecekte olmalıdır."
+      };
     }
 
     if (!trimmedNote && !input.allow_appointment_without_note) {

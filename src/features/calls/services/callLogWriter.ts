@@ -1,9 +1,11 @@
 import type { AppDatabase } from "../../../db/db";
 import { db } from "../../../db/db";
 import { isReminderCallResult, type CallResult, type LifecycleStatus } from "../../../domain/constants/statuses";
+import type { AppointmentRecord } from "../../../domain/models/appointment";
 import type { PhoneRecord } from "../../../domain/models/phone";
 import { nowIso } from "../../../utils/dateTime";
 import { createUuid } from "../../../utils/id";
+import { calculateGuardianMessageDueTime } from "../../appointments/services/guardianMessageDueTime";
 import { createPhoneSnapshot } from "../../students/services/phoneCompatibility";
 import {
   areAllPhonesInvalidOrWrong,
@@ -18,6 +20,7 @@ export type CallLogWriteInput = {
   call_result: CallResult;
   note?: string | null;
   reminder_at?: string | null;
+  appointment_at?: string | null;
   campaign_id?: number | null;
   created_by?: string | null;
 };
@@ -25,6 +28,8 @@ export type CallLogWriteInput = {
 export type CallLogWriteOptions = {
   database?: AppDatabase;
   failAfterCallLogForTest?: boolean;
+  failAfterAppointmentAddForTest?: boolean;
+  failAfterAppointmentLinkForTest?: boolean;
 };
 
 export type CallLogWriteResult = {
@@ -32,6 +37,7 @@ export type CallLogWriteResult = {
   student_id: number;
   contacted_phone_id?: number | null;
   created_reminder_id?: number | null;
+  created_appointment_id?: number | null;
   updated_existing_reminder: boolean;
 };
 
@@ -55,6 +61,53 @@ function lifecycleFromCallResult(callResult: CallResult, currentLifecycleStatus:
   return currentLifecycleStatus === "do_not_call" || currentLifecycleStatus === "registered"
     ? currentLifecycleStatus
     : "candidate";
+}
+
+function resolveAppointmentAt(input: CallLogWriteInput, timestamp: string): string | null {
+  if (input.call_result !== "appointment") {
+    return null;
+  }
+
+  if (!input.appointment_at?.trim()) {
+    throw new Error("Randevu tarihi/saat bilgisi zorunludur.");
+  }
+
+  const appointmentAt = input.appointment_at.trim();
+  const appointmentTime = new Date(appointmentAt).getTime();
+
+  if (Number.isNaN(appointmentTime)) {
+    throw new Error("Randevu tarihi/saat bilgisi geçersiz.");
+  }
+
+  if (appointmentTime <= new Date(timestamp).getTime()) {
+    throw new Error("Randevu tarihi/saat bilgisi gelecekte olmalıdır.");
+  }
+
+  calculateGuardianMessageDueTime(appointmentAt, timestamp);
+
+  return appointmentAt;
+}
+
+function isActivePendingAppointmentForOwner(appointment: AppointmentRecord, callLogId: number): boolean {
+  return !appointment.deleted_at && appointment.status === "pending" && appointment.call_log_id === callLogId;
+}
+
+async function assertNoActiveCanonicalAppointmentForOwner(
+  database: AppDatabase,
+  studentId: number,
+  callLogId: number
+): Promise<void> {
+  const ownerAppointments = (await database.appointments.toArray()).filter(
+    (appointment) => !appointment.deleted_at && appointment.call_log_id === callLogId
+  );
+
+  if (ownerAppointments.some((appointment) => appointment.student_id !== studentId)) {
+    throw new Error("Randevu sahibi aday ile görüşme kaydı uyuşmuyor.");
+  }
+
+  if (ownerAppointments.some((appointment) => isActivePendingAppointmentForOwner(appointment, callLogId))) {
+    throw new Error("Bu görüşme kaydı için zaten açık bir randevu bulunuyor.");
+  }
 }
 
 async function resolveContactPhone(
@@ -158,7 +211,7 @@ export async function writeCallLog(
 
   await database.transaction(
     "rw",
-    [database.students, database.phones, database.call_logs, database.reminders, database.audit_logs],
+    [database.students, database.phones, database.call_logs, database.reminders, database.appointments, database.audit_logs],
     async () => {
       const student = await database.students.get(input.student_id);
 
@@ -176,6 +229,7 @@ export async function writeCallLog(
       const phoneSnapshot = contactedPhone ? createPhoneSnapshot(contactedPhone) : null;
       const trimmedNote = input.note?.trim() || null;
       const callLogReminderAt = isReminderCallResult(input.call_result) ? input.reminder_at ?? null : null;
+      const appointmentAt = resolveAppointmentAt(input, timestamp);
       const callLogId = await database.call_logs.add({
         uuid: createUuid(),
         student_id: student.id,
@@ -206,6 +260,7 @@ export async function writeCallLog(
       await keepOnlySelectedPhoneContacted(database, student.id, contactedPhone?.id ?? null);
 
       let reminderId: number | null = null;
+      let appointmentId: number | null = null;
       let updatedExistingReminder = false;
 
       if (callLogReminderAt) {
@@ -250,6 +305,57 @@ export async function writeCallLog(
         });
       }
 
+      if (appointmentAt) {
+        await assertNoActiveCanonicalAppointmentForOwner(database, student.id, callLogId);
+        const guardianMessage = calculateGuardianMessageDueTime(appointmentAt, timestamp);
+        appointmentId = await database.appointments.add({
+          uuid: createUuid(),
+          student_id: student.id,
+          guardian_id: input.guardian_id ?? null,
+          appointment_at: appointmentAt,
+          status: "pending",
+          campaign_id: input.campaign_id ?? null,
+          note: trimmedNote,
+          call_log_id: callLogId,
+          guardian_message_due_at: guardianMessage.dueAt,
+          guardian_message_sent_at: null,
+          guardian_message_generation: 1,
+          sync_status: "local",
+          created_at: timestamp,
+          updated_at: timestamp,
+          deleted_at: null
+        });
+
+        if (options.failAfterAppointmentAddForTest) {
+          throw new Error("Test appointment create rollback hatası.");
+        }
+
+        const appointment = await database.appointments.get(appointmentId);
+
+        if (
+          !appointment ||
+          appointment.deleted_at ||
+          appointment.student_id !== student.id ||
+          appointment.call_log_id !== callLogId ||
+          appointment.status !== "pending"
+        ) {
+          throw new Error("Randevu kaydı güvenle doğrulanamadı.");
+        }
+
+        const reciprocalUpdateCount = await database.call_logs.update(callLogId, {
+          created_appointment_id: appointmentId,
+          updated_at: timestamp
+        });
+
+        if (reciprocalUpdateCount !== 1) {
+          throw new Error("Randevu bağlantısı oluşturulamadı.");
+        }
+
+        if (options.failAfterAppointmentLinkForTest) {
+          throw new Error("Test reciprocal link rollback hatası.");
+        }
+      }
+
       await database.students.update(student.id, {
         last_call_result: input.call_result,
         lifecycle_status: lifecycleFromCallResult(input.call_result, student.lifecycle_status),
@@ -267,11 +373,48 @@ export async function writeCallLog(
         created_at: timestamp
       });
 
+      if (appointmentId) {
+        const appointment = await database.appointments.get(appointmentId);
+        const linkedCallLog = await database.call_logs.get(callLogId);
+
+        if (
+          !appointment ||
+          !linkedCallLog ||
+          appointment.student_id !== student.id ||
+          appointment.call_log_id !== callLogId ||
+          linkedCallLog.created_appointment_id !== appointmentId ||
+          linkedCallLog.call_result !== "appointment" ||
+          linkedCallLog.created_reminder_id
+        ) {
+          throw new Error("Randevu bağlantısı güvenle doğrulanamadı.");
+        }
+
+        await database.audit_logs.add({
+          entity_type: "appointment",
+          entity_id: appointmentId,
+          action_type: "create",
+          field_name: "appointment_create",
+          old_value: null,
+          new_value: JSON.stringify({
+            appointment_id: appointmentId,
+            owner_call_log_id: callLogId,
+            initial_status: appointment.status,
+            appointment_at: appointment.appointment_at,
+            guardian_message_due_at: appointment.guardian_message_due_at ?? null,
+            guardian_message_generation: appointment.guardian_message_generation ?? null
+          }),
+          note: "Randevu kaydı oluşturuldu.",
+          performed_by: input.created_by ?? "system",
+          created_at: timestamp
+        });
+      }
+
       result = {
         call_log_id: callLogId,
         student_id: student.id,
         contacted_phone_id: contactedPhone?.id ?? null,
         created_reminder_id: reminderId,
+        created_appointment_id: appointmentId,
         updated_existing_reminder: updatedExistingReminder
       };
     }

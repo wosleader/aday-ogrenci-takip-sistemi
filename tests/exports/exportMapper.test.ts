@@ -215,6 +215,37 @@ describe("exportMapper", () => {
     expect(cellByHeader(sheet, "Baba Adı")).toBe("Ahmet Yılmaz");
   });
 
+  it.each([
+    ["completed", "Geldi"],
+    ["no_show", "Gelmedi"],
+    ["attended", "Geldi"],
+    ["missed", "Gelmedi"]
+  ] as const)("keeps %s appointment status compatible in detailed export", (status, expectedLabel) => {
+    const data = dataset();
+    data.bundles[0].appointment = {
+      id: 1,
+      uuid: "appointment-1",
+      student_id: 1,
+      guardian_id: null,
+      appointment_at: "2026-05-12T11:00:00.000Z",
+      status,
+      campaign_id: null,
+      note: null,
+      guardian_message_due_at: "2026-05-11T11:00:00.000Z",
+      guardian_message_sent_at: null,
+      guardian_message_generation: 1,
+      sync_status: "local",
+      created_at: timestamp,
+      updated_at: timestamp,
+      deleted_at: null
+    };
+
+    const sheet = createDetailedExportSheet(data);
+
+    expect(cellByHeader(sheet, "Randevu Durumu")).toBe(expectedLabel);
+    expect(JSON.stringify(sheet)).not.toContain("guardian_message_due_at");
+  });
+
   it("leaves missing Anne and Baba name cells blank", () => {
     const data = dataset();
     data.bundles[0].mother = null;

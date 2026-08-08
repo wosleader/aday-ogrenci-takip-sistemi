@@ -185,6 +185,94 @@ describe("backup and restore hardening", () => {
     }
   });
 
+  it("preserves embedded appointment guardian state, reciprocal links, audit, and legacy missing fields", async () => {
+    const sourceDatabase = await createDatabase();
+    const targetDatabase = await createDatabase();
+
+    try {
+      const studentId = await sourceDatabase.students.add(student("Randevu Adayı"));
+      const callLogId = await sourceDatabase.call_logs.add({
+        uuid: crypto.randomUUID(),
+        student_id: studentId,
+        call_time: "2099-05-10T10:00:00.000Z",
+        call_result: "appointment",
+        created_reminder_id: null,
+        created_appointment_id: null,
+        sync_status: "local",
+        created_at: timestamp,
+        updated_at: timestamp,
+        deleted_at: null
+      });
+      const appointmentId = await sourceDatabase.appointments.add({
+        uuid: crypto.randomUUID(),
+        student_id: studentId,
+        guardian_id: null,
+        appointment_at: "2099-05-11T09:00:00.000Z",
+        status: "pending",
+        campaign_id: null,
+        note: "Randevu notu",
+        call_log_id: callLogId,
+        guardian_message_due_at: "2099-05-10T11:00:00.000Z",
+        guardian_message_sent_at: null,
+        guardian_message_generation: 1,
+        sync_status: "local",
+        created_at: timestamp,
+        updated_at: timestamp,
+        deleted_at: null
+      });
+      await sourceDatabase.call_logs.update(callLogId, { created_appointment_id: appointmentId });
+      await sourceDatabase.appointments.add({
+        uuid: crypto.randomUUID(),
+        student_id: studentId,
+        guardian_id: null,
+        appointment_at: "2026-05-11T09:00:00.000Z",
+        status: "attended",
+        campaign_id: null,
+        note: "Legacy randevu",
+        sync_status: "local",
+        created_at: timestamp,
+        updated_at: timestamp,
+        deleted_at: null
+      });
+      await sourceDatabase.audit_logs.add({
+        entity_type: "appointment",
+        entity_id: appointmentId,
+        action_type: "create",
+        field_name: "appointment_create",
+        new_value: JSON.stringify({ appointment_id: appointmentId, owner_call_log_id: callLogId }),
+        performed_by: "agent",
+        created_at: timestamp
+      });
+
+      const snapshot = await createBackupSnapshot(sourceDatabase);
+      await restoreSystemBackup(snapshot, RESTORE_SYSTEM_BACKUP_CONFIRMATION, { database: targetDatabase });
+      const restoredCallLog = await targetDatabase.call_logs.get(callLogId);
+      const restoredAppointments = await targetDatabase.appointments.orderBy("id").toArray();
+      const restoredAudit = (await targetDatabase.audit_logs.toArray()).find(
+        (record) => record.field_name === "appointment_create"
+      );
+
+      expect(restoredCallLog?.created_appointment_id).toBe(appointmentId);
+      expect(restoredAppointments[0]).toMatchObject({
+        id: appointmentId,
+        call_log_id: callLogId,
+        guardian_message_due_at: "2099-05-10T11:00:00.000Z",
+        guardian_message_sent_at: null,
+        guardian_message_generation: 1
+      });
+      expect(restoredAppointments[1]).toMatchObject({ status: "attended", note: "Legacy randevu" });
+      expect(restoredAppointments[1].guardian_message_due_at).toBeUndefined();
+      expect(restoredAppointments[1].guardian_message_sent_at).toBeUndefined();
+      expect(restoredAppointments[1].guardian_message_generation).toBeUndefined();
+      expect(restoredAudit).toMatchObject({ entity_type: "appointment", entity_id: appointmentId });
+    } finally {
+      sourceDatabase.close();
+      targetDatabase.close();
+      await sourceDatabase.delete();
+      await targetDatabase.delete();
+    }
+  });
+
   it("preserves pending reminder edit audit payloads across full backup restore", async () => {
     const sourceDatabase = await createDatabase();
     const targetDatabase = await createDatabase();
