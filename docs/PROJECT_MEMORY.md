@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Appointment Model C+ product decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Appointment Model C+ Checkpoint A | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,13 +6,14 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Appointment Model C+ product decision
-- FILE_MAP: Cancel Pending Linked Call Reminder
+- PROJECT_MEMORY: Appointment Model C+ Checkpoint A
+- FILE_MAP: Appointment Model C+ Checkpoint A
 - DECISIONS: Appointment Model C+ product decision
-- Latest closed product checkpoint: `a8c1b09 docs: close reminder cancellation deployment`
-- Previous implementation: `e15a051 feat: cancel pending linked reminders`
-- New active feature: `Appointment Model C+ — Gerçek randevu + veliye mesaj görevi + randevu alarmı`.
-- Product decision: APPROVED. Implementation başlamadı; migration/backfill yetkilendirilmedi ve önce implementation architecture discovery/test planning gerekir.
+- Latest closed product checkpoint: `e16c6a3 feat: persist appointment model c plus`
+- Checkpoint A: IMPLEMENTED / PUSHED. Strategy Re-Review `PASS WITH NOTES`; gerçek local browser/IndexedDB QA PASS.
+- Focused validation: `8` test dosyası / `175` test PASS. Full suite ve production build bu checkpoint'te bilinçli olarak çalıştırılmadı.
+- Migration, backfill, DB version ve index değişikliği yoktur. Checkpoint A tek başına canlı release değildir; A+B+C tamamlanmadan deployment yapılmaz.
+- Next active work: Checkpoint B implementation preparation — Unified Operational Alerts.
 - Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
@@ -20,11 +21,21 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 ## Current Product Decision - Appointment Model C+
 
 - `call_later` mevcut pending `call` reminder, alarm/list ve edit/complete/cancel/delete lifecycle'ı ile aynen korunur.
-- `appointment` sonucunda ayrı sahte `call` reminder oluşturulmaz. Karar sonrası gerçek appointment, owner call log ve modern ters link ile canonical planlı etkinlik olacaktır; tarih/saat ve not kalıcı saklanacaktır.
-- Pending appointment iki ayrı takip üretir: veliye manuel mesaj gönder görevi ve randevu saati alarmı. Mesaj görevinin tamamlanması appointment'ı veya randevu alarmını kapatmaz.
+- `appointment` sonucunda ayrı sahte `call` reminder oluşturulmaz. Checkpoint A gerçek AppointmentRecord'u owner call log ve modern ters link ile atomik yazar; tarih/saat ve not kalıcıdır.
+- Checkpoint A, appointment üzerinde embedded guardian-message state'ini kalıcılaştırır. Veli mesaj görevi ve randevu saati alarmının operasyonel reader/UI'sı Checkpoint B'dedir; mesaj görevinin tamamlanması appointment'ı veya randevu alarmını kapatmaz.
 - Veli mesaj görevi Europe/Istanbul yerel saatine göre: randevu saati 12.00 öncesiyse 24 saat, 12.00 ve sonrasındaysa 22 saat öncedir; hesaplanan saat 19.00'dan sonraysa aynı gün 19.00'a sabitlenir. Geç oluşturulmuş gelecekteki appointment için geçmişte kalan görev hemen due/overdue görünür.
 - Reschedule aynı appointment'ı günceller, yeni mesaj görevini hesaplar ve önceki görevi geçersiz kılar. `completed`, `no_show` veya `cancelled` appointment pending mesaj görevini kapatır; reopen yoktur.
-- Veli mesaj görevi normal exporta girmez. Full System Backup appointment, mesaj-görevi durumu ve audit'i korumalıdır. Historical appointment backfill yoktur; migration/backfill kararı implementation discovery olmadan verilmez.
+- Veli mesaj metadata'sı normal exporta girmez. Full System Backup appointment, embedded mesaj durumu ve create audit'ini korur. Historical appointment backfill yoktur; migration/backfill yapılmamıştır.
+
+## Latest Checkpoint - Appointment Model C+ Checkpoint A
+
+- Implementation/push: `e16c6a3 feat: persist appointment model c plus`.
+- Yeni appointment canonical `pending` status ile aynı Dexie transaction içinde owner call log, `appointment.call_log_id`, `call_log.created_appointment_id` ve `appointment_create` audit'iyle oluşturulur. Appointment branch ReminderRecord üretmez; `created_reminder_id` boş kalır.
+- Embedded state: `guardian_message_due_at`, `guardian_message_sent_at`, `guardian_message_generation`. Due hesabı Europe/Istanbul'da 12.00 öncesi `-24 saat`, sonrası `-22 saat`; 19.00 sonrası aynı gün 19.00 cap uygular ve overdue timestamp'i korur.
+- Pending modern owner'da missing/conflicting reciprocal, duplicate owner veya student mismatch delete/correction için fail-closed'dur. Generic correction non-appointment call log'u `appointment` sonucuna çeviremez; canonical create flow dışında eksik appointment sentezlenmez.
+- Backup/restore embedded alanları, reciprocal linkleri ve appointment create audit'ini korur; normal export guardian-message metadata'sını taşımaz. Legacy eksik alanlar okunur, mutate/backfill edilmez.
+- Manual QA PASS: reciprocal owner link, pending status, due timestamp, audit, appointment için reminder oluşmaması, pending owner delete block, generic correction reject ve `call_later` reminder regression doğrulandı.
+- Checkpoint B/C henüz uygulanmadı: unified operational alert view-model, guardian/start alarm UI, `Mesaj Gönderildi`, reschedule, complete/no_show/cancel ve lifecycle auditleri kapsam dışıdır.
 
 ## Latest Checkpoint - Cancel Pending Linked Call Reminder
 

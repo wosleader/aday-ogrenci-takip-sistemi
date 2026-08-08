@@ -63,7 +63,7 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 
 ## Current Product Decision - Appointment Model C+
 
-- [Decision State] `Appointment Model C+ — Gerçek randevu + veliye mesaj görevi + randevu alarmı` APPROVED. Implementation başlamadı; schema/migration/backfill yetkisi yoktur. Önce implementation architecture discovery ve test matrix yapılacaktır.
+- [Decision State] `Appointment Model C+ — Gerçek randevu + veliye mesaj görevi + randevu alarmı` APPROVED. Checkpoint A `e16c6a3` ile persistence sınırında uygulandı: embedded state, reciprocal owner integrity ve generic correction guard'ı vardır; schema/migration/backfill yapılmadı. Checkpoint B/C operasyonel alert ve lifecycle kapsamını taşımaya devam eder.
 - [Call Later Boundary] `call_later` görüşme kaydı, pending `reminder_type: call` kaydı, alarm/list ve mevcut edit/complete/cancel/delete lifecycle'ı ile aynen korunur. Model C+ bu davranışı değiştirmez.
 - [Canonical Appointment] `appointment` sonucunda ayrı veya sahte `call` ReminderRecord oluşturulmaz. Yeni davranışta gerçek AppointmentRecord canonical planlı etkinliktir; student, owner call log, tarih/saat ve not ile atomik mümkün olan sınırda bağlanır. Owner yönü `appointment.call_log_id → owner call log`, modern ters yön `call_log.created_appointment_id → appointment.id` olacaktır.
 - [Owner Integrity] Bir call log en fazla bir aktif canonical appointment oluşturabilir. Aynı öğrencinin farklı görüşmelerden birden fazla açık appointment'ı olabilir. Aynı owner call log'a birden fazla aktif appointment bağlanırsa işlem fail-closed olur. Reminder owner/shared cancellation kuralları appointment'a körlemesine uygulanmaz; legacy bağlantı fallback'i gerçek veriye göre discovery'de kararlaştırılır.

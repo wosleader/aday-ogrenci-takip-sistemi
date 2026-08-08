@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Stale Reminder Date Guard Fix | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Appointment Model C+ Checkpoint A | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -52,13 +52,17 @@ Son doğrulandı: Phone-Level Outcome Read Model Pilot
 - `src/features/calls/CallPage.tsx`
   Eski/yardımcı call route sayfası; ana operasyon Aday Listesi + sağ drawer üzerinden yürür.
 - `src/features/calls/services/callSaveValidation.ts`
-  Görüşme kaydetme validasyonları, uyarı ve onay mantığı. Sprint 9.3F-1 itibarıyla görüşülen telefon seçimi için Telefon 1/2'ye özel olmayan genel validation mesajını ve çoklu telefon listesiyle uyumlu seçim kontrolünü taşır. `8bf7cb2` itibarıyla `wrong_number` için seçilebilir telefon varsa telefon seçimi zorunlu kalır; adayda telefon olup tüm telefonlar invalid/wrong ise genel `wrong_number` kaydına null phone context ile izin verir.
+  Görüşme kaydetme validasyonları, uyarı ve onay mantığı. Sprint 9.3F-1 itibarıyla görüşülen telefon seçimi için Telefon 1/2'ye özel olmayan genel validation mesajını ve çoklu telefon listesiyle uyumlu seçim kontrolünü taşır. `8bf7cb2` itibarıyla `wrong_number` için seçilebilir telefon varsa telefon seçimi zorunlu kalır; adayda telefon olup tüm telefonlar invalid/wrong ise genel `wrong_number` kaydına null phone context ile izin verir. `e16c6a3` ile appointment tarih/saatini Istanbul instant'ı olarak doğrular ve `<= now` değerini reject eder.
 - `src/features/calls/services/callLogWriter.ts`
-  `writeCallLog` transaction akışı; `call_logs`, student son durum, telefon güncellemeleri ve pending reminder create/update davranışını yönetir. Sprint 9.3B-2 itibarıyla call log ve pending reminder kayıtlarına `phone_id` / `phone_snapshot` persistence wiring yapar; legacy contacted phone alanlarını korur. `8bf7cb2` edge-case'inde tüm telefonlar invalid/wrong ise genel `wrong_number` kaydını telefon bağlamı olmadan yazabilir.
+  `writeCallLog` transaction akışı; `call_logs`, student son durum, telefon güncellemeleri ve pending reminder create/update davranışını yönetir. Sprint 9.3B-2 itibarıyla call log ve pending reminder kayıtlarına `phone_id` / `phone_snapshot` persistence wiring yapar; legacy contacted phone alanlarını korur. `8bf7cb2` edge-case'inde tüm telefonlar invalid/wrong ise genel `wrong_number` kaydını telefon bağlamı olmadan yazabilir. `e16c6a3` appointment branch'inde gerçek AppointmentRecord, reciprocal owner link, embedded guardian-message state ve `appointment_create` audit'ini tek transaction içinde yazar; ReminderRecord oluşturmaz.
 - `src/features/calls/services/callLogCorrection.ts`
-  Bağlantısız iletişim geçmişi kayıtlarını düzeltir. Görüşme durumu, tarih/saat, not ve telefon bağlamını günceller; bağlı reminder/appointment kayıtlarını bloklar; PhoneRecord mutate etmeden öğrenci özetini aktif call log kayıtlarından yeniden hesaplatır.
+  Bağlantısız iletişim geçmişi kayıtlarını düzeltir. Görüşme durumu, tarih/saat, not ve telefon bağlamını günceller; bağlı reminder/appointment kayıtlarını bloklar; PhoneRecord mutate etmeden öğrenci özetini aktif call log kayıtlarından yeniden hesaplatır. `e16c6a3` ile generic correction non-appointment call log'u appointment'a çeviremez ve pending modern appointment owner bütünlüğünü fail-closed doğrular.
 - `src/features/calls/services/callLogDeletion.ts`
-  İletişim geçmişi soft delete / geçersiz sayma akışı. `call_logs.deleted_at` / `updated_at` set eder, hard delete yapmaz ve öğrenci özetini aktif call log kayıtlarından yeniden hesaplayan ortak helper'ı sağlar. `40cb62b` itibarıyla linked reminder/appointment guard'ı terminal status-aware çalışır: pending reminder bloklanır, completed/cancelled reminder soft delete edilebilir; pending/postponed appointment bloklanır, terminal appointment status'ları soft delete edilebilir.
+  İletişim geçmişi soft delete / geçersiz sayma akışı. `call_logs.deleted_at` / `updated_at` set eder, hard delete yapmaz ve öğrenci özetini aktif call log kayıtlarından yeniden hesaplayan ortak helper'ı sağlar. `e16c6a3` ile pending modern appointment forward owner linkini de fail-closed doğrular; missing/conflicting/duplicate/student-mismatch owner silinemez.
+- `src/features/appointments/services/guardianMessageDueTime.ts`
+  Appointment form tarih/saatini Europe/Istanbul anlamıyla ISO instant'a çevirir; embedded guardian-message due timestamp'ini 24/22 saat ve 19.00 cap kuralıyla hesaplar. Browser local timezone'a göre Date setter kullanmaz.
+- `src/features/appointments/services/appointmentOwnerIntegrity.ts`
+  Soft-delete olmayan canonical `pending` AppointmentRecord'ların forward `call_log_id` owner bağını doğrular. Missing/conflicting reciprocal, duplicate pending owner ve student mismatch durumlarında mutation fail-closed olur; legacy ve terminal appointment için owner tahmini üretmez.
 - `src/features/calls/services/callLogPhoneContext.ts`
   Call log telefon bağlamı display/fallback helper’ları; `phone_snapshot` varsa Telefon N / ilişki etiketi label’ı üretir, eski kayıtlarda güvenli fallback döner.
 - `src/features/calls/services/callHistoryReader.ts`

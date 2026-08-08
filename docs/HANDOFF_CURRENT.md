@@ -4,14 +4,14 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Latest closed product checkpoint: `a8c1b09 docs: close reminder cancellation deployment`
-- Previous implementation: `e15a051 feat: cancel pending linked reminders`
-- Current active feature: `Appointment Model C+ — Gerçek randevu + veliye mesaj görevi + randevu alarmı`.
-- Product decision: APPROVED; implementation NOT STARTED. Migration/backfill NOT AUTHORIZED; önce implementation architecture discovery ve test matrix gerekir.
+- Latest closed product checkpoint: `e16c6a3 feat: persist appointment model c plus`
+- Checkpoint A: CLOSED / IMPLEMENTED / PUSHED.
+- Current active work: Checkpoint B implementation preparation — Unified Operational Alerts.
+- Checkpoint A validation: Strategy Re-Review `PASS WITH NOTES`, local browser/IndexedDB manual QA PASS, focused `8` test dosyası / `175` test PASS. Migration/backfill, DB version ve index değişikliği yoktur.
 - Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi, tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i, iletişim geçmişi edit/void MVP'si, phone action label/helper cleanup, Reporting V2 Summary MVP + UI polish, linked communication history terminal status-aware soft delete ve linked reminder quick complete zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
-- Pending linked reminder edit kapanışı tamamlandı. Cancel pending linked reminder implementation, tests/build, Strategy Review, manuel QA, feature commit/push, Windows VDS deployment, feature-specific live QA, docs closure, Obsidian ve Drive doğrulaması tamamlandı. Aktif implementation/docs WIP yoktur.
+- Pending linked reminder edit kapanışı tamamlandı. Cancel pending linked reminder implementation, tests/build, Strategy Review, manuel QA, feature commit/push, Windows VDS deployment, feature-specific live QA, docs closure, Obsidian ve Drive doğrulaması tamamlandı. Checkpoint A dışındaki aktif implementation/docs WIP yoktur.
 - Pending linked call reminder cancellation tamamlandı: gerçek owner/current history satırında iptal aksiyonu görünür; shared/tarihsel referans satırlarında görünmez. `pending → cancelled` dışında lifecycle transition yoktur; call log, student ve appointment korunur.
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
@@ -45,13 +45,17 @@
 - Bu checkpoint kapandı: deployment/live-QA docs closure, exact-path docs commit/push, Obsidian ve Drive doğrulaması tamamlandı.
 - Ayrı deferred UX işi: görünür `✓` ve diğer history aksiyonlarını `⋯` menüsünde toplama fikri; bu checkpoint'e dahil değildir.
 
-## Current Product Decision - Appointment Model C+
+## Latest Checkpoint - Appointment Model C+ Checkpoint A
 
-- Karar onaylandı; kod WIP'i yoktur. `call_later` mevcut call reminder lifecycle'ını korur. `appointment`, ayrı bir `call` reminder üretmeden gerçek canonical appointment, veliye manuel mesaj görevi ve randevu zamanı alarmı olarak tasarlanacaktır.
-- Veli mesaj görevi Europe/Istanbul yerel saatinde 12.00 öncesi randevu için 24 saat, 12.00 ve sonrası için 22 saat önce hesaplanır; hesaplanan saat 19.00'dan sonraysa aynı gün 19.00'a sabitlenir. Geç oluşan gelecekteki appointment'ta görev hemen due/overdue görünür.
-- Mesaj görevi tamamlanması appointment'ı kapatmaz. Reschedule aynı appointment'ı günceller ve yeni görev üretir; `completed`, `no_show` veya `cancelled` appointment bekleyen mesaj görevini kapatır. Reopen, otomatik mesaj gönderimi, snooze politikası, historical backfill ve action-menu UX bu kararın kapsamı dışındadır.
-- Normal export veli mesaj görevini taşımaz. Full backup appointment, görev durumu ve audit'i korumalıdır. Existing appointment export davranışı ile migration/backfill yetkisi implementation discovery'de doğrulanacaktır.
-- Next gates: 1) Model C+ repo docs review, 2) exact-path decision docs commit/push, 3) implementation architecture discovery, 4) test matrix, 5) implementation, 6) Strategy Review, 7) manual QA, 8) deployment/live QA, 9) Obsidian/Drive closure.
+- `e16c6a3` gerçek AppointmentRecord persistence, reciprocal owner link, embedded guardian-message state, Europe/Istanbul due hesabı, atomic create audit ve legacy status compatibility getirir.
+- Appointment branch ReminderRecord oluşturmaz; `call_later` mevcut pending call reminder lifecycle'ını korur. Pending modern owner integrity missing/conflicting/duplicate/mismatch bağlarda fail-closed'dur; generic correction appointment sentezleyemez.
+- Manual QA PASS: pending appointment, reciprocal link, due time, appointment audit, no-reminder, deletion/correction guard ve `call_later` regression doğrulandı. Normal export guardian metadata'sını taşımaz; full backup/restore embedded state, link ve audit'i korur.
+- Checkpoint A persistence katmanıdır. Guardian/start alarm reader ve UI, `Mesaj Gönderildi`, reschedule, complete/no_show/cancel ve lifecycle auditleri henüz uygulanmadı. A+B+C tamamlanmadan deployment yapılmayacak.
+
+## Next Gate - Checkpoint B Implementation Preparation
+
+- Amaç: mevcut call reminder, appointment guardian-message task ve appointment-start alarmını tek `UNIFIED OPERATIONAL ALERT VIEW-MODEL` altında okumak.
+- Guardian/start alarm AppointmentRecord'dan türetilir; guardian task ReminderRecord olarak modellenmez. Checkpoint B lifecycle mutation eklemez; `Mesaj Gönderildi`, reschedule/complete/no_show/cancel Checkpoint C sınırında kalır.
 
 ## Previous Handoff Update - Pending Linked Reminder Edit
 
