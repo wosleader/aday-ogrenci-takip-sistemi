@@ -5,12 +5,14 @@ import {
   getVisibleDismissedReminderSummaries,
   persistDismissedReminderAlert,
   persistDismissedReminderAlerts,
+  persistDismissedOperationalAlert,
   readDismissedReminderSummaries,
   readDismissedReminderBadge,
   readPersistedDismissedReminderKeys,
   removeDismissedReminderSummary
 } from "../../src/features/reminders/services/reminderDismissalStore";
 import { createReminderPopupModel, type DueReminderAlert } from "../../src/features/reminders/services/reminderAlarmReader";
+import { filterDismissedOperationalAlerts, type OperationalAlertItem } from "../../src/features/reminders/services/operationalAlertReader";
 
 const firstAlert: DueReminderAlert = {
   reminder_id: 1,
@@ -24,6 +26,32 @@ const secondAlert: DueReminderAlert = {
   student_id: 2,
   student_full_name: "Mehmet",
   reminder_at: "2026-05-09T10:05:00.000Z"
+};
+
+const guardianAlert: OperationalAlertItem = {
+  identity: "appointment_guardian_message|7|1|2026-05-10T11:00:00.000Z",
+  kind: "appointment_guardian_message",
+  source_type: "appointment",
+  source_id: 7,
+  student_id: 3,
+  student_full_name: "Derya",
+  guardian_full_name: "Veli Derya",
+  due_at: "2026-05-10T11:00:00.000Z",
+  title: "Veli mesajı hatırlatması",
+  note: null,
+  bucket: "overdue",
+  bucket_label: "Süresi geçti",
+  due_date_label: "10.05.2026",
+  due_time_label: "11:00",
+  last_call_result_label: "Randevu Verildi",
+  note_preview: null
+};
+
+const appointmentStartAlert: OperationalAlertItem = {
+  ...guardianAlert,
+  identity: "appointment_start|7|2026-05-10T11:00:00.000Z",
+  kind: "appointment_start",
+  title: "Randevu zamanı"
 };
 
 describe("reminderDismissalStore", () => {
@@ -129,5 +157,21 @@ describe("reminderDismissalStore", () => {
       visibleSummaries: summaries.slice(0, 10),
       hiddenCount: 2
     });
+  });
+
+  it("keeps appointment guardian and start dismissals independent while preserving legacy summaries", () => {
+    const dismissed = persistDismissedOperationalAlert([], guardianAlert);
+
+    expect(readPersistedDismissedReminderKeys()).toContain(guardianAlert.identity);
+    expect(readDismissedReminderSummaries()[0]).toMatchObject({
+      dismissal_key: guardianAlert.identity,
+      alert_kind: "appointment_guardian_message",
+      source_id: 7,
+      due_at: guardianAlert.due_at
+    });
+    expect(filterDismissedOperationalAlerts([guardianAlert, appointmentStartAlert], dismissed)).toEqual([
+      appointmentStartAlert
+    ]);
+    expect(createReminderPopupModel([firstAlert], readPersistedDismissedReminderKeys(), true)?.primaryAlert).toBe(firstAlert);
   });
 });

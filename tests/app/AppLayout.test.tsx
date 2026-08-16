@@ -294,6 +294,27 @@ describe("AppLayout notifications", () => {
     expect(screen.getByLabelText(/Bağlantı durumu: İnternet var/i)).toBeInTheDocument();
   });
 
+  it("shows a due operational alert outside the students route and opens its student", async () => {
+    const studentId = await seedSearchStudent();
+    await db.reminders.add({
+      uuid: "layout-operational-alert",
+      student_id: studentId,
+      reminder_type: "call",
+      reminder_at: "2020-05-10T10:00:00.000Z",
+      status: "pending",
+      is_default_time_assigned: false,
+      created_at: "2020-05-09T10:00:00.000Z",
+      updated_at: "2020-05-09T10:00:00.000Z",
+      sync_status: "local"
+    });
+    renderLayout("/reports");
+
+    expect(await screen.findByRole("status", { name: "Operasyon bildirimi" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Adayı Aç" }));
+
+    expect(screen.getByText(`Aday: ${studentId}`)).toBeInTheDocument();
+  });
+
   it("shows amber friendly connection status when internet is unavailable", () => {
     vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
     renderLayout();

@@ -27,6 +27,7 @@ import {
   removeDismissedReminderSummary,
   REMINDER_DISMISSAL_BADGE_EVENT
 } from "../features/reminders/services/reminderDismissalStore";
+import { OperationalAlertHost } from "../features/reminders/OperationalAlertHost";
 import {
   getDefaultOperationShortcuts,
   getShortcutDisplayTextForAction,
@@ -399,6 +400,7 @@ export function AppLayout() {
 
   return (
     <div className="app-shell">
+      <OperationalAlertHost openStudentById={openStudentById} />
       <header className="topbar">
         <button
           className="topbar-icon-btn sidebar-toggle"
@@ -527,7 +529,7 @@ export function AppLayout() {
                         </button>
                       </div>
                       {summary.guardian_full_name ? <small>Veli: {summary.guardian_full_name}</small> : null}
-                      <small>Hatırlatma: {formatReminderDateTime(summary.reminder_at)}</small>
+                      <small>{summary.title ?? "Hatırlatma"}: {formatReminderDateTime(summary.due_at ?? summary.reminder_at)}</small>
                       <em>Bildirim kapatıldı</em>
                     </div>
                   ))}

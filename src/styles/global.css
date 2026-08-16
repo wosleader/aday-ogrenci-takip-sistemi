@@ -2949,6 +2949,34 @@ body {
   line-height: 1;
 }
 
+.operational-alert-kind-badge {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  margin: 0 0 5px;
+  padding: 4px 7px;
+  border: 1px solid var(--aots-border);
+  border-radius: var(--aots-radius);
+  background: var(--aots-surface);
+  color: var(--aots-text);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.operational-alert-kind-badge.appointment_guardian_message {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.operational-alert-kind-badge.appointment_start {
+  border-color: #ddd6fe;
+  background: #f5f3ff;
+  color: #6d28d9;
+}
+
 .reminder-bucket-badge.overdue {
   background: #ffe4e6;
   color: #be123c;

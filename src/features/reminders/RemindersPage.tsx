@@ -5,17 +5,18 @@ import type { AppOutletContext } from "../../app/AppLayout";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/PageHeader";
 import {
-  createReminderTaskSummary,
-  filterReminderTaskRows,
-  readReminderTaskRows,
-  type ReminderTaskFilter
-} from "./services/reminderListReader";
+  createOperationalAlertSummary,
+  filterOperationalAlertItems,
+  getOperationalAlertKindLabel,
+  readOperationalAlertItems,
+  type OperationalAlertFilter
+} from "./services/operationalAlertReader";
 
-const FILTERS: Array<{ value: ReminderTaskFilter; label: string }> = [
-  { value: "all", label: "Tüm hatırlatmalar" },
+const FILTERS: Array<{ value: OperationalAlertFilter; label: string }> = [
+  { value: "all", label: "Tüm operasyonlar" },
   { value: "overdue", label: "Süresi geçenler" },
-  { value: "today", label: "Bugün aranacaklar" },
-  { value: "upcoming", label: "Yaklaşan aramalar" }
+  { value: "today", label: "Bugünkü operasyonlar" },
+  { value: "upcoming", label: "Yaklaşan operasyonlar" }
 ];
 
 function formatReminderPhoneContext(label?: string | null, number?: string | null): string | null {
@@ -31,16 +32,16 @@ function formatReminderPhoneContext(label?: string | null, number?: string | nul
 
 export function RemindersPage() {
   const { openStudentById } = useOutletContext<AppOutletContext>();
-  const [activeFilter, setActiveFilter] = useState<ReminderTaskFilter>("all");
-  const rows = useLiveQuery(() => readReminderTaskRows(), [], []);
-  const summary = useMemo(() => createReminderTaskSummary(rows ?? []), [rows]);
-  const filteredRows = useMemo(() => filterReminderTaskRows(rows ?? [], activeFilter), [activeFilter, rows]);
+  const [activeFilter, setActiveFilter] = useState<OperationalAlertFilter>("all");
+  const rows = useLiveQuery(() => readOperationalAlertItems(), [], []);
+  const summary = useMemo(() => createOperationalAlertSummary(rows ?? []), [rows]);
+  const filteredRows = useMemo(() => filterOperationalAlertItems(rows ?? [], activeFilter), [activeFilter, rows]);
 
   return (
     <section className="reminders-page">
       <PageHeader
         title="Hatırlatmalar"
-        description="Bugün aranacak, süresi geçen ve yaklaşan tekrar aramaları buradan takip edin."
+        description="Arama, veli mesajı ve randevu zamanlarını tek listeden takip edin."
       />
 
       <div className="reminder-summary-grid" aria-label="Hatırlatma özeti">
@@ -50,23 +51,23 @@ export function RemindersPage() {
           <p>Zamanı geçmiş açık aramalar</p>
         </div>
         <div className="reminder-summary-card today">
-          <span>Bugün aranacaklar</span>
+          <span>Bugünkü operasyonlar</span>
           <strong>{summary.today}</strong>
           <p>Bugün için planlananlar</p>
         </div>
         <div className="reminder-summary-card upcoming">
-          <span>Yaklaşan aramalar</span>
+          <span>Yaklaşan operasyonlar</span>
           <strong>{summary.upcoming}</strong>
-          <p>İleri tarihli açık aramalar</p>
+          <p>İleri tarihli operasyonlar</p>
         </div>
         <div className="reminder-summary-card total">
-          <span>Toplam açık hatırlatma</span>
+          <span>Toplam açık operasyon</span>
           <strong>{summary.all}</strong>
-          <p>Tamamlanmamış tekrar aramalar</p>
+          <p>Takip gerektiren açık kayıtlar</p>
         </div>
       </div>
 
-      <div className="reminder-filter-bar" aria-label="Hatırlatma filtreleri">
+      <div className="reminder-filter-bar" aria-label="Operasyon filtreleri">
         {FILTERS.map((filter) => (
           <button
             className={`reminder-filter-button ${activeFilter === filter.value ? "active" : ""}`}
@@ -87,7 +88,7 @@ export function RemindersPage() {
                 <tr>
                   <th>Öğrenci</th>
                   <th>Veli</th>
-                  <th>Aranacak telefon</th>
+                  <th>Telefon</th>
                   <th>Telefon 2</th>
                   <th>Tarih</th>
                   <th>Saat</th>
@@ -98,14 +99,17 @@ export function RemindersPage() {
               </thead>
               <tbody>
                 {filteredRows.map((row) => (
-                  <tr key={row.reminder_id}>
+                  <tr key={row.identity}>
                     <td title={row.student_full_name}>{row.student_full_name}</td>
                     <td title={row.guardian_full_name ?? undefined}>{row.guardian_full_name || "-"}</td>
                     <td>{formatReminderPhoneContext(row.phone_context_label, row.phone_context_number) ?? row.phone_1 ?? "-"}</td>
                     <td>{row.phone_2 || "-"}</td>
-                    <td>{row.reminder_date_label}</td>
-                    <td>{row.reminder_time_label}</td>
+                    <td>{row.due_date_label}</td>
+                    <td>{row.due_time_label}</td>
                     <td>
+                      <span className={`operational-alert-kind-badge ${row.kind}`}>
+                        {getOperationalAlertKindLabel(row.kind)}
+                      </span>
                       <span className={`reminder-bucket-badge ${row.bucket}`}>{row.bucket_label}</span>
                     </td>
                     <td title={row.note_preview ?? row.last_call_result_label}>
@@ -124,7 +128,7 @@ export function RemindersPage() {
             </table>
           </div>
         ) : (
-          <div className="reminder-empty-state">Açık hatırlatma yok.</div>
+          <div className="reminder-empty-state">Açık operasyon yok.</div>
         )}
       </div>
     </section>

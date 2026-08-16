@@ -3,6 +3,13 @@ import {
   dismissReminderAlert,
   type DueReminderAlert
 } from "./reminderAlarmReader";
+import {
+  dismissOperationalAlert,
+  dismissOperationalAlerts,
+  type OperationalAlertItem,
+  type OperationalAlertKind,
+  type OperationalAlertSourceType
+} from "./operationalAlertReader";
 
 const DISMISSED_REMINDER_KEYS_STORAGE_KEY = "aots.dismissedReminderAlertKeys";
 const DISMISSED_REMINDER_SUMMARIES_STORAGE_KEY = "aots.dismissedReminderAlertSummaries";
@@ -15,11 +22,16 @@ export const REMINDER_DISMISSAL_BADGE_EVENT = "aots:reminder-dismissal-badge";
 
 export type DismissedReminderSummary = {
   dismissal_key: string;
-  reminder_id: number;
+  reminder_id?: number;
+  source_type?: OperationalAlertSourceType;
+  source_id?: number;
+  alert_kind?: OperationalAlertKind;
+  title?: string;
   student_id: number;
   student_full_name: string;
   guardian_full_name?: string | null;
   reminder_at: string;
+  due_at?: string;
   dismissed_at: string;
 };
 
@@ -43,11 +55,12 @@ function safeReadSummaryArray(): DismissedReminderSummary[] {
       ? parsed.filter(
           (value): value is DismissedReminderSummary =>
             typeof value?.dismissal_key === "string" &&
-            typeof value?.reminder_id === "number" &&
             typeof value?.student_id === "number" &&
             typeof value?.student_full_name === "string" &&
             typeof value?.reminder_at === "string" &&
-            typeof value?.dismissed_at === "string"
+            typeof value?.dismissed_at === "string" &&
+            (typeof value?.reminder_id === "number" ||
+              (typeof value?.source_id === "number" && typeof value?.alert_kind === "string"))
         )
       : [];
   } catch {
@@ -122,6 +135,30 @@ function persistDismissedReminderSummary(alert: DueReminderAlert): void {
   const nextSummaries = pruneDismissedReminderSummaries([
     nextSummary,
     ...currentSummaries.filter((summary) => summary.dismissal_key !== dismissalKey)
+  ]);
+
+  writeDismissedReminderSummaries(nextSummaries);
+}
+
+function persistDismissedOperationalAlertSummary(alert: OperationalAlertItem): void {
+  const currentSummaries = readDismissedReminderSummaries();
+  const nextSummary: DismissedReminderSummary = {
+    dismissal_key: alert.identity,
+    source_type: alert.source_type,
+    source_id: alert.source_id,
+    alert_kind: alert.kind,
+    title: alert.title,
+    student_id: alert.student_id,
+    student_full_name: alert.student_full_name,
+    guardian_full_name: alert.guardian_full_name ?? null,
+    // reminder_at stays populated so historic notification panel consumers retain a single due field.
+    reminder_at: alert.due_at,
+    due_at: alert.due_at,
+    dismissed_at: new Date().toISOString()
+  };
+  const nextSummaries = pruneDismissedReminderSummaries([
+    nextSummary,
+    ...currentSummaries.filter((summary) => summary.dismissal_key !== alert.identity)
   ]);
 
   writeDismissedReminderSummaries(nextSummaries);
@@ -218,6 +255,36 @@ export function persistDismissedReminderAlerts(
     persistDismissedReminderSummary(alert);
   }
   markDismissedReminderBadge();
+
+  return nextKeys;
+}
+
+export function persistDismissedOperationalAlert(
+  currentKeys: string[],
+  alert: OperationalAlertItem
+): string[] {
+  const nextKeys = dismissOperationalAlert(currentKeys, alert);
+  writePersistedDismissedReminderKeys(nextKeys);
+  persistDismissedOperationalAlertSummary(alert);
+  markDismissedReminderBadge();
+
+  return nextKeys;
+}
+
+export function persistDismissedOperationalAlerts(
+  currentKeys: string[],
+  alerts: OperationalAlertItem[]
+): string[] {
+  const nextKeys = dismissOperationalAlerts(currentKeys, alerts);
+  writePersistedDismissedReminderKeys(nextKeys);
+
+  for (const alert of alerts) {
+    persistDismissedOperationalAlertSummary(alert);
+  }
+
+  if (alerts.length) {
+    markDismissedReminderBadge();
+  }
 
   return nextKeys;
 }

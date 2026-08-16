@@ -138,15 +138,15 @@ describe("RemindersPage", () => {
     renderRemindersPage();
 
     expect(screen.getByRole("heading", { name: "Hatırlatmalar" })).toBeInTheDocument();
-    expect(screen.getByText("Bugün aranacak, süresi geçen ve yaklaşan tekrar aramaları buradan takip edin.")).toBeInTheDocument();
+    expect(screen.getByText("Arama, veli mesajı ve randevu zamanlarını tek listeden takip edin.")).toBeInTheDocument();
     expect(screen.getAllByText("Süresi geçenler").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Bugün aranacaklar").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Yaklaşan aramalar").length).toBeGreaterThan(0);
-    expect(screen.getByText("Toplam açık hatırlatma")).toBeInTheDocument();
-    expect(screen.getByText("Tüm hatırlatmalar")).toBeInTheDocument();
+    expect(screen.getAllByText("Bugünkü operasyonlar").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Yaklaşan operasyonlar").length).toBeGreaterThan(0);
+    expect(screen.getByText("Toplam açık operasyon")).toBeInTheDocument();
+    expect(screen.getByText("Tüm operasyonlar")).toBeInTheDocument();
     expect(screen.getByText("Zamanı geçmiş açık aramalar")).toBeInTheDocument();
-    expect(screen.getByText("Tamamlanmamış tekrar aramalar")).toBeInTheDocument();
-    expect(screen.getByText("Açık hatırlatma yok.")).toBeInTheDocument();
+    expect(screen.getByText("Takip gerektiren açık kayıtlar")).toBeInTheDocument();
+    expect(screen.getByText("Açık operasyon yok.")).toBeInTheDocument();
   });
 
   it("opens the selected student from the reminder list", async () => {
@@ -155,7 +155,8 @@ describe("RemindersPage", () => {
     renderRemindersPage(openStudentById);
 
     expect(await screen.findByText("ZEYNEP SUBAŞI")).toBeInTheDocument();
-    expect(screen.getByText("Aranacak telefon")).toBeInTheDocument();
+    expect(screen.getByText("Telefon")).toBeInTheDocument();
+    expect(screen.getByText("Arama hatırlatması")).toBeInTheDocument();
     expect(screen.getByText("0532 000 00 00")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Adayı Aç" }));
 
@@ -177,5 +178,37 @@ describe("RemindersPage", () => {
 
     expect(await screen.findByText("Telefon 5 · Yakın: 0555 123 4567")).toBeInTheDocument();
     expect(screen.getByText("0533 000 00 00")).toBeInTheDocument();
+  });
+
+  it("lists separate future guardian-message and appointment-start operational rows without lifecycle actions", async () => {
+    const studentId = await seedReminder();
+    const ownerId = await db.call_logs.add({
+      uuid: "appointment-owner-reminder-page",
+      student_id: studentId,
+      call_time: timestamp,
+      call_result: "appointment",
+      created_at: timestamp,
+      updated_at: timestamp,
+      sync_status: "local"
+    });
+    const appointmentId = await db.appointments.add({
+      uuid: "appointment-reminder-page",
+      student_id: studentId,
+      appointment_at: "2099-05-11T13:00:00.000Z",
+      guardian_message_due_at: "2099-05-10T11:00:00.000Z",
+      guardian_message_sent_at: null,
+      guardian_message_generation: 1,
+      call_log_id: ownerId,
+      status: "pending",
+      created_at: timestamp,
+      updated_at: timestamp,
+      sync_status: "local"
+    });
+    await db.call_logs.update(ownerId, { created_appointment_id: appointmentId });
+    renderRemindersPage();
+
+    expect(await screen.findByText("Veli mesajı hatırlatması")).toBeInTheDocument();
+    expect(screen.getByText("Randevu zamanı")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Mesaj Gönderildi|Tamamla|İptal/i })).not.toBeInTheDocument();
   });
 });

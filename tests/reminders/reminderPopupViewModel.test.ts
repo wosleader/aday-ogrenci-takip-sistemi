@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import type { ReminderPopupModel } from "../../src/features/reminders/services/reminderAlarmReader";
 import {
   createReminderPopupViewModel,
+  createOperationalAlertPopupViewModel,
   DISMISS_FOLLOWING_REMINDERS_LABEL,
   formatReminderPopupDateTime
 } from "../../src/features/reminders/services/reminderPopupViewModel";
+import type { OperationalAlertItem } from "../../src/features/reminders/services/operationalAlertReader";
 
 function popupModel(overrides: Partial<ReminderPopupModel> = {}): ReminderPopupModel {
   const primaryAlert = {
@@ -53,5 +55,34 @@ describe("reminderPopupViewModel", () => {
 
   it("uses the new dismiss following reminders label", () => {
     expect(DISMISS_FOLLOWING_REMINDERS_LABEL).toBe("Sonraki Bildirimleri Kapat");
+  });
+
+  it("uses the operational item title and safe note preview for appointment alerts", () => {
+    const alert: OperationalAlertItem = {
+      identity: "appointment_start|5|2026-05-09T11:00:00",
+      kind: "appointment_start",
+      source_type: "appointment",
+      source_id: 5,
+      student_id: 10,
+      student_full_name: "ZEYNEP SUBAŞI",
+      guardian_full_name: "RAMAZAN SUBAŞI",
+      due_at: "2026-05-09T11:00:00",
+      title: "Randevu zamanı",
+      note: "Detaylı not",
+      bucket: "overdue",
+      bucket_label: "Süresi geçti",
+      due_date_label: "09.05.2026",
+      due_time_label: "11:00",
+      last_call_result_label: "Randevu Verildi",
+      note_preview: "Detaylı not"
+    };
+
+    expect(createOperationalAlertPopupViewModel(alert, 1)).toEqual({
+      title: "Randevu zamanı",
+      student_name: "ZEYNEP SUBAŞI",
+      guardian_line: "Veli: RAMAZAN SUBAŞI",
+      due_line: "Zaman: 09.05.2026 11:00",
+      context_line: "Not: Detaylı not"
+    });
   });
 });

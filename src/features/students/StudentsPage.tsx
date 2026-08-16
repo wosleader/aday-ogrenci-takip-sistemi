@@ -12,7 +12,7 @@ import {
 import { createPortal } from "react-dom";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Ban, Bell, CalendarClock, Check, ChevronsRight, Copy, MoreVertical, Pencil, Trash2, X } from "lucide-react";
+import { Ban, CalendarClock, Check, ChevronsRight, Copy, MoreVertical, Pencil, Trash2, X } from "lucide-react";
 import type { AppOutletContext } from "../../app/AppLayout";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/EmptyState";
@@ -38,23 +38,6 @@ import { writeCallLog } from "../calls/services/callLogWriter";
 import { validateCallSave } from "../calls/services/callSaveValidation";
 import { createIstanbulAppointmentAt } from "../appointments/services/guardianMessageDueTime";
 import { saveFilteredExportSnapshot } from "../exports/services/exportSelection";
-import {
-  createReminderPopupModel,
-  dismissReminderAlert,
-  readDueReminderAlerts,
-  type DueReminderAlert
-} from "../reminders/services/reminderAlarmReader";
-import {
-  persistDismissedReminderAlert,
-  persistDismissedReminderAlerts,
-  readPersistedDismissedReminderKeys,
-  writePersistedDismissedReminderKeys
-} from "../reminders/services/reminderDismissalStore";
-import { readReminderNotificationSettings } from "../reminders/services/reminderSettings";
-import {
-  createReminderPopupViewModel,
-  DISMISS_FOLLOWING_REMINDERS_LABEL
-} from "../reminders/services/reminderPopupViewModel";
 import {
   getShortcutBarItems,
   getDefaultOperationShortcuts,
@@ -603,35 +586,6 @@ function getEditableCallHistoryPhoneId(historyItem: CallHistoryItem, selectedRow
   }
 
   return String(phoneId);
-}
-
-function playReminderChime() {
-  try {
-    const audioWindow = window as Window &
-      typeof globalThis & { webkitAudioContext?: typeof AudioContext };
-    const AudioContextClass = audioWindow.AudioContext || audioWindow.webkitAudioContext;
-
-    if (!AudioContextClass) {
-      return;
-    }
-
-    const context = new AudioContextClass();
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(660, context.currentTime);
-    oscillator.frequency.setValueAtTime(880, context.currentTime + 0.12);
-    gain.gain.setValueAtTime(0.001, context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.08, context.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.35);
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-    oscillator.start();
-    oscillator.stop(context.currentTime + 0.38);
-  } catch (error) {
-    console.debug("Reminder chime could not play.", error);
-  }
 }
 
 function maskPhoneForGroup(value: string): string {
@@ -1738,9 +1692,6 @@ export function StudentsPage() {
   const [whatsAppDraftVisibleStatus, setWhatsAppDraftVisibleStatus] = useState<WhatsAppDraftVisibleStatus | null>(null);
   const [isWhatsAppDraftBusy, setIsWhatsAppDraftBusy] = useState(false);
   const [allowAppointmentWithoutNote, setAllowAppointmentWithoutNote] = useState(false);
-  const [dismissedReminderKeys, setDismissedReminderKeys] = useState(() => readPersistedDismissedReminderKeys());
-  const [chimedReminderIds, setChimedReminderIds] = useState<number[]>([]);
-  const [reminderTick, setReminderTick] = useState(() => Date.now());
   const drawerPhoneListRef = useRef<HTMLDivElement | null>(null);
   const shouldScrollPhoneListAfterCollapseRef = useRef(false);
   const rows = useLiveQuery(
@@ -1755,12 +1706,6 @@ export function StudentsPage() {
     },
     [],
     undefined
-  );
-  const reminderSettings = useLiveQuery(() => readReminderNotificationSettings(), [], undefined);
-  const dueReminderAlerts = useLiveQuery(
-    () => readDueReminderAlerts(new Date(reminderTick).toISOString()),
-    [reminderTick],
-    []
   );
   const campaignOptions = useMemo(() => {
     const names = new Set((rows ?? []).map((row) => row.campaign_name || "Diğer"));
@@ -1845,17 +1790,6 @@ export function StudentsPage() {
     [selectedWhatsAppTemplateId]
   );
   const whatsAppDraftVisibleStatusLabel = getWhatsAppDraftVisibleStatusLabel(whatsAppDraftVisibleStatus);
-  const reminderPopup = useMemo(
-    () =>
-      createReminderPopupModel(
-        dueReminderAlerts ?? [],
-        dismissedReminderKeys,
-        reminderSettings?.popup_enabled ?? true
-      ),
-    [dismissedReminderKeys, dueReminderAlerts, reminderSettings?.popup_enabled]
-  );
-  const activeReminderAlert = reminderPopup?.primaryAlert ?? null;
-  const reminderPopupView = reminderPopup ? createReminderPopupViewModel(reminderPopup) : null;
   const operationShortcuts = useLiveQuery(
     () => readActiveOperationShortcuts(),
     [],
@@ -1900,12 +1834,6 @@ export function StudentsPage() {
   }, [selectedStudentId, visibleRows]);
 
   useEffect(() => {
-    const intervalId = window.setInterval(() => setReminderTick(Date.now()), 30_000);
-
-    return () => window.clearInterval(intervalId);
-  }, []);
-
-  useEffect(() => {
     if (!selectedRow) {
       return;
     }
@@ -1942,20 +1870,6 @@ export function StudentsPage() {
       phoneListElement.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, [isExtraPhonesExpanded]);
-
-  useEffect(() => {
-    if (!reminderPopup || !reminderSettings?.sound_enabled) {
-      return;
-    }
-
-    const visibleReminderIds = reminderPopup.alerts.map((alert) => alert.reminder_id);
-    const hasNewReminder = visibleReminderIds.some((reminderId) => !chimedReminderIds.includes(reminderId));
-
-    if (hasNewReminder) {
-      playReminderChime();
-      setChimedReminderIds((current) => [...new Set([...current, ...visibleReminderIds])]);
-    }
-  }, [chimedReminderIds, reminderPopup, reminderSettings?.sound_enabled]);
 
   useEffect(() => {
     if (!operationToast) {
@@ -2486,7 +2400,6 @@ export function StudentsPage() {
       closeLinkedReminderCancelModal();
       setReminderDate("");
       setReminderTime("");
-      setReminderTick(Date.now());
       const message = "Hatırlatma iptal edildi.";
       setActionMessage(message);
       showOperationToast(message, "success");
@@ -2642,16 +2555,6 @@ export function StudentsPage() {
     setIsDrawerOpen(true);
   }
 
-  function openReminderStudent(alert: DueReminderAlert) {
-    setDismissedReminderKeys((current) => {
-      const nextKeys = dismissReminderAlert(current, alert);
-      writePersistedDismissedReminderKeys(nextKeys);
-
-      return nextKeys;
-    });
-    openStudentDrawer(alert.student_id);
-  }
-
   function toggleShortcutHelp() {
     setIsShortcutHelpExpanded((current) => {
       const next = !current;
@@ -2659,22 +2562,6 @@ export function StudentsPage() {
 
       return next;
     });
-  }
-
-  function dismissActiveReminder() {
-    if (!activeReminderAlert) {
-      return;
-    }
-
-    setDismissedReminderKeys((current) => persistDismissedReminderAlert(current, activeReminderAlert));
-  }
-
-  function dismissAllVisibleReminders() {
-    if (!reminderPopup) {
-      return;
-    }
-
-    setDismissedReminderKeys((current) => persistDismissedReminderAlerts(current, reminderPopup.alerts));
   }
 
   async function saveCallAndGoNext() {
@@ -2759,11 +2646,6 @@ export function StudentsPage() {
   useEffect(() => {
     function runShortcutAction(action: ShortcutActionKey) {
       if (action === "escape") {
-        if (activeReminderAlert) {
-          dismissActiveReminder();
-          return;
-        }
-
         if (isDrawerOpen) {
           setIsDrawerOpen(false);
         }
@@ -2846,7 +2728,6 @@ export function StudentsPage() {
 
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [
-    activeReminderAlert,
     filteredRows,
     focusGlobalSearch,
     isDrawerOpen,
@@ -2890,30 +2771,6 @@ export function StudentsPage() {
 
   return (
     <div className={`students-workbench ${isDrawerOpen ? "" : "drawer-collapsed"}`}>
-      {activeReminderAlert ? (
-        <section className="reminder-toast" role="status">
-          <div className="reminder-toast-icon">
-            <Bell aria-hidden="true" size={17} />
-          </div>
-          <div className="reminder-toast-body">
-            <strong>{reminderPopupView?.title}</strong>
-            <span>{reminderPopupView?.student_name}</span>
-            {reminderPopupView?.guardian_line ? <small>{reminderPopupView.guardian_line}</small> : null}
-            <small>{reminderPopupView?.reminder_line}</small>
-          </div>
-          <div className="reminder-toast-actions">
-            <button onClick={() => openReminderStudent(activeReminderAlert)} type="button">
-              Adayı Aç
-            </button>
-            <button onClick={dismissActiveReminder} type="button">
-              Bu Bildirimi Kapat
-            </button>
-            <button onClick={dismissAllVisibleReminders} type="button">
-              {DISMISS_FOLLOWING_REMINDERS_LABEL}
-            </button>
-          </div>
-        </section>
-      ) : null}
       {operationToast ? (
         <button
           className={`operation-toast ${operationToast.type}`}
