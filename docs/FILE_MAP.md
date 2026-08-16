@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Appointment Model C+ Checkpoint A | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Appointment Model C+ Checkpoint B | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -857,4 +857,28 @@ Son doğrulandı: `c094741 chore: simplify phone result helper labels`
 - `tests/students/StudentsPageMultiPhone.test.tsx`
   Multi-phone action label regression coverage içerir.
 - Scope dışı: schema/migration, PhoneRecord model/semantik, phone_status/is_wrong/call_outcome davranışı, X/dropdown/✓ davranışı, call log validation/write rules, import/export/backup ve WhatsApp değiştirilmemiştir.
+
+## Latest File Map Addendum - Appointment Model C+ Checkpoint B
+
+Son doğrulandı: `79cf2f9 feat: unify operational appointment alerts`
+
+- `src/features/reminders/services/operationalAlertReader.ts`
+  Mevcut call reminder satırlarını ve aktif C+ appointment'lardan fail-closed türetilen `appointment_guardian_message` / `appointment_start` satırlarını tek read-only operasyonel modelde üretir. Appointment için ReminderRecord oluşturmaz; aynı appointment'ın item identity'lerini bağımsız taşır.
+- `src/features/reminders/OperationalAlertHost.tsx`
+  AppLayout altında tek kez mount edilen global 30 saniyelik polling, future list, due/overdue popup/chime ve Escape davranışı host'udur. Dismiss DB write yapmaz; local UI bastırması kullanır.
+- `src/features/reminders/RemindersPage.tsx`
+  `call_reminder`, `appointment_guardian_message` ve `appointment_start` satırlarını read-only listeler. Appointment satırlarında lifecycle aksiyonu yoktur; yalnız `Adayı Aç` bulunur.
+- `src/features/reminders/services/reminderDismissalStore.ts`
+  Mevcut call reminder dismissal anahtarlarını korur; appointment guardian/start item'larının bağımsız stable identity'lerini local UI bastırmasında destekler.
+- `src/features/reminders/services/reminderPopupViewModel.ts`
+  Üç operasyonel tür için popup metinlerini ve tür farkını read modelden üretir.
+- `src/app/AppLayout.tsx`
+  Route bağımsız operasyonel alert host'unu tek global mount noktasında taşır.
+- `src/features/students/StudentsPage.tsx`
+  Eski route'a bağlı reminder polling/popup/chime sorumluluğunu taşımaz; öğrenci drawer ve call flow sorumlulukları korunur.
+- `tests/reminders/operationalAlertReader.test.ts`
+  Türetilen guardian/start satırları, fail-closed integrity, identity ve call reminder regresyonlarını kapsar.
+- `tests/reminders/OperationalAlertHost.test.tsx`
+  Global host polling, chime, popup, dismiss ve Escape davranışlarını kapsar.
+- Scope dışı: DB version/index/migration/backfill, appointment ReminderRecord oluşturma, guardian message sent mutation, appointment lifecycle mutationları, package/config ve deployment değiştirilmemiştir.
 

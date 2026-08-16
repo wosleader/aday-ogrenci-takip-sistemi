@@ -4,14 +4,14 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Latest closed product checkpoint: `e16c6a3 feat: persist appointment model c plus`
-- Checkpoint A: CLOSED / IMPLEMENTED / PUSHED.
-- Current active work: Checkpoint B implementation preparation — Unified Operational Alerts.
-- Checkpoint A validation: Strategy Re-Review `PASS WITH NOTES`, local browser/IndexedDB manual QA PASS, focused `8` test dosyası / `175` test PASS. Migration/backfill, DB version ve index değişikliği yoktur.
+- Latest closed product checkpoint: `79cf2f9 feat: unify operational appointment alerts`
+- Checkpoint A: CLOSED / IMPLEMENTED / PUSHED. Checkpoint B: CLOSED / IMPLEMENTED / REVIEWED / MANUAL QA PASS / PUSHED; Strategy Re-Review `PASS WITH NOTES`.
+- Current active work: Checkpoint C implementation preparation — appointment lifecycle mutations.
+- Checkpoint B validation: operational reader + host `2` dosya / `13` test PASS; reminders + AppLayout `11` dosya / `91` test PASS; reports + pilot seed `2` dosya / `14` test PASS; calls + appointments `7` dosya / `165` test PASS; build PASS (bilinen Vite chunk-size warning). Migration/backfill, DB version ve index değişikliği yoktur.
 - Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi, tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i, iletişim geçmişi edit/void MVP'si, phone action label/helper cleanup, Reporting V2 Summary MVP + UI polish, linked communication history terminal status-aware soft delete ve linked reminder quick complete zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
-- Pending linked reminder edit kapanışı tamamlandı. Cancel pending linked reminder implementation, tests/build, Strategy Review, manuel QA, feature commit/push, Windows VDS deployment, feature-specific live QA, docs closure, Obsidian ve Drive doğrulaması tamamlandı. Checkpoint A dışındaki aktif implementation/docs WIP yoktur.
+- Pending linked reminder edit kapanışı tamamlandı. Cancel pending linked reminder implementation, tests/build, Strategy Review, manuel QA, feature commit/push, Windows VDS deployment, feature-specific live QA, docs closure, Obsidian ve Drive doğrulaması tamamlandı. Checkpoint A/B dışındaki aktif implementation/docs WIP yoktur.
 - Pending linked call reminder cancellation tamamlandı: gerçek owner/current history satırında iptal aksiyonu görünür; shared/tarihsel referans satırlarında görünmez. `pending → cancelled` dışında lifecycle transition yoktur; call log, student ve appointment korunur.
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
@@ -45,17 +45,27 @@
 - Bu checkpoint kapandı: deployment/live-QA docs closure, exact-path docs commit/push, Obsidian ve Drive doğrulaması tamamlandı.
 - Ayrı deferred UX işi: görünür `✓` ve diğer history aksiyonlarını `⋯` menüsünde toplama fikri; bu checkpoint'e dahil değildir.
 
-## Latest Checkpoint - Appointment Model C+ Checkpoint A
+## Latest Checkpoint - Appointment Model C+ Checkpoint B
+
+- Implementation/push: `79cf2f9 feat: unify operational appointment alerts`.
+- `call_reminder` davranışı korunurken aktif C+ appointment'lardan read-only `appointment_guardian_message` ve `appointment_start` operasyonel satırları fail-closed olarak türetilir. Appointment için ReminderRecord oluşturulmaz.
+- Aynı appointment'ın guardian-message ve start satırları ayrı stable identity taşır; dismiss ve chime bastırmaları birbirini etkilemez.
+- `OperationalAlertHost` AppLayout altında tek mount edilir; tüm rotalarda 30 saniyelik polling, future list, due/overdue popup/chime davranışını sağlar. Dismiss localStorage UI bastırmasıdır ve Escape yalnız popup varken onu kapatır.
+- RemindersPage üç tür satırı gösterir; appointment satırları lifecycle aksiyonu içermez ve yalnız `Adayı Aç` sunar.
+- Manual QA PASS. Production deployment yapılmadı; A+B+C tamamlanana kadar deployment kapısı kapalıdır.
+- Checkpoint C için kalanlar: guardian message sent mutation, appointment note edit/reschedule/start move, terminal complete/no_show/cancel, lifecycle audit ve owner-row lifecycle UI.
+
+## Previous Checkpoint - Appointment Model C+ Checkpoint A
 
 - `e16c6a3` gerçek AppointmentRecord persistence, reciprocal owner link, embedded guardian-message state, Europe/Istanbul due hesabı, atomic create audit ve legacy status compatibility getirir.
 - Appointment branch ReminderRecord oluşturmaz; `call_later` mevcut pending call reminder lifecycle'ını korur. Pending modern owner integrity missing/conflicting/duplicate/mismatch bağlarda fail-closed'dur; generic correction appointment sentezleyemez.
 - Manual QA PASS: pending appointment, reciprocal link, due time, appointment audit, no-reminder, deletion/correction guard ve `call_later` regression doğrulandı. Normal export guardian metadata'sını taşımaz; full backup/restore embedded state, link ve audit'i korur.
-- Checkpoint A persistence katmanıdır. Guardian/start alarm reader ve UI, `Mesaj Gönderildi`, reschedule, complete/no_show/cancel ve lifecycle auditleri henüz uygulanmadı. A+B+C tamamlanmadan deployment yapılmayacak.
+- Checkpoint A persistence katmanıdır. Checkpoint B guardian/start alarm reader ve UI'ı uyguladı. `Mesaj Gönderildi`, reschedule, complete/no_show/cancel ve lifecycle auditleri Checkpoint C'de kalır. A+B+C tamamlanmadan deployment yapılmayacak.
 
-## Next Gate - Checkpoint B Implementation Preparation
+## Next Gate - Checkpoint C Implementation Preparation
 
-- Amaç: mevcut call reminder, appointment guardian-message task ve appointment-start alarmını tek `UNIFIED OPERATIONAL ALERT VIEW-MODEL` altında okumak.
-- Guardian/start alarm AppointmentRecord'dan türetilir; guardian task ReminderRecord olarak modellenmez. Checkpoint B lifecycle mutation eklemez; `Mesaj Gönderildi`, reschedule/complete/no_show/cancel Checkpoint C sınırında kalır.
+- Amaç: appointment lifecycle mutationlarını dar discovery ve implementation preparation ile birbirinden ayırmak.
+- Guardian-message sent, appointment note edit, reschedule/start move, terminal complete/no_show/cancel ve lifecycle audit aynı sprintte körlemesine birleştirilmez. A+B+C tamamlanmadan production deployment yapılmaz.
 
 ## Previous Handoff Update - Pending Linked Reminder Edit
 
