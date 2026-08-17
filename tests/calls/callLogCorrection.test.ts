@@ -344,10 +344,7 @@ describe("callLogCorrection", () => {
       await expect(getCallLogCorrectionPolicy(deletedReminderCallLogId, database)).resolves.toMatchObject({
         mode: "blocked_conflict"
       });
-      await expect(getCallLogCorrectionPolicy(pendingAppointmentCallLogId, database)).resolves.toMatchObject({
-        mode: "blocked_active",
-        message: expect.stringContaining("Bu görüşmeye bağlı aktif bir etkinlik")
-      });
+      await expect(getCallLogCorrectionPolicy(pendingAppointmentCallLogId, database)).resolves.toEqual({ mode: "note_only" });
       await expect(getCallLogCorrectionPolicy(registeredAppointmentCallLogId, database)).resolves.toEqual({ mode: "note_only" });
       await expect(getCallLogCorrectionPolicy(unknownAppointmentCallLogId, database)).resolves.toMatchObject({
         mode: "blocked_conflict"
@@ -504,24 +501,41 @@ describe("callLogCorrection", () => {
     }
   });
 
-  it.each(["pending", "postponed"] satisfies AppointmentStatus[])(
-    "blocks a %s linked appointment correction",
-    async (status) => {
-      const database = await createDatabase();
+  it("updates only the call-log note for a valid pending appointment", async () => {
+    const database = await createDatabase();
 
-      try {
-        const studentId = await database.students.add(student());
-        const appointmentId = await database.appointments.add(appointment(studentId, status));
-        const callLogId = await database.call_logs.add(callLog(studentId, { created_appointment_id: appointmentId }));
+    try {
+      const studentId = await database.students.add(student());
+      const appointmentId = await database.appointments.add(appointment(studentId, "pending"));
+      const callLogId = await database.call_logs.add(callLog(studentId, { created_appointment_id: appointmentId }));
+      const appointmentBefore = await database.appointments.get(appointmentId);
 
-        await expect(updateCallLogCorrection(correctionInput(callLogId), database)).rejects.toThrow("aktif bir etkinlik");
-        expect(await database.audit_logs.count()).toBe(0);
-      } finally {
-        database.close();
-        await database.delete();
-      }
+      await expect(getCallLogCorrectionPolicy(callLogId, database)).resolves.toEqual({ mode: "note_only" });
+      await updateCallLogCorrection(correctionInput(callLogId, { note: "Güncellenmiş görüşme notu" }), database);
+
+      expect(await database.call_logs.get(callLogId)).toMatchObject({ note: "Güncellenmiş görüşme notu" });
+      expect(await database.appointments.get(appointmentId)).toEqual(appointmentBefore);
+    } finally {
+      database.close();
+      await database.delete();
     }
-  );
+  });
+
+  it("keeps a postponed linked appointment correction blocked", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const appointmentId = await database.appointments.add(appointment(studentId, "postponed"));
+      const callLogId = await database.call_logs.add(callLog(studentId, { created_appointment_id: appointmentId }));
+
+      await expect(updateCallLogCorrection(correctionInput(callLogId), database)).rejects.toThrow("aktif bir etkinlik");
+      expect(await database.audit_logs.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
 
   it.each(["attended", "missed", "cancelled", "registered", "completed", "no_show"] satisfies AppointmentStatus[])(
     "permits note-only correction for a terminal %s appointment",
@@ -659,7 +673,7 @@ describe("callLogCorrection", () => {
       const before = await database.call_logs.get(callLogId);
 
       await expect(updateCallLogCorrection(correctionInput(callLogId, { call_result: "reached" }), database)).rejects.toThrow(
-        "aktif bir etkinlik"
+        "yalnız açıklama notu"
       );
 
       expect(await database.call_logs.get(callLogId)).toEqual(before);

@@ -1,7 +1,8 @@
 import type { AppDatabase } from "../../../db/db";
 import { db } from "../../../db/db";
 import type { AuditLogRecord } from "../../../domain/models/auditLog";
-import { CALL_RESULTS, type ReminderStatus } from "../../../domain/constants/statuses";
+import { CALL_RESULTS, type AppointmentStatus, type ReminderStatus } from "../../../domain/constants/statuses";
+import { readPendingAppointmentLifecycleContext } from "../../appointments/services/appointmentOwnerIntegrity";
 import { resolveLinkedCallReminderOwner } from "../../reminders/services/reminderLifecycle";
 import { createPhoneSnapshotDisplayLabel } from "./callLogPhoneContext";
 
@@ -28,9 +29,18 @@ export type CallHistoryItem = {
   linked_reminder_previous_at?: string | null;
   linked_reminder_previous_note?: string | null;
   linked_reminder_last_editor?: string | null;
+  linked_appointment_id?: number | null;
+  linked_appointment_status?: AppointmentStatus | null;
+  linked_appointment_at?: string | null;
+  linked_appointment_note?: string | null;
+  linked_appointment_updated_at?: string | null;
+  linked_appointment_guardian_message_due_at?: string | null;
+  linked_appointment_guardian_message_sent_at?: string | null;
+  linked_appointment_guardian_message_generation?: number | null;
   canCompleteLinkedReminder: boolean;
   canEditLinkedReminder: boolean;
   canCancelLinkedReminder: boolean;
+  canManageLinkedAppointment: boolean;
   created_by?: string | null;
 };
 
@@ -149,6 +159,7 @@ export async function readCallHistoryForStudent(
 ): Promise<CallHistoryItem[]> {
   const logs = await database.call_logs.where("student_id").equals(studentId).toArray();
   const studentReminders = await database.reminders.where("student_id").equals(studentId).toArray();
+  const studentAppointments = await database.appointments.where("student_id").equals(studentId).toArray();
   const reminderOwnershipCandidates = await database.reminders.toArray();
   const activeCallLogIds = new Set(
     logs.flatMap((log) => (log.id && !log.deleted_at ? [log.id] : []))
@@ -166,6 +177,23 @@ export async function readCallHistoryForStudent(
   const linkedReminders = reminderIds.length ? await database.reminders.bulkGet(reminderIds) : [];
   const remindersById = new Map(linkedReminders.flatMap((reminder) => (reminder?.id ? [[reminder.id, reminder]] : [])));
   const reminderOwnerCallLogIds = createReminderOwnerCallLogIds(logs, remindersById);
+  const appointmentsById = new Map(
+    studentAppointments.flatMap((appointment) => (appointment.id ? [[appointment.id, appointment]] : []))
+  );
+  const manageableAppointmentIds = new Set<number>();
+
+  for (const appointment of studentAppointments) {
+    if (!appointment.id || appointment.deleted_at || appointment.status !== "pending") {
+      continue;
+    }
+
+    try {
+      await readPendingAppointmentLifecycleContext(appointment.id, database);
+      manageableAppointmentIds.add(appointment.id);
+    } catch {
+      // Partial, legacy, or conflicting appointment records remain visible but read-only.
+    }
+  }
 
   const reminderCancellationOwners = new Map<number, number>();
   const remindersByOwnerCallLogId = new Map<number, LinkedReminderCandidate>();
@@ -283,6 +311,10 @@ export async function readCallHistoryForStudent(
       const cancellationOwnerCallLogId = linkedReminder?.id
         ? reminderCancellationOwners.get(linkedReminder.id) ?? null
         : null;
+      const linkedAppointment = log.created_appointment_id
+        ? appointmentsById.get(log.created_appointment_id) ?? null
+        : null;
+      const activeLinkedAppointment = linkedAppointment && !linkedAppointment.deleted_at ? linkedAppointment : null;
 
       return {
         call_log_id: log.id!,
@@ -307,12 +339,24 @@ export async function readCallHistoryForStudent(
         linked_reminder_previous_at: reminderEditAudit?.previous_at ?? null,
         linked_reminder_previous_note: reminderEditAudit?.previous_note ?? null,
         linked_reminder_last_editor: reminderEditAudit?.last_editor ?? null,
+        linked_appointment_id: activeLinkedAppointment?.id ?? log.created_appointment_id ?? null,
+        linked_appointment_status: activeLinkedAppointment?.status ?? null,
+        linked_appointment_at: activeLinkedAppointment?.appointment_at ?? null,
+        linked_appointment_note: activeLinkedAppointment?.note ?? null,
+        linked_appointment_updated_at: activeLinkedAppointment?.updated_at ?? null,
+        linked_appointment_guardian_message_due_at: activeLinkedAppointment?.guardian_message_due_at ?? null,
+        linked_appointment_guardian_message_sent_at: activeLinkedAppointment?.guardian_message_sent_at ?? null,
+        linked_appointment_guardian_message_generation: activeLinkedAppointment?.guardian_message_generation ?? null,
         canCompleteLinkedReminder: isPendingLinkedReminderOwner,
         canEditLinkedReminder,
         canCancelLinkedReminder:
           activeLinkedReminder?.status === "pending" &&
           activeLinkedReminder.reminder_type === "call" &&
           cancellationOwnerCallLogId === log.id,
+        canManageLinkedAppointment:
+          activeLinkedAppointment?.status === "pending" &&
+          activeLinkedAppointment.id != null &&
+          manageableAppointmentIds.has(activeLinkedAppointment.id),
         created_by: normalizeVisibleActorLabel(log.created_by)
       };
     });

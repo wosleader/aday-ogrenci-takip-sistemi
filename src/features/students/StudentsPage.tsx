@@ -16,7 +16,13 @@ import { Ban, CalendarClock, Check, ChevronsRight, Copy, MoreVertical, Pencil, T
 import type { AppOutletContext } from "../../app/AppLayout";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/EmptyState";
-import { CALL_RESULTS, LIFE_CYCLE_STATUSES, isReminderCallResult, type CallResult } from "../../domain/constants/statuses";
+import {
+  APPOINTMENT_STATUSES,
+  CALL_RESULTS,
+  LIFE_CYCLE_STATUSES,
+  isReminderCallResult,
+  type CallResult
+} from "../../domain/constants/statuses";
 import {
   getPhoneCallOutcomeLabel,
   PHONE_CALL_OUTCOME_OPTIONS,
@@ -36,7 +42,17 @@ import {
 } from "../calls/services/callHistoryReader";
 import { writeCallLog } from "../calls/services/callLogWriter";
 import { validateCallSave } from "../calls/services/callSaveValidation";
-import { createIstanbulAppointmentAt } from "../appointments/services/guardianMessageDueTime";
+import {
+  cancelPendingAppointment,
+  completePendingAppointment,
+  markPendingAppointmentNoShow,
+  reschedulePendingAppointment,
+  updatePendingAppointmentNote
+} from "../appointments/services/appointmentLifecycle";
+import {
+  createIstanbulAppointmentAt,
+  getIstanbulAppointmentInputValues
+} from "../appointments/services/guardianMessageDueTime";
 import { saveFilteredExportSnapshot } from "../exports/services/exportSelection";
 import {
   getShortcutBarItems,
@@ -1666,6 +1682,13 @@ export function StudentsPage() {
   const [linkedReminderEditNote, setLinkedReminderEditNote] = useState("");
   const [linkedReminderCancelCandidate, setLinkedReminderCancelCandidate] = useState<CallHistoryItem | null>(null);
   const [linkedReminderCancelReason, setLinkedReminderCancelReason] = useState("");
+  const [appointmentLifecycleCandidate, setAppointmentLifecycleCandidate] = useState<CallHistoryItem | null>(null);
+  const [appointmentLifecycleDate, setAppointmentLifecycleDate] = useState("");
+  const [appointmentLifecycleTime, setAppointmentLifecycleTime] = useState("11:00");
+  const [appointmentLifecycleNote, setAppointmentLifecycleNote] = useState("");
+  const [appointmentTerminalAction, setAppointmentTerminalAction] = useState<
+    "completed" | "no_show" | "cancelled" | null
+  >(null);
   const [callLogEditResult, setCallLogEditResult] = useState<CallResult>("not_called");
   const [callLogEditDate, setCallLogEditDate] = useState("");
   const [callLogEditTime, setCallLogEditTime] = useState("11:00");
@@ -1684,6 +1707,7 @@ export function StudentsPage() {
   const [isCompletingLinkedReminder, setIsCompletingLinkedReminder] = useState(false);
   const [isUpdatingLinkedReminder, setIsUpdatingLinkedReminder] = useState(false);
   const [isCancellingLinkedReminder, setIsCancellingLinkedReminder] = useState(false);
+  const [isUpdatingAppointmentLifecycle, setIsUpdatingAppointmentLifecycle] = useState(false);
   const [operationToast, setOperationToast] = useState<OperationToast | null>(null);
   const [whatsAppDraftContext, setWhatsAppDraftContext] = useState<WhatsAppDraftContext | null>(null);
   const [selectedWhatsAppTemplateId, setSelectedWhatsAppTemplateId] = useState(DEFAULT_WHATSAPP_TEMPLATE_ID);
@@ -2470,6 +2494,161 @@ export function StudentsPage() {
     }
   }
 
+  function openAppointmentLifecycleModal(historyItem: CallHistoryItem) {
+    if (
+      !historyItem.canManageLinkedAppointment ||
+      !historyItem.linked_appointment_id ||
+      !historyItem.linked_appointment_updated_at ||
+      !historyItem.linked_appointment_at
+    ) {
+      const message = "Yönetilebilecek açık randevu bulunamadı.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
+      return;
+    }
+
+    let inputValues: { dateValue: string; timeValue: string };
+
+    try {
+      inputValues = getIstanbulAppointmentInputValues(historyItem.linked_appointment_at);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Randevu tarihi/saat bilgisi geçersiz.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
+      return;
+    }
+
+    setAppointmentLifecycleCandidate(historyItem);
+    setAppointmentLifecycleDate(inputValues.dateValue);
+    setAppointmentLifecycleTime(inputValues.timeValue);
+    setAppointmentLifecycleNote(historyItem.linked_appointment_note ?? "");
+    setAppointmentTerminalAction(null);
+    setActionMessage(null);
+  }
+
+  function closeAppointmentLifecycleModal(force = false) {
+    if (isUpdatingAppointmentLifecycle && !force) {
+      return;
+    }
+
+    setAppointmentLifecycleCandidate(null);
+    setAppointmentLifecycleDate("");
+    setAppointmentLifecycleTime("11:00");
+    setAppointmentLifecycleNote("");
+    setAppointmentTerminalAction(null);
+  }
+
+  function getAppointmentLifecycleExpectedUpdatedAt(): string | null {
+    return appointmentLifecycleCandidate?.linked_appointment_updated_at ?? null;
+  }
+
+  async function saveAppointmentLifecycleNote() {
+    const appointmentId = appointmentLifecycleCandidate?.linked_appointment_id;
+    const expectedUpdatedAt = getAppointmentLifecycleExpectedUpdatedAt();
+
+    if (!appointmentId || !expectedUpdatedAt || isUpdatingAppointmentLifecycle) {
+      return;
+    }
+
+    setIsUpdatingAppointmentLifecycle(true);
+    setActionMessage(null);
+
+    try {
+      await updatePendingAppointmentNote(appointmentId, {
+        expected_updated_at: expectedUpdatedAt,
+        note: appointmentLifecycleNote,
+        performed_by: "agent"
+      });
+      closeAppointmentLifecycleModal(true);
+      const message = "Randevu notu güncellendi.";
+      setActionMessage(message);
+      showOperationToast(message, "success");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Randevu notu güncellenemedi.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
+    } finally {
+      setIsUpdatingAppointmentLifecycle(false);
+    }
+  }
+
+  async function rescheduleAppointmentLifecycle() {
+    const appointmentId = appointmentLifecycleCandidate?.linked_appointment_id;
+    const expectedUpdatedAt = getAppointmentLifecycleExpectedUpdatedAt();
+
+    if (!appointmentId || !expectedUpdatedAt || isUpdatingAppointmentLifecycle) {
+      return;
+    }
+
+    let appointmentAt: string;
+
+    try {
+      appointmentAt = createIstanbulAppointmentAt(appointmentLifecycleDate, appointmentLifecycleTime);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Randevu tarih/saat bilgisi geçersiz.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
+      return;
+    }
+
+    setIsUpdatingAppointmentLifecycle(true);
+    setActionMessage(null);
+
+    try {
+      await reschedulePendingAppointment(appointmentId, {
+        expected_updated_at: expectedUpdatedAt,
+        appointment_at: appointmentAt,
+        performed_by: "agent"
+      });
+      closeAppointmentLifecycleModal(true);
+      const message = "Randevu tarih/saat bilgisi ertelendi.";
+      setActionMessage(message);
+      showOperationToast(message, "success");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Randevu ertelenemedi.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
+    } finally {
+      setIsUpdatingAppointmentLifecycle(false);
+    }
+  }
+
+  async function confirmAppointmentTerminalAction() {
+    const appointmentId = appointmentLifecycleCandidate?.linked_appointment_id;
+    const expectedUpdatedAt = getAppointmentLifecycleExpectedUpdatedAt();
+    const action = appointmentTerminalAction;
+
+    if (!appointmentId || !expectedUpdatedAt || !action || isUpdatingAppointmentLifecycle) {
+      return;
+    }
+
+    setIsUpdatingAppointmentLifecycle(true);
+    setActionMessage(null);
+
+    try {
+      const input = { expected_updated_at: expectedUpdatedAt, performed_by: "agent" };
+
+      if (action === "completed") {
+        await completePendingAppointment(appointmentId, input);
+      } else if (action === "no_show") {
+        await markPendingAppointmentNoShow(appointmentId, input);
+      } else {
+        await cancelPendingAppointment(appointmentId, input);
+      }
+
+      closeAppointmentLifecycleModal(true);
+      const message = `Randevu ${APPOINTMENT_STATUSES[action]} olarak işaretlendi.`;
+      setActionMessage(message);
+      showOperationToast(message, "success");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Randevu durumu güncellenemedi.";
+      setActionMessage(message);
+      showOperationToast(message, "error");
+    } finally {
+      setIsUpdatingAppointmentLifecycle(false);
+    }
+  }
+
   async function openCallLogEditModal(historyItem: CallHistoryItem) {
     try {
       const policy = await getCallLogCorrectionPolicy(historyItem.call_log_id);
@@ -2959,6 +3138,103 @@ export function StudentsPage() {
           </div>
         </section>
       ) : null}
+      {appointmentLifecycleCandidate ? (
+        <section
+          aria-labelledby="appointment-lifecycle-title"
+          aria-modal="true"
+          className="delete-confirm-backdrop"
+          role="dialog"
+        >
+          <div className="delete-confirm-modal" style={{ maxWidth: 560 }}>
+            {appointmentTerminalAction ? (
+              <>
+                <h2 id="appointment-lifecycle-title">
+                  Randevu {APPOINTMENT_STATUSES[appointmentTerminalAction]} olarak işaretlensin mi?
+                </h2>
+                <p>Bu işlem randevuyu yeniden açmaz. Görüşme kaydı ve randevu geçmişi korunur.</p>
+                <div className="delete-confirm-actions">
+                  <button
+                    disabled={isUpdatingAppointmentLifecycle}
+                    onClick={() => setAppointmentTerminalAction(null)}
+                    type="button"
+                  >
+                    Vazgeç
+                  </button>
+                  <button
+                    disabled={isUpdatingAppointmentLifecycle}
+                    onClick={() => void confirmAppointmentTerminalAction()}
+                    type="button"
+                  >
+                    {isUpdatingAppointmentLifecycle ? "İşleniyor..." : APPOINTMENT_STATUSES[appointmentTerminalAction]}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 id="appointment-lifecycle-title">Randevuyu yönet</h2>
+                <p>Randevu notu ve tarihi bu kayda aittir; ilk görüşme notu değiştirilmez.</p>
+                <div style={{ display: "grid", gap: 12 }}>
+                  <div style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr" }}>
+                    <label style={{ display: "grid", gap: 4 }}>
+                      <span>Tarih</span>
+                      <input
+                        disabled={isUpdatingAppointmentLifecycle}
+                        onChange={(event) => setAppointmentLifecycleDate(event.target.value)}
+                        required
+                        type="date"
+                        value={appointmentLifecycleDate}
+                      />
+                    </label>
+                    <label style={{ display: "grid", gap: 4 }}>
+                      <span>Saat</span>
+                      <input
+                        disabled={isUpdatingAppointmentLifecycle}
+                        onChange={(event) => setAppointmentLifecycleTime(event.target.value)}
+                        required
+                        type="time"
+                        value={appointmentLifecycleTime}
+                      />
+                    </label>
+                  </div>
+                  <label style={{ display: "grid", gap: 4 }}>
+                    <span>Randevu notu</span>
+                    <textarea
+                      disabled={isUpdatingAppointmentLifecycle}
+                      onChange={(event) => setAppointmentLifecycleNote(event.target.value)}
+                      rows={3}
+                      value={appointmentLifecycleNote}
+                    />
+                  </label>
+                  <div className="delete-confirm-actions" style={{ marginTop: 0 }}>
+                    <button disabled={isUpdatingAppointmentLifecycle} onClick={() => void saveAppointmentLifecycleNote()} type="button">
+                      Notu kaydet
+                    </button>
+                    <button disabled={isUpdatingAppointmentLifecycle} onClick={() => void rescheduleAppointmentLifecycle()} type="button">
+                      Randevuyu ertele
+                    </button>
+                  </div>
+                  <div className="delete-confirm-actions" style={{ marginTop: 0 }}>
+                    <button disabled={isUpdatingAppointmentLifecycle} onClick={() => setAppointmentTerminalAction("completed")} type="button">
+                      Geldi
+                    </button>
+                    <button disabled={isUpdatingAppointmentLifecycle} onClick={() => setAppointmentTerminalAction("no_show")} type="button">
+                      Gelmedi
+                    </button>
+                    <button disabled={isUpdatingAppointmentLifecycle} onClick={() => setAppointmentTerminalAction("cancelled")} type="button">
+                      İptal
+                    </button>
+                  </div>
+                </div>
+                <div className="delete-confirm-actions" style={{ marginTop: 16 }}>
+                  <button disabled={isUpdatingAppointmentLifecycle} onClick={() => closeAppointmentLifecycleModal()} type="button">
+                    Kapat
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </section>
+      ) : null}
       {callLogEditCandidate ? (
         <section
           aria-labelledby="call-log-edit-title"
@@ -3026,7 +3302,7 @@ export function StudentsPage() {
                 </select>
               </label>
               <label style={{ display: "grid", gap: 4 }}>
-                <span>Not</span>
+                <span>Görüşme notu</span>
                 <textarea
                   disabled={isUpdatingCallLog}
                   onChange={(event) => setCallLogEditNote(event.target.value)}
@@ -3828,6 +4104,30 @@ export function StudentsPage() {
                               <Ban aria-hidden="true" size={12} />
                             </button>
                           ) : null}
+                          {historyItem.canManageLinkedAppointment ? (
+                            <button
+                              aria-label="Randevuyu yönet"
+                              onClick={() => openAppointmentLifecycleModal(historyItem)}
+                              style={{
+                                alignItems: "center",
+                                background: "transparent",
+                                border: "0",
+                                color: "#2563eb",
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                fontSize: 12,
+                                gap: 4,
+                                height: 20,
+                                justifyContent: "center",
+                                opacity: 0.86,
+                                padding: 0
+                              }}
+                              title="Randevuyu yönet"
+                              type="button"
+                            >
+                              <CalendarClock aria-hidden="true" size={12} />
+                            </button>
+                          ) : null}
                           <button
                             aria-label="İletişim kaydını düzelt"
                             onClick={() => void openCallLogEditModal(historyItem)}
@@ -3878,7 +4178,27 @@ export function StudentsPage() {
                           historyItem.phone_context_number
                         ) ?? "Telefon seçilmedi"}
                       </div>
-                      {historyItem.note ? <div className="tl-text">{historyItem.note}</div> : null}
+                      {historyItem.note ? (
+                        historyItem.linked_appointment_id ? (
+                          <div className="tl-text">
+                            <span style={{ color: "var(--aots-muted)", fontSize: 11, fontWeight: 700 }}>Görüşme notu: </span>
+                            <span>{historyItem.note}</span>
+                          </div>
+                        ) : (
+                          <div className="tl-text">{historyItem.note}</div>
+                        )
+                      ) : null}
+                      {historyItem.linked_appointment_id && historyItem.linked_appointment_at ? (
+                        <div className="tl-author">
+                          Randevu: {formatShortDateTime(historyItem.linked_appointment_at)}
+                          {historyItem.linked_appointment_status
+                            ? ` · ${APPOINTMENT_STATUSES[historyItem.linked_appointment_status]}`
+                            : ""}
+                        </div>
+                      ) : null}
+                      {historyItem.linked_appointment_note ? (
+                        <div className="tl-text">Randevu notu: {historyItem.linked_appointment_note}</div>
+                      ) : null}
                       {historyItem.linked_reminder_last_edited_at ? (
                         <ReminderEditPreview
                           editedAt={historyItem.linked_reminder_last_edited_at}

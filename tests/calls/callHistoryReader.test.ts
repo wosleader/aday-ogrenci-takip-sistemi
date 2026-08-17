@@ -929,4 +929,58 @@ describe("callHistoryReader", () => {
       await database.delete();
     }
   });
+
+  it("exposes lifecycle controls only for a strict pending appointment owner", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const callLogId = await database.call_logs.add(
+        callLog(studentId, {
+          call_result: "appointment",
+          call_time: "2099-05-10T10:00:00.000Z"
+        })
+      );
+      const appointmentId = await database.appointments.add({
+        uuid: crypto.randomUUID(),
+        student_id: studentId,
+        guardian_id: null,
+        appointment_at: "2099-05-11T09:00:00.000Z",
+        status: "pending",
+        campaign_id: null,
+        note: "Randevu notu",
+        call_log_id: callLogId,
+        guardian_message_due_at: "2099-05-10T11:00:00.000Z",
+        guardian_message_sent_at: null,
+        guardian_message_generation: 1,
+        sync_status: "local",
+        created_at: timestamp,
+        updated_at: timestamp,
+        deleted_at: null
+      });
+      await database.call_logs.update(callLogId, { created_appointment_id: appointmentId });
+
+      let [historyItem] = await readCallHistoryForStudent(studentId, database);
+
+      expect(historyItem).toMatchObject({
+        linked_appointment_id: appointmentId,
+        linked_appointment_status: "pending",
+        linked_appointment_note: "Randevu notu",
+        linked_appointment_guardian_message_generation: 1,
+        canManageLinkedAppointment: true
+      });
+
+      await database.appointments.update(appointmentId, { status: "completed" });
+      [historyItem] = await readCallHistoryForStudent(studentId, database);
+
+      expect(historyItem).toMatchObject({
+        linked_appointment_id: appointmentId,
+        linked_appointment_status: "completed",
+        canManageLinkedAppointment: false
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
 });

@@ -4,6 +4,7 @@ import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AppOutletContext } from "../../src/app/AppLayout";
 import { db } from "../../src/db/db";
+import type { AppointmentStatus } from "../../src/domain/constants/statuses";
 import { StudentsPage } from "../../src/features/students/StudentsPage";
 import { createSearchText, normalizeText } from "../../src/utils/normalizeText";
 
@@ -296,7 +297,7 @@ async function seedTerminalReminderWithEditAudit(status: "completed" | "cancelle
   return editedAt;
 }
 
-async function seedCallHistoryWithAppointment(status: "pending" | "attended" | "missed" | "cancelled" | "registered") {
+async function seedCallHistoryWithAppointment(status: AppointmentStatus) {
   const studentId = await seedStudent();
   const appointmentId = await db.appointments.add({
     uuid: `linked-appointment-${status}`,
@@ -306,6 +307,10 @@ async function seedCallHistoryWithAppointment(status: "pending" | "attended" | "
     status,
     campaign_id: null,
     note: "Bağlı randevu",
+    call_log_id: null,
+    guardian_message_due_at: "2026-05-10T11:00:00.000Z",
+    guardian_message_sent_at: null,
+    guardian_message_generation: 1,
     sync_status: "local",
     created_at: now,
     updated_at: now,
@@ -332,6 +337,8 @@ async function seedCallHistoryWithAppointment(status: "pending" | "attended" | "
     updated_at: now,
     deleted_at: null
   });
+
+  await db.appointments.update(appointmentId, { call_log_id: callLogId });
 
   return { appointmentId, callLogId, studentId };
 }
@@ -453,7 +460,7 @@ describe("StudentsPage call history phone context", () => {
     await user.click(screen.getByRole("button", { name: "İletişim kaydını düzelt" }));
 
     const dialog = screen.getByRole("dialog", { name: "İletişim kaydı düzelt" });
-    const noteInput = within(dialog).getByLabelText("Not");
+    const noteInput = within(dialog).getByLabelText("Görüşme notu");
 
     await user.clear(noteInput);
     await user.type(noteInput, "Düzeltilmiş iletişim notu.");
@@ -486,7 +493,7 @@ describe("StudentsPage call history phone context", () => {
       const dateInput = within(dialog).getByLabelText("Tarih");
       const timeInput = within(dialog).getByLabelText("Saat");
       const phoneInput = within(dialog).getByLabelText("Telefon bağlamı");
-      const noteInput = within(dialog).getByLabelText("Not");
+      const noteInput = within(dialog).getByLabelText("Görüşme notu");
 
       expect(
         within(dialog).getByText("Bağlı kayıt tamamlandığı için yalnız açıklama notu düzeltilebilir.")
@@ -539,17 +546,139 @@ describe("StudentsPage call history phone context", () => {
     expect(screen.queryByRole("dialog", { name: "İletişim kaydı düzelt" })).not.toBeInTheDocument();
   });
 
-  it("blocks normal correction for an active linked appointment without opening the modal", async () => {
+  it("edits only the call-log note for an active linked appointment", async () => {
     const user = userEvent.setup();
-    await seedCallHistoryWithAppointment("pending");
+    const { appointmentId, callLogId } = await seedCallHistoryWithAppointment("pending");
+    const appointmentBefore = await db.appointments.get(appointmentId);
 
     renderStudentsPage();
 
-    await screen.findByText("Randevu bağlı görüşme.");
+    expect(await screen.findByText("Görüşme notu:")).toBeInTheDocument();
+    expect(screen.getByText("Randevu bağlı görüşme.")).toBeInTheDocument();
+    expect(screen.getByText("Randevu notu: Bağlı randevu")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "İletişim kaydını düzelt" }));
 
-    expect(await screen.findByText("Bu görüşmeye bağlı aktif bir etkinlik bulunuyor. Etkinlik tamamlanmadan normal düzeltme yapılamaz.")).toBeInTheDocument();
-    expect(screen.queryByRole("dialog", { name: "İletişim kaydı düzelt" })).not.toBeInTheDocument();
+    const dialog = await screen.findByRole("dialog", { name: "İletişim kaydı düzelt" });
+    expect(within(dialog).getByLabelText("Görüşme Durumu")).toBeDisabled();
+    expect(within(dialog).getByLabelText("Tarih")).toBeDisabled();
+    expect(within(dialog).getByLabelText("Saat")).toBeDisabled();
+    expect(within(dialog).getByLabelText("Telefon bağlamı")).toBeDisabled();
+    const noteInput = within(dialog).getByLabelText("Görüşme notu");
+    await user.clear(noteInput);
+    await user.type(noteInput, "Güncellenmiş görüşme notu.");
+    await user.click(within(dialog).getByRole("button", { name: "Kaydet" }));
+
+    await waitFor(async () => {
+      expect((await db.call_logs.get(callLogId))?.note).toBe("Güncellenmiş görüşme notu.");
+    });
+    expect(await db.appointments.get(appointmentId)).toEqual(appointmentBefore);
+    expect(await screen.findByText("Güncellenmiş görüşme notu.")).toBeInTheDocument();
+    expect(screen.getByText("Randevu notu: Bağlı randevu")).toBeInTheDocument();
+  });
+
+  it("manages a modern pending appointment without changing the owner call-log note", async () => {
+    const user = userEvent.setup();
+    const { appointmentId, callLogId } = await seedCallHistoryWithAppointment("pending");
+    const ownerBefore = await db.call_logs.get(callLogId);
+
+    renderStudentsPage();
+
+    expect(await screen.findByText("Görüşme notu:")).toBeInTheDocument();
+    expect(screen.getByText("Randevu bağlı görüşme.")).toBeInTheDocument();
+    expect(screen.getByText("Randevu notu: Bağlı randevu")).toBeInTheDocument();
+    const manageButtons = await screen.findAllByRole("button", { name: "Randevuyu yönet" });
+    expect(manageButtons).toHaveLength(1);
+    const [manageButton] = manageButtons;
+    expect(manageButton).toHaveAttribute("title", "Randevuyu yönet");
+    expect(manageButton).not.toHaveTextContent("Randevuyu yönet");
+    await user.click(manageButton);
+    const dialog = await screen.findByRole("dialog", { name: "Randevuyu yönet" });
+    const noteInput = within(dialog).getByLabelText("Randevu notu");
+    await user.clear(noteInput);
+    await user.type(noteInput, "Yeni randevu notu.");
+    await user.click(within(dialog).getByRole("button", { name: "Notu kaydet" }));
+
+    await waitFor(async () => {
+      expect((await db.appointments.get(appointmentId))?.note).toBe("Yeni randevu notu.");
+    });
+    expect(await db.call_logs.get(callLogId)).toEqual(ownerBefore);
+
+    await user.click(await screen.findByRole("button", { name: "Randevuyu yönet" }));
+    const refreshedDialog = await screen.findByRole("dialog", { name: "Randevuyu yönet" });
+    await user.clear(within(refreshedDialog).getByLabelText("Tarih"));
+    await user.type(within(refreshedDialog).getByLabelText("Tarih"), "2099-05-13");
+    await user.clear(within(refreshedDialog).getByLabelText("Saat"));
+    await user.type(within(refreshedDialog).getByLabelText("Saat"), "17:01");
+    await user.click(within(refreshedDialog).getByRole("button", { name: "Randevuyu ertele" }));
+
+    await waitFor(async () => {
+      expect(await db.appointments.get(appointmentId)).toMatchObject({
+        appointment_at: "2099-05-13T14:01:00.000Z",
+        note: "Yeni randevu notu.",
+        guardian_message_generation: 2,
+        guardian_message_sent_at: null
+      });
+    });
+  });
+
+  it("prefills the appointment management modal with Istanbul date and time values", async () => {
+    const user = userEvent.setup();
+    const { appointmentId } = await seedCallHistoryWithAppointment("pending");
+    await db.appointments.update(appointmentId, { appointment_at: "2099-05-11T21:30:00.000Z" });
+
+    renderStudentsPage();
+
+    await user.click(await screen.findByRole("button", { name: "Randevuyu yönet" }));
+    const dialog = await screen.findByRole("dialog", { name: "Randevuyu yönet" });
+
+    expect(within(dialog).getByLabelText("Tarih")).toHaveValue("2099-05-12");
+    expect(within(dialog).getByLabelText("Saat")).toHaveValue("00:30");
+  });
+
+  it.each([
+    ["Geldi", "completed"],
+    ["Gelmedi", "no_show"],
+    ["İptal", "cancelled"]
+  ] as const)("confirms the %s terminal appointment action and removes lifecycle controls", async (label, status) => {
+    const user = userEvent.setup();
+    const { appointmentId } = await seedCallHistoryWithAppointment("pending");
+
+    renderStudentsPage();
+
+    await user.click(await screen.findByRole("button", { name: "Randevuyu yönet" }));
+    const manageDialog = await screen.findByRole("dialog", { name: "Randevuyu yönet" });
+    await user.click(within(manageDialog).getByRole("button", { name: label }));
+    const confirmation = await screen.findByRole("dialog", { name: `Randevu ${label} olarak işaretlensin mi?` });
+    await user.click(within(confirmation).getByRole("button", { name: label }));
+
+    await waitFor(async () => {
+      expect((await db.appointments.get(appointmentId))?.status).toBe(status);
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "Randevuyu yönet" })).not.toBeInTheDocument();
+    });
+  });
+
+  it("keeps terminal and legacy appointment rows read-only", async () => {
+    await seedCallHistoryWithAppointment("attended");
+
+    renderStudentsPage();
+
+    expect(await screen.findByText(/Randevu:.*Geldi/)).toBeInTheDocument();
+    expect(screen.getByText("Görüşme notu:")).toBeInTheDocument();
+    expect(screen.getByText("Randevu bağlı görüşme.")).toBeInTheDocument();
+    expect(screen.getByText("Randevu notu: Bağlı randevu")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Randevuyu yönet" })).not.toBeInTheDocument();
+  });
+
+  it("does not show lifecycle management for a malformed pending appointment link", async () => {
+    const { appointmentId } = await seedCallHistoryWithAppointment("pending");
+    await db.appointments.update(appointmentId, { call_log_id: null });
+
+    renderStudentsPage();
+
+    expect(await screen.findByText("Randevu bağlı görüşme.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Randevuyu yönet" })).not.toBeInTheDocument();
   });
 
   it("opens a note-only correction modal for a terminal appointment", async () => {
@@ -568,7 +697,7 @@ describe("StudentsPage call history phone context", () => {
     expect(within(dialog).getByLabelText("Tarih")).toBeDisabled();
     expect(within(dialog).getByLabelText("Saat")).toBeDisabled();
     expect(within(dialog).getByLabelText("Telefon bağlamı")).toBeDisabled();
-    const noteInput = within(dialog).getByLabelText("Not");
+    const noteInput = within(dialog).getByLabelText("Görüşme notu");
     await user.clear(noteInput);
     await user.type(noteInput, "Terminal randevu notu düzeltildi.");
     await user.click(within(dialog).getByRole("button", { name: "Kaydet" }));
@@ -1186,7 +1315,7 @@ describe("StudentsPage call history phone context", () => {
 
     expect(await screen.findByText("Aday genel görüşme sonucu")).toBeInTheDocument();
 
-    await user.selectOptions(screen.getByDisplayValue("Görüşüldü"), "call_later");
+    await user.selectOptions(await screen.findByDisplayValue("Görüşüldü"), "call_later");
 
     const dateInput = view.container.querySelector('input[type="date"]') as HTMLInputElement | null;
     expect(dateInput).not.toBeNull();

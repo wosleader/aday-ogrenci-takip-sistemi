@@ -52,6 +52,21 @@ function getIstanbulParts(date: Date): IstanbulDateTimeParts {
   };
 }
 
+/**
+ * Converts a persisted appointment instant into the business-timezone values
+ * required by the appointment management form. Both values must come from the
+ * same Europe/Istanbul conversion so an edit cannot move the appointment date.
+ */
+export function getIstanbulAppointmentInputValues(appointmentAt: string): { dateValue: string; timeValue: string } {
+  const parts = getIstanbulParts(parseIsoInstant(appointmentAt));
+  const pad = (value: number) => String(value).padStart(2, "0");
+
+  return {
+    dateValue: `${parts.year}-${pad(parts.month)}-${pad(parts.day)}`,
+    timeValue: `${pad(parts.hour)}:${pad(parts.minute)}`
+  };
+}
+
 function sameIstanbulDateTime(left: IstanbulDateTimeParts, right: IstanbulDateTimeParts): boolean {
   return (
     left.year === right.year &&
@@ -119,6 +134,20 @@ export function createIstanbulAppointmentAt(dateValue: string, timeValue: string
   }
 
   return istanbulDateTimeToInstant(parts).toISOString();
+}
+
+export function assertFutureAppointmentAt(
+  appointmentAt: string,
+  now: string = new Date().toISOString()
+): string {
+  const appointmentDate = parseIsoInstant(appointmentAt);
+  const nowDate = parseIsoInstant(now);
+
+  if (appointmentDate.getTime() <= nowDate.getTime()) {
+    throw new Error("Randevu tarihi/saat bilgisi gelecekte olmalıdır.");
+  }
+
+  return appointmentAt;
 }
 
 export type GuardianMessageDueTime = {

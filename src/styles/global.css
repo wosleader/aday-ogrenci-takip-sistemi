@@ -2846,14 +2846,14 @@ body {
 
 .reminder-table {
   width: 100%;
-  min-width: 1120px;
+  min-width: 0;
   border-collapse: collapse;
   table-layout: fixed;
 }
 
 .reminder-table th,
 .reminder-table td {
-  padding: 11px 12px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--aots-border);
   text-align: left;
   vertical-align: middle;
@@ -2876,24 +2876,27 @@ body {
 
 .reminder-table th:nth-child(1),
 .reminder-table td:nth-child(1) {
-  width: 19%;
+  width: 14%;
 }
 
 .reminder-table th:nth-child(2),
 .reminder-table td:nth-child(2) {
-  width: 17%;
+  width: 10%;
 }
 
 .reminder-table th:nth-child(3),
-.reminder-table td:nth-child(3),
+.reminder-table td:nth-child(3) {
+  width: 12%;
+}
+
 .reminder-table th:nth-child(4),
 .reminder-table td:nth-child(4) {
-  width: 12%;
+  width: 8%;
 }
 
 .reminder-table th:nth-child(5),
 .reminder-table td:nth-child(5) {
-  width: 8%;
+  width: 9%;
   padding-right: 6px;
   padding-left: 6px;
 }
@@ -2907,19 +2910,19 @@ body {
 
 .reminder-table th:nth-child(7),
 .reminder-table td:nth-child(7) {
-  width: 10%;
+  width: 12%;
   padding-right: 8px;
   padding-left: 8px;
 }
 
 .reminder-table th:nth-child(8),
 .reminder-table td:nth-child(8) {
-  width: 8%;
+  width: 11%;
 }
 
 .reminder-table th:nth-child(9),
 .reminder-table td:nth-child(9) {
-  width: 8%;
+  width: 18%;
   padding-right: 8px;
   padding-left: 8px;
 }
@@ -2933,6 +2936,38 @@ body {
 .reminder-table td:nth-child(7),
 .reminder-table td:nth-child(9) {
   text-align: center;
+}
+
+.reminder-status-cell,
+.reminder-actions-cell {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.reminder-status-cell {
+  text-align: center;
+}
+
+.reminder-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 4px;
+  min-width: 0;
+}
+
+.reminder-row-actions .button {
+  flex: 0 0 auto;
+  max-width: 100%;
+  height: 28px;
+  min-height: 28px;
+  padding: 4px 7px;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .reminder-bucket-badge {
@@ -2952,6 +2987,7 @@ body {
 .operational-alert-kind-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   max-width: 100%;
   margin: 0 0 5px;
   padding: 4px 7px;
@@ -2962,7 +2998,9 @@ body {
   font-size: 10px;
   font-weight: 800;
   line-height: 1.1;
-  white-space: nowrap;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .operational-alert-kind-badge.appointment_guardian_message {
@@ -2999,10 +3037,17 @@ body {
   white-space: nowrap;
 }
 
-.reminder-open-button {
-  min-height: 30px;
-  padding: 6px 10px;
-  font-size: 12px;
+@media (max-width: 1050px) {
+  .reminder-row-actions {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 900px) {
+  .reminder-row-actions .button {
+    height: auto;
+    white-space: normal;
+  }
 }
 
 .reminder-empty-state {

@@ -40,6 +40,9 @@ export type OperationalAlertItem = {
   last_call_result?: string | null;
   last_call_result_label: string;
   note_preview?: string | null;
+  appointment_updated_at?: string | null;
+  appointment_guardian_message_generation?: number | null;
+  appointment_guardian_message_due_at?: string | null;
 };
 
 export type OperationalAlertSummary = {
@@ -364,7 +367,10 @@ export async function readOperationalAlertItems(
         note: appointment.note ?? null,
         note_preview: createNotePreview(appointment.note, owner?.note),
         phone_context_label: null,
-        phone_context_number: null
+        phone_context_number: null,
+        appointment_updated_at: appointment.updated_at,
+        appointment_guardian_message_generation: appointment.guardian_message_generation,
+        appointment_guardian_message_due_at: appointment.guardian_message_due_at
       });
     };
 

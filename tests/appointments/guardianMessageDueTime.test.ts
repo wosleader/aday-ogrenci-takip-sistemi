@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  assertFutureAppointmentAt,
   calculateGuardianMessageDueTime,
-  createIstanbulAppointmentAt
+  createIstanbulAppointmentAt,
+  getIstanbulAppointmentInputValues
 } from "../../src/features/appointments/services/guardianMessageDueTime";
 
 describe("guardianMessageDueTime", () => {
@@ -51,6 +53,13 @@ describe("guardianMessageDueTime", () => {
     expect(createIstanbulAppointmentAt("2026-05-10", "12:00")).toBe("2026-05-10T09:00:00.000Z");
   });
 
+  it.each([
+    ["Istanbul midnight boundary", "2099-05-11T21:30:00.000Z", { dateValue: "2099-05-12", timeValue: "00:30" }],
+    ["Istanbul late night", "2099-05-12T20:30:00.000Z", { dateValue: "2099-05-12", timeValue: "23:30" }]
+  ])("formats %s with explicit Istanbul input values", (_label, appointmentAt, expected) => {
+    expect(getIstanbulAppointmentInputValues(appointmentAt)).toEqual(expected);
+  });
+
   it("rejects invalid instant and local form inputs", () => {
     expect(() => calculateGuardianMessageDueTime("2026-05-10 09:00", "2026-05-01T00:00:00.000Z")).toThrow(
       "geçersiz"
@@ -58,10 +67,29 @@ describe("guardianMessageDueTime", () => {
     expect(() => createIstanbulAppointmentAt("2026-02-31", "12:00")).toThrow("geçersiz");
   });
 
+  it("accepts only an appointment instant strictly after the current instant", () => {
+    const now = "2026-05-10T09:00:00.000Z";
+
+    expect(assertFutureAppointmentAt("2026-05-10T09:01:00.000Z", now)).toBe("2026-05-10T09:01:00.000Z");
+    expect(() => assertFutureAppointmentAt(now, now)).toThrow("gelecekte");
+    expect(() => assertFutureAppointmentAt("2026-05-10T08:59:59.000Z", now)).toThrow("gelecekte");
+  });
+
   it("does not depend on the browser timezone", () => {
     const expected = calculateGuardianMessageDueTime("2026-05-11T14:01:00.000Z", "2026-05-01T00:00:00.000Z");
     vi.stubEnv("TZ", "America/New_York");
     expect(calculateGuardianMessageDueTime("2026-05-11T14:01:00.000Z", "2026-05-01T00:00:00.000Z")).toEqual(expected);
+    vi.unstubAllEnvs();
+  });
+
+  it("keeps appointment form values in Istanbul when the runtime timezone differs", () => {
+    vi.stubEnv("TZ", "America/New_York");
+
+    expect(getIstanbulAppointmentInputValues("2099-05-11T21:30:00.000Z")).toEqual({
+      dateValue: "2099-05-12",
+      timeValue: "00:30"
+    });
+
     vi.unstubAllEnvs();
   });
 });

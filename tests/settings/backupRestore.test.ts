@@ -221,6 +221,43 @@ describe("backup and restore hardening", () => {
         deleted_at: null
       });
       await sourceDatabase.call_logs.update(callLogId, { created_appointment_id: appointmentId });
+      await sourceDatabase.appointments.update(appointmentId, {
+        status: "cancelled",
+        note: "Veli isteğiyle iptal edildi.",
+        guardian_message_sent_at: "2099-05-10T11:30:00.000Z",
+        guardian_message_generation: 2,
+        updated_at: "2099-05-10T11:30:00.000Z"
+      });
+      const rescheduledCallLogId = await sourceDatabase.call_logs.add({
+        uuid: crypto.randomUUID(),
+        student_id: studentId,
+        call_time: "2099-05-11T12:00:00.000Z",
+        call_result: "appointment",
+        created_reminder_id: null,
+        created_appointment_id: null,
+        sync_status: "local",
+        created_at: timestamp,
+        updated_at: timestamp,
+        deleted_at: null
+      });
+      const rescheduledAppointmentId = await sourceDatabase.appointments.add({
+        uuid: crypto.randomUUID(),
+        student_id: studentId,
+        guardian_id: null,
+        appointment_at: "2099-05-13T14:01:00.000Z",
+        status: "pending",
+        campaign_id: null,
+        note: "Ertelenen randevu",
+        call_log_id: rescheduledCallLogId,
+        guardian_message_due_at: "2099-05-12T16:00:00.000Z",
+        guardian_message_sent_at: null,
+        guardian_message_generation: 2,
+        sync_status: "local",
+        created_at: timestamp,
+        updated_at: "2099-05-11T12:00:00.000Z",
+        deleted_at: null
+      });
+      await sourceDatabase.call_logs.update(rescheduledCallLogId, { created_appointment_id: rescheduledAppointmentId });
       await sourceDatabase.appointments.add({
         uuid: crypto.randomUUID(),
         student_id: studentId,
@@ -243,28 +280,93 @@ describe("backup and restore hardening", () => {
         performed_by: "agent",
         created_at: timestamp
       });
+      await sourceDatabase.audit_logs.add({
+        entity_type: "appointment",
+        entity_id: appointmentId,
+        action_type: "update",
+        field_name: "appointment_cancel",
+        old_value: JSON.stringify({ status: "pending" }),
+        new_value: JSON.stringify({ status: "cancelled" }),
+        performed_by: "agent",
+        created_at: "2099-05-10T11:30:00.000Z"
+      });
+      await sourceDatabase.audit_logs.add({
+        entity_type: "appointment",
+        entity_id: rescheduledAppointmentId,
+        action_type: "update",
+        field_name: "appointment_reschedule",
+        old_value: JSON.stringify({
+          appointment_at: "2099-05-12T09:00:00.000Z",
+          guardian_message_due_at: "2099-05-11T11:00:00.000Z",
+          guardian_message_generation: 1
+        }),
+        new_value: JSON.stringify({
+          appointment_at: "2099-05-13T14:01:00.000Z",
+          guardian_message_due_at: "2099-05-12T16:00:00.000Z",
+          guardian_message_generation: 2
+        }),
+        performed_by: "agent",
+        created_at: "2099-05-11T12:00:00.000Z"
+      });
 
       const snapshot = await createBackupSnapshot(sourceDatabase);
       await restoreSystemBackup(snapshot, RESTORE_SYSTEM_BACKUP_CONFIRMATION, { database: targetDatabase });
       const restoredCallLog = await targetDatabase.call_logs.get(callLogId);
+      const restoredRescheduledCallLog = await targetDatabase.call_logs.get(rescheduledCallLogId);
       const restoredAppointments = await targetDatabase.appointments.orderBy("id").toArray();
       const restoredAudit = (await targetDatabase.audit_logs.toArray()).find(
         (record) => record.field_name === "appointment_create"
       );
+      const restoredCancellationAudit = (await targetDatabase.audit_logs.toArray()).find(
+        (record) => record.field_name === "appointment_cancel"
+      );
+      const restoredRescheduledAppointment = restoredAppointments.find((record) => record.id === rescheduledAppointmentId);
+      const restoredLegacyAppointment = restoredAppointments.find((record) => record.note === "Legacy randevu");
+      const restoredRescheduleAudit = (await targetDatabase.audit_logs.toArray()).find(
+        (record) => record.field_name === "appointment_reschedule"
+      );
 
       expect(restoredCallLog?.created_appointment_id).toBe(appointmentId);
+      expect(restoredRescheduledCallLog?.created_appointment_id).toBe(rescheduledAppointmentId);
       expect(restoredAppointments[0]).toMatchObject({
         id: appointmentId,
         call_log_id: callLogId,
+        status: "cancelled",
+        note: "Veli isteğiyle iptal edildi.",
         guardian_message_due_at: "2099-05-10T11:00:00.000Z",
+        guardian_message_sent_at: "2099-05-10T11:30:00.000Z",
+        guardian_message_generation: 2
+      });
+      expect(restoredLegacyAppointment).toMatchObject({ status: "attended", note: "Legacy randevu" });
+      expect(restoredLegacyAppointment?.guardian_message_due_at).toBeUndefined();
+      expect(restoredLegacyAppointment?.guardian_message_sent_at).toBeUndefined();
+      expect(restoredLegacyAppointment?.guardian_message_generation).toBeUndefined();
+      expect(restoredRescheduledAppointment).toMatchObject({
+        id: rescheduledAppointmentId,
+        call_log_id: rescheduledCallLogId,
+        status: "pending",
+        appointment_at: "2099-05-13T14:01:00.000Z",
+        guardian_message_due_at: "2099-05-12T16:00:00.000Z",
         guardian_message_sent_at: null,
+        guardian_message_generation: 2
+      });
+      expect(restoredAudit).toMatchObject({ entity_type: "appointment", entity_id: appointmentId });
+      expect(restoredCancellationAudit).toMatchObject({ entity_type: "appointment", entity_id: appointmentId });
+      expect(restoredRescheduleAudit).toMatchObject({
+        entity_type: "appointment",
+        entity_id: rescheduledAppointmentId,
+        field_name: "appointment_reschedule"
+      });
+      expect(JSON.parse(restoredRescheduleAudit?.old_value ?? "{}")).toMatchObject({
+        appointment_at: "2099-05-12T09:00:00.000Z",
+        guardian_message_due_at: "2099-05-11T11:00:00.000Z",
         guardian_message_generation: 1
       });
-      expect(restoredAppointments[1]).toMatchObject({ status: "attended", note: "Legacy randevu" });
-      expect(restoredAppointments[1].guardian_message_due_at).toBeUndefined();
-      expect(restoredAppointments[1].guardian_message_sent_at).toBeUndefined();
-      expect(restoredAppointments[1].guardian_message_generation).toBeUndefined();
-      expect(restoredAudit).toMatchObject({ entity_type: "appointment", entity_id: appointmentId });
+      expect(JSON.parse(restoredRescheduleAudit?.new_value ?? "{}")).toMatchObject({
+        appointment_at: "2099-05-13T14:01:00.000Z",
+        guardian_message_due_at: "2099-05-12T16:00:00.000Z",
+        guardian_message_generation: 2
+      });
     } finally {
       sourceDatabase.close();
       targetDatabase.close();

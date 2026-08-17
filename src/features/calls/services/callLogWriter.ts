@@ -5,7 +5,10 @@ import type { AppointmentRecord } from "../../../domain/models/appointment";
 import type { PhoneRecord } from "../../../domain/models/phone";
 import { nowIso } from "../../../utils/dateTime";
 import { createUuid } from "../../../utils/id";
-import { calculateGuardianMessageDueTime } from "../../appointments/services/guardianMessageDueTime";
+import {
+  assertFutureAppointmentAt,
+  calculateGuardianMessageDueTime
+} from "../../appointments/services/guardianMessageDueTime";
 import { createPhoneSnapshot } from "../../students/services/phoneCompatibility";
 import {
   areAllPhonesInvalidOrWrong,
@@ -72,16 +75,7 @@ function resolveAppointmentAt(input: CallLogWriteInput, timestamp: string): stri
     throw new Error("Randevu tarihi/saat bilgisi zorunludur.");
   }
 
-  const appointmentAt = input.appointment_at.trim();
-  const appointmentTime = new Date(appointmentAt).getTime();
-
-  if (Number.isNaN(appointmentTime)) {
-    throw new Error("Randevu tarihi/saat bilgisi geçersiz.");
-  }
-
-  if (appointmentTime <= new Date(timestamp).getTime()) {
-    throw new Error("Randevu tarihi/saat bilgisi gelecekte olmalıdır.");
-  }
+  const appointmentAt = assertFutureAppointmentAt(input.appointment_at.trim(), timestamp);
 
   calculateGuardianMessageDueTime(appointmentAt, timestamp);
 

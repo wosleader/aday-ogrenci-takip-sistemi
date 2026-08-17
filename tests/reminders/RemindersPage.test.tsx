@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -180,7 +180,8 @@ describe("RemindersPage", () => {
     expect(screen.getByText("0533 000 00 00")).toBeInTheDocument();
   });
 
-  it("lists separate future guardian-message and appointment-start operational rows without lifecycle actions", async () => {
+  it("marks only the guardian-message task as sent while keeping the appointment-start row", async () => {
+    const user = userEvent.setup();
     const studentId = await seedReminder();
     const ownerId = await db.call_logs.add({
       uuid: "appointment-owner-reminder-page",
@@ -209,6 +210,26 @@ describe("RemindersPage", () => {
 
     expect(await screen.findByText("Veli mesajı hatırlatması")).toBeInTheDocument();
     expect(screen.getByText("Randevu zamanı")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Mesaj Gönderildi|Tamamla|İptal/i })).not.toBeInTheDocument();
+    const guardianAction = screen.getByRole("button", { name: "Mesaj Gönderildi" });
+    const guardianRow = guardianAction.closest("tr");
+
+    expect(guardianRow).not.toBeNull();
+    expect(guardianAction.closest(".reminder-row-actions")).toBeInTheDocument();
+    expect(guardianRow).toContainElement(screen.getByText("Veli mesajı hatırlatması"));
+    expect(within(guardianRow!).getByRole("button", { name: "Adayı Aç" })).toBeInTheDocument();
+    await user.click(guardianAction);
+
+    const dialog = await screen.findByRole("dialog", { name: "Veli mesajı gönderildi olarak işaretlensin mi?" });
+    expect(within(dialog).getByText("Bu işlem otomatik mesaj göndermez; yalnız manuel takip işaretini kaydeder.")).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Mesaj Gönderildi" }));
+
+    await waitFor(async () => {
+      expect((await db.appointments.get(appointmentId))?.guardian_message_sent_at).toEqual(expect.any(String));
+    });
+    await waitFor(() => {
+      expect(screen.queryByText("Veli mesajı hatırlatması")).not.toBeInTheDocument();
+    });
+    expect(screen.getByText("Randevu zamanı")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Mesaj Gönderildi" })).not.toBeInTheDocument();
   });
 });

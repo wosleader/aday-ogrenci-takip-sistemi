@@ -138,7 +138,11 @@ async function resolveCallLogCorrectionPolicy(
       return { mode: "note_only" };
     }
 
-    if (appointment.status === "pending" || appointment.status === "postponed") {
+    if (appointment.status === "pending") {
+      return { mode: "note_only" };
+    }
+
+    if (appointment.status === "postponed") {
       return {
         mode: "blocked_active",
         message: "Bu görüşmeye bağlı aktif bir etkinlik bulunuyor. Etkinlik tamamlanmadan normal düzeltme yapılamaz."
