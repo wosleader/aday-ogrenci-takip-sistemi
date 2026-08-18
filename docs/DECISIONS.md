@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Cancel Pending Linked Call Reminder | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Controlled Legacy Student Group Cleanup Product Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -60,6 +60,23 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 ## Değişen Kararlar Nasıl Yazılır?
 
 Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden değişti” şeklinde kısa not eklenir.
+
+## Current Product Decision - Controlled Legacy Student Group Cleanup
+
+- [Decision State] Controlled Legacy Student Group Cleanup için `MODEL B - Review + Per-record Correction` seçildi. Ürün kararı tamamlandı; implementation başlamadı. Batch cleanup, silent/automatic mutation, migration ve historical bulk backfill yoktur.
+- [Detector Scope] Mevcut read-only detector trim sonrası exact `11. Sınıf YKS Hazırlık` eşleşmesini ve `current_class` sinyallerini kullanarak `high_confidence` veya `needs_review` adayı üretir. Detector sonucu yalnız adaydır; string pattern provenance değildir ve `high_confidence` otomatik düzeltme/write authorization anlamına gelmez.
+- [Category Boundary] `category` bu scope'ta değiştirilmez. Review sırasında context/evidence olarak gösterilebilir; eski writer'ın `YKS` yazmış olması gerçek YKS adaylarını fallback kayıtlarından güvenle ayırmaya yetmez. Category cleanup ayrı product/data decision gerektirir.
+- [Correction Target] Orijinal/kaynak veriyle gerçek öğrenci grubu doğrulanabiliyorsa exact doğrulanmış değer kullanılabilir. Kaynakta Öğrenci Grubu yoksa veya boşsa persisted neutral value `""` olur; UI `Belirtilmemiş` gösterebilir. Sınıf, category, campaign veya başka alandan `student_group` türetilmez.
+- [Per-record Eligibility] İlk sürüm kayıt bazlıdır. UI iki risk seviyesini incelemeye açabilir; her correction için kullanıcı kaydı açmalı, mevcut veriyi görmeli, hedef değeri açıkça seçmeli/yazmalı, correction reason vermeli ve explicit confirmation yapmalıdır.
+- [Product Language] `Kesin hatalı kayıt` dili kullanılmaz. `high_confidence` kullanıcıya `Yüksek olasılıklı`, `needs_review` ise `İnceleme gerekli` olarak gösterilir. Eylem `Öğrenci grubunu düzelt`, neutral hedef `Belirtilmemiş`tir.
+- [Backup Gate] İlk write öncesinde mevcut Tam Sistem Yedeği zorunludur. Doğru güvence, mevcut full backup'ın student cleanup rollback için gereken `students` ve `audit_logs` state'ini korumasıdır; bütün uygulamanın byte-for-byte snapshot'ı olduğu iddia edilmez. İlk sürüm rollback'i pre-cleanup backup restore ile yapılır; dedicated batch rollback kapsam dışıdır.
+- [Transaction Integrity] Her correction transaction içinde StudentRecord yeniden okunur; active/deleted state, candidate koşulu ve `expected_updated_at` stale guard fail-closed doğrulanır. `student_group`, `search_text`, `updated_at` ve append-only audit aynı transaction'da atomik yazılır; audit failure student update'ini rollback eder.
+- [Audit Contract] Audit en az student id, old/new value, correction reason, risk/confidence, varsa source metadata, actor/performed_by ve before/after context taşır. Mevcut audit schema/primitive yeterliyse schema değişikliği yapılmaz; encoding ve payload sınırı Implementation Plan / Architecture Check'te doğrulanır.
+- [Dependent Data] Correction call logs, reminders, appointments, campaign, guardian relations, phone slots, call summary veya student summary alanlarını değiştirmez. Reporting V2 özel recompute gerektirmez. `search_text` aynı transaction'da yenilenir; liste, filtre ve export güncel StudentRecord üzerinden yeni değeri doğal olarak yansıtır.
+- [UI Surface] Canonical yüzey `Settings -> Veri Sağlığı / Bakım`dır. UI read-only candidate list, confidence badge, student identity/context, current class/group/category, varsa source file/sheet/row, created/updated zamanı ve per-record correction akışını taşır. StudentsPage içine cleanup paneli eklenmez, historical cleanup import ekranına karıştırılmaz ve batch action sunulmaz.
+- [Out of Scope] Category cleanup, batch cleanup, silent auto-fix, migration, schema redesign, historical appointment ve Model C+ değişiklikleri, campaign/phone/reporting redesign, WhatsApp, dependency update, bundle optimization ve dedicated batch rollback kapsam dışıdır.
+- [Next Gate] Sıradaki adım Implementation Plan / Architecture Check'tir. Plan correction service'i, transaction sınırını, stale guard'ı, detector/revalidation reuse'ını, audit payload'ını, `search_text` refresh'i, backup gate'i, Settings maintenance UI'ını ve test matrisini açıkça belirlemelidir.
+- [Minimum Test Gate] Plan detector edge cases ve legitimate false-positive'i; success ile missing/deleted/non-candidate/stale reject'lerini; atomic student/search/audit ve audit-failure rollback'i; backup/restore roundtrip'i; UI preview/confirmation'ı; import, student filter/export ve unrelated phone/guardian/campaign/call regresyonlarını kapsamalıdır.
 
 ## Current Product Decision - Appointment Model C+
 

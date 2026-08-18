@@ -4,14 +4,14 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Latest closed product checkpoint: `a617b09 docs: close appointment checkpoint c`.
+- Latest closed product checkpoint: `000fe6d docs: close model c plus deployment`.
 - Model C+ implementation: `4f643a4 feat: complete appointment lifecycle`. Checkpoint A/B/C CLOSED; Final Integration `PASS WITH NOTES`; production deployment `PASS`; live QA `FULL PASS`; Model C+ `PRODUCTION CLOSED`.
-- Current active work: yok. Model C+ için implementation/docs WIP yoktur; yeni ürün işi ayrı scoped discovery ile seçilmelidir.
+- Current active work: Controlled Legacy Student Group Cleanup. Product decision `MODEL B - Review + Per-record Correction` olarak tamamlandı; implementation başlamadı.
 - Checkpoint C validation: StudentsPage history `31/31`; lifecycle/read-model/history `3` dosya / `82`; reminders `10` dosya / `72`; combined lifecycle `14` dosya / `168` test iki ardışık koşuda PASS; build PASS (bilinen Vite chunk-size warning). Migration/backfill, DB version ve index değişikliği yoktur.
-- Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
+- Product decision base: `000fe6d`. Current terminal HEAD/origin yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi, tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i, iletişim geçmişi edit/void MVP'si, phone action label/helper cleanup, Reporting V2 Summary MVP + UI polish, linked communication history terminal status-aware soft delete ve linked reminder quick complete zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
-- Pending linked reminder edit kapanışı tamamlandı. Cancel pending linked reminder implementation, tests/build, Strategy Review, manuel QA, feature commit/push, Windows VDS deployment, feature-specific live QA, docs closure, Obsidian ve Drive doğrulaması tamamlandı. Model C+ dahil aktif implementation/docs WIP yoktur.
+- Pending linked reminder edit kapanışı tamamlandı. Cancel pending linked reminder implementation, tests/build, Strategy Review, manuel QA, feature commit/push, Windows VDS deployment, feature-specific live QA, docs closure, Obsidian ve Drive doğrulaması tamamlandı. Model C+ için aktif implementation/docs WIP yoktur; yeni aktif kapsam cleanup ürün kararıdır ve henüz kod WIP'i değildir.
 - Pending linked call reminder cancellation tamamlandı: gerçek owner/current history satırında iptal aksiyonu görünür; shared/tarihsel referans satırlarında görünmez. `pending → cancelled` dışında lifecycle transition yoktur; call log, student ve appointment korunur.
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
@@ -28,6 +28,19 @@
 - Bir önceki phone context persistence commit’i: 595979d feat: wire phone context persistence for calls and reminders
 - Working tree beklenen durumu: clean
 - GitHub/origin durumu: aktif branch `origin/sprint-9-2-multi-phone-architecture-plan` ile aynı son commit üzerinde görünür.
+
+## Current Scoped Work - Controlled Legacy Student Group Cleanup
+
+- Product decision complete: `MODEL B - Review + Per-record Correction`. Batch cleanup, silent/automatic mutation, migration ve historical bulk backfill kabul edilmedi.
+- Existing detector exact `11. Sınıf YKS Hazırlık` eşleşmesini ve class sinyallerini kullanır; `high_confidence` / `needs_review` sonuçları yalnız inceleme adayıdır. `high_confidence` write authorization değildir ve string pattern provenance sayılmaz.
+- İlk sürümde kullanıcı her kaydı ayrı açar, mevcut context'i görür, hedef `student_group` değerini açıkça girer/seçer, reason verir ve explicit confirmation yapar. Güvenli UI dili `Yüksek olasılıklı`, `İnceleme gerekli`, `Öğrenci grubunu düzelt` ve neutral hedef için `Belirtilmemiş`tir.
+- Kaynak veriyle doğrulanan exact grup korunabilir; kaynakta grup yoksa/boşsa persisted neutral value `""` olur. Sınıf, category, campaign veya başka bir alandan otomatik grup türetilmez. `category` yalnız context'tir ve bu scope'ta mutate edilmez.
+- İlk write öncesinde mevcut Tam Sistem Yedeği zorunludur. Bu yedek student cleanup rollback için gereken `students` / `audit_logs` state'ini korur; byte-for-byte bütün uygulama snapshot'ı olarak tanımlanmaz. İlk rollback pre-cleanup full backup restore'dur.
+- Her per-record correction transaction içi re-read, active/deleted ve candidate revalidation, `expected_updated_at` stale guard ve fail-closed davranış gerektirir. `student_group`, `search_text`, `updated_at` ve audit atomik yazılmalı; audit failure mutation'ı rollback etmelidir.
+- Call logs, reminders, appointments, campaign, guardian relations, phones, call summary, student summary ve Reporting V2 hesapları değiştirilmez. Liste/filtre/export güncel StudentRecord'u doğal olarak yansıtır.
+- Chosen surface: `Settings -> Veri Sağlığı / Bakım`. StudentsPage cleanup paneli, import ekranında historical cleanup ve batch action yoktur.
+- Next gate: Implementation Plan / Architecture Check. Correction service, transaction/stale guard, detector revalidation, audit payload, search refresh, backup gate, Settings UI ve test matrisi açıkça planlanıp onaylanmadan implementation başlamaz.
+- Category cleanup, batch/auto-fix, schema redesign, Model C+, appointment, campaign, phone, reporting, WhatsApp, dependency/bundle ve dedicated batch rollback işleri bu scope dışındadır.
 
 ## Latest Checkpoint - Cancel Pending Linked Call Reminder
 

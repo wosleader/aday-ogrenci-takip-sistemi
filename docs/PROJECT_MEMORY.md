@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Appointment Model C+ Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Controlled Legacy Student Group Cleanup Product Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,18 +6,33 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Appointment Model C+ Production Closure
+- PROJECT_MEMORY: Controlled Legacy Student Group Cleanup Product Decision
 - FILE_MAP: Appointment Model C+ Checkpoint C
-- DECISIONS: Appointment Model C+ lifecycle closure
-- Latest closed product checkpoint: `a617b09 docs: close appointment checkpoint c`.
+- DECISIONS: Controlled Legacy Student Group Cleanup MODEL B contract
+- Latest closed product checkpoint: `000fe6d docs: close model c plus deployment`.
 - Model C+ implementation: `4f643a4 feat: complete appointment lifecycle`. Checkpoint A/B/C CLOSED; Final Integration `PASS WITH NOTES`; production deployment `PASS`; live QA `FULL PASS`.
 - Checkpoint C validation: StudentsPage history `31/31`; lifecycle/read-model/history `3` dosya / `82`; reminders `10` dosya / `72`; combined lifecycle `14` dosya / `168` test iki ardışık koşuda PASS; build PASS (bilinen Vite chunk-size warning).
 - A+B+C tamamlandı ve production'da kapandı. Migration, backfill, DB version/index ve package/dependency değişikliği yoktur; appointment için ReminderRecord oluşturulmaz.
 - Production target `a617b09`; Windows VDS kaynak repo `C:\Sites\aday-ogrenci-takip-sistemi`, statik yayın `C:\Sites\netvadi-demo`, public URL `https://netvadi.com/demo/` altındadır. Doğrulanmış publish yedeği: `C:\Backups\netvadi-demo_20260818_004229`; rollback gerekmedi.
-- Sıradaki ürün işi aktif değildir; yeni iş ayrı scoped discovery ile seçilmelidir.
+- Active scoped work: Controlled Legacy Student Group Cleanup. Ürün kararı tamamlandı; implementation başlamadı. Sıradaki kapı Implementation Plan / Architecture Check'tir.
 - Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
+
+## Active Scoped Work - Controlled Legacy Student Group Cleanup
+
+- Decision base: `000fe6d docs: close model c plus deployment`. Seçilen model `MODEL B - Review + Per-record Correction`dır; batch cleanup, silent/automatic mutation, migration ve historical bulk backfill yoktur.
+- Mevcut read-only detector, trim sonrası exact `11. Sınıf YKS Hazırlık` eşleşmesini ve `current_class` sinyallerini kullanarak `high_confidence` veya `needs_review` adayı üretir. Detector sonucu yalnız inceleme adayıdır; string pattern provenance veya write authorization değildir.
+- `high_confidence` yalnız inceleme önceliğidir. UI dili `Yüksek olasılıklı` ve `İnceleme gerekli` olacaktır; `Kesin hatalı kayıt` denmeyecektir.
+- İlk sürüm yalnız kayıt bazlı düzeltmedir. Kullanıcı mevcut kaydı görmeli, hedef öğrenci grubunu açıkça seçmeli/yazmalı, düzeltme nedeni vermeli ve işlemi ayrıca onaylamalıdır.
+- Kaynak/orijinal veri gerçek grubu doğruluyorsa exact doğrulanmış değer kullanılabilir. Kaynakta Öğrenci Grubu yoksa veya boşsa persisted neutral value `""` olur; UI bunu `Belirtilmemiş` gösterebilir. Sınıf, category, campaign veya başka alanlardan öğrenci grubu türetilmez.
+- `category` bu scope'ta değiştirilmez; yalnız inceleme bağlamı olarak gösterilebilir. Category cleanup ayrı product/data decision gerektirir.
+- İlk write öncesinde Tam Sistem Yedeği zorunludur. Doğru kontrat, mevcut full backup'ın student cleanup rollback için gerekli `students` ve `audit_logs` state'ini korumasıdır; bütün uygulamanın byte-for-byte snapshot'ı olduğu iddia edilmez. İlk rollback yolu pre-cleanup backup restore'dur; dedicated batch rollback kapsam dışıdır.
+- Her correction transaction içinde StudentRecord yeniden okunmalı; active/deleted state, candidate koşulu ve `expected_updated_at` stale guard fail-closed doğrulanmalıdır. `student_group`, `search_text`, `updated_at` ve append-only audit aynı transaction'da atomik olmalı; audit failure öğrenci update'ini rollback etmelidir.
+- Audit en az student id, old/new değer, düzeltme nedeni, risk/confidence, varsa kaynak metadata, actor/performed_by ve before/after bağlamı taşımalıdır. Mevcut audit primitive yeterliyse schema değişikliği yapılmaz; payload biçimi implementation planında doğrulanır.
+- Düzeltme call log, reminder, appointment, campaign, guardian relation, phone slot, call summary veya student summary alanlarını değiştirmez. Reporting V2 özel recompute gerektirmez; liste/filtre/export güncel StudentRecord'u doğal olarak okur.
+- Seçilen UI yüzeyi `Settings -> Veri Sağlığı / Bakım`dır. StudentsPage içine cleanup paneli eklenmez, historical cleanup import ekranına karıştırılmaz ve batch action sunulmaz.
+- Sıradaki kapı Implementation Plan / Architecture Check'tir. Correction service, transaction sınırı, stale guard, detector revalidation, audit payload, `search_text` refresh, backup gate, Settings bakım UI'ı ve test matrisi planlanmadan implementation başlamaz.
 
 ## Current Product Decision - Appointment Model C+
 
