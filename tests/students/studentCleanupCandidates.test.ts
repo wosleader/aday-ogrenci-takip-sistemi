@@ -3,6 +3,7 @@ import { AppDatabase } from "../../src/db/db";
 import type { StudentRecord } from "../../src/domain/models/student";
 import {
   HARDCODED_STUDENT_GROUP_FALLBACK,
+  assessHardcodedStudentGroupCleanupCandidate,
   readHardcodedStudentGroupCleanupCandidates
 } from "../../src/features/students/services/studentCleanupCandidates";
 import { createSearchText, normalizeText } from "../../src/utils/normalizeText";
@@ -57,6 +58,7 @@ describe("readHardcodedStudentGroupCleanupCandidates", () => {
           current_class: "8",
           student_group: HARDCODED_STUDENT_GROUP_FALLBACK,
           category: "YKS",
+          updated_at: timestamp,
           risk_level: "high_confidence"
         })
       ]);
@@ -137,7 +139,8 @@ describe("readHardcodedStudentGroupCleanupCandidates", () => {
           source_file_name: "import-pilot.xlsx",
           source_sheet_name: "Adaylar",
           source_row_number: 42,
-          created_at: "2026-06-01T11:00:00.000Z"
+          created_at: "2026-06-01T11:00:00.000Z",
+          updated_at: "2026-06-01T11:30:00.000Z"
         })
       );
 
@@ -148,7 +151,8 @@ describe("readHardcodedStudentGroupCleanupCandidates", () => {
         source_file_name: "import-pilot.xlsx",
         source_sheet_name: "Adaylar",
         source_row_number: 42,
-        created_at: "2026-06-01T11:00:00.000Z"
+        created_at: "2026-06-01T11:00:00.000Z",
+        updated_at: "2026-06-01T11:30:00.000Z"
       });
     } finally {
       database.close();
@@ -172,6 +176,61 @@ describe("readHardcodedStudentGroupCleanupCandidates", () => {
       });
       expect(candidates[0].reason).toContain("LGS");
       expect(candidates[0].reason).not.toContain("Kategori de YKS");
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("keeps unrecognized class labels as needs_review", async () => {
+    const database = await createDatabase();
+
+    try {
+      await database.students.add(student({ current_class: "Mezun", category: "Diger" }));
+
+      const candidates = await readHardcodedStudentGroupCleanupCandidates(database);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ current_class: "Mezun", risk_level: "needs_review" });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("excludes deleted records and preserves exact fallback matching semantics", async () => {
+    const database = await createDatabase();
+
+    try {
+      await database.students.bulkAdd([
+        student({ deleted_at: "2026-06-01T12:00:00.000Z" }),
+        student({ student_group: `  ${HARDCODED_STUDENT_GROUP_FALLBACK}  ` }),
+        student({ student_group: HARDCODED_STUDENT_GROUP_FALLBACK.toLocaleLowerCase("tr-TR") })
+      ]);
+
+      const candidates = await readHardcodedStudentGroupCleanupCandidates(database);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0].student_group).toBe(`  ${HARDCODED_STUDENT_GROUP_FALLBACK}  `);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("uses the same assessment for the reader and correction revalidation", async () => {
+    const database = await createDatabase();
+
+    try {
+      const id = await database.students.add(student({ current_class: "9" }));
+      const storedStudent = await database.students.get(id);
+      const candidates = await readHardcodedStudentGroupCleanupCandidates(database);
+
+      expect(storedStudent).toBeDefined();
+      expect(assessHardcodedStudentGroupCleanupCandidate(storedStudent!)).toEqual({
+        risk_level: candidates[0].risk_level,
+        reason: candidates[0].reason
+      });
     } finally {
       database.close();
       await database.delete();

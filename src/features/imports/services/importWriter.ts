@@ -4,10 +4,11 @@ import type { CampaignRecord } from "../../../domain/models/campaign";
 import type { GuardianRelationType } from "../../../domain/models/guardian";
 import type { PhoneRelationLabel } from "../../../domain/models/phone";
 import type { StudentCategory } from "../../../domain/constants/statuses";
-import { createSearchText, normalizeText } from "../../../utils/normalizeText";
+import { normalizeText } from "../../../utils/normalizeText";
 import { normalizePhone } from "../../../utils/normalizePhone";
 import { nowIso } from "../../../utils/dateTime";
 import { createUuid } from "../../../utils/id";
+import { createStudentSearchText } from "../../students/services/studentSearchText";
 import { createPreImportBackup, type PreImportBackup } from "./importBackup";
 import { createImportFingerprint } from "./importDuplicateGuard";
 import { getAllImportLogs } from "./logExport";
@@ -315,15 +316,13 @@ export async function writeImportToDatabase(
           uuid: createUuid(),
           student_full_name: row.student_full_name,
           normalized_student_name: normalizeText(row.student_full_name),
-          search_text: createSearchText([
-            row.student_full_name,
-            row.guardian_full_name,
-            row.mother_full_name,
-            row.father_full_name,
-            ...getSearchPhones(row),
-            row.current_class,
-            studentGroup
-          ]),
+          search_text: createStudentSearchText({
+            student_full_name: row.student_full_name,
+            guardian_names: [row.guardian_full_name, row.mother_full_name, row.father_full_name],
+            phone_values: getSearchPhones(row),
+            current_class: row.current_class,
+            student_group: studentGroup
+          }),
           current_class: row.current_class ?? null,
           student_group: studentGroup,
           neighborhood: row.neighborhood ?? null,

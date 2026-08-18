@@ -1,6 +1,7 @@
 import type { AppDatabase } from "../../../db/db";
 import { db } from "../../../db/db";
 import type { StudentCategory } from "../../../domain/constants/statuses";
+import type { StudentRecord } from "../../../domain/models/student";
 import { normalizeText } from "../../../utils/normalizeText";
 
 export const HARDCODED_STUDENT_GROUP_FALLBACK = "11. Sınıf YKS Hazırlık";
@@ -17,6 +18,12 @@ export type StudentGroupCleanupCandidate = {
   source_sheet_name: string | null;
   source_row_number: number | null;
   created_at: string;
+  updated_at: string;
+  risk_level: StudentGroupCleanupRiskLevel;
+  reason: string;
+};
+
+export type StudentGroupCleanupAssessment = {
   risk_level: StudentGroupCleanupRiskLevel;
   reason: string;
 };
@@ -69,6 +76,23 @@ function createReason(compatibility: Exclude<ClassCompatibility, { kind: "compat
   return `Öğrenci grubu eski fallback değeriyle aynı; sınıf bilgisi boş veya net yorumlanamıyor.${categoryHint}`;
 }
 
+export function assessHardcodedStudentGroupCleanupCandidate(student: StudentRecord): StudentGroupCleanupAssessment | null {
+  if (student.deleted_at || student.student_group?.trim() !== HARDCODED_STUDENT_GROUP_FALLBACK) {
+    return null;
+  }
+
+  const compatibility = classifyCurrentClass(student.current_class);
+
+  if (compatibility.kind === "compatible_11") {
+    return null;
+  }
+
+  return {
+    risk_level: compatibility.kind === "unknown_class" ? "needs_review" : "high_confidence",
+    reason: createReason(compatibility, student.category)
+  };
+}
+
 export async function readHardcodedStudentGroupCleanupCandidates(
   database: AppDatabase = db
 ): Promise<StudentGroupCleanupCandidate[]> {
@@ -76,13 +100,13 @@ export async function readHardcodedStudentGroupCleanupCandidates(
   const candidates: StudentGroupCleanupCandidate[] = [];
 
   for (const student of students) {
-    if (!student.id || student.deleted_at || student.student_group?.trim() !== HARDCODED_STUDENT_GROUP_FALLBACK) {
+    if (!student.id) {
       continue;
     }
 
-    const compatibility = classifyCurrentClass(student.current_class);
+    const assessment = assessHardcodedStudentGroupCleanupCandidate(student);
 
-    if (compatibility.kind === "compatible_11") {
+    if (!assessment) {
       continue;
     }
 
@@ -96,8 +120,9 @@ export async function readHardcodedStudentGroupCleanupCandidates(
       source_sheet_name: student.source_sheet_name ?? null,
       source_row_number: student.source_row_number ?? null,
       created_at: student.created_at,
-      risk_level: compatibility.kind === "unknown_class" ? "needs_review" : "high_confidence",
-      reason: createReason(compatibility, student.category)
+      updated_at: student.updated_at,
+      risk_level: assessment.risk_level,
+      reason: assessment.reason
     });
   }
 
