@@ -4,14 +4,14 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Latest closed product checkpoint: `4f643a4 feat: complete appointment lifecycle`
-- Checkpoint A: CLOSED / IMPLEMENTED / PUSHED. Checkpoint B: CLOSED / IMPLEMENTED / REVIEWED / MANUAL QA PASS / PUSHED. Checkpoint C: CLOSED / IMPLEMENTED / REVIEWED / MANUAL QA PASS / PUSHED; Strategy Re-Review `PASS WITH NOTES`.
-- Current active work: yok. Sıradaki iş yalnız `MODEL C+ FINAL INTEGRATION GATE` ile seçilecektir.
+- Latest closed product checkpoint: `a617b09 docs: close appointment checkpoint c`.
+- Model C+ implementation: `4f643a4 feat: complete appointment lifecycle`. Checkpoint A/B/C CLOSED; Final Integration `PASS WITH NOTES`; production deployment `PASS`; live QA `FULL PASS`; Model C+ `PRODUCTION CLOSED`.
+- Current active work: yok. Model C+ için implementation/docs WIP yoktur; yeni ürün işi ayrı scoped discovery ile seçilmelidir.
 - Checkpoint C validation: StudentsPage history `31/31`; lifecycle/read-model/history `3` dosya / `82`; reminders `10` dosya / `72`; combined lifecycle `14` dosya / `168` test iki ardışık koşuda PASS; build PASS (bilinen Vite chunk-size warning). Migration/backfill, DB version ve index değişikliği yoktur.
 - Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi, tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i, iletişim geçmişi edit/void MVP'si, phone action label/helper cleanup, Reporting V2 Summary MVP + UI polish, linked communication history terminal status-aware soft delete ve linked reminder quick complete zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
-- Pending linked reminder edit kapanışı tamamlandı. Cancel pending linked reminder implementation, tests/build, Strategy Review, manuel QA, feature commit/push, Windows VDS deployment, feature-specific live QA, docs closure, Obsidian ve Drive doğrulaması tamamlandı. Checkpoint A/B/C dışında aktif implementation/docs WIP yoktur.
+- Pending linked reminder edit kapanışı tamamlandı. Cancel pending linked reminder implementation, tests/build, Strategy Review, manuel QA, feature commit/push, Windows VDS deployment, feature-specific live QA, docs closure, Obsidian ve Drive doğrulaması tamamlandı. Model C+ dahil aktif implementation/docs WIP yoktur.
 - Pending linked call reminder cancellation tamamlandı: gerçek owner/current history satırında iptal aksiyonu görünür; shared/tarihsel referans satırlarında görünmez. `pending → cancelled` dışında lifecycle transition yoktur; call log, student ve appointment korunur.
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
@@ -53,7 +53,8 @@
 - `Mesaj Gönderildi` yalnız internal tracking aksiyonudur: guardian item düşer, appointment `pending` ve appointment-start item kalır; external gönderim veya ReminderRecord oluşturma yoktur.
 - `Görüşme notu` CallLog'a, `Randevu notu` AppointmentRecord'a aittir; auto-sync yoktur. Pencil call note-only correction, calendar icon appointment management yüzeyidir. Pending owner correction yalnız call note'u değiştirebilir.
 - Reschedule aynı appointment ID ve owner call log ile devam eder; due time Europe/Istanbul kuralıyla yeniden hesaplanır, generation `+1`, guardian sent state `null` olur. Terminal `completed`/Geldi, `no_show`/Gelmedi ve `cancelled`/İptal kayıtları korunur, read-only'dir ve reopen almaz.
-- Manual QA FULL PASS. Deployment: NOT YET. A+B+C tamamlandı; production deployment yalnız Final Integration Gate PASS sonrasında planlanacaktır.
+- Manual QA FULL PASS. Final Integration `PASS WITH NOTES` sonrasında target `a617b09` Windows VDS'ye yayınlandı: production deployment `PASS`, live QA `FULL PASS`, rollback `NOT REQUIRED`.
+- VDS kaynak repo `C:\Sites\aday-ogrenci-takip-sistemi`, Caddy static publish dizini `C:\Sites\netvadi-demo`, public URL `https://netvadi.com/demo/`dur. Doğrulanmış backup `C:\Backups\netvadi-demo_20260818_004229`; `harita.html` korundu. Migration/schema/package değişikliği ve servis restartı gerekmedi.
 
 ## Previous Checkpoint - Appointment Model C+ Checkpoint B
 
@@ -71,7 +72,7 @@
 - Manual QA PASS: pending appointment, reciprocal link, due time, appointment audit, no-reminder, deletion/correction guard ve `call_later` regression doğrulandı. Normal export guardian metadata'sını taşımaz; full backup/restore embedded state, link ve audit'i korur.
 - Checkpoint A persistence katmanıdır. Checkpoint B guardian/start alarm reader ve UI'ı uyguladı. `Mesaj Gönderildi`, reschedule, complete/no_show/cancel ve lifecycle auditleri Checkpoint C'de tamamlandı.
 
-## Next Gate - Model C+ Final Integration Gate
+## Historical Gate - Model C+ Final Integration Gate
 
 - Amaç: tam repository test/build, cross-check ve Strategy Review ile A+B+C bütünlüğünü doğrulamaktır; gerekirse kısa final manual smoke yapılır.
 - Deployment bu gate PASS olmadan yapılmaz. Aktif implementation/docs WIP yoktur.

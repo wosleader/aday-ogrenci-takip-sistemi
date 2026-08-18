@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Appointment Model C+ Checkpoint C | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Appointment Model C+ Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,14 +6,15 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Appointment Model C+ Checkpoint C
+- PROJECT_MEMORY: Appointment Model C+ Production Closure
 - FILE_MAP: Appointment Model C+ Checkpoint C
 - DECISIONS: Appointment Model C+ lifecycle closure
-- Latest closed product checkpoint: `4f643a4 feat: complete appointment lifecycle`
-- Checkpoint A: CLOSED / IMPLEMENTED / PUSHED. Checkpoint B: CLOSED / IMPLEMENTED / REVIEWED / MANUAL QA PASS / PUSHED. Checkpoint C: CLOSED / IMPLEMENTED / REVIEWED / MANUAL QA PASS / PUSHED; Strategy Re-Review `PASS WITH NOTES`.
+- Latest closed product checkpoint: `a617b09 docs: close appointment checkpoint c`.
+- Model C+ implementation: `4f643a4 feat: complete appointment lifecycle`. Checkpoint A/B/C CLOSED; Final Integration `PASS WITH NOTES`; production deployment `PASS`; live QA `FULL PASS`.
 - Checkpoint C validation: StudentsPage history `31/31`; lifecycle/read-model/history `3` dosya / `82`; reminders `10` dosya / `72`; combined lifecycle `14` dosya / `168` test iki ardışık koşuda PASS; build PASS (bilinen Vite chunk-size warning).
-- Migration, backfill, DB version ve index değişikliği yoktur. A+B+C tamamlandı; appointment için ReminderRecord oluşturulmaz. Production deployment henüz yapılmadı.
-- Next gate: Model C+ Final Integration Gate.
+- A+B+C tamamlandı ve production'da kapandı. Migration, backfill, DB version/index ve package/dependency değişikliği yoktur; appointment için ReminderRecord oluşturulmaz.
+- Production target `a617b09`; Windows VDS kaynak repo `C:\Sites\aday-ogrenci-takip-sistemi`, statik yayın `C:\Sites\netvadi-demo`, public URL `https://netvadi.com/demo/` altındadır. Doğrulanmış publish yedeği: `C:\Backups\netvadi-demo_20260818_004229`; rollback gerekmedi.
+- Sıradaki ürün işi aktif değildir; yeni iş ayrı scoped discovery ile seçilmelidir.
 - Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
@@ -37,7 +38,8 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - Reschedule aynı appointment ID'yi, owner call log'u ve notları korur; Europe/Istanbul due time'ını yeniden hesaplar, generation'ı tam `+1` yapar, guardian sent state'ini sıfırlar ve yeni guardian/start identity'leri üretir.
 - Strategy Re-Review `PASS WITH NOTES`; yalnız tekrar üretilemeyen geçici StudentsPage `act`/timing notu non-blocking kaldı. Manual QA FULL PASS'tir.
 - Schema, migration, DB version/index, backfill, yeni tablo, package/dependency değişikliği yoktur. Full System Backup raw appointment/audit state'ini korur; normal export guardian operational metadata taşımaz.
-- A+B+C implementation tamamlandı. Production deployment henüz yapılmadı; sıradaki kapı Model C+ Final Integration Gate'dir.
+- A+B+C implementation tamamlandı. Final Integration `PASS WITH NOTES` sonrasında target `a617b09` production'a yayınlandı; deployment `PASS`, live QA `FULL PASS`, rollback `NOT REQUIRED`.
+- VDS Caddy static hosting kullanır; Node process/PM2/Docker/systemd/nginx/Caddy restart gerekmedi. `npm ci` ve pilot seed + `/demo/` base build PASS; `robocopy /MIR` publish sırasında `harita.html` korunarak başarılı tamamlandı. Migration/schema/package değişikliği yapılmadı.
 
 ## Previous Checkpoint - Appointment Model C+ Checkpoint B
 
