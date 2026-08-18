@@ -882,3 +882,27 @@ Son doğrulandı: `79cf2f9 feat: unify operational appointment alerts`
   Global host polling, chime, popup, dismiss ve Escape davranışlarını kapsar.
 - Scope dışı: DB version/index/migration/backfill, appointment ReminderRecord oluşturma, guardian message sent mutation, appointment lifecycle mutationları, package/config ve deployment değiştirilmemiştir.
 
+## Latest File Map Addendum - Appointment Model C+ Checkpoint C
+
+Son doğrulandı: `4f643a4 feat: complete appointment lifecycle`
+
+- `src/features/appointments/services/appointmentLifecycle.ts`
+  Guardian-message sent, appointment note edit, reschedule ve `pending → completed`/`no_show`/`cancelled` mutationlarının canonical service'idir. Current state'i transaction içinde yeniden okur, stale expectation'ı doğrular ve appointment update ile lifecycle audit'ini atomik yazar.
+- `src/features/appointments/services/appointmentOwnerIntegrity.ts`
+  Lifecycle için modern pending appointment, aktif öğrenci ve reciprocal owner call-log bağını fail-closed doğrular; legacy, terminal, duplicate veya conflict durumlarını mutation dışı bırakır.
+- `src/features/appointments/services/guardianMessageDueTime.ts`
+  Europe/Istanbul appointment input formatter'ını, future-only ortak doğrulamayı ve reschedule sonrası guardian-message due time hesabını taşır.
+- `src/features/calls/services/callHistoryReader.ts`
+  Owner call-log `Görüşme notu` ile linked `AppointmentRecord.note` değerini ayrı read-model alanları olarak taşır; terminal/legacy kayıtları read-only gösterir.
+- `src/features/calls/services/callLogCorrection.ts`
+  Valid pending appointment owner için yalnız call-log note-only correction'a izin verir; appointment state, tarih/saat, sonuç ve phone context korunur.
+- `src/features/reminders/services/operationalAlertReader.ts`
+  Guardian-message sent, reschedule generation ve terminal appointment state'i sonrası guardian/start operational item'larını current appointment state'ten fail-closed türetir.
+- `src/features/reminders/RemindersPage.tsx`
+  Guardian operational item üzerinde canonical `Mesaj Gönderildi` aksiyonunu sunar; call reminder ve appointment-start satırlarının davranışını korur. Tablo action layout'u kompakt, responsive ve yatay overflow olmadan kalır.
+- `src/features/students/StudentsPage.tsx`
+  Modern pending owner row için tek calendar-icon `Randevuyu yönet` entry point'ini, appointment management modalını ve CallLog/Appointment note ayrımını taşır. Terminal, legacy ve malformed rows lifecycle action göstermez.
+- `src/styles/global.css`
+  Reminder action grubu ve ilgili operational row'ların kompakt responsive görünümünü taşır; business logic içermez.
+- Scope dışı: DB version/index/migration/backfill, yeni table, appointment ReminderRecord, package/config, import/export formatı ve production deployment değiştirilmemiştir.
+
