@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Controlled Legacy Student Group Cleanup Product Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Controlled Legacy Student Group Cleanup Checkpoint A | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,33 +6,40 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Controlled Legacy Student Group Cleanup Product Decision
-- FILE_MAP: Appointment Model C+ Checkpoint C
+- PROJECT_MEMORY: Controlled Legacy Student Group Cleanup Checkpoint A
+- FILE_MAP: Controlled Legacy Student Group Cleanup Checkpoint A
 - DECISIONS: Controlled Legacy Student Group Cleanup MODEL B contract
-- Latest closed product checkpoint: `000fe6d docs: close model c plus deployment`.
+- Latest completed implementation checkpoint: `9ddc519 feat: add student group cleanup correction`.
 - Model C+ implementation: `4f643a4 feat: complete appointment lifecycle`. Checkpoint A/B/C CLOSED; Final Integration `PASS WITH NOTES`; production deployment `PASS`; live QA `FULL PASS`.
 - Checkpoint C validation: StudentsPage history `31/31`; lifecycle/read-model/history `3` dosya / `82`; reminders `10` dosya / `72`; combined lifecycle `14` dosya / `168` test iki ardışık koşuda PASS; build PASS (bilinen Vite chunk-size warning).
 - A+B+C tamamlandı ve production'da kapandı. Migration, backfill, DB version/index ve package/dependency değişikliği yoktur; appointment için ReminderRecord oluşturulmaz.
 - Production target `a617b09`; Windows VDS kaynak repo `C:\Sites\aday-ogrenci-takip-sistemi`, statik yayın `C:\Sites\netvadi-demo`, public URL `https://netvadi.com/demo/` altındadır. Doğrulanmış publish yedeği: `C:\Backups\netvadi-demo_20260818_004229`; rollback gerekmedi.
-- Active scoped work: Controlled Legacy Student Group Cleanup. Ürün kararı tamamlandı; implementation başlamadı. Sıradaki kapı Implementation Plan / Architecture Check'tir.
+- Active scoped work: Controlled Legacy Student Group Cleanup. Ürün kararı ve Checkpoint A service/domain foundation tamamlandı; sıradaki kapı Checkpoint B — Settings bakım UI'ı ve backup gate'tir.
 - Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
 
 ## Active Scoped Work - Controlled Legacy Student Group Cleanup
 
-- Decision base: `000fe6d docs: close model c plus deployment`. Seçilen model `MODEL B - Review + Per-record Correction`dır; batch cleanup, silent/automatic mutation, migration ve historical bulk backfill yoktur.
-- Mevcut read-only detector, trim sonrası exact `11. Sınıf YKS Hazırlık` eşleşmesini ve `current_class` sinyallerini kullanarak `high_confidence` veya `needs_review` adayı üretir. Detector sonucu yalnız inceleme adayıdır; string pattern provenance veya write authorization değildir.
+- Decision base: `000fe6d docs: close model c plus deployment`. Seçilen model `MODEL B - Review + Per-record Correction`dır; Checkpoint A implementation commit'i `9ddc519 feat: add student group cleanup correction`dır. Batch cleanup, silent/automatic mutation, migration ve historical bulk backfill yoktur.
+- Checkpoint A CLOSED: ortak canonical detector assessment/predicate, read-only candidate reader, `updated_at` taşıyan candidate DTO ve dedicated per-record correction service tamamlandı. Reader ile write transaction aynı eligibility/revalidation kuralını kullanır.
+- Detector trim sonrası exact `11. Sınıf YKS Hazırlık` eşleşmesini ve `current_class` sinyallerini kullanarak `high_confidence` veya `needs_review` adayı üretir. Detector sonucu yalnız inceleme adayıdır; string pattern provenance veya write authorization değildir.
 - `high_confidence` yalnız inceleme önceliğidir. UI dili `Yüksek olasılıklı` ve `İnceleme gerekli` olacaktır; `Kesin hatalı kayıt` denmeyecektir.
 - İlk sürüm yalnız kayıt bazlı düzeltmedir. Kullanıcı mevcut kaydı görmeli, hedef öğrenci grubunu açıkça seçmeli/yazmalı, düzeltme nedeni vermeli ve işlemi ayrıca onaylamalıdır.
 - Kaynak/orijinal veri gerçek grubu doğruluyorsa exact doğrulanmış değer kullanılabilir. Kaynakta Öğrenci Grubu yoksa veya boşsa persisted neutral value `""` olur; UI bunu `Belirtilmemiş` gösterebilir. Sınıf, category, campaign veya başka alanlardan öğrenci grubu türetilmez.
 - `category` bu scope'ta değiştirilmez; yalnız inceleme bağlamı olarak gösterilebilir. Category cleanup ayrı product/data decision gerektirir.
 - İlk write öncesinde Tam Sistem Yedeği zorunludur. Doğru kontrat, mevcut full backup'ın student cleanup rollback için gerekli `students` ve `audit_logs` state'ini korumasıdır; bütün uygulamanın byte-for-byte snapshot'ı olduğu iddia edilmez. İlk rollback yolu pre-cleanup backup restore'dur; dedicated batch rollback kapsam dışıdır.
-- Her correction transaction içinde StudentRecord yeniden okunmalı; active/deleted state, candidate koşulu ve `expected_updated_at` stale guard fail-closed doğrulanmalıdır. `student_group`, `search_text`, `updated_at` ve append-only audit aynı transaction'da atomik olmalı; audit failure öğrenci update'ini rollback etmelidir.
-- Audit en az student id, old/new değer, düzeltme nedeni, risk/confidence, varsa kaynak metadata, actor/performed_by ve before/after bağlamı taşımalıdır. Mevcut audit primitive yeterliyse schema değişikliği yapılmaz; payload biçimi implementation planında doğrulanır.
+- Correction service explicit `verified_value` / `unspecified` intent ayrımı kullanır. `unspecified` persisted `""` yazar; verified target kullanıcıdan gelen trim edilmiş gerçek değerdir. Sınıf, category, campaign veya başka alandan grup türetmez; `category` mutate edilmez ve correction reason zorunludur.
+- Her correction transaction içinde StudentRecord yeniden okunur; missing/deleted/stale/non-candidate durumları ve `expected_updated_at` stale guard fail-closed doğrulanır. Monotonic `updated_at` ile `student_group`, `search_text`, `updated_at` ve append-only audit aynı transaction'da atomiktir; audit failure öğrenci update'ini rollback eder.
+- Audit student id, old/new değer, düzeltme nedeni, risk/confidence, kaynak metadata, actor/performed_by ve before/after bağlamı taşır. Schema değişikliği yapılmadı.
+- Shared deterministic `studentSearchText` builder correction sırasında mevcut ilişkili veriden `search_text`i yeniden kurar; blind string replacement yoktur. ImportWriter aynı builder'ı kullanır ve mevcut import search semantics korunur.
 - Düzeltme call log, reminder, appointment, campaign, guardian relation, phone slot, call summary veya student summary alanlarını değiştirmez. Reporting V2 özel recompute gerektirmez; liste/filtre/export güncel StudentRecord'u doğal olarak okur.
 - Seçilen UI yüzeyi `Settings -> Veri Sağlığı / Bakım`dır. StudentsPage içine cleanup paneli eklenmez, historical cleanup import ekranına karıştırılmaz ve batch action sunulmaz.
-- Sıradaki kapı Implementation Plan / Architecture Check'tir. Correction service, transaction sınırı, stale guard, detector revalidation, audit payload, `search_text` refresh, backup gate, Settings bakım UI'ı ve test matrisi planlanmadan implementation başlamaz.
+- Initial validation: detector + correction `2` dosya / `16` test PASS; import writer + student list reader `2` dosya / `51` test PASS; import + students `20` dosya / `226` test PASS; build PASS (yalnız bilinen Vite chunk-size warning).
+- Strategy Review `PASS WITH NOTES` verdi. Reject-path persisted DB-state assertion ve shared search helper direct contract coverage notları test-only hardening ile kapatıldı. Post-hardening: focused `3` dosya / `18` test PASS; import writer + student list reader `2` dosya / `51` test PASS; imports + students `21` dosya / `228` test PASS; build PASS; narrow re-review PASS. Açık Checkpoint A bulgusu yoktur.
+- Settings UI, backup gate ve production-visible correction entry point Checkpoint A'da açılmadı; batch cleanup yoktur.
+- Sıradaki kapı Checkpoint B — `Settings -> Veri Sağlığı / Bakım` üzerinde candidate list, confidence filters, review modal, explicit target/`Belirtilmemiş`, reason, confirmation, first-write backup gate, stale/error feedback ve reactive candidate refresh. Checkpoint B başlamadı.
+- Kapsam dışı kalır: category cleanup, batch cleanup, silent auto-fix, migration, historical backfill, StudentsPage cleanup paneli ve deployment.
 
 ## Current Product Decision - Appointment Model C+
 

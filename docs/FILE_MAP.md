@@ -664,6 +664,25 @@ Son doğrulandı: `4ebfe33 fix: suspend WhatsApp web open action`
 - `tests/students/studentCleanupCandidates.test.ts`
   Cleanup candidate servisinin high_confidence / needs_review sınıflamasını, current_class 11 dışlamasını ve kaynak metadata taşımasını doğrular.
 
+## Latest File Map Addendum - Controlled Legacy Student Group Cleanup Checkpoint A
+
+Son doğrulandı: `9ddc519 feat: add student group cleanup correction`
+
+- `src/features/students/services/studentCleanupCandidates.ts`
+  Legacy fallback için canonical candidate assessment/predicate'i ve read-only candidate reader'ı taşır. Reader ile correction transaction aynı eligibility/revalidation kuralını kullanır; candidate DTO `updated_at` taşır.
+- `src/features/students/services/studentGroupCleanupCorrection.ts`
+  Dedicated per-record legacy `student_group` correction service'idir. Explicit hedef intenti, stale guard, transaction içi re-read/revalidation, deterministic `search_text` refresh ve append-only audit'i atomik uygular.
+- `src/features/students/services/studentSearchText.ts`
+  Import ve correction tarafından paylaşılan canonical deterministic Student `search_text` builder'ıdır.
+- `src/features/imports/services/importWriter.ts`
+  Student `search_text` oluştururken shared builder'ı kullanır; mevcut import search semantics'i korunur.
+- `tests/students/studentCleanupCandidates.test.ts`
+  Canonical assessment, exact fallback semantics, deleted/11. sınıf dışlaması, risk sınıflaması ve `updated_at` DTO aktarımını doğrular.
+- `tests/students/studentGroupCleanupCorrection.test.ts`
+  Per-record correction, explicit `unspecified`, stale/fail-closed rejectler, category korunumu, search refresh, audit ve transaction rollback davranışını doğrular.
+- `tests/students/studentSearchText.test.ts`
+  Shared search builder'ın mevcut import alan sırası, Türkçe/whitespace normalization ve boş değer sözleşmesini doğrular.
+
 ## Latest File Map Addendum - VELI ADI Import Alias Fix
 
 Son doğrulandı: `18f47c9 fix: map veli adi import column`
