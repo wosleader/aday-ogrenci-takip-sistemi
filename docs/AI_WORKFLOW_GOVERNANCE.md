@@ -147,9 +147,6 @@ Bunlar ancak EL_Patron onayı, ayrı discovery ve güvenlik değerlendirmesiyle 
 
 ## 10. Devam Eden Roadmap ile İlişki
 
-Bu governance mini sprint, ürün roadmap'ini değiştirmez.
-
-Sıradaki ürün işi hâlâ:
-Sprint 9.3D-2 — Reminder List Phone Context UI Display Discovery
+Bu governance mini sprint, ürün roadmap'ini değiştirmez. Güncel aktif iş ve sonraki gate, yeni işe başlamadan önce `docs/HANDOFF_CURRENT.md` üzerinden doğrulanır.
 
 Bu doküman sadece AI/Codex çalışma disiplinini daha standart hale getirir.

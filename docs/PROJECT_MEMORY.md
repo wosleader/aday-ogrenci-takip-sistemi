@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Controlled Legacy Student Group Cleanup Checkpoint A | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Controlled Legacy Student Group Cleanup Checkpoint B | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,15 +6,15 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Controlled Legacy Student Group Cleanup Checkpoint A
-- FILE_MAP: Controlled Legacy Student Group Cleanup Checkpoint A
+- PROJECT_MEMORY: Controlled Legacy Student Group Cleanup Checkpoint B
+- FILE_MAP: Controlled Legacy Student Group Cleanup Checkpoint B
 - DECISIONS: Controlled Legacy Student Group Cleanup MODEL B contract
-- Latest completed implementation checkpoint: `9ddc519 feat: add student group cleanup correction`.
+- Latest completed implementation checkpoint: `77542a5 feat: add student group cleanup maintenance ui`.
 - Model C+ implementation: `4f643a4 feat: complete appointment lifecycle`. Checkpoint A/B/C CLOSED; Final Integration `PASS WITH NOTES`; production deployment `PASS`; live QA `FULL PASS`.
 - Checkpoint C validation: StudentsPage history `31/31`; lifecycle/read-model/history `3` dosya / `82`; reminders `10` dosya / `72`; combined lifecycle `14` dosya / `168` test iki ardışık koşuda PASS; build PASS (bilinen Vite chunk-size warning).
 - A+B+C tamamlandı ve production'da kapandı. Migration, backfill, DB version/index ve package/dependency değişikliği yoktur; appointment için ReminderRecord oluşturulmaz.
 - Production target `a617b09`; Windows VDS kaynak repo `C:\Sites\aday-ogrenci-takip-sistemi`, statik yayın `C:\Sites\netvadi-demo`, public URL `https://netvadi.com/demo/` altındadır. Doğrulanmış publish yedeği: `C:\Backups\netvadi-demo_20260818_004229`; rollback gerekmedi.
-- Active scoped work: Controlled Legacy Student Group Cleanup. Ürün kararı ve Checkpoint A service/domain foundation tamamlandı; sıradaki kapı Checkpoint B — Settings bakım UI'ı ve backup gate'tir.
+- Active scoped work: Controlled Legacy Student Group Cleanup ürün kararı ile Checkpoint A/B yerelde kapandı. Production deployment ve live QA henüz yapılmadı; sıradaki kapı Final Integration / Deployment Preparation'dır.
 - Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
@@ -37,9 +37,14 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - Seçilen UI yüzeyi `Settings -> Veri Sağlığı / Bakım`dır. StudentsPage içine cleanup paneli eklenmez, historical cleanup import ekranına karıştırılmaz ve batch action sunulmaz.
 - Initial validation: detector + correction `2` dosya / `16` test PASS; import writer + student list reader `2` dosya / `51` test PASS; import + students `20` dosya / `226` test PASS; build PASS (yalnız bilinen Vite chunk-size warning).
 - Strategy Review `PASS WITH NOTES` verdi. Reject-path persisted DB-state assertion ve shared search helper direct contract coverage notları test-only hardening ile kapatıldı. Post-hardening: focused `3` dosya / `18` test PASS; import writer + student list reader `2` dosya / `51` test PASS; imports + students `21` dosya / `228` test PASS; build PASS; narrow re-review PASS. Açık Checkpoint A bulgusu yoktur.
-- Settings UI, backup gate ve production-visible correction entry point Checkpoint A'da açılmadı; batch cleanup yoktur.
-- Sıradaki kapı Checkpoint B — `Settings -> Veri Sağlığı / Bakım` üzerinde candidate list, confidence filters, review modal, explicit target/`Belirtilmemiş`, reason, confirmation, first-write backup gate, stale/error feedback ve reactive candidate refresh. Checkpoint B başlamadı.
-- Kapsam dışı kalır: category cleanup, batch cleanup, silent auto-fix, migration, historical backfill, StudentsPage cleanup paneli ve deployment.
+- Checkpoint B CLOSED: `77542a5 feat: add student group cleanup maintenance ui` ile `Settings -> Veri Sağlığı / Bakım` yüzeyinde `useLiveQuery` candidate list, `Tümü` / `Yüksek olasılıklı` / `İnceleme gerekli` filtreleri, per-record review modal ve reactive count/list refresh açıldı. StudentsPage cleanup paneli yoktur.
+- Review modal öğrenci kimliği, sınıf, mevcut grup, read-only category, risk/evidence, kaynak metadata ile created/updated zamanı gösterir. Kullanıcı yalnız `verified_value` veya `unspecified` hedefini, zorunlu reason'ı ve ayrı correction confirmation'ı verir; `unspecified` persisted `""` olur.
+- First-write backup gate `locked -> download_initiated -> explicit saved confirmation -> confirmed` olarak SettingsPage mount/session-local React state'te yaşar. Uygulama yalnız indirme isteğinin başlatıldığını bilir; dosyanın diskte saklandığını doğrulamaz. Saved confirmation kullanıcı beyanıdır; localStorage, sessionStorage, IndexedDB/DB bypass flag'i yoktur.
+- Aynı Settings mount'unda ikinci correction yeni backup istemez; route unmount/reload ve successful restore gate'i resetler. Review snapshot `updated_at` correction request'in `expected_updated_at` değeridir; stale Checkpoint A service'iyle fail-closed kalır. Double-submit guard vardır.
+- Initial Checkpoint B validation: focused Settings `2` dosya / `15`, Checkpoint A foundation `3` dosya / `18`, Settings + Students `16` dosya / `157`, Imports + Students `21` dosya / `228` test PASS; build PASS (bilinen Vite chunk warning). Strategy Review başlangıçta 5 finding ile `CHANGES REQUIRED` verdi.
+- Truthful backup wording, modal timestamps, restore-reset integration, unspecified UI payload ve stale success feedback hedefli fixlerle kapandı. Post-fix focused Settings `2` dosya / `18`, Checkpoint A `3` dosya / `18`, Settings + Students `16` dosya / `160`, Imports + Students `21` dosya / `228` test PASS; build PASS. Narrow re-review PASS.
+- Local manual QA PASS: bakım sekmesi/list/filter/review context'i, category read-only ve batch/auto-fix yokluğu doğrulandı. Correction confirmation, gerçek `.json` download initiation, saved confirmation, custom ve `Belirtilmemiş` correction, live refresh, same-session gate, pre-cleanup backup restore ve restore/reload sonrası gate reset başarıyla gözlendi. Student-list search'ün `student_group` aradığı varsayılmadı.
+- Kapsam dışı kalır: category cleanup/mutation, batch cleanup, silent auto-fix, migration, historical backfill, StudentsPage cleanup paneli, dependency/bundle işi ve deployment. Checkpoint B deploy/live QA henüz yapılmadı.
 
 ## Current Product Decision - Appointment Model C+
 
@@ -679,6 +684,13 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - Amaç data → randevu → gelen → kayıt dönüşümünü, süreçteki tıkanmaları ve takım/personel bazlı aday akışını yönetici için okunur hale getirmektir.
 - Bu fikir yalnızca aday takip ve kayıt görüşmesi sürecimize özeldir; LMS, ERP veya öğrenci portalı projesi değildir.
 - Import/export/backup veri güvenliği ve mevcut rapor alanı oturmadan başlatılmayacak, mevcut önceliklerin önüne geçmeyecektir.
+
+## Deferred Roadmap - Student Card Profile Editing
+
+- `Student Card Profile Editing / Bilgileri Güncelle` DEFERRED'dır; aktif cleanup scope'u veya implementation işi değildir. Gelecekte Students/candidate card `⋮` menüsünde `Adayı Sil` altında bir entry point olarak değerlendirilebilir.
+- Amaç mevcut aday profil bilgisini kontrollü güncellemektir. `current_class`, `student_group`, campaign ve diğer mevcut profile alanlarının exact editable inventory'si ayrı discovery ile kararlaştırılacaktır.
+- Source/provenance bilgisi (source file, sheet, row ve mevcut import metadata) varsayılan olarak read-only kalmalıdır; tarihsel kaynak anlamı nedeniyle elle değiştirilemez.
+- Future discovery; validation, campaign relation semantics, guardian/phone kapsamı, `updated_at` stale guard, audit before/after, `search_text` ve derived-field refresh, modal/drawer UX ile confirmation/regression sınırlarını belirlemelidir. Schema veya UI planı bu roadmap notuyla kabul edilmez.
 
 ## Latest Checkpoint Closure - Guardian + Phone UI Clarity
 

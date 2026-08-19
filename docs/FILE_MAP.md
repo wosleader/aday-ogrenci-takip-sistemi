@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Appointment Model C+ Checkpoint B | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Controlled Legacy Student Group Cleanup Checkpoint B | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -159,10 +159,12 @@ Son doğrulandı: Reporting V2 Summary MVP
 
 ## 10. Settings / Data Management
 
-Son doğrulandı: Sprint 8.9
+Son doğrulandı: Controlled Legacy Student Group Cleanup Checkpoint B
 
 - `src/features/settings/SettingsPage.tsx`
-  Ayarlar ekranı; kısayollar, sol menü kısayol bilgilendirmesi, kısayol aksiyon buton polish’i, hatırlatma ayarları, veri yönetimi, Tam Sistem Yedeği/Geri Yükleme ve görünür restore uyarı/başarı bildirimlerini içerir.
+  Ayarlar ekranı; kısayollar, hatırlatma ayarları, veri yönetimi, Tam Sistem Yedeği/Geri Yükleme, `Veri Sağlığı / Bakım` entry point'i ve student-group cleanup backup gate'in mount/session-local sahipliğini taşır. Successful restore sonrası cleanup gate'i resetler.
+- `src/features/settings/StudentGroupCleanupMaintenance.tsx`
+  `useLiveQuery` ile reactive cleanup candidate UI'ı, risk filtre/count'ları, per-record review context'i, explicit target/reason/confirmation, backup gate interaction'ı, correction service çağrısını, stale/error feedback'i ve doğal live refresh'i taşır.
 - `src/features/settings/services/dataManagement.ts`
   Tam sistem yedeği indirme, analiz ve restore servisleri.
 - `src/domain/constants/settings.ts`
@@ -175,7 +177,11 @@ Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
 - `tests/exports/*`
   Detaylı export, özet export, export data reader ve Excel exporter davranışları.
 - `tests/settings/*`
-  Veri yönetimi, backup/restore, SettingsPage UI davranışları ve restore uyarı/başarı bildirimleri.
+  Veri yönetimi, backup/restore, SettingsPage UI davranışları, restore uyarı/başarı bildirimleri ve cleanup maintenance UI davranışları.
+- `tests/settings/SettingsPage.test.tsx`
+  `Veri Sağlığı / Bakım` sekmesini, truthful backup download-initiation dilini ve restore yüzeyini doğrular.
+- `tests/settings/StudentGroupCleanupMaintenance.test.tsx`
+  Cleanup filtreleri/review context'i, category read-only sınırı, backup gate, truthful wording, explicit `unspecified` request payload'ı, stale/error, same-session/remount ve successful restore sonrası gate reset davranışlarını doğrular.
 - `tests/students/*`
   Aday listesi okuma/filtreleme, Sınıf/Şube helper’ları, telefon status, aday silme.
 - `tests/students/studentListReader.test.ts`

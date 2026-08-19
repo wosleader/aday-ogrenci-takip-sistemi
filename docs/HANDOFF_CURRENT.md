@@ -4,11 +4,11 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Latest completed implementation checkpoint: `9ddc519 feat: add student group cleanup correction`.
+- Latest completed implementation checkpoint: `77542a5 feat: add student group cleanup maintenance ui`.
 - Model C+ implementation: `4f643a4 feat: complete appointment lifecycle`. Checkpoint A/B/C CLOSED; Final Integration `PASS WITH NOTES`; production deployment `PASS`; live QA `FULL PASS`; Model C+ `PRODUCTION CLOSED`.
-- Current active work: Controlled Legacy Student Group Cleanup. Product decision `MODEL B - Review + Per-record Correction` ve Checkpoint A service/domain foundation tamamlandı; Checkpoint B başlamadı.
+- Current active work: Controlled Legacy Student Group Cleanup. `MODEL B - Review + Per-record Correction`, Checkpoint A ve Checkpoint B yerelde kapandı; deployment/live QA henüz yapılmadı.
 - Checkpoint C validation: StudentsPage history `31/31`; lifecycle/read-model/history `3` dosya / `82`; reminders `10` dosya / `72`; combined lifecycle `14` dosya / `168` test iki ardışık koşuda PASS; build PASS (bilinen Vite chunk-size warning). Migration/backfill, DB version ve index değişikliği yoktur.
-- Checkpoint A implementation commit/HEAD: `9ddc519`. Current terminal HEAD/origin yeni işe başlamadan önce Git ile doğrulanmalıdır.
+- Checkpoint B implementation commit/HEAD: `77542a5`. Current terminal HEAD/origin yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi, tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i, iletişim geçmişi edit/void MVP'si, phone action label/helper cleanup, Reporting V2 Summary MVP + UI polish, linked communication history terminal status-aware soft delete ve linked reminder quick complete zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
 - Pending linked reminder edit kapanışı tamamlandı. Cancel pending linked reminder implementation, tests/build, Strategy Review, manuel QA, feature commit/push, Windows VDS deployment, feature-specific live QA, docs closure, Obsidian ve Drive doğrulaması tamamlandı. Model C+ için aktif implementation/docs WIP yoktur; yeni aktif kapsam cleanup ürün kararıdır ve Checkpoint A foundation'ı kapalıdır.
@@ -42,9 +42,17 @@
 - Call logs, reminders, appointments, campaign, guardian relations, phones, call summary, student summary ve Reporting V2 hesapları değiştirilmez. Liste/filtre/export güncel StudentRecord'u doğal olarak yansıtır.
 - Chosen surface: `Settings -> Veri Sağlığı / Bakım`. StudentsPage cleanup paneli, import ekranında historical cleanup ve batch action yoktur.
 - Validation: initial focused `2` dosya / `16`, import/list `2` dosya / `51`, import + students `20` dosya / `226` test PASS; build PASS. Strategy Review `PASS WITH NOTES` sonrası reject-path DB-state ve shared search-text contract notları test-only hardening ile kapandı. Post-hardening focused `3` dosya / `18`, import/list `2` dosya / `51`, imports + students `21` dosya / `228` test PASS; build PASS; narrow re-review PASS.
-- Checkpoint A production-visible correction action açmaz; Settings UI ve first-write backup gate henüz yoktur. Batch cleanup yoktur.
-- Next checkpoint: Checkpoint B — Settings Maintenance UI + Backup Gate. Candidate list, confidence filters, review modal, explicit target/`Belirtilmemiş`, reason, confirmation, backup gate, stale/error feedback ve reactive refresh kapsamındadır. Checkpoint B başlamadı.
-- Category cleanup, batch/auto-fix, schema redesign, Model C+, appointment, campaign, phone, reporting, WhatsApp, dependency/bundle ve dedicated batch rollback işleri bu scope dışındadır.
+- Checkpoint B CLOSED: `77542a5 feat: add student group cleanup maintenance ui` Settings'te `Veri Sağlığı / Bakım` sekmesini, reactive candidate list/count/filters, per-record review, explicit target/reason/correction confirmation ve error/stale feedback akışını açtı. `category` salt-okunur kaldı; batch ve auto-fix yoktur.
+- First-write backup gate ayrı confirmation'larla `locked -> download_initiated -> confirmed` çalışır. Tarayıcı yalnız indirme isteğinin başlatıldığını bilir; kullanıcı dosyayı sakladığını açıkça doğrular. Gate Settings mount/session-local React state'tir; same mount'ta korunur, reload/unmount ve successful restore sonrası resetlenir.
+- Review snapshot `updated_at`, correction request'te `expected_updated_at` olarak kalır; stale fail-closed'dur. Başarılı correction modalı kapatır ve useLiveQuery aday listesini/count'larını doğal yeniler. Strategy Review'daki 5 finding hedefli fixlerle CLOSED; narrow re-review PASS. Local manual QA; list/filter/review, category read-only, backup/download/saved confirmation, custom ve `Belirtilmemiş` correction, live refresh, same-session gate ile restore/reload resetini PASS olarak doğruladı.
+- Sonraki gate: Final Integration / Full Regression, ardından deployment kararı, production deploy, live QA ve final docs closure. Checkpoint B henüz deploy edilmedi.
+- Category cleanup, batch/auto-fix, schema redesign, historical backfill, Model C+, appointment, campaign, phone, reporting, WhatsApp, dependency/bundle ve dedicated batch rollback işleri bu scope dışındadır.
+
+## Deferred Roadmap - Student Card Profile Editing
+
+- `Bilgileri Güncelle` gelecekte Students/candidate card `⋮` menüsünde `Adayı Sil` altında değerlendirilecek ayrı bir feature'dır; aktif implementation değildir ve önce discovery gerektirir.
+- Muhtemel profile alanları `current_class`, `student_group`, campaign ve diğer mevcut student alanlarıdır; exact editable inventory, validation, audit/stale/search-text semantics ve guardian/phone sınırı kararlaştırılmamıştır.
+- Source file, source sheet, source row ve mevcut import metadata provenance olarak varsayılan read-only kalmalıdır; elle güncellenmemelidir.
 
 ## Latest Checkpoint - Cancel Pending Linked Call Reminder
 
