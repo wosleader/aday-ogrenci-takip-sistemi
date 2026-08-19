@@ -29,8 +29,12 @@ import {
   type SystemBackupAnalysis,
   type SystemRestoreResult
 } from "./services/dataManagement";
+import {
+  StudentGroupCleanupMaintenance,
+  type StudentGroupCleanupBackupGateState
+} from "./StudentGroupCleanupMaintenance";
 
-type SettingsTab = "general" | "shortcuts" | "reminders" | "data";
+type SettingsTab = "general" | "shortcuts" | "reminders" | "data" | "maintenance";
 type DataManagementNotice = {
   type: "success" | "error";
   title: string;
@@ -41,7 +45,8 @@ const SETTINGS_TABS: Array<{ key: SettingsTab; label: string }> = [
   { key: "general", label: "Genel" },
   { key: "shortcuts", label: "Klavye Kısayolları" },
   { key: "reminders", label: "Hatırlatmalar" },
-  { key: "data", label: "Veri Yönetimi" }
+  { key: "data", label: "Veri Yönetimi" },
+  { key: "maintenance", label: "Veri Sağlığı / Bakım" }
 ];
 
 export function SettingsPage() {
@@ -62,11 +67,44 @@ export function SettingsPage() {
   const [dataManagementMessage, setDataManagementMessage] = useState<string | null>(null);
   const [dataManagementNotice, setDataManagementNotice] = useState<DataManagementNotice | null>(null);
   const [reminderSettingsMessage, setReminderSettingsMessage] = useState<string | null>(null);
+  const [cleanupBackupGateState, setCleanupBackupGateState] = useState<StudentGroupCleanupBackupGateState>("locked");
+  const [cleanupBackupGateError, setCleanupBackupGateError] = useState<string | null>(null);
+  const [isPreparingCleanupBackup, setIsPreparingCleanupBackup] = useState(false);
+  const cleanupBackupPreparationRef = useRef(false);
 
   async function downloadManualBackup() {
     const backup = await createDataCleanupBackup();
     downloadTextFile(backup.file_name, backup.json);
-    setDataManagementMessage("Tam Sistem Yedeği indirildi.");
+    setDataManagementMessage("Tam Sistem Yedeği için indirme isteği başlatıldı.");
+  }
+
+  async function prepareCleanupBackup() {
+    if (isPreparingCleanupBackup || cleanupBackupPreparationRef.current || cleanupBackupGateState === "confirmed") {
+      return;
+    }
+
+    cleanupBackupPreparationRef.current = true;
+    setIsPreparingCleanupBackup(true);
+    setCleanupBackupGateError(null);
+
+    try {
+      const backup = await createDataCleanupBackup();
+      downloadTextFile(backup.file_name, backup.json);
+      setCleanupBackupGateState("download_initiated");
+    } catch (error) {
+      setCleanupBackupGateState("locked");
+      setCleanupBackupGateError(error instanceof Error ? error.message : "Tam Sistem Yedeği hazırlanamadı.");
+    } finally {
+      cleanupBackupPreparationRef.current = false;
+      setIsPreparingCleanupBackup(false);
+    }
+  }
+
+  function confirmCleanupBackupSaved() {
+    if (cleanupBackupGateState === "download_initiated") {
+      setCleanupBackupGateState("confirmed");
+      setCleanupBackupGateError(null);
+    }
   }
 
   async function clearAllCandidateData() {
@@ -80,7 +118,7 @@ export function SettingsPage() {
       downloadTextFile(result.backup.file_name, result.backup.json);
       setCleanupResult(result);
       setConfirmationText("");
-      setDataManagementMessage("Tüm aday verileri temizlendi. İşlem öncesi Tam Sistem Yedeği indirildi.");
+      setDataManagementMessage("Tüm aday verileri temizlendi. İşlem öncesi Tam Sistem Yedeği için indirme isteği başlatıldı.");
     } catch (error) {
       setDataManagementMessage(error instanceof Error ? error.message : "Veri temizleme tamamlanamadı.");
     } finally {
@@ -132,6 +170,8 @@ export function SettingsPage() {
       const result = await restoreSystemBackup(restoreAnalysis.snapshot, restoreConfirmationText);
       setRestoreResult(result);
       setRestoreConfirmationText("");
+      setCleanupBackupGateState("locked");
+      setCleanupBackupGateError(null);
       setDataManagementMessage("Sistem yedeği geri yüklendi.");
       setDataManagementNotice({
         type: "success",
@@ -472,6 +512,16 @@ export function SettingsPage() {
           </div>
         ) : null}
       </section>
+      ) : null}
+
+      {activeTab === "maintenance" ? (
+        <StudentGroupCleanupMaintenance
+          backupGateError={cleanupBackupGateError}
+          backupGateState={cleanupBackupGateState}
+          isPreparingBackup={isPreparingCleanupBackup}
+          onConfirmBackupSaved={confirmCleanupBackupSaved}
+          onPrepareBackup={() => void prepareCleanupBackup()}
+        />
       ) : null}
 
       {activeTab === "reminders" ? (

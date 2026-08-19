@@ -1,10 +1,16 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TABLE_NAMES } from "../../src/db/backup";
 import { db } from "../../src/db/db";
 import { SettingsPage } from "../../src/features/settings/SettingsPage";
 import { RESTORE_SYSTEM_BACKUP_CONFIRMATION } from "../../src/features/settings/services/dataManagement";
+
+const { downloadTextFileMock } = vi.hoisted(() => ({ downloadTextFileMock: vi.fn() }));
+
+vi.mock("../../src/features/imports/services/logExport", () => ({
+  downloadTextFile: downloadTextFileMock
+}));
 
 function createEmptyBackupJson() {
   return JSON.stringify({
@@ -29,6 +35,8 @@ function getRestoreFileInput(): HTMLInputElement {
 
 describe("SettingsPage", () => {
   beforeEach(async () => {
+    downloadTextFileMock.mockReset();
+    downloadTextFileMock.mockImplementation(() => undefined);
     await db.delete();
     await db.open();
   });
@@ -70,6 +78,12 @@ describe("SettingsPage", () => {
     expect(screen.getByText("Tam Sistem Yedeği Al")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sistem Yedeğinden Geri Yükle" })).toBeEnabled();
     expect(screen.queryByText(/JSON yedek/i)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("tab", { name: "Veri Sağlığı / Bakım" }));
+
+    expect(screen.getByRole("tab", { name: "Veri Sağlığı / Bakım" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("heading", { name: "Veri Sağlığı / Bakım" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Tümü \(0\)/ })).toBeInTheDocument();
   });
 
   it("shows visible shortcut validation messages", async () => {
@@ -87,6 +101,16 @@ describe("SettingsPage", () => {
     await userEvent.keyboard("3");
 
     expect(await screen.findByText("3 tuşu bu projede kritik işlem kısayolu olarak kullanılamaz. Lütfen başka bir tuş seçin.")).toBeInTheDocument();
+  });
+
+  it("describes manual backup only as a download initiation", async () => {
+    render(<SettingsPage />);
+    await userEvent.click(screen.getByRole("tab", { name: "Veri Yönetimi" }));
+    await userEvent.click(screen.getByRole("button", { name: "Tam Sistem Yedeği Al" }));
+
+    expect(await screen.findByText("Tam Sistem Yedeği için indirme isteği başlatıldı.")).toBeInTheDocument();
+    expect(screen.queryByText("Tam Sistem Yedeği indirildi.")).not.toBeInTheDocument();
+    expect(downloadTextFileMock).toHaveBeenCalledTimes(1);
   });
 
   it("shows a visible warning when the selected system backup file is invalid", async () => {
