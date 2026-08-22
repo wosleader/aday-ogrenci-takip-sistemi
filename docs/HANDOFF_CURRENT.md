@@ -4,14 +4,14 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Latest completed implementation checkpoint: `77542a5 feat: add student group cleanup maintenance ui`.
+- Cleanup implementation checkpoints: `9ddc519 feat: add student group cleanup correction` and `77542a5 feat: add student group cleanup maintenance ui`.
 - Model C+ implementation: `4f643a4 feat: complete appointment lifecycle`. Checkpoint A/B/C CLOSED; Final Integration `PASS WITH NOTES`; production deployment `PASS`; live QA `FULL PASS`; Model C+ `PRODUCTION CLOSED`.
-- Current active work: Controlled Legacy Student Group Cleanup. `MODEL B - Review + Per-record Correction`, Checkpoint A ve Checkpoint B yerelde kapandı; deployment/live QA henüz yapılmadı.
+- Controlled Legacy Student Group Cleanup: `MODEL B - Review + Per-record Correction` PRODUCTION CLOSED. Checkpoint A/B, final integration, production deployment ve production smoke QA tamamlandı; smoke QA `PASS — data-limited`tir.
 - Checkpoint C validation: StudentsPage history `31/31`; lifecycle/read-model/history `3` dosya / `82`; reminders `10` dosya / `72`; combined lifecycle `14` dosya / `168` test iki ardışık koşuda PASS; build PASS (bilinen Vite chunk-size warning). Migration/backfill, DB version ve index değişikliği yoktur.
-- Checkpoint B implementation commit/HEAD: `77542a5`. Current terminal HEAD/origin yeni işe başlamadan önce Git ile doğrulanmalıdır.
+- Latest deployed/integration HEAD: `2826ea3 test: cap vitest workers for stability`. Current terminal HEAD/origin yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi, tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i, iletişim geçmişi edit/void MVP'si, phone action label/helper cleanup, Reporting V2 Summary MVP + UI polish, linked communication history terminal status-aware soft delete ve linked reminder quick complete zinciri tamamlandı ve pushlandı.
 - Beklenen final working tree: tracked dosya değişikliği yok; yalnız `dev-server.log` yerel runtime çıktısı olarak untracked kalabilir ve stage/commit edilmemelidir.
-- Pending linked reminder edit kapanışı tamamlandı. Cancel pending linked reminder implementation, tests/build, Strategy Review, manuel QA, feature commit/push, Windows VDS deployment, feature-specific live QA, docs closure, Obsidian ve Drive doğrulaması tamamlandı. Model C+ için aktif implementation/docs WIP yoktur; yeni aktif kapsam cleanup ürün kararıdır ve Checkpoint A foundation'ı kapalıdır.
+- Pending linked reminder edit kapanışı tamamlandı. Cancel pending linked reminder implementation, tests/build, Strategy Review, manuel QA, feature commit/push, Windows VDS deployment, feature-specific live QA, docs closure, Obsidian ve Drive doğrulaması tamamlandı. Model C+ ve cleanup için aktif implementation WIP yoktur; yeni ürün işi ayrı scoped discovery ile seçilmelidir.
 - Pending linked call reminder cancellation tamamlandı: gerçek owner/current history satırında iptal aksiyonu görünür; shared/tarihsel referans satırlarında görünmez. `pending → cancelled` dışında lifecycle transition yoktur; call log, student ve appointment korunur.
 - Önceki docs commit: 006ad84 docs: add sprint 9.3g-4 checkpoint
 - Önceki multi-phone import simulation commit: 2e1bbff feat: add multi-phone import simulation
@@ -29,7 +29,7 @@
 - Canonical docs closure commit'inden sonra working tree beklenen durumu: yalnız `dev-server.log` untracked.
 - GitHub/origin durumu: aktif branch `origin/sprint-9-2-multi-phone-architecture-plan` ile aynı son commit üzerinde görünür.
 
-## Current Scoped Work - Controlled Legacy Student Group Cleanup
+## Latest Product Closure - Controlled Legacy Student Group Cleanup
 
 - Product decision complete: `MODEL B - Review + Per-record Correction`. Batch cleanup, silent/automatic mutation, migration ve historical bulk backfill kabul edilmedi.
 - Checkpoint A CLOSED: `9ddc519 feat: add student group cleanup correction`. Canonical assessment/predicate, read-only candidate reader, `updated_at` DTO alanı, per-record correction transaction, deterministic search-text refresh ve append-only audit tamamlandı.
@@ -45,8 +45,11 @@
 - Checkpoint B CLOSED: `77542a5 feat: add student group cleanup maintenance ui` Settings'te `Veri Sağlığı / Bakım` sekmesini, reactive candidate list/count/filters, per-record review, explicit target/reason/correction confirmation ve error/stale feedback akışını açtı. `category` salt-okunur kaldı; batch ve auto-fix yoktur.
 - First-write backup gate ayrı confirmation'larla `locked -> download_initiated -> confirmed` çalışır. Tarayıcı yalnız indirme isteğinin başlatıldığını bilir; kullanıcı dosyayı sakladığını açıkça doğrular. Gate Settings mount/session-local React state'tir; same mount'ta korunur, reload/unmount ve successful restore sonrası resetlenir.
 - Review snapshot `updated_at`, correction request'te `expected_updated_at` olarak kalır; stale fail-closed'dur. Başarılı correction modalı kapatır ve useLiveQuery aday listesini/count'larını doğal yeniler. Strategy Review'daki 5 finding hedefli fixlerle CLOSED; narrow re-review PASS. Local manual QA; list/filter/review, category read-only, backup/download/saved confirmation, custom ve `Belirtilmemiş` correction, live refresh, same-session gate ile restore/reload resetini PASS olarak doğruladı.
-- Sonraki gate: Final Integration / Full Regression, ardından deployment kararı, production deploy, live QA ve final docs closure. Checkpoint B henüz deploy edilmedi.
-- Category cleanup, batch/auto-fix, schema redesign, historical backfill, Model C+, appointment, campaign, phone, reporting, WhatsApp, dependency/bundle ve dedicated batch rollback işleri bu scope dışındadır.
+- Final Integration: 24 logical CPU üzerindeki uncapped Vitest default'u 23 worker ile unrelated async UI testlerinde aralıklı fail üretti. `1/2/4/8` worker full-suite matrix PASS verdiği için, en yüksek ölçülmüş stabil seviye `test.maxWorkers: 8` `2826ea3` ile canonical config'e alındı. Timeout/retry/assertion zayıflatma, test skip, global serialization ve production code değişikliği yoktur.
+- Committed `2826ea3` doğrulaması: canonical `npm.cmd test` `59` dosya / `642` test PASS; `npm.cmd run build` PASS (yalnız bilinen Vite chunk-size warning); `npm.cmd run qa:import:e2e` `6/6` PASS.
+- Production deploy PASS: Windows VDS kaynak repo `C:\Sites\aday-ogrenci-takip-sistemi` `a617b09 → 2826ea3` fast-forward edildi; `npm.cmd ci`, `/demo/` base build ve `robocopy .\dist C:\Sites\netvadi-demo /MIR` ile static publish tamamlandı. Robocopy exit code `3` normal/successful statüdür; service/container restart gerekmedi.
+- Production smoke QA `PASS — data-limited`: `/demo/`, Settings ve `Veri Sağlığı / Bakım` yüzeyi doğrulandı. Production veri setinde eligible cleanup candidate bulunmadığından per-record review, backup-gate write, production correction write ve live candidate removal yeniden test edilmedi. Bu yollar deploy öncesi local manual QA ve exact deployed HEAD automated regression ile PASS'ti; QA için sahte/legacy veri eklenmedi ve product owner data-dependent write yolunun atlanmasını kabul etti.
+- Controlled Legacy Student Group Cleanup PRODUCTION CLOSED ve açık blocker yoktur. Category cleanup, batch/auto-fix, schema redesign, historical backfill, Model C+, appointment, campaign, phone, reporting, WhatsApp, dependency/bundle ve dedicated batch rollback işleri bu scope dışındadır. Yeni ürün işi ancak ayrı scoped discovery ile seçilir.
 
 ## Deferred Roadmap - Student Card Profile Editing
 

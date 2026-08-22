@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Controlled Legacy Student Group Cleanup Checkpoint B | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Controlled Legacy Student Group Cleanup Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -159,7 +159,7 @@ Son doğrulandı: Reporting V2 Summary MVP
 
 ## 10. Settings / Data Management
 
-Son doğrulandı: Controlled Legacy Student Group Cleanup Checkpoint B
+Son doğrulandı: Controlled Legacy Student Group Cleanup Production Closure
 
 - `src/features/settings/SettingsPage.tsx`
   Ayarlar ekranı; kısayollar, hatırlatma ayarları, veri yönetimi, Tam Sistem Yedeği/Geri Yükleme, `Veri Sağlığı / Bakım` entry point'i ve student-group cleanup backup gate'in mount/session-local sahipliğini taşır. Successful restore sonrası cleanup gate'i resetler.
@@ -629,7 +629,7 @@ Son doğrulandı: `667d501 fix: polish phone outcome card menu layout`
 Son doğrulandı: `48da40c fix: polish WhatsApp phone action icon`
 
 - `vite.config.ts`
-  `/demo` subpath deployment compatibility için Vite base path davranışını taşır. Pilot demo hedefi domain root değil `/demo` path'idir.
+  `/demo` subpath deployment compatibility için Vite base path davranışını taşır. Pilot demo hedefi domain root değil `/demo` path'idir. Vitest jsdom/setup yapılandırması ile canonical full-suite'in measured stable paralellik sınırı olan `test.maxWorkers: 8` burada tanımlıdır.
 - `src/db/seed.ts`
   Pilot demo seed bootstrap ve zengin fake pilot seed verilerinin kaynağıdır. Gerçek data alanı ile demo/test seed alanı karıştırılmamalıdır.
 - `src/features/students/StudentsPage.tsx`

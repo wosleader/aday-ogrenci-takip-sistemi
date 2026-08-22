@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Controlled Legacy Student Group Cleanup Checkpoint B | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Controlled Legacy Student Group Cleanup Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,20 +6,21 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Controlled Legacy Student Group Cleanup Checkpoint B
-- FILE_MAP: Controlled Legacy Student Group Cleanup Checkpoint B
+- PROJECT_MEMORY: Controlled Legacy Student Group Cleanup Production Closure
+- FILE_MAP: Controlled Legacy Student Group Cleanup Production Closure
 - DECISIONS: Controlled Legacy Student Group Cleanup MODEL B contract
-- Latest completed implementation checkpoint: `77542a5 feat: add student group cleanup maintenance ui`.
+- Cleanup implementation checkpoints: `9ddc519 feat: add student group cleanup correction` and `77542a5 feat: add student group cleanup maintenance ui`.
+- Latest deployed/integration HEAD: `2826ea3 test: cap vitest workers for stability`.
 - Model C+ implementation: `4f643a4 feat: complete appointment lifecycle`. Checkpoint A/B/C CLOSED; Final Integration `PASS WITH NOTES`; production deployment `PASS`; live QA `FULL PASS`.
 - Checkpoint C validation: StudentsPage history `31/31`; lifecycle/read-model/history `3` dosya / `82`; reminders `10` dosya / `72`; combined lifecycle `14` dosya / `168` test iki ardışık koşuda PASS; build PASS (bilinen Vite chunk-size warning).
 - A+B+C tamamlandı ve production'da kapandı. Migration, backfill, DB version/index ve package/dependency değişikliği yoktur; appointment için ReminderRecord oluşturulmaz.
 - Production target `a617b09`; Windows VDS kaynak repo `C:\Sites\aday-ogrenci-takip-sistemi`, statik yayın `C:\Sites\netvadi-demo`, public URL `https://netvadi.com/demo/` altındadır. Doğrulanmış publish yedeği: `C:\Backups\netvadi-demo_20260818_004229`; rollback gerekmedi.
-- Active scoped work: Controlled Legacy Student Group Cleanup ürün kararı ile Checkpoint A/B yerelde kapandı. Production deployment ve live QA henüz yapılmadı; sıradaki kapı Final Integration / Deployment Preparation'dır.
+- Controlled Legacy Student Group Cleanup (`MODEL B`) PRODUCTION CLOSED: product decision, Checkpoint A/B, final integration, production deployment and production smoke QA tamamlandı. Production smoke QA `PASS — data-limited`tir.
 - Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
 
-## Active Scoped Work - Controlled Legacy Student Group Cleanup
+## Latest Product Closure - Controlled Legacy Student Group Cleanup
 
 - Decision base: `000fe6d docs: close model c plus deployment`. Seçilen model `MODEL B - Review + Per-record Correction`dır; Checkpoint A implementation commit'i `9ddc519 feat: add student group cleanup correction`dır. Batch cleanup, silent/automatic mutation, migration ve historical bulk backfill yoktur.
 - Checkpoint A CLOSED: ortak canonical detector assessment/predicate, read-only candidate reader, `updated_at` taşıyan candidate DTO ve dedicated per-record correction service tamamlandı. Reader ile write transaction aynı eligibility/revalidation kuralını kullanır.
@@ -44,7 +45,11 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - Initial Checkpoint B validation: focused Settings `2` dosya / `15`, Checkpoint A foundation `3` dosya / `18`, Settings + Students `16` dosya / `157`, Imports + Students `21` dosya / `228` test PASS; build PASS (bilinen Vite chunk warning). Strategy Review başlangıçta 5 finding ile `CHANGES REQUIRED` verdi.
 - Truthful backup wording, modal timestamps, restore-reset integration, unspecified UI payload ve stale success feedback hedefli fixlerle kapandı. Post-fix focused Settings `2` dosya / `18`, Checkpoint A `3` dosya / `18`, Settings + Students `16` dosya / `160`, Imports + Students `21` dosya / `228` test PASS; build PASS. Narrow re-review PASS.
 - Local manual QA PASS: bakım sekmesi/list/filter/review context'i, category read-only ve batch/auto-fix yokluğu doğrulandı. Correction confirmation, gerçek `.json` download initiation, saved confirmation, custom ve `Belirtilmemiş` correction, live refresh, same-session gate, pre-cleanup backup restore ve restore/reload sonrası gate reset başarıyla gözlendi. Student-list search'ün `student_group` aradığı varsayılmadı.
-- Kapsam dışı kalır: category cleanup/mutation, batch cleanup, silent auto-fix, migration, historical backfill, StudentsPage cleanup paneli, dependency/bundle işi ve deployment. Checkpoint B deploy/live QA henüz yapılmadı.
+- Final Integration ilk olarak 24 logical CPU üzerinde uncapped Vitest'in 23 worker ile ilgisiz async UI testlerinde aralıklı fail üretmesini buldu. `1/2/4/8` worker matrix PASS verdi; en yüksek ölçülmüş stabil seviye olan `test.maxWorkers: 8` `2826ea3` ile canonical test config'e alındı. Timeout/retry/assertion zayıflatma, global serialization veya production code değişikliği yoktur.
+- Committed `2826ea3` üzerinde canonical `npm.cmd test` `59` dosya / `642` test PASS, build PASS (yalnız bilinen Vite chunk-size warning) ve `npm.cmd run qa:import:e2e` `6/6` PASS verdi.
+- Production deploy: Windows VDS repo `C:\Sites\aday-ogrenci-takip-sistemi` `a617b09 → 2826ea3` fast-forward edildi; `npm.cmd ci`, `/demo/` base build ve `robocopy .\dist C:\Sites\netvadi-demo /MIR` PASS tamamlandı. Robocopy exit code `3` normal/successful durumdur; service/container restart gerekmedi.
+- Production smoke QA `PASS — data-limited`: `/demo/`, Settings ve `Veri Sağlığı / Bakım` yüzeyi doğrulandı. Production veri setinde eligible cleanup candidate olmadığından per-record review, backup-gate write, production correction write ve live candidate removal yeniden çalıştırılmadı; bu akışlar deploy öncesi local manual QA ve exact deployed HEAD automated regression ile doğrulanmıştı. QA için sahte/legacy veri enjekte edilmedi; product owner bu data-dependent write yolunun atlanmasını kabul etti.
+- Kapsam dışı kalır: category cleanup/mutation, batch cleanup, silent auto-fix, migration, historical backfill ve StudentsPage cleanup paneli. Açık cleanup blocker'ı yoktur; yeni ürün işi ayrı scoped discovery ile seçilmelidir.
 
 ## Current Product Decision - Appointment Model C+
 

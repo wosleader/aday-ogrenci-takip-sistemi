@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Controlled Legacy Student Group Cleanup Checkpoint B | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Controlled Legacy Student Group Cleanup Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -63,7 +63,7 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 
 ## Current Product Decision - Controlled Legacy Student Group Cleanup
 
-- [Decision State] Controlled Legacy Student Group Cleanup için `MODEL B - Review + Per-record Correction` seçildi. Checkpoint A `9ddc519 feat: add student group cleanup correction` ve Checkpoint B `77542a5 feat: add student group cleanup maintenance ui` ile yerelde kapandı; local manual QA PASS. Batch cleanup, silent/automatic mutation, migration ve historical bulk backfill yoktur.
+- [Decision State] Controlled Legacy Student Group Cleanup için `MODEL B - Review + Per-record Correction` seçildi. Checkpoint A `9ddc519 feat: add student group cleanup correction` ve Checkpoint B `77542a5 feat: add student group cleanup maintenance ui` CLOSED; local manual QA PASS, final integration PASS, production deployment PASS ve production smoke QA `PASS — data-limited`tir. Batch cleanup, silent/automatic mutation, migration ve historical bulk backfill yoktur.
 - [Detector Scope] Mevcut read-only detector trim sonrası exact `11. Sınıf YKS Hazırlık` eşleşmesini ve `current_class` sinyallerini kullanarak `high_confidence` veya `needs_review` adayı üretir. Detector sonucu yalnız adaydır; string pattern provenance değildir ve `high_confidence` otomatik düzeltme/write authorization anlamına gelmez.
 - [Category Boundary] `category` bu scope'ta değiştirilmez. Review sırasında context/evidence olarak gösterilebilir; eski writer'ın `YKS` yazmış olması gerçek YKS adaylarını fallback kayıtlarından güvenle ayırmaya yetmez. Category cleanup ayrı product/data decision gerektirir.
 - [Correction Target] Orijinal/kaynak veriyle gerçek öğrenci grubu doğrulanabiliyorsa exact doğrulanmış değer kullanılabilir. Kaynakta Öğrenci Grubu yoksa veya boşsa persisted neutral value `""` olur; UI `Belirtilmemiş` gösterebilir. Sınıf, category, campaign veya başka alandan `student_group` türetilmez.
@@ -76,7 +76,7 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [UI Surface] Canonical yüzey `Settings -> Veri Sağlığı / Bakım`dır. UI read-only candidate list, confidence badge, student identity/context, current class/group/category, varsa source file/sheet/row, created/updated zamanı ve per-record correction akışını taşır. StudentsPage içine cleanup paneli eklenmez, historical cleanup import ekranına karıştırılmaz ve batch action sunulmaz.
 - [Out of Scope] Category cleanup, batch cleanup, silent auto-fix, migration, schema redesign, historical appointment ve Model C+ değişiklikleri, campaign/phone/reporting redesign, WhatsApp, dependency update, bundle optimization ve dedicated batch rollback kapsam dışıdır.
 - [Checkpoint B Closure] `Settings -> Veri Sağlığı / Bakım` reactive candidate list/filter/count, review context, explicit `verified_value` / `unspecified`, reason ve ayrı correction confirmation ile açıldı. Review snapshot `updated_at` correction request'in `expected_updated_at` değeridir; stale fail-closed kalır. Category mutate edilmez, batch/auto-fix yoktur; successful correction live list/count'u optimistic delete olmadan yeniler.
-- [Validation / Next Gate] Checkpoint B post-fix focused Settings `2` dosya / `18`, Checkpoint A `3` dosya / `18`, Settings + Students `16` dosya / `160`, Imports + Students `21` dosya / `228` test PASS; build PASS, narrow re-review PASS ve local manual QA PASS. Sıradaki workflow kapısı Final Integration / Full Regression, deployment kararı, production deploy ve live QA'dır; Checkpoint B henüz deploy edilmemiştir.
+- [Validation / Closure] Checkpoint B post-fix focused Settings `2` dosya / `18`, Checkpoint A `3` dosya / `18`, Settings + Students `16` dosya / `160`, Imports + Students `21` dosya / `228` test PASS; build PASS, narrow re-review PASS ve local manual QA PASS. Final Integration'da measured stable Vitest cap `test.maxWorkers: 8` ile committed `2826ea3` üzerinde canonical `59` dosya / `642` test, build ve import E2E `6/6` PASS verdi. Production deployment tamamlandı; production smoke QA `PASS — data-limited`tir. Bu MODEL B ürün kararını değiştirmez ve yeni aktif implementation scope'u açmaz.
 
 ## Deferred Roadmap - Student Card Profile Editing
 
