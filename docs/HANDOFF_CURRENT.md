@@ -8,6 +8,7 @@
 - Cleanup implementation checkpoints: `9ddc519 feat: add student group cleanup correction` and `77542a5 feat: add student group cleanup maintenance ui`.
 - Model C+ implementation: `4f643a4 feat: complete appointment lifecycle`. Checkpoint A/B/C CLOSED; Final Integration `PASS WITH NOTES`; production deployment `PASS`; live QA `FULL PASS`; Model C+ `PRODUCTION CLOSED`.
 - Controlled Legacy Student Group Cleanup: `MODEL B - Review + Per-record Correction` PRODUCTION CLOSED. Checkpoint A/B, final integration, production deployment ve production smoke QA tamamlandı; smoke QA `PASS — data-limited`tir.
+- Student Card Profile Editing / `Bilgileri Güncelle` V1 PRODUCT DECISION APPROVED; implementation NOT STARTED. Onaylı ilk yüzey küçük dedicated modal ve mevcut öğrenci kartı `Aday işlemleri` menüsünde `Adayı Sil` altındaki entry point'tir.
 - Checkpoint C validation: StudentsPage history `31/31`; lifecycle/read-model/history `3` dosya / `82`; reminders `10` dosya / `72`; combined lifecycle `14` dosya / `168` test iki ardışık koşuda PASS; build PASS (bilinen Vite chunk-size warning). Migration/backfill, DB version ve index değişikliği yoktur.
 - Latest deployed/integration HEAD: `2826ea3 test: cap vitest workers for stability`. Current terminal HEAD/origin yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Dar Pilot Final Gate sonucu `PILOT READY WITH WARNINGS` idi; kullanıcı bildirimiyle dar pilot kullanım testi başarıyla tamamlandı. VELI TEL / guardian_phone import ve guardian phone Playwright E2E checkpoint'i, VELI ADI import alias fix, WhatsApp draft edit/override, import fallback fix, cleanup candidate read-only service, WhatsApp Web open suspend, Kampanya import persistence bugfix, görüşme durumu telefon seçimi kuralı düzeltmesi, tüm telefonlar invalid iken genel Yanlış Numara edge-case fix'i, iletişim geçmişi edit/void MVP'si, phone action label/helper cleanup, Reporting V2 Summary MVP + UI polish, linked communication history terminal status-aware soft delete ve linked reminder quick complete zinciri tamamlandı ve pushlandı.
@@ -38,7 +39,7 @@
 - Validation: local manual QA PASS; focused `2` dosya / `28` test PASS; canonical `59` dosya / `636` test PASS; build PASS (yalnız bilinen Vite chunk-size warning). `642 → 636` farkı yalnız silinen beş WhatsApp-link telefon normalization ve bir `wa.me` URL-construction testidir.
 - Production deployment PASS: VDS repo `C:\Sites\aday-ogrenci-takip-sistemi` `2826ea3 → d2a4eff` fast-forward edildi; `npm.cmd ci`, `/demo/` base build ve `robocopy .\dist C:\Sites\netvadi-demo /MIR /R:2 /W:2` PASS tamamlandı. Robocopy exit code `3` başarılı/non-fataldır. Mevcut deprecation uyarıları ve audit çıktısındaki `10` vulnerability (`2` low, `8` high) bu feature için yeni bulgu değildir ve deploy'u bloklamadı.
 - Production smoke QA PASS: live `/demo/` üzerinde öğrenci kartı aksiyonu taslak modalını açar; yeni tab/window, `wa.me` veya WhatsApp Web navigation oluşmaz; taslak görünür ve düzenlenebilir, kopyalama çalışır, `WhatsApp'ta Aç` outbound kontrolü kalmaz.
-- Bu geçici ürün kararı dış bağlantıyı kalıcı olarak reddetmez. Reconnection yalnız açık product discovery/decision ile ele alınabilir. Aktif WhatsApp implementation WIP yoktur; sıradaki işlem final docs commit/push, ardından Obsidian final closure'dır.
+- Bu geçici ürün kararı dış bağlantıyı kalıcı olarak reddetmez. Reconnection yalnız açık product discovery/decision ile ele alınabilir. Aktif WhatsApp implementation WIP yoktur; Student Profile Editing V1 ancak ayrı dar implementation göreviyle başlayabilir.
 
 ## Latest Product Closure - Controlled Legacy Student Group Cleanup
 
@@ -62,11 +63,14 @@
 - Production smoke QA `PASS — data-limited`: `/demo/`, Settings ve `Veri Sağlığı / Bakım` yüzeyi doğrulandı. Production veri setinde eligible cleanup candidate bulunmadığından per-record review, backup-gate write, production correction write ve live candidate removal yeniden test edilmedi. Bu yollar deploy öncesi local manual QA ve exact deployed HEAD automated regression ile PASS'ti; QA için sahte/legacy veri eklenmedi ve product owner data-dependent write yolunun atlanmasını kabul etti.
 - Controlled Legacy Student Group Cleanup PRODUCTION CLOSED ve açık blocker yoktur. Category cleanup, batch/auto-fix, schema redesign, historical backfill, Model C+, appointment, campaign, phone, reporting, WhatsApp, dependency/bundle ve dedicated batch rollback işleri bu scope dışındadır. Yeni ürün işi ancak ayrı scoped discovery ile seçilir.
 
-## Deferred Roadmap - Student Card Profile Editing
+## Current Product Decision - Student Card Profile Editing V1
 
-- `Bilgileri Güncelle` gelecekte Students/candidate card `⋮` menüsünde `Adayı Sil` altında değerlendirilecek ayrı bir feature'dır; aktif implementation değildir ve önce discovery gerektirir.
-- Muhtemel profile alanları `current_class`, `student_group`, campaign ve diğer mevcut student alanlarıdır; exact editable inventory, validation, audit/stale/search-text semantics ve guardian/phone sınırı kararlaştırılmamıştır.
-- Source file, source sheet, source row ve mevcut import metadata provenance olarak varsayılan read-only kalmalıdır; elle güncellenmemelidir.
+- Status: PRODUCT DECISION APPROVED / IMPLEMENTATION NOT STARTED. Aktif implementation WIP yoktur. Sıradaki gate `Implementation Checkpoint A`dır; bu onaylı V1 sınırıyla ayrı dar prompt olarak açılmalıdır.
+- V1 editable alanları: `student_full_name`, `current_class`, `student_group`, `neighborhood`, `district`. UI small dedicated modaldır; entry point card `⋮` → `Aday işlemleri` → `Adayı Sil` altındaki `Bilgileri Güncelle`dir. Her save için boş olmayan `Değişiklik nedeni` zorunludur.
+- Ad normalize edilir; boş sınıf `null`, boş grup `""`, boş mahalle/ilçe `null` kalır. Class/group/category bağımsızdır; otomatik türetme yoktur. `id`, `uuid`, derived/search, lifecycle/call summary, timestamps, sync/delete, audit ve provenance salt-okunurdur; mevcut source file/sheet/row modal context'inde read-only gösterilir.
+- `general_note`, `category`, `campaign_id`, guardians ve phones V1'den explicit deferred'dır. Campaign/reporting, phone/guardian relation-normalization-history ve import/provenance davranışı bu profile save ile değişmez. WhatsApp outbound TEMPORARILY DISCONNECTED sınırı korunur.
+- Save contract: fresh `id`/`uuid`/`expected_updated_at` snapshot, double-submit guard, transaction reread, missing/deleted/UUID mismatch/stale/no-change reject, controlled patch + monotonic `updated_at`, same-transaction audit ve audit failure rollback. Stale formu korur, auto-merge yapmaz; successful save live list/card'ı reactive yeniler.
+- Implementation öncesi pilot seed'in broader legacy search tokenları ile canonical `studentSearchText` arasındaki fark regression testle ele alınmalıdır. Schema, migration, package, import/export/backup, campaign, WhatsApp ve phone/guardian domain değişikliği beklenmez.
 
 ## Latest Checkpoint - Cancel Pending Linked Call Reminder
 

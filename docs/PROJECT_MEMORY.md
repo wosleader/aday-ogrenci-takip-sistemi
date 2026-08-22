@@ -1,4 +1,4 @@
-<!-- Son guncelleme: WhatsApp Outbound Disconnect Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Student Card Profile Editing V1 Product Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -17,6 +17,7 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - A+B+C tamamlandı ve production'da kapandı. Migration, backfill, DB version/index ve package/dependency değişikliği yoktur; appointment için ReminderRecord oluşturulmaz.
 - Production target `a617b09`; Windows VDS kaynak repo `C:\Sites\aday-ogrenci-takip-sistemi`, statik yayın `C:\Sites\netvadi-demo`, public URL `https://netvadi.com/demo/` altındadır. Doğrulanmış publish yedeği: `C:\Backups\netvadi-demo_20260818_004229`; rollback gerekmedi.
 - Controlled Legacy Student Group Cleanup (`MODEL B`) PRODUCTION CLOSED: product decision, Checkpoint A/B, final integration, production deployment and production smoke QA tamamlandı. Production smoke QA `PASS — data-limited`tir.
+- Student Card Profile Editing / `Bilgileri Güncelle` V1 PRODUCT DECISION APPROVED; implementation başlamadı. Onaylı scope küçük dedicated modal, kayıt bazlı controlled update ve yalnız `student_full_name`, `current_class`, `student_group`, `neighborhood`, `district` alanlarıdır.
 - Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
@@ -701,12 +702,15 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - Bu fikir yalnızca aday takip ve kayıt görüşmesi sürecimize özeldir; LMS, ERP veya öğrenci portalı projesi değildir.
 - Import/export/backup veri güvenliği ve mevcut rapor alanı oturmadan başlatılmayacak, mevcut önceliklerin önüne geçmeyecektir.
 
-## Deferred Roadmap - Student Card Profile Editing
+## Current Product Decision - Student Card Profile Editing V1
 
-- `Student Card Profile Editing / Bilgileri Güncelle` DEFERRED'dır; aktif cleanup scope'u veya implementation işi değildir. Gelecekte Students/candidate card `⋮` menüsünde `Adayı Sil` altında bir entry point olarak değerlendirilebilir.
-- Amaç mevcut aday profil bilgisini kontrollü güncellemektir. `current_class`, `student_group`, campaign ve diğer mevcut profile alanlarının exact editable inventory'si ayrı discovery ile kararlaştırılacaktır.
-- Source/provenance bilgisi (source file, sheet, row ve mevcut import metadata) varsayılan olarak read-only kalmalıdır; tarihsel kaynak anlamı nedeniyle elle değiştirilemez.
-- Future discovery; validation, campaign relation semantics, guardian/phone kapsamı, `updated_at` stale guard, audit before/after, `search_text` ve derived-field refresh, modal/drawer UX ile confirmation/regression sınırlarını belirlemelidir. Schema veya UI planı bu roadmap notuyla kabul edilmez.
+- [Decision State] Önceki deferred discovery tamamlandı; product owner `MODEL 1` small dedicated modal kararını onayladı. Implementation NOT STARTED'dır. Entry point Students/candidate card `⋮` → `Aday işlemleri` → `Adayı Sil` altındaki `Bilgileri Güncelle` olacaktır.
+- [Editable Fields] V1 yalnız `student_full_name`, `current_class`, `student_group`, `neighborhood` ve `district` alanlarını günceller. Ad trim sonrası zorunludur ve `normalized_student_name` yeniden üretilir; boş sınıf `null`, boş grup `""`, boş mahalle/ilçe `null` persist edilir. Sınıf grup/category'yi, grup ise sınıf/category/campaign'i otomatik değiştirmez veya türetmez.
+- [Required Reason + Read-only] Her başarılı kayıtta trim sonrası zorunlu `Değişiklik nedeni` bulunur ve yalnız audit'e yazılır. Kimlik, timestamps, sync/delete, lifecycle/call summary, source/import provenance, `normalized_student_name`, `search_text` ve audit history edit UI'da salt-okunurdur. Modal, mevcutsa source file/sheet/row bilgisini context olarak gösterir; tarihsel gerçek bu alanlar profile save ile değiştirilemez.
+- [Deferred Boundary] `general_note` mevcut Excel/import notu semantiği nedeniyle; `category` ve `campaign_id` domain/reporting semantiği nedeniyle; guardians ve phones relation/normalization/history bağımlılıkları nedeniyle V1 kapsamı dışındadır. Phone source metadata da bu modalın dışındadır.
+- [Save Integrity] UI fresh authoritative StudentRecord ile `id`, `uuid`, `expected_updated_at` snapshot'ı alır. Save double-submit korumalı transaction içinde reread, identity/stale/missing/deleted reject, controlled patch validation ve no-change reject uygular; `updated_at` monotonik güncellenir, audit aynı transaction'da yazılır ve audit failure rollback eder. Modal yalnız successful save sonrasında kapanır; validation, stale/missing/deleted/identity veya audit failure'da açık kalır ve UI state geçerliyse kullanıcı form input'u korunur. Stale durumda form korunur, otomatik merge yapılmaz; kullanıcı güncel veriyi yeniden yükleyip inceler.
+- [Search + Safety] Ad/sınıf/grup değişiminde canonical `studentSearchText` builder kullanılır; mahalle/ilçe tek başına persistent search_text'i değiştirmez. Pilot seed'in daha geniş legacy search tokenları için implementation öncesi regression coverage zorunludur. WhatsApp Draft Mode ACTIVE, outbound TEMPORARILY DISCONNECTED kalır; profile edit hiçbir outbound WhatsApp davranışı eklemez.
+- [Architecture + QA] Schema/migration/index/package değişikliği beklenmez. Gelecek implementation menu/modal preload, trim/null semantics, reason, no-change, stale/UUID/deleted reject, audit rollback, search refresh, read-only boundary, reactive card/list refresh ve WhatsApp outbound absence testlerini; bunların görünür manual QA akışını kapsamalıdır.
 
 ## Latest Checkpoint Closure - Guardian + Phone UI Clarity
 
