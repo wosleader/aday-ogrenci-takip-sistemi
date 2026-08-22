@@ -4,7 +4,7 @@
 
 - Repository adı: aday-ogrenci-takip-sistemi
 - Aktif branch: sprint-9-2-multi-phone-architecture-plan
-- Latest implementation: `847ac24 feat: suspend whatsapp outbound integration`. WhatsApp Draft Mode `ACTIVE`; WhatsApp outbound integration `TEMPORARILY DISCONNECTED`. Review ve local manual QA PASS; docs closure bu görevde güncellenmektedir. Production deployment ve smoke QA henüz yapılmadı.
+- WhatsApp outbound disconnect PRODUCTION CLOSED: implementation `847ac24 feat: suspend whatsapp outbound integration`; pre-production docs closure/deployed target `d2a4eff docs: close whatsapp outbound disconnect`. WhatsApp Draft Mode `ACTIVE`; outbound integration `TEMPORARILY DISCONNECTED`. Implementation review, local manual QA, canonical docs, production deployment ve production smoke QA PASS.
 - Cleanup implementation checkpoints: `9ddc519 feat: add student group cleanup correction` and `77542a5 feat: add student group cleanup maintenance ui`.
 - Model C+ implementation: `4f643a4 feat: complete appointment lifecycle`. Checkpoint A/B/C CLOSED; Final Integration `PASS WITH NOTES`; production deployment `PASS`; live QA `FULL PASS`; Model C+ `PRODUCTION CLOSED`.
 - Controlled Legacy Student Group Cleanup: `MODEL B - Review + Per-record Correction` PRODUCTION CLOSED. Checkpoint A/B, final integration, production deployment ve production smoke QA tamamlandı; smoke QA `PASS — data-limited`tir.
@@ -36,7 +36,9 @@
 - Uygulama `wa.me`, WhatsApp Web/API, `whatsapp://`, WhatsApp hedefli `window.open`, redirect, anchor, iframe, prefetch veya background request üretmez. `whatsappUrl.ts` silinmiştir; clickable outbound WhatsApp kontrolü yoktur.
 - Modal açılması WhatsApp'ın açıldığı, mesajın gönderildiği veya teslim edildiği anlamına gelmez. Yeni UI akışında yalnız explicit `copied` ve `manually_marked_sent` logları yazılır; manuel işaret teslimat onayı değildir.
 - Validation: local manual QA PASS; focused `2` dosya / `28` test PASS; canonical `59` dosya / `636` test PASS; build PASS (yalnız bilinen Vite chunk-size warning). `642 → 636` farkı yalnız silinen beş WhatsApp-link telefon normalization ve bir `wa.me` URL-construction testidir.
-- Bu geçici ürün kararı dış bağlantıyı kalıcı olarak reddetmez. Reconnection yalnız açık product discovery/decision ile ele alınabilir; bu docs closure sonrası sıradaki gate production deployment ve smoke QA'dır.
+- Production deployment PASS: VDS repo `C:\Sites\aday-ogrenci-takip-sistemi` `2826ea3 → d2a4eff` fast-forward edildi; `npm.cmd ci`, `/demo/` base build ve `robocopy .\dist C:\Sites\netvadi-demo /MIR /R:2 /W:2` PASS tamamlandı. Robocopy exit code `3` başarılı/non-fataldır. Mevcut deprecation uyarıları ve audit çıktısındaki `10` vulnerability (`2` low, `8` high) bu feature için yeni bulgu değildir ve deploy'u bloklamadı.
+- Production smoke QA PASS: live `/demo/` üzerinde öğrenci kartı aksiyonu taslak modalını açar; yeni tab/window, `wa.me` veya WhatsApp Web navigation oluşmaz; taslak görünür ve düzenlenebilir, kopyalama çalışır, `WhatsApp'ta Aç` outbound kontrolü kalmaz.
+- Bu geçici ürün kararı dış bağlantıyı kalıcı olarak reddetmez. Reconnection yalnız açık product discovery/decision ile ele alınabilir. Aktif WhatsApp implementation WIP yoktur; sıradaki işlem final docs commit/push, ardından Obsidian final closure'dır.
 
 ## Latest Product Closure - Controlled Legacy Student Group Cleanup
 

@@ -1,4 +1,4 @@
-<!-- Son guncelleme: WhatsApp Outbound Disconnect | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: WhatsApp Outbound Disconnect Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -9,7 +9,7 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - PROJECT_MEMORY: Controlled Legacy Student Group Cleanup Production Closure
 - FILE_MAP: Controlled Legacy Student Group Cleanup Production Closure
 - DECISIONS: Controlled Legacy Student Group Cleanup MODEL B contract
-- WhatsApp outbound disconnect: `847ac24 feat: suspend whatsapp outbound integration`. Draft modal/local metin hazırlama ACTIVE; outbound WhatsApp integration TEMPORARILY DISCONNECTED. Local manual QA, focused `2` dosya / `28`, canonical `59` dosya / `636` test ve build PASS; production deploy henüz yapılmadı.
+- WhatsApp outbound disconnect PRODUCTION CLOSED: implementation `847ac24 feat: suspend whatsapp outbound integration`, pre-production docs closure `d2a4eff docs: close whatsapp outbound disconnect`. Draft modal/local metin hazırlama ACTIVE; outbound WhatsApp integration TEMPORARILY DISCONNECTED. Local manual QA, focused `2` dosya / `28`, canonical `59` dosya / `636` test, VDS deployment ve production smoke QA PASS.
 - Cleanup implementation checkpoints: `9ddc519 feat: add student group cleanup correction` and `77542a5 feat: add student group cleanup maintenance ui`.
 - Latest deployed/integration HEAD: `2826ea3 test: cap vitest workers for stability`.
 - Model C+ implementation: `4f643a4 feat: complete appointment lifecycle`. Checkpoint A/B/C CLOSED; Final Integration `PASS WITH NOTES`; production deployment `PASS`; live QA `FULL PASS`.
@@ -27,6 +27,8 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - [Outbound Boundary] Executable `wa.me`, WhatsApp Web/API, `whatsapp://`, WhatsApp hedefli `window.open`, browser redirect, anchor, iframe, prefetch veya background request yoktur. `src/features/whatsapp/whatsappUrl.ts` silinmiştir; uygulama clickable WhatsApp outbound link üretmez.
 - [Logging Truth] Modal açılması WhatsApp açıldı/gönderildi/teslim edildi iddiası oluşturmaz. Current UI yalnız explicit `copied` ve `manually_marked_sent` loglarını yazar; manuel işaret CRM takip bilgisidir, teslimat onayı değildir.
 - [Validation] Local manual QA PASS; modal açılırken yeni tab/window veya WhatsApp navigation yok, taslak edit/copy çalışır ve `WhatsApp'ta Aç` kontrolü kalmaz. Focused `2` dosya / `28`, canonical `59` dosya / `636` test ve build PASS; yalnız bilinen Vite chunk-size warning vardır. `642 → 636` test farkı beş obsolete WhatsApp-link normalization ve bir `wa.me` URL-construction testinin silinmesidir; geçerli draft/CRM coverage kaybolmamıştır.
+- [Production Deployment] VDS repo `C:\Sites\aday-ogrenci-takip-sistemi` branch'te `2826ea3 → d2a4eff` fast-forward edildi. `npm.cmd ci` PASS; mevcut deprecation uyarıları ve audit çıktısındaki `10` vulnerability (`2` low, `8` high) bu deployment tarafından üretilmiş yeni bulgu değildir ve deploy'u bloklamadı. `npm.cmd run build -- --base=/demo/` PASS verdi; yalnız bilinen Vite chunk-size warning görüldü. `dist`, `robocopy .\dist C:\Sites\netvadi-demo /MIR /R:2 /W:2` ile yayınlandı; exit code `3` başarılı/non-fatal kabul edildi. VDS repo `d2a4eff`, origin `0/0` ve temiz durumdadır; yayın hedefi `C:\Sites\netvadi-demo\index.html`dir.
+- [Production Smoke QA] Live `/demo/` PASS: öğrenci kartı aksiyonu taslak modalını açar; yeni tab/window, `wa.me` veya WhatsApp Web navigation oluşmaz; taslak görünür ve düzenlenebilir, kopyalama çalışır, `WhatsApp'ta Aç` outbound kontrolü yoktur. Bu doğrulama bu listeyle sınırlıdır.
 - [Future Boundary] Bu geçici disconnect ürün fikrinin kalıcı olarak silindiği anlamına gelmez. Dış bağlantının yeniden değerlendirilmesi yeni bir explicit product discovery/decision gerektirir; sessizce yeniden etkinleştirilemez.
 
 ## Latest Product Closure - Controlled Legacy Student Group Cleanup
