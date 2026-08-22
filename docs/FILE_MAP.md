@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Controlled Legacy Student Group Cleanup Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: WhatsApp Outbound Disconnect | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -638,18 +638,29 @@ Son doğrulandı: `48da40c fix: polish WhatsApp phone action icon`
   Kurum bilgisi, konum, takip ve randevu gibi manuel WhatsApp taslak şablonlarını taşır.
 - `src/features/whatsapp/whatsappTemplateRenderer.ts`
   Şablon değişkenlerini aday/veli/telefon bağlamına göre metne dönüştürür.
-- `src/features/whatsapp/whatsappUrl.ts`
-  Telefonu `wa.me` linki için normalize eder ve taslak URL üretir. WhatsApp API, bot veya auto-send değildir.
 - `src/features/whatsapp/whatsappDraftLogService.ts`
-  `draft_opened`, `copied` ve `manually_marked_sent` local log kayıtlarını yazar/okur. `manually_marked_sent` WhatsApp teslimat onayı değil, manuel CRM takip işaretidir.
+  Local WhatsApp draft log kayıtlarını yazar/okur. Current UI akışı yalnız explicit `copied` ve `manually_marked_sent` logları üretir; `manually_marked_sent` WhatsApp teslimat onayı değil, manuel CRM takip işaretidir.
 - `src/domain/models/whatsappDraftLog.ts`
   WhatsApp draft log modelini ve izinli local log status değerlerini tanımlar.
 - `tests/whatsapp/whatsappDraft.test.ts`
-  URL normalization, template rendering, draft log write/read ve manually marked sent lookup davranışlarını doğrular.
+  Template rendering, local draft log write/read ve manually marked sent lookup davranışlarını doğrular.
 - `tests/students/StudentsPagePhoneSelection.test.tsx`
-  WhatsApp ikon butonu, modal açma, `WhatsApp'ta Aç`, `Mesajı Kopyala`, `Gönderildi olarak işaretle`, gönderildi badge'i ve X/✓ regression davranışlarını doğrular.
+  WhatsApp ikon butonu, modal açma, outbound kontrolün bulunmaması, `Mesajı Kopyala`, `Gönderildi olarak işaretle`, gönderildi badge'i ve X/✓ regression davranışlarını doğrular.
 
-## Latest File Map Addendum - WhatsApp Web Open Suspend + Student Cleanup Candidate Service
+## Current File Map Addendum - WhatsApp Outbound Disconnect
+
+Son doğrulandı: `847ac24 feat: suspend whatsapp outbound integration`
+
+- `src/features/students/StudentsPage.tsx`
+  Student-card WhatsApp aksiyonundan yerel phone/context ile taslak modalını açar; template render/local override, edit, copy ve explicit manual CRM mark-sent akışlarını taşır. Outbound WhatsApp open/navigation veya clickable link üretmez.
+- `src/features/whatsapp/whatsappUrl.ts`
+  Silinmiştir. Uygulamada WhatsApp outbound URL helper kalmamıştır.
+- `tests/students/StudentsPagePhoneSelection.test.tsx`
+  Modal-only flow'u, `window.open` çağrılmamasını, `draft_opened` log oluşmamasını ve edit/copy/manual mark-sent akışını doğrular.
+- `tests/whatsapp/whatsappDraft.test.ts`
+  Silinen outbound URL helper kapsamını değil, kalan local template/log/override davranışını doğrular.
+
+## Historical File Map Addendum - WhatsApp Web Open Suspend + Student Cleanup Candidate Service
 
 Son doğrulandı: `4ebfe33 fix: suspend WhatsApp web open action`
 

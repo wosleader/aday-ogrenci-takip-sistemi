@@ -358,8 +358,8 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Subpath Deploy] Pilot demo için `/demo` subpath desteği tamamlanmıştır. `netvadi.com/demo` pilot demo alanıdır; domain root hedefi değildir.
 - [Pilot Data Areas] `localhost:5173` gerçek lokal data alanıdır. `localhost:7777` fake/pilot test alanıdır. Bu iki alan karıştırılmamalıdır.
 - [Pilot Seed] Pilot demo seed bootstrap ve zengin fake pilot seed + UI smoke QA tamamlanmıştır. Seed/pilot test verisi gerçek öğrenci verisi gibi ele alınmamalıdır.
-- [WhatsApp Manual Drafts] WhatsApp için API, bot, otomatik gönderim, kişi kaydetme/vCard veya teslimat doğrulama kullanılmayacaktır. Ücretsiz/manual `wa.me` taslak akışı kullanılacaktır.
-- [WhatsApp Manual Drafts] `WhatsApp'ta Aç` yalnız taslak bağlantısı açar. Gönderme işlemi WhatsApp içinde kullanıcı/personel tarafından manuel yapılır.
+- [WhatsApp Manual Drafts - Historical] Önceki ürün kararı ücretsiz/manual `wa.me` taslak akışıydı; `847ac24` ile bunun outbound bölümü geçici olarak disconnected duruma alınmıştır.
+- [WhatsApp Manual Drafts - Historical] Önceki `WhatsApp'ta Aç` taslak bağlantısı artık mevcut UI veya uygulama davranışı değildir.
 - [WhatsApp Manual Sent Marker] `Gönderildi olarak işaretle` WhatsApp teslimat onayı değildir. Bu yalnız CRM içinde manuel takip işaretidir.
 - [WhatsApp UI Scope] Öğrenci listesinde WhatsApp rozeti gösterilmeyecektir. WhatsApp bilgisi telefon kartı bazlı mikro UI olarak kalır.
 - [WhatsApp Pending] WhatsApp taslak editleme ve gönderildi işaretini geri alma aktif scope değildir; ayrı ürün kararı gerektirir.
@@ -367,7 +367,14 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Phone Action Semantics] Dropdown `Yanlış Numara` ve `Kullanılmıyor` seçenekleri phone-level `call_outcome` alanını etkiler.
 - [Phone Action Semantics] X ile dropdown aynı veri davranışını üretmez. X/dropdown birleşimi veya sadeleştirmesi ayrı product/data decision olmadan yapılmayacaktır.
 
-## Latest Decisions - WhatsApp Web Open Suspend + Import Fallback Cleanup
+## Current Decision - WhatsApp Outbound Disconnect
+
+- [WhatsApp Outbound Disconnect] `847ac24 feat: suspend whatsapp outbound integration` ile WhatsApp Draft Mode ACTIVE, outbound integration TEMPORARILY DISCONNECTED durumundadır. Kullanıcı taslak modalını açabilir, metni düzenleyip kopyalayabilir ve açık aksiyonla manuel CRM `Gönderildi olarak işaretle` kaydı oluşturabilir.
+- [WhatsApp Outbound Disconnect] Uygulama `wa.me`, WhatsApp Web/API, `whatsapp://`, WhatsApp hedefli `window.open`, redirect, anchor, iframe, prefetch veya background request kullanmaz; outbound URL helper silinmiştir. Modal açılışı outbound navigasyon veya sent/opened claim oluşturmaz.
+- [WhatsApp Logging Boundary] Current UI logları yalnız explicit `copied` ve `manually_marked_sent` aksiyonlarıdır. Manuel mark-sent WhatsApp teslimat onayı değildir.
+- [WhatsApp Reconnection Boundary] Bu geçici karar, product concept'in kalıcı silinmesi değildir. Her türlü outbound reconnection ayrı explicit product discovery/decision gerektirir; gelecekte sessizce URL/open davranışı eklenemez.
+
+## Historical Decisions - WhatsApp Web Open Suspend + Import Fallback Cleanup
 
 - [WhatsApp Web Open Suspend] WhatsApp Web bağlı cihaz kısıtı nedeniyle `WhatsApp'ta Aç` / `wa.me` yeni sohbet açma aksiyonu geçici olarak askıya alınmıştır.
 - [WhatsApp Web Open Suspend] Buton görünür ama disabled kalır; kullanıcı mesajı kopyalayıp WhatsApp'a manuel yapıştırmaya yönlendirilir.
@@ -415,8 +422,8 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Dar Pilot Final Gate] Kısa manuel QA/smoke yeterli kabul edilir; VDS `/demo` manuel smoke kullanıcı tarafından okey bildirildiği kadar kayda alınır, canlıda doğrulanmamış ek garanti dili kullanılmaz.
 - [Dar Pilot Final Gate] Final validation import, students, exports, settings, reports/reminders, Playwright import E2E ve build kontrollerinde PASS sonucuyla kapanmıştır.
 - [Risk Classification] BLOCKER yok; HIGH yok; MEDIUM olarak WhatsApp modal testinde ilk koşu async/flaky fail ve React `act(...)` warning not edilir; LOW olarak bilinen Vite chunk-size warning kabul edilir.
-- [Deferred Scope] Phone Action Simplification / `✓` `x` dropdown karmaşası, Communication History correction/delete, Reporting Area V2, mobile polish, eski `student_group` cleanup apply, `VELI TEL` ayrı export kolonu ve WhatsApp Web open suspend kalıcı ürün kararı pilot sonrası veya ayrı discovery kapsamındadır.
-- [Next Decision Candidates] Bir sonraki ürün/discovery hattı Phone Action Simplification veya WhatsApp Web open suspend için kalıcı ürün kararı olabilir; ikisi de ayrı tekil görev olarak ele alınmalıdır.
+- [Deferred Scope] Phone Action Simplification / `✓` `x` dropdown karmaşası, Communication History correction/delete, Reporting Area V2, mobile polish, eski `student_group` cleanup apply, `VELI TEL` ayrı export kolonu ve WhatsApp outbound reconnection kararı pilot sonrası veya ayrı discovery kapsamındadır.
+- [Next Decision Candidates] Bir sonraki ürün/discovery hattı Phone Action Simplification veya WhatsApp outbound reconnection için açık ürün kararı olabilir; ikisi de ayrı tekil görev olarak ele alınmalıdır.
 
 ## Latest Decisions - Kampanya Import Persistence Bugfix
 

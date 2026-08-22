@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Controlled Legacy Student Group Cleanup Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: WhatsApp Outbound Disconnect | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -9,6 +9,7 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - PROJECT_MEMORY: Controlled Legacy Student Group Cleanup Production Closure
 - FILE_MAP: Controlled Legacy Student Group Cleanup Production Closure
 - DECISIONS: Controlled Legacy Student Group Cleanup MODEL B contract
+- WhatsApp outbound disconnect: `847ac24 feat: suspend whatsapp outbound integration`. Draft modal/local metin hazırlama ACTIVE; outbound WhatsApp integration TEMPORARILY DISCONNECTED. Local manual QA, focused `2` dosya / `28`, canonical `59` dosya / `636` test ve build PASS; production deploy henüz yapılmadı.
 - Cleanup implementation checkpoints: `9ddc519 feat: add student group cleanup correction` and `77542a5 feat: add student group cleanup maintenance ui`.
 - Latest deployed/integration HEAD: `2826ea3 test: cap vitest workers for stability`.
 - Model C+ implementation: `4f643a4 feat: complete appointment lifecycle`. Checkpoint A/B/C CLOSED; Final Integration `PASS WITH NOTES`; production deployment `PASS`; live QA `FULL PASS`.
@@ -19,6 +20,14 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
+
+## Current Product Decision - WhatsApp Outbound Disconnect
+
+- [Decision State] `847ac24 feat: suspend whatsapp outbound integration` ile WhatsApp Draft Mode ACTIVE, WhatsApp outbound integration TEMPORARILY DISCONNECTED durumundadır. Student-card aksiyonu yalnız modalı açar; phone/context çözümü, template render/local override, draft edit ve clipboard copy korunur.
+- [Outbound Boundary] Executable `wa.me`, WhatsApp Web/API, `whatsapp://`, WhatsApp hedefli `window.open`, browser redirect, anchor, iframe, prefetch veya background request yoktur. `src/features/whatsapp/whatsappUrl.ts` silinmiştir; uygulama clickable WhatsApp outbound link üretmez.
+- [Logging Truth] Modal açılması WhatsApp açıldı/gönderildi/teslim edildi iddiası oluşturmaz. Current UI yalnız explicit `copied` ve `manually_marked_sent` loglarını yazar; manuel işaret CRM takip bilgisidir, teslimat onayı değildir.
+- [Validation] Local manual QA PASS; modal açılırken yeni tab/window veya WhatsApp navigation yok, taslak edit/copy çalışır ve `WhatsApp'ta Aç` kontrolü kalmaz. Focused `2` dosya / `28`, canonical `59` dosya / `636` test ve build PASS; yalnız bilinen Vite chunk-size warning vardır. `642 → 636` test farkı beş obsolete WhatsApp-link normalization ve bir `wa.me` URL-construction testinin silinmesidir; geçerli draft/CRM coverage kaybolmamıştır.
+- [Future Boundary] Bu geçici disconnect ürün fikrinin kalıcı olarak silindiği anlamına gelmez. Dış bağlantının yeniden değerlendirilmesi yeni bir explicit product discovery/decision gerektirir; sessizce yeniden etkinleştirilemez.
 
 ## Latest Product Closure - Controlled Legacy Student Group Cleanup
 
@@ -737,9 +746,9 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - Dropdown `Yanlış Numara` / `Kullanılmıyor` phone-level `call_outcome` alanını etkiler.
 - X ile dropdown aynı veri davranışını üretmez. Bu yüzden birleştirme veya sadeleştirme ayrı product/data decision gerektirir.
 
-## Latest Handoff Sync - WhatsApp Web Open Suspend + Import Fallback Cleanup
+## Historical Handoff Sync - WhatsApp Web Open Suspend + Import Fallback Cleanup
 
-- Güncel güvenli HEAD/origin: `4ebfe33 fix: suspend WhatsApp web open action`.
+- Tarihsel güvenli HEAD/origin: `4ebfe33 fix: suspend WhatsApp web open action`.
 - Son güvenli commit zinciri:
   - `7067175 feat: allow editing WhatsApp draft messages`
   - `723326f feat: persist WhatsApp template overrides`
@@ -809,9 +818,9 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
   - `npm.cmd run build`: PASS, yalnız bilinen Vite chunk-size warning.
 - VDS `/demo` manuel smoke kullanıcı tarafından okey bildirildi; bu not canlı ortam için abartılı garanti olarak yorumlanmamalıdır.
 - Risk sınıfları: BLOCKER yok; HIGH yok; MEDIUM olarak WhatsApp modal testinde ilk koşu async/flaky fail ve React `act(...)` warning not edildi; LOW olarak bilinen Vite chunk-size warning devam ediyor.
-- Deferred işler: Phone Action Simplification / `✓` `x` dropdown karmaşası, Communication History correction/delete, Reporting Area V2, mobile polish, eski `student_group` cleanup apply, `VELI TEL` ayrı export kolonu, WhatsApp Web open suspend kalıcı ürün kararı.
+- Deferred işler: Phone Action Simplification / `✓` `x` dropdown karmaşası, Communication History correction/delete, Reporting Area V2, mobile polish, eski `student_group` cleanup apply, `VELI TEL` ayrı export kolonu ve WhatsApp outbound reconnection kararı.
 - Pilot öncesi zorunlu bugfix gerekmiyor; kısa manuel QA/smoke yeterli kabul edildi.
-- Sıradaki muhtemel product/discovery: Phone Action Simplification veya WhatsApp Web open suspend için kalıcı ürün kararı.
+- Sıradaki muhtemel product/discovery: Phone Action Simplification veya WhatsApp outbound reconnection için açık ürün kararı.
 
 ## Latest Checkpoint Closure - Kampanya Import Persistence Bugfix
 
