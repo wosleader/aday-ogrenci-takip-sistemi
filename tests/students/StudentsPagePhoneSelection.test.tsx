@@ -845,7 +845,7 @@ describe("StudentsPage phone selection", () => {
     expect(writeText).not.toHaveBeenCalled();
   });
 
-  it("keeps WhatsApp web open suspended while copy and manual sent logs keep working", async () => {
+  it("opens WhatsApp drafts without outbound navigation while copy and manual sent logs keep working", async () => {
     const user = userEvent.setup();
     const writeText = mockClipboard();
     const openSpy = vi.spyOn(window, "open").mockReturnValue({} as Window);
@@ -875,21 +875,17 @@ describe("StudentsPage phone selection", () => {
     expect(draftBody.value).toContain("https://maps.app.goo.gl/AjMa1AcJxZyE9oZq8");
     expect(
       within(dialog).getByText(
-        "WhatsApp Web yeni sohbet açma geçici olarak kapalı. Mesajı kopyalayıp WhatsApp'a manuel yapıştırabilirsiniz."
+        "Bu ekran sadece mesaj taslağı hazırlar. WhatsApp bağlantısı geçici olarak kapalıdır; metni düzenleyip kopyalayabilirsiniz."
       )
     ).toBeInTheDocument();
-    const suspendedOpenButton = within(dialog).getByRole("button", { name: "WhatsApp'ta Aç" });
-    expect(suspendedOpenButton).toBeDisabled();
+    expect(within(dialog).queryByRole("button", { name: "WhatsApp'ta Aç" })).not.toBeInTheDocument();
+    expect(openSpy).not.toHaveBeenCalled();
+    await expect(db.whatsapp_draft_logs.toArray()).resolves.toHaveLength(0);
 
     fireEvent.change(draftBody, { target: { value: "   " } });
     await user.click(within(dialog).getByRole("button", { name: "Mesajı Kopyala" }));
     expect(within(dialog).getByText("Mesaj metni boş olamaz.")).toBeInTheDocument();
     expect(writeText).not.toHaveBeenCalled();
-
-    await user.click(suspendedOpenButton);
-    expect(within(dialog).getByText("Mesaj metni boş olamaz.")).toBeInTheDocument();
-    expect(openSpy).not.toHaveBeenCalled();
-    await expect(db.whatsapp_draft_logs.toArray()).resolves.toHaveLength(0);
 
     await user.click(within(dialog).getByRole("button", { name: "Şablonu güncelle" }));
     expect(within(dialog).getByText("Mesaj metni boş olamaz.")).toBeInTheDocument();
@@ -934,10 +930,7 @@ describe("StudentsPage phone selection", () => {
 
     fireEvent.change(draftBody, { target: { value: editedMessage } });
 
-    const reopenedSuspendedOpenButton = within(dialog).getByRole("button", { name: "WhatsApp'ta Aç" });
-
-    expect(reopenedSuspendedOpenButton).toBeDisabled();
-    await user.click(reopenedSuspendedOpenButton);
+    expect(within(dialog).queryByRole("button", { name: "WhatsApp'ta Aç" })).not.toBeInTheDocument();
     expect(openSpy).not.toHaveBeenCalled();
     await expect(db.whatsapp_draft_logs.where("status").equals("draft_opened").count()).resolves.toBe(0);
     expect(within(dialog).queryByText("Son işlem: WhatsApp taslağı açıldı")).not.toBeInTheDocument();

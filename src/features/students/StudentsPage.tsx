@@ -101,13 +101,9 @@ import {
   resetWhatsAppTemplateOverride,
   saveWhatsAppTemplateOverride
 } from "../whatsapp/whatsappTemplateOverrides";
-import { buildWhatsAppDraftUrl } from "../whatsapp/whatsappUrl";
 
 const PAGE_SIZE = 100;
 const SHORTCUT_HELP_STORAGE_KEY = "aots-shortcut-help-expanded";
-const WHATSAPP_WEB_OPEN_SUSPENDED = true;
-const WHATSAPP_WEB_OPEN_SUSPENDED_MESSAGE =
-  "WhatsApp Web yeni sohbet açma geçici olarak kapalı. Mesajı kopyalayıp WhatsApp'a manuel yapıştırabilirsiniz.";
 
 const FILTER_OPTIONS: Array<{ key: StudentListFilter; label: string }> = [
   { key: "all", label: "Tümü" },
@@ -687,7 +683,7 @@ type WhatsAppDraftContext = {
   guardianLine?: string | null;
 };
 
-type WhatsAppDraftVisibleStatus = "draft_opened" | "copied" | "manually_marked_sent";
+type WhatsAppDraftVisibleStatus = "copied" | "manually_marked_sent";
 
 type PhoneOutcomeMenuPosition = {
   isConstrained: boolean;
@@ -888,8 +884,6 @@ function renderWhatsAppDraftBody(template: WhatsAppTemplate, context: WhatsAppDr
 
 function getWhatsAppDraftVisibleStatusLabel(status: WhatsAppDraftVisibleStatus | null): string | null {
   switch (status) {
-    case "draft_opened":
-      return "WhatsApp taslağı açıldı";
     case "copied":
       return "Mesaj kopyalandı";
     case "manually_marked_sent":
@@ -2206,7 +2200,7 @@ export function StudentsPage() {
   }
 
   async function logWhatsAppDraftAction(
-    status: "draft_opened" | "copied" | "manually_marked_sent",
+    status: "copied" | "manually_marked_sent",
     messagePreview = whatsAppDraftBody
   ) {
     if (!whatsAppDraftContext) {
@@ -2252,49 +2246,6 @@ export function StudentsPage() {
       setWhatsAppDraftVisibleStatus("copied");
     } catch (error) {
       setWhatsAppDraftMessage(error instanceof Error ? error.message : "Mesaj kopyalanamadı.");
-    } finally {
-      setIsWhatsAppDraftBusy(false);
-    }
-  }
-
-  async function openWhatsAppDraftUrl() {
-    if (!whatsAppDraftContext || isWhatsAppDraftBusy) {
-      return;
-    }
-
-    if (WHATSAPP_WEB_OPEN_SUSPENDED) {
-      setWhatsAppDraftMessage(WHATSAPP_WEB_OPEN_SUSPENDED_MESSAGE);
-      setWhatsAppDraftVisibleStatus(null);
-      return;
-    }
-
-    const currentMessage = whatsAppDraftBody;
-    if (!currentMessage.trim()) {
-      setWhatsAppDraftMessage("Mesaj metni boş olamaz.");
-      return;
-    }
-
-    setIsWhatsAppDraftBusy(true);
-    setWhatsAppDraftMessage(null);
-
-    try {
-      const draftUrl = buildWhatsAppDraftUrl(whatsAppDraftContext.phoneNumber, currentMessage);
-      const openedWindow = window.open(draftUrl, "_blank", "noopener,noreferrer");
-
-      await logWhatsAppDraftAction("draft_opened", currentMessage);
-
-      if (!openedWindow) {
-        setWhatsAppDraftMessage(
-          "WhatsApp taslağı açılmadıysa tarayıcı engellemiş olabilir. Mesajı kopyalayarak manuel kullanabilirsiniz."
-        );
-        setWhatsAppDraftVisibleStatus("draft_opened");
-        return;
-      }
-
-      setWhatsAppDraftMessage("WhatsApp taslağı açıldı. Gönderme işlemi WhatsApp içinde manuel yapılır.");
-      setWhatsAppDraftVisibleStatus("draft_opened");
-    } catch (error) {
-      setWhatsAppDraftMessage(error instanceof Error ? error.message : "WhatsApp taslağı açılamadı.");
     } finally {
       setIsWhatsAppDraftBusy(false);
     }
@@ -3341,7 +3292,8 @@ export function StudentsPage() {
           >
             <h2 id="whatsapp-draft-title">WhatsApp Taslak Mesajı</h2>
             <p style={{ marginBottom: 12 }}>
-              Bu ekran sadece WhatsApp mesaj taslağı hazırlar. Gönderme işlemi WhatsApp içinde manuel yapılır.
+              Bu ekran sadece mesaj taslağı hazırlar. WhatsApp bağlantısı geçici olarak kapalıdır; metni düzenleyip
+              kopyalayabilirsiniz.
             </p>
             <div style={{ display: "grid", flex: "1 1 auto", gap: 10, marginBottom: 12, minHeight: 0, overflowY: "auto" }}>
               <div style={{ color: "#475569", display: "grid", fontSize: 13, gap: 4 }}>
@@ -3414,11 +3366,6 @@ export function StudentsPage() {
                   ) : null}
                 </div>
               ) : null}
-              {WHATSAPP_WEB_OPEN_SUSPENDED ? (
-                <div aria-live="polite" style={{ color: "#64748b", fontSize: 13 }}>
-                  {WHATSAPP_WEB_OPEN_SUSPENDED_MESSAGE}
-                </div>
-              ) : null}
             </div>
             <div
               className="delete-confirm-actions"
@@ -3454,16 +3401,6 @@ export function StudentsPage() {
                 {whatsAppDraftVisibleStatus === "manually_marked_sent"
                   ? "Gönderildi olarak işaretlendi"
                   : "Gönderildi olarak işaretle"}
-              </button>
-              <button
-                className="danger"
-                disabled={isWhatsAppDraftBusy || WHATSAPP_WEB_OPEN_SUSPENDED}
-                onClick={() => void openWhatsAppDraftUrl()}
-                style={{ background: "#047857", borderColor: "#047857" }}
-                title={WHATSAPP_WEB_OPEN_SUSPENDED ? WHATSAPP_WEB_OPEN_SUSPENDED_MESSAGE : undefined}
-                type="button"
-              >
-                WhatsApp'ta Aç
               </button>
             </div>
           </div>

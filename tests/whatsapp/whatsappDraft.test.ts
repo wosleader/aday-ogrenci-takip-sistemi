@@ -13,9 +13,8 @@ import {
   saveWhatsAppTemplateOverride,
   WHATSAPP_TEMPLATE_OVERRIDE_KEY_PREFIX
 } from "../../src/features/whatsapp/whatsappTemplateOverrides";
-import { buildWhatsAppDraftUrl, normalizeWhatsAppPhoneNumber } from "../../src/features/whatsapp/whatsappUrl";
 
-describe("WhatsApp draft helpers", () => {
+describe("WhatsApp draft services", () => {
   beforeEach(async () => {
     await db.delete();
     await db.open();
@@ -23,26 +22,6 @@ describe("WhatsApp draft helpers", () => {
 
   afterEach(async () => {
     await db.delete();
-  });
-
-  it.each([
-    ["0530 233 75 72", "905302337572"],
-    ["+90 530 233 75 72", "905302337572"],
-    ["90 530 233 75 72", "905302337572"],
-    ["5302337572", "905302337572"],
-    ["0500 000 10 01", "905000001001"]
-  ])("normalizes %s for WhatsApp links", (input, expected) => {
-    expect(normalizeWhatsAppPhoneNumber(input)).toEqual({
-      ok: true,
-      normalizedPhone: expected
-    });
-  });
-
-  it("builds encoded wa.me draft URLs without changing message line breaks", () => {
-    const message = "Merhaba\n\n*Akademik Not*\nKonum:\nhttps://maps.app.goo.gl/AjMa1AcJxZyE9oZq8";
-    const url = buildWhatsAppDraftUrl("0530 233 75 72", message);
-
-    expect(url).toBe(`https://wa.me/905302337572?text=${encodeURIComponent(message)}`);
   });
 
   it("renders template variables without leaking undefined or null", () => {
