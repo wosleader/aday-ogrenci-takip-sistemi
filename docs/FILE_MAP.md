@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Student Profile Editing V1 Canonical Search Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Student Profile Editing V1 Checkpoint B Docs Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -35,7 +35,7 @@ Son doğrulandı: Sprint 8.2
 Son doğrulandı: Phone-Level Outcome Read Model Pilot
 
 - `src/features/students/StudentsPage.tsx`
-  Aday Listesi, filtreler, sağ drawer, görüşme akışı, kompakt/açılır-kapanır kısayol yardım barı, call history UI ve sağ kişi kartı telefon alanını içerir. Sprint 9.3D-1 itibarıyla call history `phone_context_label` / `phone_context_number` display alanlarını gösterir. Sprint 9.3E-2 itibarıyla Telefon 1 / Telefon 2 aksiyonlu kartlarını korur, Telefon 3+ için readonly görünüm sunar, `+N numara daha göster` / `Daha az göster` interaction'ını yönetir ve `visible_phones` / `phones` / `hidden_phone_count` alanlarını tüketir. Sprint 9.3F-1 itibarıyla Telefon 3+ için call save selection, selected call phone state, `saveCallAndGoNext` içinde `contacted_phone_id` hesaplaması ve legacy Telefon 1/2 fallback davranışını taşır. Phone-Level Outcome Read Model Pilot itibarıyla Telefon 1/2 ve Telefon 3+ kartlarında `call_logs` kaynaklı read-only `Son sonuç` göstergesini render eder; schema, import/export ve `phone_status` semantiğini değiştirmez. `8f1f613` itibarıyla bağlantısız call history kayıtları için düzeltme/düzenle modalını ve `İletişim kaydını geçersiz say / sil` / `Geçersiz say / sil` soft delete aksiyon dilini sunar. `39e3840` itibarıyla pending reminder bağlantılı history satırında icon-only `Hatırlatmayı tamamla` aksiyonunu ve confirmation modalını render eder. `e15a051` itibarıyla yalnız canonical owner satırında `Hatırlatmayı iptal et` aksiyonunu, optional nedenli confirmation modalını ve `Vazgeç` ikincil eylemini render eder; shared/tarihsel satırlar aksiyon almaz. Student Card Profile Editing V1 için mevcut `Aday işlemleri` overflow menu onaylı entry point'tir; Checkpoint A service foundation tamamlandı, `Bilgileri Güncelle` modalı Checkpoint B'ye kadar uygulanmamıştır.
+  Aday Listesi, filtreler, sağ drawer, görüşme akışı, kompakt/açılır-kapanır kısayol yardım barı, call history UI ve sağ kişi kartı telefon alanını içerir. Sprint 9.3D-1 itibarıyla call history `phone_context_label` / `phone_context_number` display alanlarını gösterir. Sprint 9.3E-2 itibarıyla Telefon 1 / Telefon 2 aksiyonlu kartlarını korur, Telefon 3+ için readonly görünüm sunar, `+N numara daha göster` / `Daha az göster` interaction'ını yönetir ve `visible_phones` / `phones` / `hidden_phone_count` alanlarını tüketir. Sprint 9.3F-1 itibarıyla Telefon 3+ için call save selection, selected call phone state, `saveCallAndGoNext` içinde `contacted_phone_id` hesaplaması ve legacy Telefon 1/2 fallback davranışını taşır. Phone-Level Outcome Read Model Pilot itibarıyla Telefon 1/2 ve Telefon 3+ kartlarında `call_logs` kaynaklı read-only `Son sonuç` göstergesini render eder; schema, import/export ve `phone_status` semantiğini değiştirmez. `8f1f613` itibarıyla bağlantısız call history kayıtları için düzeltme/düzenle modalını ve `İletişim kaydını geçersiz say / sil` / `Geçersiz say / sil` soft delete aksiyon dilini sunar. `39e3840` itibarıyla pending reminder bağlantılı history satırında icon-only `Hatırlatmayı tamamla` aksiyonunu ve confirmation modalını render eder. `e15a051` itibarıyla yalnız canonical owner satırında `Hatırlatmayı iptal et` aksiyonunu, optional nedenli confirmation modalını ve `Vazgeç` ikincil eylemini render eder; shared/tarihsel satırlar aksiyon almaz. `e64c15d` itibarıyla `Aday işlemleri` overflow menu'sünde `Adayı Sil` altında `Bilgileri Güncelle` entry point'ini, profile-edit modal state'ini, fresh reader integration'ını ve save/error UX'ini taşır.
 - `src/features/students/services/studentListReader.ts`
   Aday liste satırlarını okuma, filtreleme, Sınıf/Şube helper’ları ve `StudentListRow` read model üretimi. General search yalnız persisted canonical `student.search_text`i kullanır; note/call-history query expansion yapmaz. Legacy `phone_1` / `phone_2` / `phone_count` alanlarını korur; Sprint 9.3E-1 itibarıyla sağ kişi kartı çoklu telefon hazırlığı için `phones`, `visible_phones` ve `hidden_phone_count` alanlarını taşır.
 - `src/features/students/services/studentProfileReader.ts`
@@ -736,6 +736,17 @@ Son doğrulandı: `d6b7620 feat: implement student profile editing checkpoint a`
   Controlled patch, reason, stale/identity/no-change guards, audit rollback ve derived search/name refresh sözleşmesini doğrular.
 - `tests/students/studentSearchReindex.test.ts`
   Reindex'in active-only, deleted-skip, deterministic/idempotent, relation-aware ve atomic davranışını doğrular.
+
+## Latest File Map Addendum - Student Profile Editing V1 Checkpoint B
+
+Son doğrulandı: `e64c15d feat: add student profile editing ui`
+
+- `src/features/students/StudentsPage.tsx`
+  Student card `⋮` → `Aday işlemleri` menüsündeki `Bilgileri Güncelle` entry point'ini, `Aday Bilgilerini Güncelle` modal state'ini, fresh `readStudentProfileForEdit` akışını ve `updateStudentProfile` save/error UX'ini taşır. Component doğrudan Dexie, audit veya canonical search mutation yapmaz.
+- `src/styles/global.css`
+  Profile-edit modalına ait scoped form, provenance, validation ve responsive presentation stilini taşır; business logic içermez.
+- `tests/students/StudentsPageProfileEditing.test.tsx`
+  Checkpoint B UI acceptance coverage'ını taşır: menu/modal, editable/deferred alanlar, fresh reader, validation/no-change/stale/write-failure UX, duplicate-submit/close davranışı, successful reactive refresh ve WhatsApp outbound side-effect yokluğu.
 
 ## Latest File Map Addendum - VELI ADI Import Alias Fix
 
