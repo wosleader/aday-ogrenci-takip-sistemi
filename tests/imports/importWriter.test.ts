@@ -634,6 +634,33 @@ describe("writeImportToDatabase", () => {
     }
   });
 
+  it("uses canonical district and neighborhood values in imported student search text", async () => {
+    const database = await createDatabase();
+    const parsedWorksheet = worksheet(
+      ["Ad Soyad", "Veli Ad Soyad", "Telefon", "Mahalle", "İlçe", "Kampanya", "Not"],
+      [["Ayşe Yılmaz", "Veli Yılmaz", "5321234567", "Fenerbahçe", "Kadıköy", "Yaz Kampı", "Pilot notu"]]
+    );
+
+    try {
+      const summary = simulateImport(parsedWorksheet);
+      await writeImportToDatabase(parsedWorksheet, summary, { database });
+
+      const [student] = await database.students.toArray();
+      const rows = await readStudentListRows(database);
+
+      expect(student.search_text).toContain("fenerbahce");
+      expect(student.search_text).toContain("kadikoy");
+      expect(student.search_text).not.toContain("yaz kampi");
+      expect(student.search_text).not.toContain("pilot notu");
+      expect(filterStudentListRows(rows, "fenerbahce")).toHaveLength(1);
+      expect(filterStudentListRows(rows, "kadikoy")).toHaveLength(1);
+      expect(filterStudentListRows(rows, "pilot notu")).toHaveLength(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
   it("creates reminders when reminder date exists", async () => {
     const database = await createDatabase();
     const parsedWorksheet = worksheet(

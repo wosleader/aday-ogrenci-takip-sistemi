@@ -9,11 +9,13 @@ describe("createStudentSearchText", () => {
       guardian_names: ["Veli Demir", " Fatma Şahin ", "Mehmet Öztürk"],
       phone_values: ["05321112233", "05322223344"],
       current_class: " 8. Sınıf ",
-      student_group: " 8. Sınıf LGS Hazırlık "
+      student_group: " 8. Sınıf LGS Hazırlık ",
+      district: " Kadıköy ",
+      neighborhood: " Fenerbahçe "
     });
 
     expect(result).toBe(
-      "ayse yilmaz veli demir fatma sahin mehmet ozturk 05321112233 05322223344 8 sinif 8 sinif lgs hazirlik"
+      "ayse yilmaz veli demir fatma sahin mehmet ozturk 05321112233 05322223344 8 sinif 8 sinif lgs hazirlik kadikoy fenerbahce"
     );
     expect(result).toBe(
       createSearchText([
@@ -24,7 +26,9 @@ describe("createStudentSearchText", () => {
         "05321112233",
         "05322223344",
         " 8. Sınıf ",
-        " 8. Sınıf LGS Hazırlık "
+        " 8. Sınıf LGS Hazırlık ",
+        " Kadıköy ",
+        " Fenerbahçe "
       ])
     );
   });
@@ -35,10 +39,28 @@ describe("createStudentSearchText", () => {
       guardian_names: [null, undefined, ""],
       phone_values: [null, undefined, ""],
       current_class: null,
-      student_group: ""
+      student_group: "",
+      district: null,
+      neighborhood: ""
     });
 
     expect(result).toBe("ayse yilmaz");
     expect(result).not.toContain("11 sinif yks hazirlik");
+  });
+
+  it("does not accept arbitrary non-canonical tokens", () => {
+    const result = createStudentSearchText({
+      student_full_name: "Ayşe Yılmaz",
+      guardian_names: ["Veli Yılmaz"],
+      phone_values: ["05321112233"],
+      current_class: "8",
+      student_group: "LGS Hazırlık",
+      district: "Kadıköy",
+      neighborhood: "Fenerbahçe"
+    });
+
+    expect(result).not.toContain("kampanya");
+    expect(result).not.toContain("oncelik");
+    expect(result).not.toContain("aday notu");
   });
 });

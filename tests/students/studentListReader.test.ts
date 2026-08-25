@@ -16,6 +16,7 @@ import {
   normalizeClassSectionLabel,
   readStudentListRows
 } from "../../src/features/students/services/studentListReader";
+import { createStudentSearchText } from "../../src/features/students/services/studentSearchText";
 import { createSearchText, normalizeText } from "../../src/utils/normalizeText";
 
 const baseTime = "2026-05-08T09:00:00.000Z";
@@ -169,15 +170,24 @@ describe("studentListReader", () => {
         guardian(studentId, { guardian_full_name: "Mehmet Yilmaz", relation_type: "father" })
       ]);
 
-      const [row] = await readStudentListRows(database);
+      await database.students.update(studentId, {
+        search_text: createStudentSearchText({
+          student_full_name: "Ayse Yilmaz",
+          guardian_names: ["Zeynep Yilmaz", "Fatma Yilmaz", "Mehmet Yilmaz"],
+          phone_values: [],
+          current_class: "11",
+          student_group: "11. Sinif YKS"
+        })
+      });
+      const [updatedRow] = await readStudentListRows(database);
 
-      expect(row).toMatchObject({
+      expect(updatedRow).toMatchObject({
         guardian_full_name: "Zeynep Yilmaz",
         mother_full_name: "Fatma Yilmaz",
         father_full_name: "Mehmet Yilmaz"
       });
-      expect(filterStudentListRows([row], "Fatma Yilmaz")).toHaveLength(1);
-      expect(filterStudentListRows([row], "Mehmet Yilmaz")).toHaveLength(1);
+      expect(filterStudentListRows([updatedRow], "Fatma Yilmaz")).toHaveLength(1);
+      expect(filterStudentListRows([updatedRow], "Mehmet Yilmaz")).toHaveLength(1);
     } finally {
       database.close();
       await database.delete();
@@ -454,7 +464,7 @@ describe("studentListReader", () => {
     }
   });
 
-  it("filters by student, guardian, phone and note text", async () => {
+  it("filters by canonical search text but not general or interaction notes", async () => {
     const database = await createDatabase();
 
     try {
@@ -462,18 +472,32 @@ describe("studentListReader", () => {
         student({
           student_full_name: "Mehmet Kaya",
           general_note: "Burs bilgisi soruldu",
-          search_text: createSearchText(["Mehmet Kaya", "Burs bilgisi soruldu"])
+          neighborhood: "Atatürk",
+          district: "Kadıköy",
+          search_text: createStudentSearchText({
+            student_full_name: "Mehmet Kaya",
+            guardian_names: ["Fatma Kaya"],
+            phone_values: ["05329998877"],
+            current_class: "11",
+            student_group: "11. Sinif YKS",
+            district: "Kadıköy",
+            neighborhood: "Atatürk"
+          })
         })
       );
       await database.guardians.add(guardian(studentId, { guardian_full_name: "Fatma Kaya" }));
       await database.phones.add(phone(studentId, { phone_number: "05329998877", normalized_phone_number: "05329998877" }));
+      await database.call_logs.add(callLog(studentId, { note: "Görüşme notu sadece burada" }));
 
       const rows = await readStudentListRows(database);
 
       expect(filterStudentListRows(rows, "mehmet")).toHaveLength(1);
       expect(filterStudentListRows(rows, "fatma")).toHaveLength(1);
       expect(filterStudentListRows(rows, "998877")).toHaveLength(1);
-      expect(filterStudentListRows(rows, "burs")).toHaveLength(1);
+      expect(filterStudentListRows(rows, "kadikoy")).toHaveLength(1);
+      expect(filterStudentListRows(rows, "ataturk")).toHaveLength(1);
+      expect(filterStudentListRows(rows, "burs")).toHaveLength(0);
+      expect(filterStudentListRows(rows, "gorusme notu")).toHaveLength(0);
       expect(filterStudentListRows(rows, "olmayan")).toHaveLength(0);
     } finally {
       database.close();

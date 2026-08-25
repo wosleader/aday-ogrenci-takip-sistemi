@@ -321,7 +321,9 @@ export async function writeImportToDatabase(
             guardian_names: [row.guardian_full_name, row.mother_full_name, row.father_full_name],
             phone_values: getSearchPhones(row),
             current_class: row.current_class,
-            student_group: studentGroup
+            student_group: studentGroup,
+            district: row.district ?? null,
+            neighborhood: row.neighborhood ?? null
           }),
           current_class: row.current_class ?? null,
           student_group: studentGroup,

@@ -6,7 +6,7 @@ import type { GuardianRecord } from "../../../domain/models/guardian";
 import type { PhoneCallOutcome, PhoneRecord, PhoneRelationLabel, PhoneStatus } from "../../../domain/models/phone";
 import type { ReminderRecord } from "../../../domain/models/reminder";
 import type { StudentRecord } from "../../../domain/models/student";
-import { createSearchText, normalizeText } from "../../../utils/normalizeText";
+import { normalizeText } from "../../../utils/normalizeText";
 import { createCompatibilityPhoneList, createPhoneDisplayLabel } from "./phoneCompatibility";
 
 export type StudentListFilter =
@@ -657,17 +657,7 @@ function mapStudentToRow(
     source_row_number: student.source_row_number ?? null,
     created_at: student.created_at,
     updated_at: student.updated_at,
-    search_blob: createSearchText([
-      student.search_text,
-      student.student_full_name,
-      guardian?.guardian_full_name,
-      mother?.guardian_full_name,
-      father?.guardian_full_name,
-      phone1?.phone_number,
-      phone2?.phone_number,
-      student.general_note,
-      ...callLogNoteInfo.notes
-    ])
+    search_blob: student.search_text
   };
 }
 

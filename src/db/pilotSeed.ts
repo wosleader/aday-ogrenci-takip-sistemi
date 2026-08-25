@@ -12,8 +12,9 @@ import {
 import type { AppointmentStatus, CallResult, ReminderStatus, StudentCategory } from "../domain/constants/statuses";
 import type { GuardianRelationType } from "../domain/models/guardian";
 import type { PhoneRelationLabel, PhoneSnapshot } from "../domain/models/phone";
+import { createStudentSearchText } from "../features/students/services/studentSearchText";
 import { createUuid } from "../utils/id";
-import { createSearchText, normalizeText } from "../utils/normalizeText";
+import { normalizeText } from "../utils/normalizeText";
 import { normalizePhone } from "../utils/normalizePhone";
 
 type PilotSeedStats = {
@@ -239,21 +240,18 @@ export async function createPilotSeed(database: AppDatabase = db): Promise<Pilot
           uuid: createUuid(),
           student_full_name: candidate.student_name,
           normalized_student_name: normalizeText(candidate.student_name),
-          search_text: createSearchText([
-            candidate.student_name,
-            candidate.class_group,
-            studentGroupFor(candidate.class_group),
-            candidate.source_campaign,
-            candidate.district,
-            candidate.school,
-            candidate.priority,
-            candidate.candidate_note,
-            ...guardiansForCandidate.map((guardian) => guardian.guardian_name),
-            ...phonesForCandidate.map((phone) => phone.phone_number)
-          ]),
+          search_text: createStudentSearchText({
+            student_full_name: candidate.student_name,
+            guardian_names: guardiansForCandidate.map((guardian) => guardian.guardian_name),
+            phone_values: phonesForCandidate.map((phone) => phone.phone_number),
+            current_class: candidate.class_group,
+            student_group: studentGroupFor(candidate.class_group),
+            district: candidate.district,
+            neighborhood: null
+          }),
           current_class: candidate.class_group,
           student_group: studentGroupFor(candidate.class_group),
-          neighborhood: candidate.school,
+          neighborhood: null,
           district: candidate.district,
           category: categoryFor(candidate.class_group),
           campaign_id: campaignId,

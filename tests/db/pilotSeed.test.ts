@@ -1,12 +1,19 @@
 ﻿import { describe, expect, it } from "vitest";
 import { AppDatabase } from "../../src/db/db";
 import { bootstrapPilotSeedIfNeeded } from "../../src/db/pilotSeed";
+import {
+  PILOT_SEED_CANDIDATES,
+  PILOT_SEED_GUARDIANS,
+  PILOT_SEED_PHONES,
+  type PilotSeedCandidate
+} from "../../src/db/pilotSeedData";
 import { seedDatabase } from "../../src/db/seed";
 import { PHONE_CALL_OUTCOME_OPTIONS } from "../../src/domain/models/phone";
 import { readDetailedExportData } from "../../src/features/exports/services/exportDataReader";
 import { readReminderTaskRows } from "../../src/features/reminders/services/reminderListReader";
 import { readDailyReport } from "../../src/features/reports/services/dailyReportReader";
-import { readStudentListRows } from "../../src/features/students/services/studentListReader";
+import { filterStudentListRows, readStudentListRows } from "../../src/features/students/services/studentListReader";
+import { createStudentSearchText } from "../../src/features/students/services/studentSearchText";
 import { createSearchText, normalizeText } from "../../src/utils/normalizeText";
 
 async function createDatabase() {
@@ -96,6 +103,41 @@ describe("pilot seed bootstrap", () => {
       expect(rows.some((row) => row.mother_full_name?.startsWith("Demo Anne"))).toBe(true);
       expect(rows.some((row) => row.father_full_name?.startsWith("Demo Baba"))).toBe(true);
       expect(rows.every((row) => row.visible_phones.length >= 2)).toBe(true);
+    } finally {
+      await destroyDatabase(database);
+    }
+  });
+
+  it("keeps school outside canonical pilot search when no authoritative neighborhood exists", async () => {
+    const { database } = await seedPilotDatabase();
+    const candidate: PilotSeedCandidate = PILOT_SEED_CANDIDATES[0];
+
+    try {
+      const student = await database.students.filter((item) => item.student_full_name === candidate.student_name).first();
+      const guardians = PILOT_SEED_GUARDIANS.filter((item) => item.candidate_id === candidate.candidate_id);
+      const phones = PILOT_SEED_PHONES.filter((item) => item.candidate_id === candidate.candidate_id);
+
+      expect(student?.search_text).toBe(
+        createStudentSearchText({
+          student_full_name: candidate.student_name,
+          guardian_names: guardians.map((item) => item.guardian_name),
+          phone_values: phones.map((item) => item.phone_number),
+          current_class: candidate.class_group,
+          student_group: candidate.class_group === "LGS" ? "LGS Hazırlık" : candidate.class_group === "YKS" ? "YKS Hazırlık" : `${candidate.class_group} Demo Grup`,
+          district: candidate.district,
+          neighborhood: null
+        })
+      );
+      const rows = await readStudentListRows(database);
+
+      expect(student?.neighborhood).toBeNull();
+      expect(student?.search_text).toContain(normalizeText(candidate.district));
+      expect(student?.search_text).not.toContain(normalizeText(candidate.school));
+      expect(student?.search_text).not.toContain(normalizeText(candidate.source_campaign));
+      expect(student?.search_text).not.toContain(normalizeText(candidate.priority));
+      expect(student?.search_text).not.toContain(normalizeText(candidate.candidate_note));
+      expect(filterStudentListRows(rows, candidate.district).map((row) => row.student_full_name)).toContain(candidate.student_name);
+      expect(filterStudentListRows(rows, candidate.school)).toHaveLength(0);
     } finally {
       await destroyDatabase(database);
     }

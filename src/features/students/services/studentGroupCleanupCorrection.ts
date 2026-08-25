@@ -2,9 +2,9 @@ import type { AppDatabase } from "../../../db/db";
 import { db } from "../../../db/db";
 import type { GuardianRecord } from "../../../domain/models/guardian";
 import type { PhoneRecord } from "../../../domain/models/phone";
-import { nowIso } from "../../../utils/dateTime";
 import { assessHardcodedStudentGroupCleanupCandidate, type StudentGroupCleanupAssessment } from "./studentCleanupCandidates";
-import { createStudentSearchText } from "./studentSearchText";
+import { createStudentSearchTextFromRelations } from "./studentSearchText";
+import { createNextStudentUpdatedAt } from "./studentUpdatedAt";
 
 export type StudentGroupCleanupTargetMode = "verified_value" | "unspecified";
 
@@ -48,13 +48,6 @@ type ValidatedCorrectionInput = {
   performed_by: string;
 };
 
-function createNextUpdatedAt(currentUpdatedAt: string): string {
-  const currentTimestamp = new Date(currentUpdatedAt).getTime();
-  const nowTimestamp = new Date(nowIso()).getTime();
-
-  return new Date(Math.max(nowTimestamp, currentTimestamp + 1)).toISOString();
-}
-
 function validateCorrectionInput(input: CorrectStudentGroupCleanupCandidateInput, currentStudentGroup?: string): ValidatedCorrectionInput {
   const correctionReason = input.correction_reason.trim();
 
@@ -91,33 +84,13 @@ function validateCorrectionInput(input: CorrectStudentGroupCleanupCandidateInput
   };
 }
 
-function isActive<T extends { deleted_at?: string | null }>(record: T): boolean {
-  return !record.deleted_at;
-}
-
-function byStableSearchOrder<T extends { created_at: string; id?: number }>(left: T, right: T): number {
-  return left.created_at.localeCompare(right.created_at) || (left.id ?? 0) - (right.id ?? 0);
-}
-
 function createCorrectedSearchText(
   student: Parameters<typeof assessHardcodedStudentGroupCleanupCandidate>[0],
   guardians: GuardianRecord[],
   phones: PhoneRecord[],
   studentGroup: string
 ): string {
-  return createStudentSearchText({
-    student_full_name: student.student_full_name,
-    guardian_names: guardians
-      .filter(isActive)
-      .sort(byStableSearchOrder)
-      .map((guardian) => guardian.guardian_full_name),
-    phone_values: phones
-      .filter(isActive)
-      .sort((left, right) => (left.priority ?? 0) - (right.priority ?? 0) || byStableSearchOrder(left, right))
-      .map((phone) => phone.normalized_phone_number || phone.phone_number),
-    current_class: student.current_class,
-    student_group: studentGroup
-  });
+  return createStudentSearchTextFromRelations({ ...student, student_group: studentGroup }, guardians, phones);
 }
 
 function createAuditValue(
@@ -176,7 +149,7 @@ export async function correctStudentGroupCleanupCandidate(
       database.guardians.where("student_id").equals(student.id).toArray(),
       database.phones.where("student_id").equals(student.id).toArray()
     ]);
-    const updatedAt = createNextUpdatedAt(student.updated_at);
+    const updatedAt = createNextStudentUpdatedAt(student.updated_at);
     const searchText = createCorrectedSearchText(student, guardians, phones, validatedInput.target_student_group);
     const updatedCount = await database.students.update(student.id, {
       student_group: validatedInput.target_student_group,
