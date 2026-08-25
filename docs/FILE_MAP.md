@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Student Card Profile Editing V1 Product Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Student Profile Editing V1 Canonical Search Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -394,7 +394,7 @@ Son dogrulandi: Mahalle/Ilce Import Pilot
 - `src/features/imports/services/importWriter.ts`
   Mahalle/Ilce degerlerini ogrenci kaydina persist eder; `general_note` icine yazmaz.
 - `src/features/students/services/studentListReader.ts`
-  Student list/read model Mahalle/Ilce alanlarini sag kart tarafina tasir; search/filter genisletmesi yapmaz.
+  Student list/read model Mahalle/Ilce alanlarini sag kart tarafina tasir. CURRENT runtime `search_blob`, persisted `student.search_text`e ek olarak `student.general_note` ve mevcut call/interview note text'ini de query'ye katar; bu approved canonical target degildir. Checkpoint A implementation retry bu reader behavior'ini canonical persisted search contract'ina hizalayacaktir.
 - `src/features/students/StudentsPage.tsx`
   Sag drawer'da veri varsa kucuk read-only `Mahalle / Ilce` satirini gosterir.
 - `tests/imports/columnMatching.test.ts`
@@ -690,7 +690,7 @@ Son doğrulandı: `9ddc519 feat: add student group cleanup correction`
 - `src/features/students/services/studentGroupCleanupCorrection.ts`
   Dedicated per-record legacy `student_group` correction service'idir. Explicit hedef intenti, stale guard, transaction içi re-read/revalidation, deterministic `search_text` refresh ve append-only audit'i atomik uygular.
 - `src/features/students/services/studentSearchText.ts`
-  Import ve correction tarafından paylaşılan canonical deterministic Student `search_text` builder'ıdır. Onaylı fakat henüz uygulanmamış Profile Editing V1, ad/sınıf/grup değişiminde bu builder'ı reuse eder; pilot seed'in daha geniş legacy tokenları için regression coverage gerekir.
+  Mevcut import ve correction tarafından paylaşılan canonical deterministic Student `search_text` builder'ıdır. Onaylı fakat henüz uygulanmamış source-agnostic hedef semantik öğrenci adı, guardian adları, phone values, sınıf, grup, district ve neighborhood'u kapsar; gelecek implementation import, pilot/demo seed, restore ve Profile Editing V1'i bu tek semantiğe zorunlu olarak hizalar. Mevcut code bu genişletmeyi, required one-time reindex'i veya Students list reader'daki note-based runtime search alignment'ini henüz uygulamaz; campaign/priority/general_note/call-log note/arbitrary seed tokenları canonical davranış değildir.
 - `src/features/imports/services/importWriter.ts`
   Student `search_text` oluştururken shared builder'ı kullanır; mevcut import search semantics'i korunur.
 - `tests/students/studentCleanupCandidates.test.ts`
