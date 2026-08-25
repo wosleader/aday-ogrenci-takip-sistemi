@@ -7,7 +7,8 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties
+  type CSSProperties,
+  type FormEvent
 } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useOutletContext } from "react-router-dom";
@@ -68,6 +69,12 @@ import {
   updatePendingReminder
 } from "../reminders/services/reminderLifecycle";
 import { deleteStudentWithRelations } from "./services/studentDelete";
+import {
+  readStudentProfileForEdit,
+  StudentProfileReaderError,
+  type StudentProfileSnapshot
+} from "./services/studentProfileReader";
+import { StudentProfileUpdateError, updateStudentProfile } from "./services/studentProfileUpdate";
 import {
   ALL_STUDENT_GROUPS_FILTER,
   createStudentListNoteSummary,
@@ -698,6 +705,59 @@ type OperationToast = {
   message: string;
   type: "success" | "warning" | "error";
 };
+
+type StudentProfileEditForm = {
+  student_full_name: string;
+  current_class: string;
+  student_group: string;
+  neighborhood: string;
+  district: string;
+  change_reason: string;
+};
+
+function createStudentProfileEditForm(snapshot: StudentProfileSnapshot): StudentProfileEditForm {
+  return {
+    student_full_name: snapshot.student_full_name,
+    current_class: snapshot.current_class ?? "",
+    student_group: snapshot.student_group,
+    neighborhood: snapshot.neighborhood ?? "",
+    district: snapshot.district ?? "",
+    change_reason: ""
+  };
+}
+
+function getStudentProfileEditErrorMessage(error: unknown, fallbackMessage: string): string {
+  if (error instanceof StudentProfileReaderError) {
+    return error.code === "student_deleted"
+      ? "Silinmiş aday düzenlenemez."
+      : "Aday kaydı bulunamadı.";
+  }
+
+  if (!(error instanceof StudentProfileUpdateError)) {
+    return fallbackMessage;
+  }
+
+  switch (error.code) {
+    case "invalid_student_full_name":
+      return "Ad Soyad boş olamaz.";
+    case "missing_reason":
+      return "Değişiklik nedeni boş olamaz.";
+    case "student_missing":
+      return "Aday kaydı bulunamadı.";
+    case "student_deleted":
+      return "Silinmiş aday düzenlenemez.";
+    case "student_uuid_mismatch":
+      return "Aday kimliği güncel değil. Kaydı yeniden açıp tekrar deneyin.";
+    case "student_stale":
+      return "Aday kaydı form açıldıktan sonra değişti. Güncel bilgileri inceleyip yeniden deneyin.";
+    case "no_change":
+      return "Kaydedilecek bir değişiklik bulunamadı.";
+    case "student_write_failed":
+      return "Aday bilgileri kaydedilemedi. Lütfen yeniden deneyin.";
+    case "audit_failed":
+      return "Aday bilgileri kaydedilemedi; değişiklik kaydı oluşturulamadı.";
+  }
+}
 
 type ShortcutHelpGroup = {
   title: string;
@@ -1666,6 +1726,13 @@ export function StudentsPage() {
   const [selectedCallPhoneId, setSelectedCallPhoneId] = useState<number | null>(null);
   const [isStudentActionsOpen, setIsStudentActionsOpen] = useState(false);
   const [studentDeleteCandidate, setStudentDeleteCandidate] = useState<StudentListRow | null>(null);
+  const [studentProfileEditStudentId, setStudentProfileEditStudentId] = useState<number | null>(null);
+  const [studentProfileEditSnapshot, setStudentProfileEditSnapshot] = useState<StudentProfileSnapshot | null>(null);
+  const [studentProfileEditForm, setStudentProfileEditForm] = useState<StudentProfileEditForm | null>(null);
+  const [studentProfileEditLoadError, setStudentProfileEditLoadError] = useState<string | null>(null);
+  const [studentProfileEditSaveError, setStudentProfileEditSaveError] = useState<string | null>(null);
+  const [isStudentProfileEditLoading, setIsStudentProfileEditLoading] = useState(false);
+  const [isStudentProfileEditSaving, setIsStudentProfileEditSaving] = useState(false);
   const [callLogDeleteCandidate, setCallLogDeleteCandidate] = useState<CallHistoryItem | null>(null);
   const [callLogEditCandidate, setCallLogEditCandidate] = useState<CallHistoryItem | null>(null);
   const [callLogEditMode, setCallLogEditMode] = useState<CallLogCorrectionMode>("full");
@@ -1712,6 +1779,7 @@ export function StudentsPage() {
   const [allowAppointmentWithoutNote, setAllowAppointmentWithoutNote] = useState(false);
   const drawerPhoneListRef = useRef<HTMLDivElement | null>(null);
   const shouldScrollPhoneListAfterCollapseRef = useRef(false);
+  const studentProfileEditRequestRef = useRef(0);
   const rows = useLiveQuery(
     async () => {
       try {
@@ -1937,6 +2005,111 @@ export function StudentsPage() {
       message,
       type
     });
+  }
+
+  function resetStudentProfileEdit() {
+    setStudentProfileEditStudentId(null);
+    setStudentProfileEditSnapshot(null);
+    setStudentProfileEditForm(null);
+    setStudentProfileEditLoadError(null);
+    setStudentProfileEditSaveError(null);
+    setIsStudentProfileEditLoading(false);
+  }
+
+  function closeStudentProfileEdit() {
+    if (isStudentProfileEditSaving) {
+      return;
+    }
+
+    studentProfileEditRequestRef.current += 1;
+    resetStudentProfileEdit();
+  }
+
+  async function loadStudentProfileForEdit(studentId: number) {
+    const requestId = studentProfileEditRequestRef.current + 1;
+    studentProfileEditRequestRef.current = requestId;
+    setStudentProfileEditLoadError(null);
+    setStudentProfileEditSaveError(null);
+    setStudentProfileEditSnapshot(null);
+    setStudentProfileEditForm(null);
+    setIsStudentProfileEditLoading(true);
+
+    try {
+      const snapshot = await readStudentProfileForEdit(studentId);
+
+      if (studentProfileEditRequestRef.current !== requestId) {
+        return;
+      }
+
+      setStudentProfileEditSnapshot(snapshot);
+      setStudentProfileEditForm(createStudentProfileEditForm(snapshot));
+    } catch (error) {
+      if (studentProfileEditRequestRef.current !== requestId) {
+        return;
+      }
+
+      setStudentProfileEditLoadError(getStudentProfileEditErrorMessage(error, "Aday bilgileri yüklenemedi."));
+    } finally {
+      if (studentProfileEditRequestRef.current === requestId) {
+        setIsStudentProfileEditLoading(false);
+      }
+    }
+  }
+
+  function openStudentProfileEdit(studentId: number) {
+    setStudentProfileEditStudentId(studentId);
+    void loadStudentProfileForEdit(studentId);
+  }
+
+  function updateStudentProfileEditForm(field: keyof StudentProfileEditForm, value: string) {
+    setStudentProfileEditForm((current) => (current ? { ...current, [field]: value } : current));
+    setStudentProfileEditSaveError(null);
+  }
+
+  async function submitStudentProfileEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (isStudentProfileEditSaving || !studentProfileEditSnapshot || !studentProfileEditForm) {
+      return;
+    }
+
+    if (!studentProfileEditForm.student_full_name.trim()) {
+      setStudentProfileEditSaveError("Ad Soyad boş olamaz.");
+      return;
+    }
+
+    if (!studentProfileEditForm.change_reason.trim()) {
+      setStudentProfileEditSaveError("Değişiklik nedeni boş olamaz.");
+      return;
+    }
+
+    setStudentProfileEditSaveError(null);
+    setIsStudentProfileEditSaving(true);
+
+    try {
+      await updateStudentProfile({
+        student_id: studentProfileEditSnapshot.id,
+        student_uuid: studentProfileEditSnapshot.uuid,
+        expected_updated_at: studentProfileEditSnapshot.updated_at,
+        student_full_name: studentProfileEditForm.student_full_name,
+        current_class: studentProfileEditForm.current_class,
+        student_group: studentProfileEditForm.student_group,
+        neighborhood: studentProfileEditForm.neighborhood,
+        district: studentProfileEditForm.district,
+        change_reason: studentProfileEditForm.change_reason,
+        performed_by: "agent"
+      });
+      const message = "Aday bilgileri güncellendi.";
+
+      studentProfileEditRequestRef.current += 1;
+      resetStudentProfileEdit();
+      setActionMessage(message);
+      showOperationToast(message, "success");
+    } catch (error) {
+      setStudentProfileEditSaveError(getStudentProfileEditErrorMessage(error, "Aday bilgileri kaydedilemedi."));
+    } finally {
+      setIsStudentProfileEditSaving(false);
+    }
   }
 
   function resetStatusFilter() {
@@ -2937,6 +3110,130 @@ export function StudentsPage() {
           </div>
         </section>
       ) : null}
+      {studentProfileEditStudentId !== null ? (
+        <section
+          aria-labelledby="student-profile-edit-title"
+          aria-modal="true"
+          className="student-profile-edit-backdrop"
+          role="dialog"
+        >
+          <div className="student-profile-edit-modal">
+            <header>
+              <h2 id="student-profile-edit-title">Aday Bilgilerini Güncelle</h2>
+              <p>Bu alanlar yalnızca aday profil bilgisini günceller.</p>
+            </header>
+            {isStudentProfileEditLoading ? <p className="student-profile-edit-loading">Aday bilgileri yükleniyor.</p> : null}
+            {studentProfileEditLoadError ? (
+              <div className="student-profile-edit-error" role="alert">
+                <p>{studentProfileEditLoadError}</p>
+                <div className="student-profile-edit-actions">
+                  <Button onClick={closeStudentProfileEdit} type="button" variant="secondary">
+                    Kapat
+                  </Button>
+                  <Button onClick={() => void loadStudentProfileForEdit(studentProfileEditStudentId)} type="button">
+                    Yeniden dene
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+            {studentProfileEditSnapshot && studentProfileEditForm ? (
+              <form className="student-profile-edit-form" onSubmit={submitStudentProfileEdit}>
+                {studentProfileEditSnapshot.source_file_name ||
+                studentProfileEditSnapshot.source_sheet_name ||
+                studentProfileEditSnapshot.source_row_number !== null ? (
+                  <section aria-label="Kaynak Bilgisi" className="student-profile-edit-provenance">
+                    <span className="student-profile-edit-provenance-title">Kaynak Bilgisi</span>
+                    <dl>
+                      {studentProfileEditSnapshot.source_file_name ? (
+                        <div>
+                          <dt>Dosya</dt>
+                          <dd>{studentProfileEditSnapshot.source_file_name}</dd>
+                        </div>
+                      ) : null}
+                      {studentProfileEditSnapshot.source_sheet_name ? (
+                        <div>
+                          <dt>Sayfa</dt>
+                          <dd>{studentProfileEditSnapshot.source_sheet_name}</dd>
+                        </div>
+                      ) : null}
+                      {studentProfileEditSnapshot.source_row_number !== null ? (
+                        <div>
+                          <dt>Satır</dt>
+                          <dd>{studentProfileEditSnapshot.source_row_number}</dd>
+                        </div>
+                      ) : null}
+                    </dl>
+                  </section>
+                ) : null}
+                <div className="student-profile-edit-fields">
+                  <label className="student-profile-edit-field student-profile-edit-field-wide">
+                    Ad Soyad
+                    <input
+                      autoComplete="name"
+                      disabled={isStudentProfileEditSaving}
+                      onChange={(event) => updateStudentProfileEditForm("student_full_name", event.target.value)}
+                      value={studentProfileEditForm.student_full_name}
+                    />
+                  </label>
+                  <label className="student-profile-edit-field">
+                    Sınıf
+                    <input
+                      disabled={isStudentProfileEditSaving}
+                      onChange={(event) => updateStudentProfileEditForm("current_class", event.target.value)}
+                      value={studentProfileEditForm.current_class}
+                    />
+                  </label>
+                  <label className="student-profile-edit-field">
+                    Öğrenci Grubu
+                    <input
+                      disabled={isStudentProfileEditSaving}
+                      onChange={(event) => updateStudentProfileEditForm("student_group", event.target.value)}
+                      value={studentProfileEditForm.student_group}
+                    />
+                  </label>
+                  <label className="student-profile-edit-field">
+                    Mahalle
+                    <input
+                      disabled={isStudentProfileEditSaving}
+                      onChange={(event) => updateStudentProfileEditForm("neighborhood", event.target.value)}
+                      value={studentProfileEditForm.neighborhood}
+                    />
+                  </label>
+                  <label className="student-profile-edit-field">
+                    İlçe
+                    <input
+                      disabled={isStudentProfileEditSaving}
+                      onChange={(event) => updateStudentProfileEditForm("district", event.target.value)}
+                      value={studentProfileEditForm.district}
+                    />
+                  </label>
+                  <label className="student-profile-edit-field student-profile-edit-field-wide">
+                    Değişiklik Nedeni
+                    <textarea
+                      disabled={isStudentProfileEditSaving}
+                      onChange={(event) => updateStudentProfileEditForm("change_reason", event.target.value)}
+                      value={studentProfileEditForm.change_reason}
+                    />
+                  </label>
+                </div>
+                {studentProfileEditSaveError ? (
+                  <p className="student-profile-edit-error" role="alert">
+                    {studentProfileEditSaveError}
+                  </p>
+                ) : null}
+                <div className="student-profile-edit-actions">
+                  <Button disabled={isStudentProfileEditSaving} onClick={closeStudentProfileEdit} type="button" variant="secondary">
+                    Vazgeç
+                  </Button>
+                  <Button disabled={isStudentProfileEditSaving} type="submit">
+                    {isStudentProfileEditSaving ? "Kaydediliyor..." : "Kaydet"}
+                  </Button>
+                </div>
+              </form>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
       {callLogDeleteCandidate ? (
         <section
           aria-labelledby="call-log-delete-title"
@@ -3736,6 +4033,16 @@ export function StudentsPage() {
                         >
                           <Trash2 aria-hidden="true" size={14} />
                           Adayı sil
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsStudentActionsOpen(false);
+                            openStudentProfileEdit(selectedRow.student_id);
+                          }}
+                          type="button"
+                        >
+                          <Pencil aria-hidden="true" size={14} />
+                          Bilgileri Güncelle
                         </button>
                       </div>
                     ) : null}
