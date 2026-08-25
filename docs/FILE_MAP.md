@@ -35,9 +35,17 @@ Son doğrulandı: Sprint 8.2
 Son doğrulandı: Phone-Level Outcome Read Model Pilot
 
 - `src/features/students/StudentsPage.tsx`
-  Aday Listesi, filtreler, sağ drawer, görüşme akışı, kompakt/açılır-kapanır kısayol yardım barı, call history UI ve sağ kişi kartı telefon alanını içerir. Sprint 9.3D-1 itibarıyla call history `phone_context_label` / `phone_context_number` display alanlarını gösterir. Sprint 9.3E-2 itibarıyla Telefon 1 / Telefon 2 aksiyonlu kartlarını korur, Telefon 3+ için readonly görünüm sunar, `+N numara daha göster` / `Daha az göster` interaction'ını yönetir ve `visible_phones` / `phones` / `hidden_phone_count` alanlarını tüketir. Sprint 9.3F-1 itibarıyla Telefon 3+ için call save selection, selected call phone state, `saveCallAndGoNext` içinde `contacted_phone_id` hesaplaması ve legacy Telefon 1/2 fallback davranışını taşır. Phone-Level Outcome Read Model Pilot itibarıyla Telefon 1/2 ve Telefon 3+ kartlarında `call_logs` kaynaklı read-only `Son sonuç` göstergesini render eder; schema, import/export ve `phone_status` semantiğini değiştirmez. `8f1f613` itibarıyla bağlantısız call history kayıtları için düzeltme/düzenle modalını ve `İletişim kaydını geçersiz say / sil` / `Geçersiz say / sil` soft delete aksiyon dilini sunar. `39e3840` itibarıyla pending reminder bağlantılı history satırında icon-only `Hatırlatmayı tamamla` aksiyonunu ve confirmation modalını render eder. `e15a051` itibarıyla yalnız canonical owner satırında `Hatırlatmayı iptal et` aksiyonunu, optional nedenli confirmation modalını ve `Vazgeç` ikincil eylemini render eder; shared/tarihsel satırlar aksiyon almaz. Student Card Profile Editing V1 için mevcut local `Aday işlemleri` overflow menu onaylı entry point'tir; `Bilgileri Güncelle` modalı henüz uygulanmamıştır.
+  Aday Listesi, filtreler, sağ drawer, görüşme akışı, kompakt/açılır-kapanır kısayol yardım barı, call history UI ve sağ kişi kartı telefon alanını içerir. Sprint 9.3D-1 itibarıyla call history `phone_context_label` / `phone_context_number` display alanlarını gösterir. Sprint 9.3E-2 itibarıyla Telefon 1 / Telefon 2 aksiyonlu kartlarını korur, Telefon 3+ için readonly görünüm sunar, `+N numara daha göster` / `Daha az göster` interaction'ını yönetir ve `visible_phones` / `phones` / `hidden_phone_count` alanlarını tüketir. Sprint 9.3F-1 itibarıyla Telefon 3+ için call save selection, selected call phone state, `saveCallAndGoNext` içinde `contacted_phone_id` hesaplaması ve legacy Telefon 1/2 fallback davranışını taşır. Phone-Level Outcome Read Model Pilot itibarıyla Telefon 1/2 ve Telefon 3+ kartlarında `call_logs` kaynaklı read-only `Son sonuç` göstergesini render eder; schema, import/export ve `phone_status` semantiğini değiştirmez. `8f1f613` itibarıyla bağlantısız call history kayıtları için düzeltme/düzenle modalını ve `İletişim kaydını geçersiz say / sil` / `Geçersiz say / sil` soft delete aksiyon dilini sunar. `39e3840` itibarıyla pending reminder bağlantılı history satırında icon-only `Hatırlatmayı tamamla` aksiyonunu ve confirmation modalını render eder. `e15a051` itibarıyla yalnız canonical owner satırında `Hatırlatmayı iptal et` aksiyonunu, optional nedenli confirmation modalını ve `Vazgeç` ikincil eylemini render eder; shared/tarihsel satırlar aksiyon almaz. Student Card Profile Editing V1 için mevcut `Aday işlemleri` overflow menu onaylı entry point'tir; Checkpoint A service foundation tamamlandı, `Bilgileri Güncelle` modalı Checkpoint B'ye kadar uygulanmamıştır.
 - `src/features/students/services/studentListReader.ts`
-  Aday liste satırlarını okuma, filtreleme, Sınıf/Şube helper’ları ve `StudentListRow` read model üretimi. Legacy `phone_1` / `phone_2` / `phone_count` alanlarını korur; Sprint 9.3E-1 itibarıyla sağ kişi kartı çoklu telefon hazırlığı için `phones`, `visible_phones` ve `hidden_phone_count` alanlarını taşır.
+  Aday liste satırlarını okuma, filtreleme, Sınıf/Şube helper’ları ve `StudentListRow` read model üretimi. General search yalnız persisted canonical `student.search_text`i kullanır; note/call-history query expansion yapmaz. Legacy `phone_1` / `phone_2` / `phone_count` alanlarını korur; Sprint 9.3E-1 itibarıyla sağ kişi kartı çoklu telefon hazırlığı için `phones`, `visible_phones` ve `hidden_phone_count` alanlarını taşır.
+- `src/features/students/services/studentProfileReader.ts`
+  Student Profile Editing V1 için fresh authoritative, read-only profile snapshot'ı verir; missing/deleted kayıtları fail-closed reddeder.
+- `src/features/students/services/studentProfileUpdate.ts`
+  Beş onaylı alan için controlled profile patch, stale/UUID/missing/deleted/no-change guard, monotonic `updated_at` ve atomik `student_profile_edit` audit'ini uygular.
+- `src/features/students/services/studentSearchReindex.ts`
+  Canonical `search_text`i aktif, silinmemiş öğrencilere yönelik deterministic/idempotent, tek-transaction controlled reindex olarak kurar; operational execution çağrısı yoktur.
+- `src/features/students/services/studentUpdatedAt.ts`
+  Aynı hızlı ardışık yazılarda `updated_at`ın monotonik kalması için ortak helper'dır.
 - `src/features/students/services/studentPhoneStatus.ts`
   Telefon 1/2 son görüşülen ve yanlış numara durumları.
 - `src/features/students/services/phoneCompatibility.ts`
@@ -115,7 +123,7 @@ Son doğrulandı: Sprint 9.3G-5 Multi-Phone Import Writer / Persistence
 - `src/features/imports/services/importSimulation.ts`
   Import önizleme, uyarılar ve simülasyon özeti. Sprint 9.3G-4 itibarıyla `phones[]` üretimi, empty phone skip, row-level duplicate dedupe, invalid phone metadata ve duplicate warning kontrolünün tüm `phones[]` üzerinden çalışması davranışlarını taşır.
 - `src/features/imports/services/importWriter.ts`
-  Gerçek IndexedDB import transaction akışı. Sprint 9.3G-5 itibarıyla `row.phones[]` tüketir, `phone_1` / `phone_2` fallback'ini korur, Telefon 1-10 `PhoneRecord` persistence yapar, `phone_label` / `reference_label` / `priority` / `source_column` / `original_phone_value` / `is_valid` metadata'sını taşır, invalid non-empty phone persistence kararını uygular, `search_text` içine tüm `row.phones[]` numaralarını ekler ve dedupe / empty skip / `is_primary` davranışını yönetir. `82036c0` itibarıyla `row.campaign_name` değerini campaign lookup/create ve `student.campaign_id` persistence için kullanır; boş kampanyada default `Diğer` davranışı korunur.
+  Gerçek IndexedDB import transaction akışı. Sprint 9.3G-5 itibarıyla `row.phones[]` tüketir, `phone_1` / `phone_2` fallback'ini korur, Telefon 1-10 `PhoneRecord` persistence yapar, `phone_label` / `reference_label` / `priority` / `source_column` / `original_phone_value` / `is_valid` metadata'sını taşır, invalid non-empty phone persistence kararını uygular, canonical shared builder ile `search_text`i kurar ve dedupe / empty skip / `is_primary` davranışını yönetir. `82036c0` itibarıyla `row.campaign_name` değerini campaign lookup/create ve `student.campaign_id` persistence için kullanır; boş kampanyada default `Diğer` davranışı korunur.
 - `src/features/imports/services/importDuplicateGuard.ts`
   Aynı dosya/sheet/fingerprint şüphesini yakalama.
 - `src/features/imports/services/logExport.ts`
@@ -394,7 +402,7 @@ Son dogrulandi: Mahalle/Ilce Import Pilot
 - `src/features/imports/services/importWriter.ts`
   Mahalle/Ilce degerlerini ogrenci kaydina persist eder; `general_note` icine yazmaz.
 - `src/features/students/services/studentListReader.ts`
-  Student list/read model Mahalle/Ilce alanlarini sag kart tarafina tasir. CURRENT runtime `search_blob`, persisted `student.search_text`e ek olarak `student.general_note` ve mevcut call/interview note text'ini de query'ye katar; bu approved canonical target degildir. Checkpoint A implementation retry bu reader behavior'ini canonical persisted search contract'ina hizalayacaktir.
+  Student list/read model Mahalle/Ilce alanlarini sag kart tarafina tasir. Checkpoint A ile general search yalnız persisted canonical `student.search_text`i kullanır; `student.general_note` ve call/interview note runtime query expansion'ı kaldırılmıştır.
 - `src/features/students/StudentsPage.tsx`
   Sag drawer'da veri varsa kucuk read-only `Mahalle / Ilce` satirini gosterir.
 - `tests/imports/columnMatching.test.ts`
@@ -688,17 +696,46 @@ Son doğrulandı: `9ddc519 feat: add student group cleanup correction`
 - `src/features/students/services/studentCleanupCandidates.ts`
   Legacy fallback için canonical candidate assessment/predicate'i ve read-only candidate reader'ı taşır. Reader ile correction transaction aynı eligibility/revalidation kuralını kullanır; candidate DTO `updated_at` taşır.
 - `src/features/students/services/studentGroupCleanupCorrection.ts`
-  Dedicated per-record legacy `student_group` correction service'idir. Explicit hedef intenti, stale guard, transaction içi re-read/revalidation, deterministic `search_text` refresh ve append-only audit'i atomik uygular.
+  Dedicated per-record legacy `student_group` correction service'idir. Explicit hedef intenti, stale guard, transaction içi re-read/revalidation, canonical relation-aware `search_text` refresh ve append-only audit'i atomik uygular.
 - `src/features/students/services/studentSearchText.ts`
-  Mevcut import ve correction tarafından paylaşılan canonical deterministic Student `search_text` builder'ıdır. Onaylı fakat henüz uygulanmamış source-agnostic hedef semantik öğrenci adı, guardian adları, phone values, sınıf, grup, district ve neighborhood'u kapsar; gelecek implementation import, pilot/demo seed, restore ve Profile Editing V1'i bu tek semantiğe zorunlu olarak hizalar. Mevcut code bu genişletmeyi, required one-time reindex'i veya Students list reader'daki note-based runtime search alignment'ini henüz uygulamaz; campaign/priority/general_note/call-log note/arbitrary seed tokenları canonical davranış değildir.
+  Import, pilot/demo seed, cleanup correction, profile update ve controlled reindex tarafından paylaşılan canonical deterministic Student `search_text` builder'ıdır. Öğrenci adı, aktif guardian adları, aktif phone values, sınıf, grup, district ve neighborhood'u kapsar; campaign/priority/general_note/call-log note/arbitrary seed tokenları ve authoritative olmayan school canonical davranış değildir.
 - `src/features/imports/services/importWriter.ts`
-  Student `search_text` oluştururken shared builder'ı kullanır; mevcut import search semantics'i korunur.
+  Student `search_text` oluştururken shared canonical builder'ı kullanır; district/neighborhood dahil source-agnostic import search semantics'i korunur.
 - `tests/students/studentCleanupCandidates.test.ts`
   Canonical assessment, exact fallback semantics, deleted/11. sınıf dışlaması, risk sınıflaması ve `updated_at` DTO aktarımını doğrular.
 - `tests/students/studentGroupCleanupCorrection.test.ts`
   Per-record correction, explicit `unspecified`, stale/fail-closed rejectler, category korunumu, search refresh, audit ve transaction rollback davranışını doğrular.
 - `tests/students/studentSearchText.test.ts`
-  Shared search builder'ın mevcut import alan sırası, Türkçe/whitespace normalization ve boş değer sözleşmesini doğrular.
+  Shared search builder'ın canonical token setini, Türkçe/whitespace normalization ve boş değer sözleşmesini doğrular.
+
+## Latest File Map Addendum - Student Profile Editing V1 Checkpoint A
+
+Son doğrulandı: `d6b7620 feat: implement student profile editing checkpoint a`
+
+- `src/features/students/services/studentProfileReader.ts`
+  Fresh authoritative profile snapshot'ı, seçili öğrencinin kimlik/provenance context'ini ve `expected_updated_at` değerini read-only sağlar.
+- `src/features/students/services/studentProfileUpdate.ts`
+  Yalnız `student_full_name`, `current_class`, `student_group`, `neighborhood`, `district` controlled patch'ini; required reason, stale guard, normalized name/search rebuild, monotonic timestamp ve same-transaction audit rollback'ını uygular.
+- `src/features/students/services/studentSearchReindex.ts`
+  Aktif, silinmemiş öğrenciler için canonical builder kullanan, yalnız `search_text` yazan deterministic/idempotent controlled reindex service'idir; user/production data üzerinde henüz çalıştırılmamıştır.
+- `src/features/students/services/studentUpdatedAt.ts`
+  Profile update ve cleanup correction'da ortak monotonik `updated_at` helper'ıdır.
+- `src/features/students/services/studentSearchText.ts`
+  Active guardian/phone relations ile canonical name/class/group/district/neighborhood tokenlarını tek builder'da toplar.
+- `src/features/students/services/studentListReader.ts`
+  General list aramasını persisted canonical `search_text` ile hizalar; runtime general_note/call-note genişletmesi yoktur.
+- `src/features/imports/services/importWriter.ts`
+  Yeni importlarda shared canonical builder'ı kullanır.
+- `src/db/pilotSeed.ts`
+  Demo search semantic'ini canonical builder'a hizalar; authoritative neighborhood olmayan fixture school değerini neighborhood'a eşlemez.
+- `src/features/students/services/studentGroupCleanupCorrection.ts`
+  Cleanup correction sonrası current guardian/phone relations ile canonical search rebuild uygular.
+- `tests/students/studentProfileReader.test.ts`
+  Authoritative snapshot ile missing/deleted fail-closed davranışını doğrular.
+- `tests/students/studentProfileUpdate.test.ts`
+  Controlled patch, reason, stale/identity/no-change guards, audit rollback ve derived search/name refresh sözleşmesini doğrular.
+- `tests/students/studentSearchReindex.test.ts`
+  Reindex'in active-only, deleted-skip, deterministic/idempotent, relation-aware ve atomic davranışını doğrular.
 
 ## Latest File Map Addendum - VELI ADI Import Alias Fix
 
