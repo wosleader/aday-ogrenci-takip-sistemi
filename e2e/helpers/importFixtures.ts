@@ -1,6 +1,8 @@
 import path from "node:path";
-import { mkdirSync } from "node:fs";
-import { utils, writeFile } from "xlsx";
+import * as fs from "node:fs";
+import { set_fs, utils, writeFile } from "xlsx";
+
+set_fs(fs);
 
 export type ImportWorkbookPaths = {
   filePath: string;
@@ -15,7 +17,7 @@ export function createImportWorkbook(
   const workbook = utils.book_new();
   utils.book_append_sheet(workbook, worksheet, "Adaylar");
 
-  mkdirSync(outputDir, { recursive: true });
+  fs.mkdirSync(outputDir, { recursive: true });
   const filePath = path.join(outputDir, fileName);
   writeFile(workbook, filePath, { bookType: "xlsx" });
 

@@ -70,4 +70,53 @@ describe("parseFirstWorksheet", () => {
     expect(reparsed.detected_header_row_number).toBe(2);
     expect(reparsed.headers).toEqual(["Ayşe Yılmaz"]);
   });
+
+  it("preserves the app-visible date/time contract for formatted Excel cells", async () => {
+    // Excel's 1900-date-system serial for 2026-01-15 plus 04:30 as a day fraction.
+    const excelDateTimeSerial = 46037 + (4 * 60 + 30) / (24 * 60);
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.aoa_to_sheet([
+      ["Ad Soyad", "Görüşme Tarihi", "Puan"],
+      ["Ayşe İpek", excelDateTimeSerial, 42]
+    ]);
+    const dateCell = worksheet.B2;
+
+    if (!dateCell) {
+      throw new Error("Date fixture cell could not be created.");
+    }
+
+    dateCell.z = "yyyy-mm-dd hh:mm:ss";
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Tarih");
+
+    const buffer = XLSX.write(workbook, { type: "array", bookType: "xlsx", cellDates: true }) as ArrayBuffer;
+    const parsed = await parseFirstWorksheet(buffer, "tarih-saat.xlsx");
+
+    expect(parsed.headers).toEqual(["Ad Soyad", "Görüşme Tarihi", "Puan"]);
+    expect(parsed.rows[0]?.[0]).toBe("Ayşe İpek");
+    expect(parsed.rows[0]?.[1]).toBe("2026-01-15 04:30:00");
+    expect(parsed.rows[0]?.[2]).toBe("42");
+  });
+
+  it("parses representative legacy xls content with Turkish text and numbers", async () => {
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.aoa_to_sheet([
+      ["Ad Soyad", "Deneme Puanı"],
+      ["Çağrı Şahin", 378]
+    ]);
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Adaylar");
+
+    const buffer = XLSX.write(workbook, { type: "array", bookType: "xls" }) as ArrayBuffer;
+    const parsed = await parseFirstWorksheet(buffer, "legacy-adaylar.xls");
+
+    expect(parsed.sheet_name).toBe("Adaylar");
+    expect(parsed.headers).toEqual(["Ad Soyad", "Deneme Puanı"]);
+    expect(parsed.rows).toEqual([["Çağrı Şahin", "378"]]);
+  });
+
+  it("rejects malformed workbook bytes", async () => {
+    const malformed = new Uint8Array([0x50, 0x4b, 0x03, 0x04]);
+
+    await expect(parseFirstWorksheet(malformed.buffer, "bozuk.xlsx")).rejects.toThrow();
+  });
 });

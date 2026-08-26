@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import * as XLSX from "xlsx";
 import {
   createDetailedExportFileName,
   createDetailedExportWorkbook,
@@ -68,5 +69,21 @@ describe("excelExporter", () => {
 
     expect(workbook.SheetNames).toEqual(["Özet Görüşme Raporu"]);
     expect(workbook.Sheets["Özet Görüşme Raporu"]).toBeTruthy();
+  });
+
+  it("round-trips detailed export headers, Turkish text, and numeric values", async () => {
+    const workbook = await createDetailedExportWorkbook(sheet());
+    const buffer = XLSX.write(workbook, { type: "array", bookType: "xlsx" }) as ArrayBuffer;
+    const readBack = XLSX.read(buffer, { type: "array" });
+    const exportedRows = XLSX.utils.sheet_to_json<unknown[]>(readBack.Sheets["Detaylı Export"], {
+      header: 1,
+      defval: "",
+      raw: false
+    });
+
+    expect(exportedRows).toEqual([
+      ["Sıra No", "Öğrenci Ad Soyad", "Arama 1 Açıklaması"],
+      ["1", "Ayşe Yılmaz", "Veli bilgi istedi."]
+    ]);
   });
 });
