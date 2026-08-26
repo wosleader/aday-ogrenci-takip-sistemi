@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build --base=/demo/",
     "preview": "vite preview",
     "test": "vitest run --exclude e2e/**",
     "qa:import:e2e": "playwright test e2e/import-smoke.spec.ts e2e/import-regression.spec.ts",
