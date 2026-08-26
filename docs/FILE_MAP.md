@@ -1,15 +1,15 @@
-<!-- Son guncelleme: SheetJS Security Remediation Checkpoint A | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: SheetJS Security Remediation Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
 Bu dosya “hangi dosya ne işe yarar?” haritasıdır.
 
-## Latest File Map Addendum - SheetJS Security Remediation Checkpoint A
+## Latest File Map Addendum - SheetJS Security Remediation Production Closure
 
 - `vendor/xlsx-0.20.3.tgz`
   Official SheetJS CE `0.20.3` vendored security-remediation artifact. Package dependency `file:vendor/xlsx-0.20.3.tgz` üzerinden çözülür; artifact unpack/edit edilmez.
 - `package.json` / `package-lock.json`
-  `xlsx@0.20.3` local vendored tarball dependency ve deterministic lockfile resolution'ı taşır; eski `xlsx@0.18.5` kaldırılmıştır.
+  `xlsx@0.20.3` local vendored tarball dependency ve deterministic lockfile resolution'ı taşır; eski `xlsx@0.18.5` kaldırılmıştır. `f12e2a0` ile canonical production build komutu `tsc -b && vite build --base=/demo/` oldu; `package-lock.json` bu hotfix'te değişmedi.
 - `e2e/helpers/importFixtures.ts`
   Node-only runtime workbook fixture helper'ı. SheetJS CE ESM file writing için `set_fs(fs)` binding'ini taşır; production browser source'una Node `fs` eklemez.
 - `tests/imports/excelReader.test.ts` / `tests/imports/excelReaderEmptyWorkbook.test.ts`
