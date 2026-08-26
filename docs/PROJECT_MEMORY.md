@@ -1,4 +1,4 @@
-<!-- Son guncelleme: SheetJS Security Remediation Product Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: SheetJS Security Remediation Checkpoint A | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,9 +6,9 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Canonical Student Search Reindex Production Closure
-- FILE_MAP: Canonical Student Search Reindex Checkpoint A
-- DECISIONS: Canonical Student Search Reindex Operational Model V1 + Production Closure
+- PROJECT_MEMORY: SheetJS Security Remediation Checkpoint A
+- FILE_MAP: SheetJS Security Remediation Checkpoint A
+- DECISIONS: SheetJS Security Remediation Checkpoint A
 - WhatsApp outbound disconnect PRODUCTION CLOSED: implementation `847ac24 feat: suspend whatsapp outbound integration`, pre-production docs closure `d2a4eff docs: close whatsapp outbound disconnect`. Draft modal/local metin hazırlama ACTIVE; outbound WhatsApp integration TEMPORARILY DISCONNECTED. Local manual QA, focused `2` dosya / `28`, canonical `59` dosya / `636` test, VDS deployment ve production smoke QA PASS.
 - Cleanup implementation checkpoints: `9ddc519 feat: add student group cleanup correction` and `77542a5 feat: add student group cleanup maintenance ui`.
 - Latest deployed/integration HEAD: `155dde6 docs: close student search reindex checkpoint a`.
@@ -17,20 +17,20 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - A+B+C tamamlandı ve production'da kapandı. Migration, backfill, DB version/index ve package/dependency değişikliği yoktur; appointment için ReminderRecord oluşturulmaz.
 - Production target `a617b09`; Windows VDS kaynak repo `C:\Sites\aday-ogrenci-takip-sistemi`, statik yayın `C:\Sites\netvadi-demo`, public URL `https://netvadi.com/demo/` altındadır. Doğrulanmış publish yedeği: `C:\Backups\netvadi-demo_20260818_004229`; rollback gerekmedi.
 - Controlled Legacy Student Group Cleanup (`MODEL B`) PRODUCTION CLOSED: product decision, Checkpoint A/B, final integration, production deployment and production smoke QA tamamlandı. Production smoke QA `PASS — data-limited`tir.
-- Student Card Profile Editing / `Bilgileri Güncelle` V1 `PRODUCTION FEATURE COMPLETE`: Checkpoint B implementation `e64c15d feat: add student profile editing ui`, deployed target `3b8d017 docs: close student profile editing checkpoint b`. Windows VDS deployment ve production browser smoke QA PASS'tir. Canonical Student Search Reindex Checkpoint A `b3dbd63 feat: add student search reindex maintenance ui` COMPLETE, Strategy Review PASS, local manual QA PASS, production deployment `155dde6` COMPLETE, production browser QA PASS ve production reindex COMPLETE'tir. Feature `PRODUCTION CLOSED`; sonraki onaylı checkpoint SheetJS Remediation Checkpoint A'dır ve implementation henüz başlamamıştır.
-- Dependency Security Discovery ve SheetJS Compatibility Discovery `COMPLETE`; SheetJS CE `0.20.3` için product decision `DECIDED`dir. Hedef resmi, hash-doğrulanabilir vendored tarball modelidir; implementation henüz başlamamıştır.
+- Student Card Profile Editing / `Bilgileri Güncelle` V1 `PRODUCTION FEATURE COMPLETE`: Checkpoint B implementation `e64c15d feat: add student profile editing ui`, deployed target `3b8d017 docs: close student profile editing checkpoint b`. Windows VDS deployment ve production browser smoke QA PASS'tir. Canonical Student Search Reindex Checkpoint A `b3dbd63 feat: add student search reindex maintenance ui` COMPLETE, Strategy Review PASS, local manual QA PASS, production deployment `155dde6` COMPLETE, production browser QA PASS ve production reindex COMPLETE'tir. Feature `PRODUCTION CLOSED`dur.
+- SheetJS Security Remediation Checkpoint A `IMPLEMENTED`: `a0505ff feat: remediate sheetjs dependency security`. Dependency Security Discovery ve SheetJS Compatibility Discovery `COMPLETE`, product decision `DECIDED`, Strategy Review `PASS` ve manual browser QA `PASS`tir. Production deployment ve production QA `PENDING`dir; feature henüz production-closed değildir.
 - Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
 
 ## Current Product Decision - SheetJS Security Remediation
 
-- [Security Scope] Mevcut direct production dependency `xlsx@0.18.5`, production browser bundle'ına girer ve kullanıcı seçimi `.xlsx` / `.xls` workbook byte'larını browser'da `XLSX.read(...)` ile parse eder. Crafted workbook input için plausible runtime exposure doğrulandı; belirli bir exploit chain gösterilmedi. Discovery anındaki npm audit snapshot'ı full graph için `10` grup (`2` low, `8` high), production-only için `3` grup (`1` low, `2` high) idi. Bu slice yalnız `xlsx` grubunu hedefler; React Router grubu ve diğer bağımlılıklar kalacaktır.
-- [Approved Target + Evidence] Hedef resmi SheetJS Community Edition `0.20.3`dür: `https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz`. Beklenen artifact `2,409,319` byte ve SHA256 `8DC73FC3B00203E72D176E85B50938627C7B086E607C682E8D3C22C02BB99FE8`dir. `0.20.3`, mevcut `GHSA-4r6h-8v6p-xvw6` ve `GHSA-5pgg-2g8v-p4x9` fixed-threshold'larının üzerindedir; disposable tarball audit denemesinde XLSX bulguları kayboldu, tüm audit sıfırlanmadı.
-- [Distribution Decision] Doğrudan CDN dependency kullanılmayacak. Onaylı implementation modeli `vendor/xlsx-0.20.3.tgz` ve package dependency olarak `"xlsx": "file:vendor/xlsx-0.20.3.tgz"`dır. Bu model deterministic `npm ci`, VDS/CDN bağımsız build, hash verification, lockfile pinning ve offline-friendly resolution sağlar; third-party tarball unpack veya değişiklik olmadan saklanır.
-- [Compatibility] Official `0.20.3` mevcut production kullanımına uyumludur: browser ArrayBuffer parse, `XLSX.read`, `sheet_to_json`, `aoa_to_sheet`, `book_new`, `book_append_sheet`, `writeFile`, TypeScript, Vite, XLS/XLSX, Turkish text, sayılar, blank cells ve multiple rows doğrulandı. Real pilot fixture'ın sekiz worksheet'i old/new parser arasında aynı çıktı verdi; temporary production build ve import Playwright E2E PASS'tir.
-- [Boundary + Risks] Production `src/**` değişikliği beklenmez. Bilinen değişiklik yalnız test altyapısındadır: ESM Node fixture writer için `e2e/helpers/importFixtures.ts` içinde `set_fs(fs)` gerekir. Date/UTC behavior, browser export/download QA ve real/representative legacy `.xls`, malformed/empty workbook coverage MEDIUM/LOW validation gereksinimleridir; yaklaşık `424.76 kB -> 493.28 kB` XLSX browser chunk artışı LOW kabul edilmiştir.
-- [Next Gate] `SHEETJS REMEDIATION — CHECKPOINT A`: tarball, `package.json`, `package-lock.json`, test-only E2E fixture adaptation ve hedefli regression tests. SHA256, `npm ci`, full/production-only audit JSON, focused Excel tests, canonical suite, build, import E2E, export/browser QA, Strategy Review ve manual QA PASS olmadan deploy yoktur. `npm audit fix` / `--force`, React Router/Vite/PostCSS/nanoid/undici/fast-uri/brace-expansion/@babel/core/glob/source-map remediation bu scope dışındadır.
+- [Security Scope] Pre-remediation direct production dependency `xlsx@0.18.5` browser bundle'ına giriyor ve kullanıcı seçimi `.xlsx` / `.xls` workbook byte'larını browser'da `XLSX.read(...)` ile parse ediyordu. Checkpoint A bunu `xlsx@0.20.3` ile değiştirdi; crafted workbook input için discovery'de doğrulanan plausible runtime exposure, belirli bir exploit chain iddiasına dönüştürülmedi.
+- [Artifact + Distribution] Resmi SheetJS Community Edition `0.20.3` artifact'i `vendor/xlsx-0.20.3.tgz` olarak vendored durumdadır. Boyutu `2,409,319` byte, SHA256 değeri `8DC73FC3B00203E72D176E85B50938627C7B086E607C682E8D3C22C02BB99FE8`dir. Package dependency tam olarak `"xlsx": "file:vendor/xlsx-0.20.3.tgz"`; `npm ci` deterministic local resolution ile PASS'tir. Artifact unpack/edit edilmemiş, `src/**` değiştirilmemiştir.
+- [Security Outcome] `GHSA-4r6h-8v6p-xvw6` ve `GHSA-5pgg-2g8v-p4x9` kaldırıldı. Son audit full graph `9` grup (`2` low, `7` high), production-only `2` grup (`react-router`, `react-router-dom`) gösterir; bu slice npm audit'i sıfırlamaz ve dependency security genelini kapatmaz.
+- [Validation] Focused Excel `3` dosya / `14` test, canonical `65` dosya / `672` test, production build, import E2E `6/6` ve browser export/download E2E `1/1` PASS'tir. XLSX chunk `493.28 kB` (`160.68 kB` gzip) oldu; bilinen genel Vite chunk warning non-blocking'dir. Yeni coverage date/time görünür import contract, gerçek legacy `.xls`/BIFF, malformed/empty workbook, export round-trip ve gerçek browser download'u kapsar.
+- [Strategy + Manual QA] İlk Strategy Review, JavaScript `Date` fixture'ının `Pacific/Kiritimati` altında host-timezone sensitive olduğunu buldu; bu production defect değildi. Test-only fix, Excel serial `46037.1875`, `yyyy-mm-dd hh:mm:ss` formatı ve exact `2026-01-15 04:30:00` raw:false çıktısıyla Default/UTC/Pacific-Kiritimati PASS verdi; narrow re-review PASS'tir. Kullanıcı-confirmed manual browser QA: `.xlsx` import, legacy `.xls` import ve gerçek Excel export/download PASS.
+- [Next Gate] SheetJS remediation için production deployment gate'i sıradadır; production deploy ve production QA henüz yapılmadı, feature production-closed değildir. `npm audit fix` / `--force`, React Router/Vite/PostCSS/nanoid/undici/fast-uri/brace-expansion/@babel/core/glob/source-map remediation bu scope dışındadır.
 
 ## Latest Checkpoint - Canonical Student Search Reindex Checkpoint A
 
