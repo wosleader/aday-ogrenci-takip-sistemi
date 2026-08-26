@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Student Profile Editing V1 Checkpoint B Docs Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Canonical Student Search Reindex Checkpoint A Docs Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
@@ -43,7 +43,7 @@ Son doğrulandı: Phone-Level Outcome Read Model Pilot
 - `src/features/students/services/studentProfileUpdate.ts`
   Beş onaylı alan için controlled profile patch, stale/UUID/missing/deleted/no-change guard, monotonic `updated_at` ve atomik `student_profile_edit` audit'ini uygular.
 - `src/features/students/services/studentSearchReindex.ts`
-  Canonical `search_text`i aktif, silinmemiş öğrencilere yönelik deterministic/idempotent, tek-transaction controlled reindex olarak kurar; operational execution çağrısı yoktur.
+  Canonical `search_text`i aktif, silinmemiş öğrencilere yönelik deterministic/idempotent, tek-transaction controlled reindex olarak kurar; yalnız Settings maintenance UI tarafından explicit backup/operation confirmation sonrasında çağrılır.
 - `src/features/students/services/studentUpdatedAt.ts`
   Aynı hızlı ardışık yazılarda `updated_at`ın monotonik kalması için ortak helper'dır.
 - `src/features/students/services/studentPhoneStatus.ts`
@@ -170,7 +170,7 @@ Son doğrulandı: Reporting V2 Summary MVP
 Son doğrulandı: Controlled Legacy Student Group Cleanup Production Closure
 
 - `src/features/settings/SettingsPage.tsx`
-  Ayarlar ekranı; kısayollar, hatırlatma ayarları, veri yönetimi, Tam Sistem Yedeği/Geri Yükleme, `Veri Sağlığı / Bakım` entry point'i ve student-group cleanup backup gate'in mount/session-local sahipliğini taşır. Successful restore sonrası cleanup gate'i resetler.
+  Ayarlar ekranı; kısayollar, hatırlatma ayarları, veri yönetimi, Tam Sistem Yedeği/Geri Yükleme, `Veri Sağlığı / Bakım` entry point'i ve cleanup/reindex shared backup gate'in mount/session-local sahipliğini taşır. Successful restore sonrası maintenance gate'lerini resetler.
 - `src/features/settings/StudentGroupCleanupMaintenance.tsx`
   `useLiveQuery` ile reactive cleanup candidate UI'ı, risk filtre/count'ları, per-record review context'i, explicit target/reason/confirmation, backup gate interaction'ı, correction service çağrısını, stale/error feedback'i ve doğal live refresh'i taşır.
 - `src/features/settings/services/dataManagement.ts`
@@ -717,7 +717,7 @@ Son doğrulandı: `d6b7620 feat: implement student profile editing checkpoint a`
 - `src/features/students/services/studentProfileUpdate.ts`
   Yalnız `student_full_name`, `current_class`, `student_group`, `neighborhood`, `district` controlled patch'ini; required reason, stale guard, normalized name/search rebuild, monotonic timestamp ve same-transaction audit rollback'ını uygular.
 - `src/features/students/services/studentSearchReindex.ts`
-  Aktif, silinmemiş öğrenciler için canonical builder kullanan, yalnız `search_text` yazan deterministic/idempotent controlled reindex service'idir; user/production data üzerinde henüz çalıştırılmamıştır.
+  Aktif, silinmemiş öğrenciler için canonical builder kullanan, yalnız `search_text` yazan deterministic/idempotent controlled reindex service'idir; local manual QA'da çalıştırılmış, production browser data üzerinde henüz çalıştırılmamıştır.
 - `src/features/students/services/studentUpdatedAt.ts`
   Profile update ve cleanup correction'da ortak monotonik `updated_at` helper'ıdır.
 - `src/features/students/services/studentSearchText.ts`
@@ -747,6 +747,22 @@ Son doğrulandı: `e64c15d feat: add student profile editing ui`
   Profile-edit modalına ait scoped form, provenance, validation ve responsive presentation stilini taşır; business logic içermez.
 - `tests/students/StudentsPageProfileEditing.test.tsx`
   Checkpoint B UI acceptance coverage'ını taşır: menu/modal, editable/deferred alanlar, fresh reader, validation/no-change/stale/write-failure UX, duplicate-submit/close davranışı, successful reactive refresh ve WhatsApp outbound side-effect yokluğu.
+
+## Latest File Map Addendum - Canonical Student Search Reindex Checkpoint A
+
+Son doğrulandı: `b3dbd63 feat: add student search reindex maintenance ui`
+
+- `src/features/settings/SettingsPage.tsx`
+  Cleanup ve reindex'in ortak Settings-session Full System Backup gate'ini sahiplenir; successful restore sonrası gate ve maintenance child resetini tetikler.
+- `src/features/settings/StudentSearchReindexMaintenance.tsx`
+  `Ayarlar -> Veri Sağlığı / Bakım` altındaki explicit reindex card'ını taşır. Existing reindex service'i çağırır; shared confirmed backup attestation'ını görünür açıklar, per-run confirmation ve duplicate-submit guard uygular, counters/failure feedback gösterir. Direct Dexie reindex logic içermez.
+- `src/features/students/services/studentSearchReindex.ts`
+  Değişmeden kullanılan canonical, active-only, idempotent, atomic `search_text` maintenance service'idir; profile/business data, audit ve `updated_at` mutate etmez.
+- `src/styles/global.css`
+  Reindex maintenance card, shared-backup status, confirmation, result ve responsive presentation için scoped stilleri taşır; business logic içermez.
+- `tests/settings/StudentSearchReindexMaintenance.test.tsx`
+  Locked/download/confirmed gate, truthful saved-file attestation, cleanup-to-reindex shared session integration, per-run confirmation, no-auto-run, duplicate guard, zero-update, failure, remount ve successful restore reset sözleşmelerini doğrular.
+- Scope dışı: schema/DB version/table/index/migration, package/dependency, WhatsApp, Student Profile Editing ve reindex service algoritması değiştirilmemiştir. Production reindex bu implementation tarafından otomatik çalıştırılmaz.
 
 ## Latest File Map Addendum - VELI ADI Import Alias Fix
 
