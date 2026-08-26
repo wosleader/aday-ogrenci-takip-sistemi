@@ -33,6 +33,7 @@ import {
   StudentGroupCleanupMaintenance,
   type StudentGroupCleanupBackupGateState
 } from "./StudentGroupCleanupMaintenance";
+import { StudentSearchReindexMaintenance } from "./StudentSearchReindexMaintenance";
 
 type SettingsTab = "general" | "shortcuts" | "reminders" | "data" | "maintenance";
 type DataManagementNotice = {
@@ -71,6 +72,7 @@ export function SettingsPage() {
   const [cleanupBackupGateError, setCleanupBackupGateError] = useState<string | null>(null);
   const [isPreparingCleanupBackup, setIsPreparingCleanupBackup] = useState(false);
   const cleanupBackupPreparationRef = useRef(false);
+  const [maintenanceResetKey, setMaintenanceResetKey] = useState(0);
 
   async function downloadManualBackup() {
     const backup = await createDataCleanupBackup();
@@ -172,6 +174,7 @@ export function SettingsPage() {
       setRestoreConfirmationText("");
       setCleanupBackupGateState("locked");
       setCleanupBackupGateError(null);
+      setMaintenanceResetKey((current) => current + 1);
       setDataManagementMessage("Sistem yedeği geri yüklendi.");
       setDataManagementNotice({
         type: "success",
@@ -515,13 +518,23 @@ export function SettingsPage() {
       ) : null}
 
       {activeTab === "maintenance" ? (
-        <StudentGroupCleanupMaintenance
-          backupGateError={cleanupBackupGateError}
-          backupGateState={cleanupBackupGateState}
-          isPreparingBackup={isPreparingCleanupBackup}
-          onConfirmBackupSaved={confirmCleanupBackupSaved}
-          onPrepareBackup={() => void prepareCleanupBackup()}
-        />
+        <>
+          <StudentSearchReindexMaintenance
+            backupGateError={cleanupBackupGateError}
+            backupGateState={cleanupBackupGateState}
+            isPreparingBackup={isPreparingCleanupBackup}
+            onConfirmBackupSaved={confirmCleanupBackupSaved}
+            onPrepareBackup={() => void prepareCleanupBackup()}
+            resetKey={maintenanceResetKey}
+          />
+          <StudentGroupCleanupMaintenance
+            backupGateError={cleanupBackupGateError}
+            backupGateState={cleanupBackupGateState}
+            isPreparingBackup={isPreparingCleanupBackup}
+            onConfirmBackupSaved={confirmCleanupBackupSaved}
+            onPrepareBackup={() => void prepareCleanupBackup()}
+          />
+        </>
       ) : null}
 
       {activeTab === "reminders" ? (
