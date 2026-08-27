@@ -1,4 +1,4 @@
-<!-- Son guncelleme: SheetJS Security Remediation Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: React Router Security Product Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,9 +6,9 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: SheetJS Security Remediation Production Closure
+- PROJECT_MEMORY: React Router Security Product Decision
 - FILE_MAP: SheetJS Security Remediation Production Closure
-- DECISIONS: SheetJS Security Remediation Production Closure
+- DECISIONS: React Router Security Product Decision
 - WhatsApp outbound disconnect PRODUCTION CLOSED: implementation `847ac24 feat: suspend whatsapp outbound integration`, pre-production docs closure `d2a4eff docs: close whatsapp outbound disconnect`. Draft modal/local metin hazırlama ACTIVE; outbound WhatsApp integration TEMPORARILY DISCONNECTED. Local manual QA, focused `2` dosya / `28`, canonical `59` dosya / `636` test, VDS deployment ve production smoke QA PASS.
 - Cleanup implementation checkpoints: `9ddc519 feat: add student group cleanup correction` and `77542a5 feat: add student group cleanup maintenance ui`.
 - Latest deployed/integration HEAD: `f12e2a0 fix: make production build use demo base`.
@@ -18,7 +18,8 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - Production target `a617b09`; Windows VDS kaynak repo `C:\Sites\aday-ogrenci-takip-sistemi`, statik yayın `C:\Sites\netvadi-demo`, public URL `https://netvadi.com/demo/` altındadır. Doğrulanmış publish yedeği: `C:\Backups\netvadi-demo_20260818_004229`; rollback gerekmedi.
 - Controlled Legacy Student Group Cleanup (`MODEL B`) PRODUCTION CLOSED: product decision, Checkpoint A/B, final integration, production deployment and production smoke QA tamamlandı. Production smoke QA `PASS — data-limited`tir.
 - Student Card Profile Editing / `Bilgileri Güncelle` V1 `PRODUCTION FEATURE COMPLETE`: Checkpoint B implementation `e64c15d feat: add student profile editing ui`, deployed target `3b8d017 docs: close student profile editing checkpoint b`. Windows VDS deployment ve production browser smoke QA PASS'tir. Canonical Student Search Reindex Checkpoint A `b3dbd63 feat: add student search reindex maintenance ui` COMPLETE, Strategy Review PASS, local manual QA PASS, production deployment `155dde6` COMPLETE, production browser QA PASS ve production reindex COMPLETE'tir. Feature `PRODUCTION CLOSED`dur.
-- SheetJS Security Remediation `PRODUCTION CLOSED`: implementation `a0505ff feat: remediate sheetjs dependency security`, canonical `/demo/` build hotfix'i `f12e2a0 fix: make production build use demo base`. Dependency Security/Compatibility Discovery `COMPLETE`, product decision `DECIDED`, Strategy Review, local manual QA, production deployment ve user-confirmed production browser QA `PASS`tir. Dependency security programı açık kalır; sonraki aday React Router / React Router DOM'dur.
+- SheetJS Security Remediation `PRODUCTION CLOSED`: implementation `a0505ff feat: remediate sheetjs dependency security`, canonical `/demo/` build hotfix'i `f12e2a0 fix: make production build use demo base`. Discovery/decision, Strategy Review, local manual QA, production deployment ve user-confirmed production browser QA `PASS`tir.
+- React Router / React Router DOM Security: Discovery `COMPLETE`, product decision `DECIDED`; implementation `NOT STARTED`, Strategy Review/manual QA/production deployment/production QA `PENDING`. Dependency security programı açıktır; sonraki execution gate bu dar Router remediation'dır.
 - Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
@@ -33,6 +34,15 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - [Initial Deployment Incident] İlk production target `c8af973`de VDS fast-forward, `xlsx@0.20.3` install/artifact integrity, build, static publish ve live root HTTP `200` başarılıydı. Ancak bare `npm.cmd run build`, root `/assets/...`, `/manifest.webmanifest` ve `/registerSW.js` referansları üretti; root asset URL'leri unrelated `text/plain` içerik döndürürken gerçek dosyalar `/demo/assets/...` altında kaldı. `vite.config.ts` base'i CLI `--base` argümanından türetir ve argüman yoksa `/`e çözer; önceki başarılı VDS deploy'ları `npm.cmd run build -- --base=/demo/` kullanıyordu. Bu build-invocation contract regression'ıydı, SheetJS runtime veya Caddy defect'i değildi; ilk browser deployment production QA PASS kabul edilmedi.
 - [/demo/ Build Hotfix + Final Deploy] `f12e2a0` yalnız `package.json` build scriptini `tsc -b && vite build --base=/demo/` yaptı; `package-lock.json`, `vite.config.ts`, `src/**`, tests, E2E, vendor ve Caddy değişmedi. Final VDS build'i plain `npm.cmd run build` ile `/demo/assets/...`, `/demo/manifest.webmanifest`, `/demo/registerSW.js` üretti; PWA `start_url`/`scope` `/demo/` oldu. Main JS/CSS ve `xlsx-BD77uNrC.js` (`493,280` byte) live HTTP `200` ve uygun JavaScript/CSS MIME ile doğrulandı; `https://netvadi.com/demo/` ve `https://www.netvadi.com/demo/` PASS'tir.
 - [Production Browser QA + Next Slice] User-confirmed production QA: application opens, live `.xlsx` import, live legacy `.xls` import ve live Excel export/download PASS. SheetJS slice `PRODUCTION CLOSED`dur; dependency security genel programı açık kalır. `npm audit fix` / `--force`, React Router/React Router DOM, Vite, PostCSS, nanoid, undici, fast-uri, brace-expansion, @babel/core, glob ve source-map remediation ayrı işlerdir; sonraki aday React Router / React Router DOM'dur.
+
+## Current Product Decision - React Router / React Router DOM Security
+
+- [Current State] Direct dependency `react-router-dom@^7.15.0`, installed/lock `react-router-dom@7.15.0` ve onun tek transitive dependency'si `react-router@7.15.0`dır. `react-router` direct dependency değildir; tek Router version pair vardır.
+- [Security Decision] Production audit `2` bulgu (`1 low`, `1 high`) ve `GHSA-84g9-w2xq-vcv6`, `GHSA-wrjc-x8rr-h8h6`, `GHSA-h8fp-f39c-q6mh`, `GHSA-337j-9hxr-rhxg`, `GHSA-chx6-hx7r-mcp5`, `GHSA-qwww-vcr4-c8h2` Router advisory setini raporlar. SSR/RSC/document request/hydration yolları bu client-only Vite SPA'da kullanılmasa da vulnerable production dependency remediate edilecektir.
+- [Architecture + Subpath] Router `createBrowserRouter`/`Navigate`, `RouterProvider`, `Link`/`NavLink`/`Outlet`/`useLocation`/`useNavigate` kullanır; SSR, RSC, server action, loader/action, Router redirect ve hydration API yoktur. `basename`, `import.meta.env.BASE_URL`den türetilir; canonical `vite build --base=/demo/` ile `/demo` olur. Bu slice basename/config veya Caddy değişikliği yapmaz; `/demo/students` direct refresh production SPA fallback QA'sında doğrulanacaktır.
+- [Approved Target] `react-router-dom@^7.18.2` ve onun transitive `react-router@7.18.2` pair'i onaylı hedefdir. `react-router` direct dependency eklenmez; major migration yoktur.
+- [Disposable Evidence] Isolated candidate `7.18.2/7.18.2`: router-focused `5` dosya / `56` test, canonical `65` dosya / `672` test, production build ve import browser regression `6/6` PASS verdi. Candidate `npm audit --omit=dev` `0` vulnerability; full audit'te Router bulguları kalktı, yalnız later slices için unrelated `1 low` / `6 high` kaldı.
+- [Next Gate] Implementation yalnız `package.json` ve `package-lock.json` hedefler. `src/**`, Vite/basename, Caddy, tests/E2E, vendor ve SheetJS değişmez; gerçek compatibility/coverage kanıtı aksi gerektirirse ayrı karar gerekir. Önce implementation validation + Strategy Review, sonra local ve production QA çalışacaktır.
 
 ## Latest Checkpoint - Canonical Student Search Reindex Checkpoint A
 
