@@ -1,4 +1,4 @@
-<!-- Son guncelleme: React Router Security Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Vite Security Product Decision | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,9 +6,9 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: React Router Security Production Closure
+- PROJECT_MEMORY: Vite Security Product Decision
 - FILE_MAP: SheetJS Security Remediation Production Closure
-- DECISIONS: React Router Security Production Closure
+- DECISIONS: Vite Security Product Decision
 - WhatsApp outbound disconnect PRODUCTION CLOSED: implementation `847ac24 feat: suspend whatsapp outbound integration`, pre-production docs closure `d2a4eff docs: close whatsapp outbound disconnect`. Draft modal/local metin hazırlama ACTIVE; outbound WhatsApp integration TEMPORARILY DISCONNECTED. Local manual QA, focused `2` dosya / `28`, canonical `59` dosya / `636` test, VDS deployment ve production smoke QA PASS.
 - Cleanup implementation checkpoints: `9ddc519 feat: add student group cleanup correction` and `77542a5 feat: add student group cleanup maintenance ui`.
 - Latest deployed/integration HEAD: `5998fe7 docs: close react router remediation checkpoint a`.
@@ -20,6 +20,7 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - Student Card Profile Editing / `Bilgileri Güncelle` V1 `PRODUCTION FEATURE COMPLETE`: Checkpoint B implementation `e64c15d feat: add student profile editing ui`, deployed target `3b8d017 docs: close student profile editing checkpoint b`. Windows VDS deployment ve production browser smoke QA PASS'tir. Canonical Student Search Reindex Checkpoint A `b3dbd63 feat: add student search reindex maintenance ui` COMPLETE, Strategy Review PASS, local manual QA PASS, production deployment `155dde6` COMPLETE, production browser QA PASS ve production reindex COMPLETE'tir. Feature `PRODUCTION CLOSED`dur.
 - SheetJS Security Remediation `PRODUCTION CLOSED`: implementation `a0505ff feat: remediate sheetjs dependency security`, canonical `/demo/` build hotfix'i `f12e2a0 fix: make production build use demo base`. Discovery/decision, Strategy Review, local manual QA, production deployment ve user-confirmed production browser QA `PASS`tir.
 - React Router / React Router DOM Security `PRODUCTION CLOSED`: discovery/product decision, implementation `7e9b4f6 chore: remediate react router dependency security`, Strategy Review, local QA, production deployment ve production browser QA `PASS`. Current production runtime `5998fe7`; dependency security programı açık kalır.
+- Vite Security Discovery `COMPLETE`; Vite Security Product Decision `DECIDED`; implementation `NOT STARTED`. Direct devDependency `vite@^8.0.11`, installed/lock `8.0.11` affected durumdadır. Approved declared range `^8.0.16`, current clean-install lock target `8.2.2`dir; bu aynı-major Vite 8 remediation'dır. SheetJS ve React Router production closed kalır; dependency security programı `OPEN`dur.
 - Current terminal HEAD/origin: yeni işe başlamadan önce Git ile doğrulanmalıdır.
 - Güncel branch: sprint-9-2-multi-phone-architecture-plan
 - Beklenen final working tree: yalnız `?? dev-server.log`
@@ -41,6 +42,14 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - [Security Outcome] `npm audit --omit=dev` `0` vulnerability verir. Önceki altı Router advisory'si (`GHSA-84g9-w2xq-vcv6`, `GHSA-wrjc-x8rr-h8h6`, `GHSA-h8fp-f39c-q6mh`, `GHSA-337j-9hxr-rhxg`, `GHSA-chx6-hx7r-mcp5`, `GHSA-qwww-vcr4-c8h2`) kalktı. Full audit'te sonraki dependency-security slice'larına ait `7` bulgu (`1 low`, `6 high`): `@babel/core`, `brace-expansion`, `fast-uri`, `nanoid`, `postcss`, `undici`, `vite` kaldı; genel dependency security closure iddiası yoktur.
 - [Validation + Local QA] Clean `npm ci`, single installed `7.18.2/7.18.2` graph, focused `5` dosya / `56`, canonical `65` dosya / `672`, canonical production build, `/demo/` asset/PWA contract, import E2E `6/6`, Strategy Review, local manual QA ve `git diff --check` PASS'tir. Local QA application startup, sidebar/internal navigation (`/students`, `/reminders`, `/settings`), browser back/forward, `.xlsx` import ve Excel export/download smoke'u kapsar. İlk `npm ci` Vite/Rolldown native-binding process lock'a takıldı; dev-server durdurulduktan sonra PASS verdi. Bu environment/process-lock olayıdır; `dev-server.log` değiştirilmedi/silinmedi/stage edilmedi.
 - [Production Deployment + Browser QA] Production target `5998fe7`; VDS `f12e2a0 -> 5998fe7` fast-forward, `npm ci`, installed Router graph ve production audit `0` PASS'tir. Canonical `npm.cmd run build` `/demo/assets/...`, `/demo/manifest.webmanifest`, `/demo/registerSW.js` üretir; root asset/PWA refs yoktur, manifest `start_url`/`scope` `/demo/`dur. Published index hash dist ile eşleşti; `https://netvadi.com/demo/`, `https://www.netvadi.com/demo/`, main JS/CSS, `registerSW.js` ve `xlsx-BD77uNrC.js` (`493,280` byte) HTTP `200` ve doğru MIME ile doğrulandı. `/demo/students` HTTP `200` SPA fallback verdi. User-confirmed browser QA: root open, direct `/demo/students`, refresh, sidebar/internal navigation, back/forward, `.xlsx` import ve Excel export/download PASS. React Router remediation `PRODUCTION CLOSED`dur.
+
+## Current Product Decision - Vite Security Remediation
+
+- [Current State + Advisories] Vite direct `devDependency` olarak `^8.0.11`, installed/lock olarak `8.0.11`dir; production browser runtime Vite içermez ve current `npm audit --omit=dev` `0` vulnerability verir. Ancak dev/build tooling için `GHSA-v6wh-96g9-6wx3` ve `GHSA-fx2h-pf6j-xcff` affected range `8.0.0 - 8.0.15`i kapsar; current lock affected olduğundan remediation gereklidir. Minimum fixed Vite 8 version `8.0.16`dır.
+- [Approved Version Model] Declared dependency `^8.0.11 -> ^8.0.16` olacaktır. Bu repo caret policy'sini korur; exact pin exception'ı kabul edilmedi. Disposable candidate clean install'da bu range `vite@8.2.2`ye çözüldü; `8.0.16` minimum security floor, `8.2.2` current expected lock target'tır. Major migration yoktur.
+- [Compatibility Evidence] Candidate clean `npm ci`, canonical Vitest `65` dosya / `672` test, canonical `npm.cmd run build` ve import E2E `6/6` PASS verdi. Build `/demo/assets/...`, `/demo/manifest.webmanifest`, `/demo/registerSW.js`, PWA `start_url`/`scope` `/demo/` ve XLSX dynamic chunk contract'ını korudu. `vite-plugin-pwa@1.3.0`, `@vitejs/plugin-react@6.0.1` ve `vitest@4.1.5` Vite 8 ile uyumludur; companion direct dependency upgrade'i onaylanmadı.
+- [Audit + Lock Boundary] Candidate full audit'te Vite kalktı; production-only audit `0` kaldı. `nanoid` ve `postcss` yalnız Vite graph refresh'inin transitive sonucu olarak kayboldu; canonical implementation audit'i bunu yeniden doğrulamadan ayrı remediation/closure iddiası yoktur. Yaklaşık `43` lock entry hareketi Vite, Rolldown/native bindings, Lightning CSS, PostCSS ve ilgili Vite transitiflerinden geldiği için `MEDIUM` implementation risk olarak kabul edildi; unrelated direct dependency hareketi kabul edilmez.
+- [Scope + Gates] Beklenen tracked implementation yalnız `package.json` ve `package-lock.json`dur. `vite.config.ts`, router basename, `src/**`, tests/E2E, PWA/Workbox config, vendor ve Caddy değişikliği onaylanmadı. Commit öncesi clean `npm ci`, single compatible Vite graph, `65/672`, build, `/demo/` artifact/PWA/XLSX checks, import E2E `6/6`, production-only audit `0`, full audit'te Vite absence, `git diff --check` ve Strategy Review gerekir. Local/prod manual QA henüz `PENDING`dir.
 
 ## Latest Checkpoint - Canonical Student Search Reindex Checkpoint A
 
