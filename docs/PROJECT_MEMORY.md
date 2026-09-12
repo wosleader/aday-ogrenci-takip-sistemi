@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Brace Expansion Checkpoint A Docs Preparation | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Brace Expansion Final Closure Docs | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -6,11 +6,11 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Sistem Sağlığı
 
-- PROJECT_MEMORY: Brace Expansion Checkpoint A Docs WIP
+- PROJECT_MEMORY: Dependency Security Program Re-rank
 - Brace Expansion implementation `COMPLETE`: `7646e81f76fda2294613456896fb24c8f3343c50` (`chore: remediate brace-expansion dependency security`), parent `731f2ede42d2534c5280c395ca79e9d6a2370877`, persistent scope `package-lock.json` only. Exact controlled movement root Brace `5.0.5 -> 5.0.9`, nested Brace `2.1.0 -> 2.1.4`; changed `2`, added/removed/parent/collateral movement `0`, manifest/root declarations byte-identicaldır. Update ve `npm ci --ignore-scripts` birer kez/retry olmadan tamamlandı; physical state `5.0.9 / 2.1.4`tür. Published engine metadata `18 || 20 || >=22 -> 20 || >=22` aynı Brace node içindedir, proje Node runtime değişmemiştir.
 - Brace identities `GHSA-jxxr-4gwj-5jf2`, `GHSA-3jxr-9vmj-r5cp`, `GHSA-mh99-v99m-4gvg`, `GHSA-rgw5-rvv9-x895` `ABSENT`; final audit `2` MODERATE, `0` HIGH/LOW/CRITICAL ve yalnız `GHSA-82fw-gwwq-j7x9` (`vitest`, `@vitest/mocker`) taşır. Production audit `0`; Dependency Security Program `OPEN`, Vitest remediation `NOT STARTED`dır. Focused automation `NOT AVAILABLE`; canonical tests `65/672`, `/demo/` build/PWA/XLSX contract ve import E2E `6/6` `PASS`; chunk-size warning known/non-blockingdir.
 - Strategy Review `PASS WITH NOTES`: `AdayDevTray.exe` sync gates sonrasında dev serverı yeniden başlattı ama tracked scope, final hashes ve evidence değişmedi; gelecekte dependency mutationdan önce `PROCESS-CLEAN GATE` zorunludur. Protected boundaries unchanged: minimatch `10.2.5`/`5.1.9`, Browserslist `4.28.7`, baseline-browser-mapping `2.11.22`, closed Babel six-package state, `vite-plugin-pwa@1.3.0`, `workbox-build@7.4.1`, Vitest/mocker ve root declarations.
-- `PRODUCTION DEPLOYMENT` ile `PRODUCTION BROWSER QA` `NOT REQUIRED WITH EVIDENCE`dir: package-lock-only scope, source/runtime/config/browser-shipped behavior değişimi yok, classification `LINT / BUILD / PWA TOOLING`, exposure `NOT PROVEN`, production audit `0`; production runtime `3a9dd50` kalır, `7646e81` deployed değildir. Checkpoint A `COMPLETE`, Checkpoint A Docs Review `PASS`, Brace slice `NOT FINAL-CLOSED YET`, current gate `BRACE-EXPANSION FINAL CLOSURE DOCS`dur. Sıra: Final Closure Docs -> Final Closure Docs Review -> exact-path Final Closure docs commit/push -> Brace closure -> program re-rank.
+- `PRODUCTION DEPLOYMENT` ile `PRODUCTION BROWSER QA` `NOT REQUIRED WITH EVIDENCE`dir: package-lock-only scope, source/runtime/config/browser-shipped behavior değişimi yok, classification `LINT / BUILD / PWA TOOLING`, exposure `NOT PROVEN`, production audit `0`; production runtime `3a9dd50` kalır, `7646e81` deployed değildir. Checkpoint A `COMPLETE`, Checkpoint A Docs Review `PASS`, Brace Expansion Security Remediation `CLOSED`, Final Closure `COMPLETE`, Final Closure Docs Review `PASS`, current gate `DEPENDENCY SECURITY PROGRAM RE-RANK`tır. Brace için aktif gate kalmamıştır; Vitest remediation `NOT STARTED` ve Dependency Security Program `OPEN`dur.
 
 ## Latest Security Closure - Browserslist Security Remediation
 
