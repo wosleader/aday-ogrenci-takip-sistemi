@@ -8,6 +8,14 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 
 ## Aktif Kararlar
 
+## Current Product Decision - Vitest Security Remediation
+
+- Vitest Security Remediation `REQUIRED`; Product Decision `COMPLETE`, Isolated Route Discovery `PASS`, implementation `NOT AUTHORIZED`. Classification `DEV / TEST TOOLING`, direct production exposure `NOT PROVEN`, production audit `0`; Dependency Security Program `OPEN`dur.
+- Advisory `GHSA-82fw-gwwq-j7x9`, affected range `<4.1.11`, fixed floor `4.1.11`; current `vitest@4.1.5` ve `@vitest/mocker@4.1.5`, package declaration `vitest: ^4.1.5` ve fixed version bu aralığa uyar.
+- Selected route `npm update vitest --package-lock-only --ignore-scripts`; rejected `npm update @vitest/mocker --package-lock-only --ignore-scripts` exit `0` verdi ancak hareket üretmedi. Expected closure `9` changed, added/removed `0`: `vitest`, `@vitest/expect`, `@vitest/mocker`, `@vitest/pretty-format`, `@vitest/runner`, `@vitest/snapshot`, `@vitest/spy`, `@vitest/utils` `4.1.5 -> 4.1.11`; `tinyrainbow 3.1.0 -> 3.1.1`.
+- Persistent implementation scope yalnız `package-lock.json`; `package.json` byte-identicaldir. Candidate root lock SHA256 `45A6A473881DBDE333448E49D76887AEF172AE3756AE95F13789CBF84F314A42`, hidden lock `4A0177F765555C9D257F8E083DA3B78D933D1B68A7F09FBB6FBCBA19E8273488`; current real repo `4D87 / 56F10C / DB8B54` olarak kalır. Lock metadata ve `npm ls` fiziksel kanıt değildir; implementation sonrası `npm ci --ignore-scripts` ve gerçek manifest doğrulaması gerekir.
+- Candidate audit full `0`, production `0`, no new advisory; önceki tüm security slices kapalı kalır. Current gate `VITEST CONTROLLED REAL-REPO IMPLEMENTATION PREPARATION`; future dependency mutation öncesi `PROCESS-CLEAN GATE` zorunludur.
+
 - [Sprint 6] Excel export raporlama/paylaşım içindir; eksiksiz geri yükleme için Tam Sistem Yedeği kullanılır.
 - [Sprint 6] Ana UI’da “JSON yedek” gibi teknik ifade gösterilmez; kullanıcı dili “Tam Sistem Yedeği” olur.
 - [Sprint 6.1] Arama operasyonu Aday Listesi + sağ kişi kartı üzerinden yürür; eski Arama Ekranı menüsü gizlidir.

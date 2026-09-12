@@ -1,5 +1,11 @@
 ﻿# HANDOFF_CURRENT — Aday Öğrenci Takip Sistemi
 
+## Current Product Decision - Vitest Security Remediation
+
+- Vitest Security Remediation `REQUIRED`; Product Decision `COMPLETE`, Isolated Route Discovery `PASS`, implementation `NOT AUTHORIZED`. Classification `DEV / TEST TOOLING`, direct production exposure `NOT PROVEN`, production audit `0`; Dependency Security Program `OPEN`dur. Advisory `GHSA-82fw-gwwq-j7x9`, affected range `<4.1.11`, fixed floor `4.1.11`; current `vitest@4.1.5` / `@vitest/mocker@4.1.5`, declaration `vitest: ^4.1.5`.
+- Selected route `npm update vitest --package-lock-only --ignore-scripts`; `@vitest/mocker` route exit `0` ile no-op kaldığı için reddedildi. Expected persistent scope yalnız `package-lock.json`; `package.json` byte-identical. Nine-node closure: `vitest`, `@vitest/expect`, `@vitest/mocker`, `@vitest/pretty-format`, `@vitest/runner`, `@vitest/snapshot`, `@vitest/spy`, `@vitest/utils` `4.1.5 -> 4.1.11`, `tinyrainbow 3.1.0 -> 3.1.1`; added/removed `0`.
+- Candidate root/hidden hashes `45A6A473...` / `4A0177F...`; current real-repo hashes `4D87 / 56F10C / DB8B54` olarak korunur. Candidate full audit `0`, production audit `0`; lock metadata ve `npm ls` fiziksel proof değildir, implementation sonrası `npm ci --ignore-scripts` ve manifest doğrulaması gerekir. Current gate `VITEST CONTROLLED REAL-REPO IMPLEMENTATION PREPARATION`; Vitest remediation henüz `NOT STARTED`, gelecekte dependency mutation öncesi `PROCESS-CLEAN GATE` zorunludur.
+
 ## 1. Güncel Repo Durumu
 
 - Repository adı: aday-ogrenci-takip-sistemi
