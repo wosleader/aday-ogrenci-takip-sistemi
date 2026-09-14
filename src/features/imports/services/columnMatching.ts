@@ -27,6 +27,7 @@ function isSystemExportInfoHeader(normalizedHeader: string): boolean {
   return (
     SYSTEM_EXPORT_INFO_HEADERS.has(normalizedHeader) ||
     /^telefon (10|[1-9]) durumu$/.test(normalizedHeader) ||
+    /^telefon (10|[1-9]) kullanim disi (nedeni|tarihi)$/.test(normalizedHeader) ||
     /^arama \d+ (tarihi|sonucu|telefon|aciklamasi|tekrar arama tarihi)$/.test(normalizedHeader)
   );
 }

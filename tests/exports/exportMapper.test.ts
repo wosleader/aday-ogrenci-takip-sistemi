@@ -257,32 +257,18 @@ describe("exportMapper", () => {
     expect(cellByHeader(sheet, "Baba Adı")).toBe("");
   });
 
-  it("adds Telefon 3-10 detailed headers immediately after Telefon 2 Durumu", () => {
+  it("groups detailed status, invalid reason, and invalidated date for Telefon 1-10", () => {
     const sheet = createDetailedExportSheet(dataset());
     const telefon1Index = sheet.headers.indexOf("Telefon 1");
 
-    expect(sheet.headers.slice(telefon1Index, telefon1Index + 20)).toEqual([
-      "Telefon 1",
-      "Telefon 1 Durumu",
-      "Telefon 2",
-      "Telefon 2 Durumu",
-      "Telefon 3",
-      "Telefon 3 Durumu",
-      "Telefon 4",
-      "Telefon 4 Durumu",
-      "Telefon 5",
-      "Telefon 5 Durumu",
-      "Telefon 6",
-      "Telefon 6 Durumu",
-      "Telefon 7",
-      "Telefon 7 Durumu",
-      "Telefon 8",
-      "Telefon 8 Durumu",
-      "Telefon 9",
-      "Telefon 9 Durumu",
-      "Telefon 10",
-      "Telefon 10 Durumu"
-    ]);
+    expect(sheet.headers.slice(telefon1Index, telefon1Index + 40)).toEqual(
+      Array.from({ length: 10 }, (_, index) => index + 1).flatMap((slot) => [
+        `Telefon ${slot}`,
+        `Telefon ${slot} Durumu`,
+        `Telefon ${slot} Kullanım Dışı Nedeni`,
+        `Telefon ${slot} Kullanım Dışı Tarihi`
+      ])
+    );
   });
 
   it("maps Telefon 3-only and Telefon 7-only records to their explicit detailed export slots", () => {
@@ -346,7 +332,7 @@ describe("exportMapper", () => {
     expect(sheet.headers).not.toContain("Baba Telefonu");
   });
 
-  it("exports invalid, wrong and duplicate extra phones with the expected detailed statuses", () => {
+  it("exports precise operational states and evidence without guessing legacy or format-invalid reasons", () => {
     const invalidTelefon3 = phoneForSlot(3, {
       phone_number: "05550000000",
       normalized_phone_number: "05550000000",
@@ -360,11 +346,23 @@ describe("exportMapper", () => {
       phoneForSlot(4, {
         phone_number: "05554444444",
         normalized_phone_number: "05554444444",
+        phone_status: "invalid",
         is_wrong: true
       }),
       phoneForSlot(5, {
-        phone_number: "05550000000",
-        normalized_phone_number: "05550000000"
+        invalid_reason: "wrong_number",
+        phone_status: "invalid",
+        is_wrong: true,
+        invalidated_at: "2026-05-09T10:15:00"
+      }),
+      phoneForSlot(6, { invalid_reason: "not_in_use", phone_status: "invalid", is_wrong: false }),
+      phoneForSlot(7, { invalid_reason: "manual", phone_status: "invalid", is_wrong: false }),
+      phoneForSlot(8, { phone_status: "contacted" }),
+      phoneForSlot(9, {
+        is_valid: false,
+        phone_status: "invalid",
+        invalid_reason: "wrong_number",
+        invalidated_at: "2026-05-09T11:30:00"
       })
     ];
 
@@ -372,11 +370,21 @@ describe("exportMapper", () => {
 
     expect(cellByHeader(sheet, "Telefon 1")).toBe("");
     expect(cellByHeader(sheet, "Telefon 3")).toBe("05550000000");
-    expect(cellByHeader(sheet, "Telefon 3 Durumu")).toBe("Geçersiz format");
+    expect(cellByHeader(sheet, "Telefon 3 Durumu")).toBe("Geçersiz Format");
+    expect(cellByHeader(sheet, "Telefon 3 Kullanım Dışı Nedeni")).toBe("");
+    expect(cellByHeader(sheet, "Telefon 3 Kullanım Dışı Tarihi")).toBe("");
     expect(cellByHeader(sheet, "Telefon 4")).toBe("05554444444");
-    expect(cellByHeader(sheet, "Telefon 4 Durumu")).toBe("Yanlış numara / kullanılmıyor");
-    expect(cellByHeader(sheet, "Telefon 5")).toBe("");
-    expect(cellByHeader(sheet, "Telefon 5 Durumu")).toBe("");
+    expect(cellByHeader(sheet, "Telefon 4 Durumu")).toBe("Eski Kullanım Dışı");
+    expect(cellByHeader(sheet, "Telefon 4 Kullanım Dışı Nedeni")).toBe("Belirtilmemiş Eski Kayıt");
+    expect(cellByHeader(sheet, "Telefon 5 Durumu")).toBe("Yanlış Numara");
+    expect(cellByHeader(sheet, "Telefon 5 Kullanım Dışı Nedeni")).toBe("Yanlış Numara");
+    expect(cellByHeader(sheet, "Telefon 5 Kullanım Dışı Tarihi")).toBe("09.05.2026 10:15");
+    expect(cellByHeader(sheet, "Telefon 6 Durumu")).toBe("Kullanılmıyor");
+    expect(cellByHeader(sheet, "Telefon 7 Durumu")).toBe("Manuel Devre Dışı");
+    expect(cellByHeader(sheet, "Telefon 8 Durumu")).toBe("Kullanılabilir");
+    expect(cellByHeader(sheet, "Telefon 8 Kullanım Dışı Nedeni")).toBe("");
+    expect(cellByHeader(sheet, "Telefon 9 Durumu")).toBe("Geçersiz Format");
+    expect(cellByHeader(sheet, "Telefon 9 Kullanım Dışı Nedeni")).toBe("Yanlış Numara");
   });
 
   it("maps call logs into dynamic chronological Arama columns", () => {
@@ -401,8 +409,13 @@ describe("exportMapper", () => {
   });
 
   it("translates phone status and call result values", () => {
-    expect(getPhoneStatusLabel(phone({ phone_status: "contacted" }))).toBe("Son görüşülen / iletişim kurulan numara");
-    expect(getPhoneStatusLabel(phone({ phone_status: "invalid", is_wrong: true }))).toBe("Yanlış numara / kullanılmıyor");
+    expect(getPhoneStatusLabel(phone({ phone_status: "active" }))).toBe("Kullanılabilir");
+    expect(getPhoneStatusLabel(phone({ phone_status: "contacted" }))).toBe("Kullanılabilir");
+    expect(getPhoneStatusLabel(phone({ phone_status: "invalid", invalid_reason: "wrong_number" }))).toBe("Yanlış Numara");
+    expect(getPhoneStatusLabel(phone({ phone_status: "invalid", invalid_reason: "not_in_use" }))).toBe("Kullanılmıyor");
+    expect(getPhoneStatusLabel(phone({ phone_status: "invalid", invalid_reason: "manual" }))).toBe("Manuel Devre Dışı");
+    expect(getPhoneStatusLabel(phone({ phone_status: "invalid", is_wrong: true }))).toBe("Eski Kullanım Dışı");
+    expect(getPhoneStatusLabel(phone({ is_valid: false, invalid_reason: "wrong_number" }))).toBe("Geçersiz Format");
     expect(getPhoneStatusLabel(null)).toBe("Belirtilmedi");
     expect(getCallResultLabel("wrong_number")).toBe("Yanlış numara");
     expect(getCallResultLabel(null)).toBe("Aranmadı");

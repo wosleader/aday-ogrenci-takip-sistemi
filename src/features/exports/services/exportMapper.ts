@@ -1,7 +1,7 @@
 import type { CallResult, LifecycleStatus } from "../../../domain/constants/statuses";
 import type { AppointmentRecord } from "../../../domain/models/appointment";
 import type { CallLogRecord } from "../../../domain/models/callLog";
-import type { PhoneRecord } from "../../../domain/models/phone";
+import type { PhoneInvalidReason, PhoneRecord } from "../../../domain/models/phone";
 import type { ReminderRecord } from "../../../domain/models/reminder";
 import type {
   DetailedExportSheet,
@@ -20,24 +20,44 @@ export const BASE_EXPORT_HEADERS = [
   "Baba Adı",
   "Telefon 1",
   "Telefon 1 Durumu",
+  "Telefon 1 Kullanım Dışı Nedeni",
+  "Telefon 1 Kullanım Dışı Tarihi",
   "Telefon 2",
   "Telefon 2 Durumu",
+  "Telefon 2 Kullanım Dışı Nedeni",
+  "Telefon 2 Kullanım Dışı Tarihi",
   "Telefon 3",
   "Telefon 3 Durumu",
+  "Telefon 3 Kullanım Dışı Nedeni",
+  "Telefon 3 Kullanım Dışı Tarihi",
   "Telefon 4",
   "Telefon 4 Durumu",
+  "Telefon 4 Kullanım Dışı Nedeni",
+  "Telefon 4 Kullanım Dışı Tarihi",
   "Telefon 5",
   "Telefon 5 Durumu",
+  "Telefon 5 Kullanım Dışı Nedeni",
+  "Telefon 5 Kullanım Dışı Tarihi",
   "Telefon 6",
   "Telefon 6 Durumu",
+  "Telefon 6 Kullanım Dışı Nedeni",
+  "Telefon 6 Kullanım Dışı Tarihi",
   "Telefon 7",
   "Telefon 7 Durumu",
+  "Telefon 7 Kullanım Dışı Nedeni",
+  "Telefon 7 Kullanım Dışı Tarihi",
   "Telefon 8",
   "Telefon 8 Durumu",
+  "Telefon 8 Kullanım Dışı Nedeni",
+  "Telefon 8 Kullanım Dışı Tarihi",
   "Telefon 9",
   "Telefon 9 Durumu",
+  "Telefon 9 Kullanım Dışı Nedeni",
+  "Telefon 9 Kullanım Dışı Tarihi",
   "Telefon 10",
   "Telefon 10 Durumu",
+  "Telefon 10 Kullanım Dışı Nedeni",
+  "Telefon 10 Kullanım Dışı Tarihi",
   "Sınıf",
   "Öğrenci Grubu",
   "Kategori",
@@ -108,6 +128,12 @@ const APPOINTMENT_LABELS: Record<string, string> = {
 };
 
 const PHONE_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+
+const PHONE_INVALID_REASON_LABELS: Record<PhoneInvalidReason, string> = {
+  wrong_number: "Yanlış Numara",
+  not_in_use: "Kullanılmıyor",
+  manual: "Manuel Devre Dışı"
+};
 
 export type SummaryColumnPlan = {
   includeMother: boolean;
@@ -194,22 +220,18 @@ export function getPhoneStatusLabel(phone?: PhoneRecord | null): string {
   }
 
   if (phone.is_valid === false) {
-    return "Geçersiz format";
+    return "Geçersiz Format";
+  }
+
+  if (phone.invalid_reason) {
+    return PHONE_INVALID_REASON_LABELS[phone.invalid_reason];
   }
 
   if (phone.is_wrong || phone.phone_status === "invalid") {
-    return "Yanlış numara / kullanılmıyor";
+    return "Eski Kullanım Dışı";
   }
 
-  if (phone.phone_status === "contacted") {
-    return "Son görüşülen / iletişim kurulan numara";
-  }
-
-  if (phone.phone_status === "active") {
-    return "Aktif";
-  }
-
-  return "Belirtilmedi";
+  return "Kullanılabilir";
 }
 
 export function getSummaryPhoneStatusLabel(phone?: PhoneRecord | null): string {
@@ -218,22 +240,37 @@ export function getSummaryPhoneStatusLabel(phone?: PhoneRecord | null): string {
   }
 
   if (phone.is_valid === false) {
-    return "Geçersiz format";
+    return "Geçersiz Format";
+  }
+
+  if (phone.invalid_reason) {
+    return PHONE_INVALID_REASON_LABELS[phone.invalid_reason];
   }
 
   if (phone.is_wrong || phone.phone_status === "invalid") {
-    return "Yanlış numara / kullanılmıyor";
+    return "Eski Kullanım Dışı";
   }
 
-  if (phone.phone_status === "contacted") {
-    return "Son görüşülen numara";
+  return "Kullanılabilir";
+}
+
+function getDetailedPhoneInvalidReasonLabel(phone: PhoneRecord): string {
+  if (phone.invalid_reason) {
+    return PHONE_INVALID_REASON_LABELS[phone.invalid_reason];
   }
 
-  if (phone.phone_status === "active") {
-    return "Aktif";
+  if (phone.is_valid !== false && (phone.is_wrong || phone.phone_status === "invalid")) {
+    return "Belirtilmemiş Eski Kayıt";
   }
 
-  return "Belirtilmedi";
+  return "";
+}
+
+function getDetailedPhoneInvalidatedAt(phone: PhoneRecord): string {
+  const hasExplicitReason = Boolean(phone.invalid_reason);
+  const isLegacyInvalid = phone.is_valid !== false && (phone.is_wrong || phone.phone_status === "invalid");
+
+  return hasExplicitReason || isLegacyInvalid ? formatExportDateTime(phone.invalidated_at) : "";
 }
 
 export function getSummaryCallResultLabel(value?: CallResult | string | null): string {
@@ -347,7 +384,12 @@ function createDetailedPhoneCells(bundle: ExportStudentBundle): Array<string | n
   return PHONE_SLOTS.flatMap((slot) => {
     const phone = phoneSlots.get(slot);
 
-    return [phone?.phone_number ?? "", phone ? getPhoneStatusLabel(phone) : ""];
+    return [
+      phone?.phone_number ?? "",
+      phone ? getPhoneStatusLabel(phone) : "",
+      phone ? getDetailedPhoneInvalidReasonLabel(phone) : "",
+      phone ? getDetailedPhoneInvalidatedAt(phone) : ""
+    ];
   });
 }
 

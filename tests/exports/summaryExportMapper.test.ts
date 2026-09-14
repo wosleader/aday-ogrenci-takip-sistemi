@@ -168,9 +168,10 @@ describe("summaryExportMapper", () => {
     expect(sheet.headers).not.toContain("Kampanya");
     expect(sheet.headers).not.toContain("Tekrar Arama Tarihi");
     expect(cellByHeader(sheet, "Telefon 1")).toBe("05321234567");
-    expect(cellByHeader(sheet, "Telefon 1 Durumu")).toBe("Son görüşülen numara");
+    expect(cellByHeader(sheet, "Telefon 1 Durumu")).toBe("Kullanılabilir");
     expect(cellByHeader(sheet, "Telefon 2")).toBe("05431234567");
-    expect(cellByHeader(sheet, "Telefon 2 Durumu")).toBe("Yanlış numara / kullanılmıyor");
+    expect(cellByHeader(sheet, "Telefon 2 Durumu")).toBe("Eski Kullanım Dışı");
+    expect(sheet.headers.some((header) => header.includes("Kullanım Dışı Nedeni"))).toBe(false);
   });
 
   it("keeps Telefon 1/2 and expands through the highest slot without compressing Telefon 7", () => {
@@ -325,7 +326,7 @@ describe("summaryExportMapper", () => {
     expect(cellByHeader(sheet, "Telefon 1")).toBe("");
     expect(cellByHeader(sheet, "Telefon 1 Durumu")).toBe("");
     expect(cellByHeader(sheet, "Telefon 3")).toBe("12345");
-    expect(cellByHeader(sheet, "Telefon 3 Durumu")).toBe("Geçersiz format");
+    expect(cellByHeader(sheet, "Telefon 3 Durumu")).toBe("Geçersiz Format");
   });
 
   it("fails fast when a supplied summary plan would omit populated data", () => {
@@ -405,12 +406,21 @@ describe("summaryExportMapper", () => {
   });
 
   it("translates summary phone status and call result values", () => {
-    expect(getSummaryPhoneStatusLabel(phone({ phone_status: "active" }))).toBe("Aktif");
-    expect(getSummaryPhoneStatusLabel(phone({ phone_status: "contacted" }))).toBe("Son görüşülen numara");
-    expect(getSummaryPhoneStatusLabel(phone({ phone_status: "invalid", is_wrong: true }))).toBe(
-      "Yanlış numara / kullanılmıyor"
+    expect(getSummaryPhoneStatusLabel(phone({ phone_status: "active" }))).toBe("Kullanılabilir");
+    expect(getSummaryPhoneStatusLabel(phone({ phone_status: "contacted" }))).toBe("Kullanılabilir");
+    expect(getSummaryPhoneStatusLabel(phone({ phone_status: "invalid", invalid_reason: "wrong_number" }))).toBe(
+      "Yanlış Numara"
     );
-    expect(getSummaryPhoneStatusLabel(phone({ is_valid: false }))).toBe("Geçersiz format");
+    expect(getSummaryPhoneStatusLabel(phone({ phone_status: "invalid", invalid_reason: "not_in_use" }))).toBe(
+      "Kullanılmıyor"
+    );
+    expect(getSummaryPhoneStatusLabel(phone({ phone_status: "invalid", invalid_reason: "manual" }))).toBe(
+      "Manuel Devre Dışı"
+    );
+    expect(getSummaryPhoneStatusLabel(phone({ phone_status: "invalid", is_wrong: true }))).toBe("Eski Kullanım Dışı");
+    expect(getSummaryPhoneStatusLabel(phone({ is_valid: false, invalid_reason: "wrong_number" }))).toBe(
+      "Geçersiz Format"
+    );
     expect(getSummaryPhoneStatusLabel(null)).toBe("");
     expect(getSummaryCallResultLabel("do_not_call")).toBe("Aranmayacak / ilgilenmiyor");
     expect(getSummaryCallResultLabel("wrong_number")).toBe("Yanlış numara");

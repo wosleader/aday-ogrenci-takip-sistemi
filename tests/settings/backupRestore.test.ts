@@ -494,7 +494,7 @@ describe("backup and restore hardening", () => {
     }
   });
 
-  it("preserves guardian relations and relation-aware phone metadata across backup restore", async () => {
+  it("preserves guardian relations, operational reasons, and legacy phones across backup restore", async () => {
     const sourceDatabase = await createDatabase();
     const targetDatabase = await createDatabase();
 
@@ -558,12 +558,14 @@ describe("backup and restore hardening", () => {
           relation_label: "Veli",
           source_column: "GSM",
           priority: 1,
-          phone_status: "active",
+          phone_status: "invalid",
           is_valid: true,
-          is_wrong: false,
+          is_wrong: true,
           is_primary: true,
-          call_outcome: "no_answer",
+          call_outcome: "wrong_number",
           call_outcome_updated_at: "2026-05-08T12:00:00.000Z",
+          invalid_reason: "wrong_number",
+          invalidated_at: "2026-05-08T12:00:00.000Z",
           sync_status: "local",
           created_at: timestamp,
           updated_at: timestamp,
@@ -581,12 +583,14 @@ describe("backup and restore hardening", () => {
           relation_label: "Anne",
           source_column: "ANNE TEL",
           priority: 2,
-          phone_status: "active",
+          phone_status: "invalid",
           is_valid: true,
           is_wrong: false,
           is_primary: false,
-          call_outcome: "busy",
+          call_outcome: "unused",
           call_outcome_updated_at: "2026-05-08T13:00:00.000Z",
+          invalid_reason: "not_in_use",
+          invalidated_at: "2026-05-08T13:00:00.000Z",
           sync_status: "local",
           created_at: timestamp,
           updated_at: timestamp,
@@ -604,10 +608,12 @@ describe("backup and restore hardening", () => {
           relation_label: "Baba",
           source_column: "BABA TEL",
           priority: 3,
-          phone_status: "active",
+          phone_status: "invalid",
           is_valid: true,
           is_wrong: false,
           is_primary: false,
+          invalid_reason: "manual",
+          invalidated_at: "2026-05-08T14:00:00.000Z",
           sync_status: "local",
           created_at: timestamp,
           updated_at: timestamp,
@@ -625,9 +631,9 @@ describe("backup and restore hardening", () => {
           relation_label: "Anne",
           source_column: "ANNE GSM",
           priority: 4,
-          phone_status: "active",
+          phone_status: "invalid",
           is_valid: true,
-          is_wrong: false,
+          is_wrong: true,
           is_primary: false,
           sync_status: "local",
           created_at: timestamp,
@@ -653,15 +659,29 @@ describe("backup and restore hardening", () => {
       ]);
       expect(restoredPhones).toHaveLength(4);
       expect(
-        restoredPhones.map(({ guardian_id, relation_label, source_column, reference_label, priority, call_outcome, call_outcome_updated_at }) => ({
-          guardian_id,
-          relation_label,
-          source_column,
-          reference_label,
-          priority,
-          call_outcome,
-          call_outcome_updated_at
-        }))
+        restoredPhones.map(
+          ({
+            guardian_id,
+            relation_label,
+            source_column,
+            reference_label,
+            priority,
+            call_outcome,
+            call_outcome_updated_at,
+            invalid_reason,
+            invalidated_at
+          }) => ({
+            guardian_id,
+            relation_label,
+            source_column,
+            reference_label,
+            priority,
+            call_outcome,
+            call_outcome_updated_at,
+            invalid_reason,
+            invalidated_at
+          })
+        )
       ).toEqual([
         {
           guardian_id: guardianId,
@@ -669,8 +689,10 @@ describe("backup and restore hardening", () => {
           source_column: "GSM",
           reference_label: "Telefon 1",
           priority: 1,
-          call_outcome: "no_answer",
-          call_outcome_updated_at: "2026-05-08T12:00:00.000Z"
+          call_outcome: "wrong_number",
+          call_outcome_updated_at: "2026-05-08T12:00:00.000Z",
+          invalid_reason: "wrong_number",
+          invalidated_at: "2026-05-08T12:00:00.000Z"
         },
         {
           guardian_id: motherId,
@@ -678,8 +700,10 @@ describe("backup and restore hardening", () => {
           source_column: "ANNE TEL",
           reference_label: "Telefon 2",
           priority: 2,
-          call_outcome: "busy",
-          call_outcome_updated_at: "2026-05-08T13:00:00.000Z"
+          call_outcome: "unused",
+          call_outcome_updated_at: "2026-05-08T13:00:00.000Z",
+          invalid_reason: "not_in_use",
+          invalidated_at: "2026-05-08T13:00:00.000Z"
         },
         {
           guardian_id: fatherId,
@@ -688,7 +712,9 @@ describe("backup and restore hardening", () => {
           reference_label: "Telefon 3",
           priority: 3,
           call_outcome: undefined,
-          call_outcome_updated_at: undefined
+          call_outcome_updated_at: undefined,
+          invalid_reason: "manual",
+          invalidated_at: "2026-05-08T14:00:00.000Z"
         },
         {
           guardian_id: null,
@@ -697,7 +723,9 @@ describe("backup and restore hardening", () => {
           reference_label: "Telefon 4",
           priority: 4,
           call_outcome: undefined,
-          call_outcome_updated_at: undefined
+          call_outcome_updated_at: undefined,
+          invalid_reason: undefined,
+          invalidated_at: undefined
         }
       ]);
     } finally {

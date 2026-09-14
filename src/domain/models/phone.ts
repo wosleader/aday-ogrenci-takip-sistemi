@@ -1,6 +1,7 @@
 import type { BaseEntity } from "./base";
 
 export type PhoneStatus = "active" | "contacted" | "invalid";
+export type PhoneInvalidReason = "wrong_number" | "not_in_use" | "manual";
 export type PhoneRelationLabel = "Telefon" | "Anne" | "Baba" | "Öğrenci" | "Veli" | "Yakın" | "Diğer";
 export type PhoneCallOutcome =
   | "not_called"
@@ -69,5 +70,7 @@ export type PhoneRecord = BaseEntity & {
   is_primary: boolean;
   call_outcome?: PhoneCallOutcome | null;
   call_outcome_updated_at?: string | null;
+  invalid_reason?: PhoneInvalidReason | null;
+  invalidated_at?: string | null;
   note?: string | null;
 };

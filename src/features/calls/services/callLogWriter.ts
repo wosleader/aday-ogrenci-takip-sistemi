@@ -10,6 +10,7 @@ import {
   calculateGuardianMessageDueTime
 } from "../../appointments/services/guardianMessageDueTime";
 import { createPhoneSnapshot } from "../../students/services/phoneCompatibility";
+import { applyPhoneStateTransitionInTransaction } from "../../students/services/studentPhoneStatus";
 import {
   areAllPhonesInvalidOrWrong,
   isSelectableCallPhone,
@@ -160,39 +161,18 @@ async function resolveContactPhone(
 
 async function keepOnlySelectedPhoneContacted(
   database: AppDatabase,
-  studentId: number,
-  selectedPhoneId?: number | null
+  selectedPhoneId: number | null | undefined,
+  timestamp: string
 ) {
   if (!selectedPhoneId) {
     return;
   }
 
-  const timestamp = nowIso();
-  const phones = await database.phones.where("student_id").equals(studentId).toArray();
-
-  await Promise.all(
-    phones.flatMap((phone) => {
-      if (!phone.id) {
-        return [];
-      }
-
-      if (phone.id === selectedPhoneId) {
-        return database.phones.update(phone.id, {
-          phone_status: "contacted",
-          is_wrong: false,
-          updated_at: timestamp
-        });
-      }
-
-      if (phone.phone_status === "contacted") {
-        return database.phones.update(phone.id, {
-          phone_status: "active",
-          updated_at: timestamp
-        });
-      }
-
-      return [];
-    })
+  await applyPhoneStateTransitionInTransaction(
+    selectedPhoneId,
+    { type: "set_contacted" },
+    database,
+    timestamp
   );
 }
 
@@ -251,7 +231,7 @@ export async function writeCallLog(
         throw new Error("Test transaction rollback hatası.");
       }
 
-      await keepOnlySelectedPhoneContacted(database, student.id, contactedPhone?.id ?? null);
+      await keepOnlySelectedPhoneContacted(database, contactedPhone?.id ?? null, timestamp);
 
       let reminderId: number | null = null;
       let appointmentId: number | null = null;

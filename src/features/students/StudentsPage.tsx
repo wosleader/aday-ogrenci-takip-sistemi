@@ -2264,6 +2264,9 @@ export function StudentsPage() {
     try {
       setActionMessage(null);
       await updatePhoneOutcome(phoneId, outcome);
+      if (outcome === "wrong_number" || outcome === "unused") {
+        setSelectedCallPhoneId((currentPhoneId) => (currentPhoneId === phoneId ? null : currentPhoneId));
+      }
       const message = `Telefon durumu ${getPhoneCallOutcomeLabel(outcome)} olarak kaydedildi.`;
       setActionMessage(message);
       showOperationToast(message, "success");

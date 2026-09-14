@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { AppDatabase } from "../../src/db/db";
 import type { PhoneRecord } from "../../src/domain/models/phone";
 import type { StudentRecord } from "../../src/domain/models/student";
@@ -71,6 +71,7 @@ describe("studentPhoneStatus", () => {
       expect(result.phone_status).toBe("contacted");
       expect(updatedPhone?.phone_status).toBe("contacted");
       expect(updatedPhone?.is_wrong).toBe(false);
+      expect(await database.audit_logs.count()).toBe(1);
     } finally {
       database.close();
       await database.delete();
@@ -89,6 +90,7 @@ describe("studentPhoneStatus", () => {
 
       expect(result.phone_status).toBe("active");
       expect(updatedPhone?.phone_status).toBe("active");
+      expect(await database.audit_logs.count()).toBe(1);
     } finally {
       database.close();
       await database.delete();
@@ -115,13 +117,14 @@ describe("studentPhoneStatus", () => {
 
       expect((await database.phones.get(firstPhoneId))?.phone_status).toBe("active");
       expect((await database.phones.get(secondPhoneId))?.phone_status).toBe("contacted");
+      expect(await database.audit_logs.count()).toBe(2);
     } finally {
       database.close();
       await database.delete();
     }
   });
 
-  it("marks a phone as invalid and keeps is_wrong in sync", async () => {
+  it("manually disables a phone with an explicit reason and audit without inventing an outcome", async () => {
     const database = await createDatabase();
 
     try {
@@ -133,26 +136,191 @@ describe("studentPhoneStatus", () => {
 
       expect(result.phone_status).toBe("invalid");
       expect(updatedPhone?.phone_status).toBe("invalid");
-      expect(updatedPhone?.is_wrong).toBe(true);
+      expect(updatedPhone?.invalid_reason).toBe("manual");
+      expect(updatedPhone?.invalidated_at).toEqual(expect.any(String));
+      expect(updatedPhone?.is_wrong).toBe(false);
+      expect(updatedPhone?.call_outcome).toBeUndefined();
+
+      const audit = await database.audit_logs.where("entity_id").equals(phoneId).first();
+      expect(audit).toMatchObject({
+        entity_type: "phone",
+        action_type: "update",
+        field_name: "operational_status",
+        performed_by: "agent"
+      });
+      expect(JSON.parse(audit?.old_value ?? "{}")).toMatchObject({
+        phone_status: "active",
+        invalid_reason: null,
+        invalidated_at: null,
+        is_wrong: false
+      });
+      expect(JSON.parse(audit?.new_value ?? "{}")).toMatchObject({
+        phone_status: "invalid",
+        invalid_reason: "manual",
+        is_wrong: false
+      });
     } finally {
       database.close();
       await database.delete();
     }
   });
 
-  it("removes invalid status when the same phone is selected again", async () => {
+  it("re-enables a wrong-number phone and resets its invalidating outcome without changing call history", async () => {
     const database = await createDatabase();
 
     try {
       const studentId = await database.students.add(student());
-      const phoneId = await database.phones.add(phone(studentId, { phone_status: "invalid", is_wrong: true }));
+      const phoneId = await database.phones.add(
+        phone(studentId, {
+          phone_status: "invalid",
+          invalid_reason: "wrong_number",
+          invalidated_at: "2026-05-09T09:00:00.000Z",
+          is_wrong: true,
+          call_outcome: "wrong_number",
+          call_outcome_updated_at: "2026-05-09T09:00:00.000Z"
+        })
+      );
+      const callLogId = await database.call_logs.add({
+        uuid: crypto.randomUUID(),
+        student_id: studentId,
+        phone_id: phoneId,
+        contacted_phone_id: phoneId,
+        contacted_phone_number: "05321234567",
+        call_time: "2026-05-09T09:00:00.000Z",
+        call_result: "wrong_number",
+        sync_status: "local",
+        created_at: timestamp,
+        updated_at: timestamp,
+        deleted_at: null
+      });
+      const historicalCallLog = await database.call_logs.get(callLogId);
 
       const result = await markPhoneAsInvalid(phoneId, database);
       const updatedPhone = await database.phones.get(phoneId);
 
       expect(result.phone_status).toBe("active");
       expect(updatedPhone?.phone_status).toBe("active");
+      expect(updatedPhone?.invalid_reason).toBeNull();
+      expect(updatedPhone?.invalidated_at).toBeNull();
       expect(updatedPhone?.is_wrong).toBe(false);
+      expect(updatedPhone?.call_outcome).toBe("not_called");
+      expect(updatedPhone?.call_outcome_updated_at).toEqual(expect.any(String));
+      expect(updatedPhone?.call_outcome_updated_at).not.toBe("2026-05-09T09:00:00.000Z");
+      expect(await database.call_logs.get(callLogId)).toEqual(historicalCallLog);
+      expect(await database.audit_logs.count()).toBe(1);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("re-enables a not-in-use phone and resets its invalidating outcome", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const phoneId = await database.phones.add(
+        phone(studentId, {
+          phone_status: "invalid",
+          invalid_reason: "not_in_use",
+          invalidated_at: "2026-05-09T09:00:00.000Z",
+          is_wrong: false,
+          call_outcome: "unused",
+          call_outcome_updated_at: "2026-05-09T09:00:00.000Z"
+        })
+      );
+
+      await markPhoneAsInvalid(phoneId, database);
+
+      expect(await database.phones.get(phoneId)).toMatchObject({
+        phone_status: "active",
+        invalid_reason: null,
+        invalidated_at: null,
+        is_wrong: false,
+        call_outcome: "not_called",
+        call_outcome_updated_at: expect.any(String)
+      });
+      expect(await database.audit_logs.count()).toBe(1);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("re-enables a legacy wrong-flag phone whose stored status is still active", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const phoneId = await database.phones.add(
+        phone(studentId, {
+          phone_status: "active",
+          is_wrong: true
+        })
+      );
+
+      const result = await markPhoneAsInvalid(phoneId, database);
+
+      expect(result.phone_status).toBe("active");
+      expect(await database.phones.get(phoneId)).toMatchObject({
+        phone_status: "active",
+        invalid_reason: null,
+        invalidated_at: null,
+        is_wrong: false
+      });
+      expect(await database.audit_logs.count()).toBe(1);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("re-enables a manually disabled phone while preserving a non-invalidating outcome", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const phoneId = await database.phones.add(
+        phone(studentId, {
+          phone_status: "invalid",
+          invalid_reason: "manual",
+          invalidated_at: "2026-05-09T09:00:00.000Z",
+          is_wrong: false,
+          call_outcome: "busy",
+          call_outcome_updated_at: "2026-05-09T09:00:00.000Z"
+        })
+      );
+
+      await markPhoneAsInvalid(phoneId, database);
+
+      expect(await database.phones.get(phoneId)).toMatchObject({
+        phone_status: "active",
+        invalid_reason: null,
+        invalidated_at: null,
+        is_wrong: false,
+        call_outcome: "busy",
+        call_outcome_updated_at: "2026-05-09T09:00:00.000Z"
+      });
+      expect(await database.audit_logs.count()).toBe(1);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("rolls back an operational transition when its audit write fails", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const phoneId = await database.phones.add(phone(studentId));
+      const before = await database.phones.get(phoneId);
+      vi.spyOn(database.audit_logs, "add").mockRejectedValueOnce(new Error("audit failed"));
+
+      await expect(markPhoneAsInvalid(phoneId, database)).rejects.toThrow("audit failed");
+
+      expect(await database.phones.get(phoneId)).toEqual(before);
+      expect(await database.audit_logs.count()).toBe(0);
     } finally {
       database.close();
       await database.delete();

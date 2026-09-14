@@ -98,6 +98,9 @@ describe("studentPhoneOutcome", () => {
         is_wrong: false,
         is_valid: true
       });
+      expect(updatedFirstPhone?.invalid_reason).toBeUndefined();
+      expect(updatedFirstPhone?.invalidated_at).toBeUndefined();
+      expect(updatedFirstPhone?.updated_at).toBe(timestamp);
       expect(untouchedSecondPhone).toMatchObject({
         phone_status: "invalid",
         is_wrong: true,
@@ -108,6 +111,7 @@ describe("studentPhoneOutcome", () => {
       expect(unchangedStudent?.last_call_result).toBe("not_called");
       expect(unchangedStudent?.last_contacted_at).toBeUndefined();
       expect(unchangedStudent?.last_contacted_phone_id).toBeUndefined();
+      expect(await database.audit_logs.count()).toBe(0);
     } finally {
       database.close();
       await database.delete();
@@ -137,6 +141,159 @@ describe("studentPhoneOutcome", () => {
       await database.delete();
     }
   });
+
+  it("atomically records wrong number as an invalid operational state without rewriting call history", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const phoneId = await database.phones.add(phone(studentId));
+      const callLogId = await database.call_logs.add({
+        uuid: crypto.randomUUID(),
+        student_id: studentId,
+        phone_id: phoneId,
+        contacted_phone_id: phoneId,
+        contacted_phone_number: "05321234567",
+        call_time: timestamp,
+        call_result: "reached",
+        sync_status: "local",
+        created_at: timestamp,
+        updated_at: timestamp,
+        deleted_at: null
+      });
+      const historicalCallLog = await database.call_logs.get(callLogId);
+
+      await updatePhoneOutcome(phoneId, "wrong_number", database);
+
+      const updatedPhone = await database.phones.get(phoneId);
+      expect(updatedPhone).toMatchObject({
+        call_outcome: "wrong_number",
+        call_outcome_updated_at: expect.any(String),
+        phone_status: "invalid",
+        invalid_reason: "wrong_number",
+        invalidated_at: expect.any(String),
+        is_wrong: true,
+        is_valid: true
+      });
+      expect(await database.call_logs.get(callLogId)).toEqual(historicalCallLog);
+
+      const [audit] = await database.audit_logs.toArray();
+      expect(audit).toMatchObject({ entity_type: "phone", entity_id: phoneId, field_name: "operational_status" });
+      expect(JSON.parse(audit.new_value ?? "{}")).toMatchObject({
+        phone_status: "invalid",
+        invalid_reason: "wrong_number",
+        is_wrong: true
+      });
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("atomically records not in use without setting the wrong-number compatibility flag", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const phoneId = await database.phones.add(phone(studentId));
+
+      await updatePhoneOutcome(phoneId, "unused", database);
+
+      expect(await database.phones.get(phoneId)).toMatchObject({
+        call_outcome: "unused",
+        phone_status: "invalid",
+        invalid_reason: "not_in_use",
+        invalidated_at: expect.any(String),
+        is_wrong: false,
+        is_valid: true
+      });
+      expect(await database.audit_logs.count()).toBe(1);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("keeps an existing invalid reason when a temporary outcome is selected", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const phoneId = await database.phones.add(
+        phone(studentId, {
+          phone_status: "invalid",
+          invalid_reason: "manual",
+          invalidated_at: "2026-05-08T08:30:00.000Z",
+          is_wrong: false
+        })
+      );
+
+      await updatePhoneOutcome(phoneId, "busy", database);
+
+      expect(await database.phones.get(phoneId)).toMatchObject({
+        call_outcome: "busy",
+        phone_status: "invalid",
+        invalid_reason: "manual",
+        invalidated_at: "2026-05-08T08:30:00.000Z",
+        is_wrong: false
+      });
+      expect(await database.audit_logs.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it.each([
+    ["wrong_number", "no_answer", "wrong_number", true],
+    ["unused", "reached", "not_in_use", false]
+  ] as const)(
+    "re-enables an outcome-invalid phone when %s changes to %s",
+    async (initialOutcome, nextOutcome, invalidReason, isWrong) => {
+      const database = await createDatabase();
+
+      try {
+        const studentId = await database.students.add(student());
+        const phoneId = await database.phones.add(
+          phone(studentId, {
+            phone_status: "invalid",
+            invalid_reason: invalidReason,
+            invalidated_at: "2026-05-08T08:30:00.000Z",
+            is_wrong: isWrong,
+            call_outcome: initialOutcome,
+            call_outcome_updated_at: "2026-05-08T08:30:00.000Z"
+          })
+        );
+
+        await updatePhoneOutcome(phoneId, nextOutcome, database);
+
+        expect(await database.phones.get(phoneId)).toMatchObject({
+          call_outcome: nextOutcome,
+          call_outcome_updated_at: expect.any(String),
+          phone_status: "active",
+          invalid_reason: null,
+          invalidated_at: null,
+          is_wrong: false
+        });
+        const [audit] = await database.audit_logs.toArray();
+        expect(audit).toMatchObject({ entity_type: "phone", entity_id: phoneId, field_name: "operational_status" });
+        expect(JSON.parse(audit.old_value ?? "{}")).toMatchObject({
+          phone_status: "invalid",
+          invalid_reason: invalidReason,
+          is_wrong: isWrong
+        });
+        expect(JSON.parse(audit.new_value ?? "{}")).toMatchObject({
+          phone_status: "active",
+          invalid_reason: null,
+          invalidated_at: null,
+          is_wrong: false
+        });
+      } finally {
+        database.close();
+        await database.delete();
+      }
+    }
+  );
 
   it("does not share outcome between duplicate normalized phones on different candidates", async () => {
     const database = await createDatabase();

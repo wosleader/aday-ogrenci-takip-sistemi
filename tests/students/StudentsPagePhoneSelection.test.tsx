@@ -607,6 +607,71 @@ describe("StudentsPage phone selection", () => {
     });
   });
 
+  it("clears the current-call selection when an outcome makes an extra phone unusable", async () => {
+    const user = userEvent.setup();
+    await seedStudentWithPhones("MELIS KAYA", "invalidating-outcome-selection");
+
+    renderStudentsPage();
+
+    const phone3Card = await waitFor(() => getDrawerPhoneCard("Telefon 3"));
+    await user.click(within(phone3Card).getByRole("button", { name: "Bu görüşmede kullanılacak telefon" }));
+
+    await waitFor(() => {
+      expect(
+        within(getDrawerPhoneCard("Telefon 3")).getByRole("button", {
+          name: "Bu görüşmede kullanılacak telefon seçili"
+        })
+      ).toBeInTheDocument();
+    });
+
+    await user.click(
+      within(getDrawerPhoneCard("Telefon 3")).getByRole("button", {
+        name: "Bu telefonun son arama sonucu: Aranmadı"
+      })
+    );
+    await user.click(screen.getByRole("menuitemradio", { name: "Kullanılmıyor" }));
+
+    await waitFor(async () => {
+      const updatedPhone = await db.phones.where("normalized_phone_number").equals("05321000003").first();
+
+      expect(updatedPhone).toMatchObject({
+        call_outcome: "unused",
+        phone_status: "invalid",
+        invalid_reason: "not_in_use",
+        is_wrong: false
+      });
+      expect(
+        within(getDrawerPhoneCard("Telefon 3")).queryByRole("button", {
+          name: "Bu görüşmede kullanılacak telefon seçili"
+        })
+      ).not.toBeInTheDocument();
+    });
+
+    await user.click(
+      within(getDrawerPhoneCard("Telefon 3")).getByRole("button", {
+        name: "Telefonu tekrar kullanılabilir yap"
+      })
+    );
+
+    await waitFor(async () => {
+      const reenabledPhone = await db.phones.where("normalized_phone_number").equals("05321000003").first();
+
+      expect(reenabledPhone).toMatchObject({
+        call_outcome: "not_called",
+        call_outcome_updated_at: expect.any(String),
+        phone_status: "active",
+        invalid_reason: null,
+        invalidated_at: null,
+        is_wrong: false
+      });
+      expect(
+        within(getDrawerPhoneCard("Telefon 3")).getByRole("button", {
+          name: "Bu telefonun son arama sonucu: Aranmadı"
+        })
+      ).toBeInTheDocument();
+    });
+  });
+
   it("shows the latest call outcome for Telefon 1, Telefon 2, and Telefon 3+ cards", async () => {
     const studentId = await seedStudentWithPhones("MELIS KAYA", "phone-outcomes");
     const phone1Id = await getPhoneId("05321000001");
@@ -779,7 +844,10 @@ describe("StudentsPage phone selection", () => {
       const updatedPhone = await db.phones.where("normalized_phone_number").equals("05321000003").first();
 
       expect(updatedPhone?.phone_status).toBe("invalid");
-      expect(updatedPhone?.is_wrong).toBe(true);
+      expect(updatedPhone?.invalid_reason).toBe("manual");
+      expect(updatedPhone?.invalidated_at).toEqual(expect.any(String));
+      expect(updatedPhone?.is_wrong).toBe(false);
+      expect(updatedPhone?.call_outcome).toBeUndefined();
     });
 
     expect(

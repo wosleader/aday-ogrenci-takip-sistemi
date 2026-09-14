@@ -178,7 +178,11 @@ describe("column matching", () => {
     for (const header of [
       "Sıra No",
       "Telefon 1 Durumu",
+      "Telefon 1 Kullanım Dışı Nedeni",
+      "Telefon 1 Kullanım Dışı Tarihi",
       "Telefon 10 Durumu",
+      "Telefon 10 Kullanım Dışı Nedeni",
+      "Telefon 10 Kullanım Dışı Tarihi",
       "Kategori",
       "Son Arama Sonucu",
       "Son Görüşülen Telefon",
