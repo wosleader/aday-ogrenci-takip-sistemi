@@ -1,5 +1,12 @@
 ﻿# HANDOFF_CURRENT — Aday Öğrenci Takip Sistemi
 
+## Latest Product Closure - Phone Operational Status / Invalid Reason
+
+- Phone Operational Status / Invalid Reason `MODEL B` `CLOSED`; implementation `786c2fb32b61b1b3652ea7b422b4b6ac81fd4c2a` (`feat: track phone operational invalid reasons`) committed/pushed durumdadır.
+- Optional `invalid_reason` (`wrong_number` | `not_in_use` | `manual`) ve `invalidated_at` eklendi; schema/version bump, migration/backfill yoktur. Legacy reason'sız invalid kayıtlar desteklenir.
+- Canonical atomic transition/audit transaction kullanılır; `callLogWriter` bypass'ı ve legacy `is_wrong` uyumluluk açığı kapatıldı. Tarihsel call log/snapshot kayıtları değiştirilmez; export Telefon 1-10 fidelity'sini ve backup/restore uyumluluğunu korur.
+- Manual QA `PASS`; focused `5/103`, canonical `65/686`, build `PASS`, import E2E `6/6 PASS`; Strategy Review `PASS WITH NOTES`. Production deploy edilmedi, runtime `3a9dd50` ve sonraki ürün slice'ı `PHONE ACTION SIMPLIFICATION`dır.
+
 ## Latest Security Closure - Vitest Security Remediation
 
 - Vitest Security Remediation `CLOSED`; decision/route docs commit `af0940f25788d2c3d1e60ac9c92bd0b63f7ec1bb`, implementation `fed8af10a0c271d7529e971943292eb35d76bd8b`; persistent scope yalnız `package-lock.json`, `package.json` unchanged.

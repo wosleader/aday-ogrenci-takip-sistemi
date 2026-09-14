@@ -4,6 +4,14 @@
 
 Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
+## Latest Product Closure - Phone Operational Status / Invalid Reason
+
+- Phone Operational Status / Invalid Reason `MODEL B` `CLOSED`; implementation `786c2fb32b61b1b3652ea7b422b4b6ac81fd4c2a` (`feat: track phone operational invalid reasons`) committed/pushed durumdadır.
+- `PhoneRecord` optional `invalid_reason` (`wrong_number` | `not_in_use` | `manual`) ve `invalidated_at` alanlarını destekler; DB schema/version bump, migration ve backfill yoktur. Legacy reason'sız invalid kayıtlar guessed reason olmadan desteklenir.
+- Canonical atomic path; wrong number/unused invalidation, manual disable, outcome-caused re-enable, manual re-enable normalization, audit transaction, `callLogWriter` bypass düzeltmesi ve legacy `is_wrong` uyumluluğunu kapsar. Call logs/snapshots tarihsel olarak korunur.
+- Summary export compact Telefon N / Durumu yapısını, detailed export reason/date evidence'ını ve Telefon 1-10 fidelity'sini korur; backup/restore optional fields roundtrip eder. Manual QA `PASS`; focused `5/103`, canonical `65/686`, build `PASS`, import E2E `6/6 PASS`; Strategy Review `PASS WITH NOTES`.
+- Bu slice production'a deploy edilmedi; production runtime `3a9dd50` olarak kalır ve repository HEAD deployment değildir. Sonraki ürün slice'ı `PHONE ACTION SIMPLIFICATION`dır; phone cleanup/quarantine ve hard-delete ayrı kapsamdır.
+
 ## Sistem Sağlığı
 
 - PROJECT_MEMORY: Dependency Security Program Closed
