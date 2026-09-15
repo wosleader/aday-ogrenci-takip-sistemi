@@ -700,6 +700,12 @@ type PhoneOutcomeMenuPosition = {
   width: number;
 };
 
+type PhoneActionMenuPosition = {
+  left: number;
+  top: number;
+  width: number;
+};
+
 type OperationToast = {
   id: number;
   message: string;
@@ -776,8 +782,9 @@ const SHORTCUT_HELP_GROUPS: ShortcutHelpGroup[] = [
 
 const CALL_PHONE_ACTION_LABEL = "Bu görüşmede kullanılacak telefon";
 const CALL_PHONE_ACTION_SELECTED_LABEL = "Bu görüşmede kullanılacak telefon seçili";
-const WRONG_PHONE_ACTION_LABEL = "Telefonu yanlış / kullanılmayacak olarak işaretle";
-const WRONG_PHONE_ACTION_SELECTED_LABEL = "Telefonu tekrar kullanılabilir yap";
+const PHONE_ACTION_MENU_LABEL = "Telefon işlemleri";
+const PHONE_DISABLE_ACTION_LABEL = "Kullanımdan kaldır";
+const PHONE_ENABLE_ACTION_LABEL = "Yeniden kullanıma al";
 const PHONE_OUTCOME_ACTION_LABEL = "Bu telefonun son arama sonucu";
 const PHONE_OUTCOME_ACTION_HELPER = "Bu seçim aday genel görüşme durumunu değiştirmez.";
 
@@ -1093,11 +1100,15 @@ function PhoneCard({
         : null);
   const [isCopied, setIsCopied] = useState(false);
   const [isCopyControlVisible, setIsCopyControlVisible] = useState(false);
+  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+  const [actionMenuPosition, setActionMenuPosition] = useState<PhoneActionMenuPosition | null>(null);
   const [isOutcomeMenuOpen, setIsOutcomeMenuOpen] = useState(false);
   const [outcomeMenuPlacement, setOutcomeMenuPlacement] = useState<"top" | "bottom">("bottom");
   const [outcomeMenuPosition, setOutcomeMenuPosition] = useState<PhoneOutcomeMenuPosition | null>(null);
   const hideCopyControlTimeoutRef = useRef<number | null>(null);
   const copySuccessTimeoutRef = useRef<number | null>(null);
+  const actionMenuTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const actionMenuRef = useRef<HTMLDivElement | null>(null);
   const outcomeChipRef = useRef<HTMLButtonElement | null>(null);
   const outcomeMenuRef = useRef<HTMLDivElement | null>(null);
   const currentOutcome = callOutcome ?? "not_called";
@@ -1183,6 +1194,93 @@ function PhoneCard({
     }
   }
 
+  function chooseActionMenuPosition() {
+    const triggerRect = actionMenuTriggerRef.current?.getBoundingClientRect();
+
+    if (!triggerRect) {
+      setActionMenuPosition(null);
+      return;
+    }
+
+    const safeMargin = 8;
+    const menuGap = 6;
+    const menuWidth = 180;
+    const menuHeight = 42;
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+    const top =
+      viewportHeight - triggerRect.bottom >= menuHeight + menuGap + safeMargin
+        ? triggerRect.bottom + menuGap
+        : Math.max(safeMargin, triggerRect.top - menuGap - menuHeight);
+    const left = Math.max(
+      safeMargin,
+      Math.min(triggerRect.right - menuWidth, Math.max(safeMargin, viewportWidth - safeMargin - menuWidth))
+    );
+
+    setActionMenuPosition({ left, top, width: menuWidth });
+  }
+
+  function toggleActionMenu() {
+    if (!isActionMenuOpen) {
+      chooseActionMenuPosition();
+      setIsOutcomeMenuOpen(false);
+    }
+
+    setIsActionMenuOpen((isOpen) => !isOpen);
+  }
+
+  useEffect(() => {
+    if (!isActionMenuOpen) {
+      return;
+    }
+
+    function closeOnOutsidePointer(event: MouseEvent) {
+      const target = event.target;
+
+      if (
+        target instanceof Node &&
+        (actionMenuTriggerRef.current?.contains(target) || actionMenuRef.current?.contains(target))
+      ) {
+        return;
+      }
+
+      setIsActionMenuOpen(false);
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      setIsActionMenuOpen(false);
+      actionMenuTriggerRef.current?.focus();
+    }
+
+    function updatePosition() {
+      chooseActionMenuPosition();
+    }
+
+    document.addEventListener("mousedown", closeOnOutsidePointer);
+    document.addEventListener("keydown", closeOnEscape);
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsidePointer);
+      document.removeEventListener("keydown", closeOnEscape);
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [isActionMenuOpen]);
+
+  useLayoutEffect(() => {
+    if (isActionMenuOpen) {
+      chooseActionMenuPosition();
+    }
+  }, [isActionMenuOpen]);
+
   function getMeasuredOutcomeMenuHeight(): number | undefined {
     const menu = outcomeMenuRef.current;
 
@@ -1250,6 +1348,7 @@ function PhoneCard({
   function toggleOutcomeMenu() {
     if (!isOutcomeMenuOpen) {
       chooseOutcomeMenuPlacement();
+      setIsActionMenuOpen(false);
     }
 
     setIsOutcomeMenuOpen((isOpen) => !isOpen);
@@ -1344,6 +1443,53 @@ function PhoneCard({
       </button>
     ) : null;
 
+  const manualPhoneActionLabel = isWrong ? PHONE_ENABLE_ACTION_LABEL : PHONE_DISABLE_ACTION_LABEL;
+  const phoneActionMenu = onInvalid ? (
+    <>
+      <button
+        ref={actionMenuTriggerRef}
+        aria-expanded={isActionMenuOpen}
+        aria-haspopup="menu"
+        aria-label={`${label} telefon işlemleri`}
+        disabled={!phoneId}
+        onClick={toggleActionMenu}
+        title={PHONE_ACTION_MENU_LABEL}
+        type="button"
+      >
+        <MoreVertical aria-hidden="true" size={14} />
+      </button>
+      {isActionMenuOpen && actionMenuPosition && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              ref={actionMenuRef}
+              aria-label={`${label} telefon işlemleri`}
+              className="phone-action-menu"
+              role="menu"
+              style={{
+                left: actionMenuPosition.left,
+                top: actionMenuPosition.top,
+                width: actionMenuPosition.width
+              }}
+            >
+              <button
+                onClick={() => {
+                  if (phoneId) {
+                    onInvalid(phoneId);
+                  }
+                  setIsActionMenuOpen(false);
+                }}
+                role="menuitem"
+                type="button"
+              >
+                {manualPhoneActionLabel}
+              </button>
+            </div>,
+            document.body
+          )
+        : null}
+    </>
+  ) : null;
+
   const phoneActions =
     !isReadOnly && onContacted && onInvalid ? (
       <div className="phone-actions phone-card-action-row" style={{ display: "flex", flex: "0 0 auto", gap: 5 }}>
@@ -1357,16 +1503,7 @@ function PhoneCard({
         >
           <Check aria-hidden="true" size={14} />
         </button>
-        <button
-          aria-label={isWrong ? WRONG_PHONE_ACTION_SELECTED_LABEL : WRONG_PHONE_ACTION_LABEL}
-          className={isWrong ? "active invalid" : ""}
-          disabled={!phoneId}
-          onClick={() => phoneId && onInvalid(phoneId)}
-          title={isWrong ? WRONG_PHONE_ACTION_SELECTED_LABEL : WRONG_PHONE_ACTION_LABEL}
-          type="button"
-        >
-          x
-        </button>
+        {phoneActionMenu}
         {whatsAppAction}
       </div>
     ) : isReadOnly && onSelectForCall && onInvalid ? (
@@ -1382,16 +1519,7 @@ function PhoneCard({
         >
           <Check aria-hidden="true" size={14} />
         </button>
-        <button
-          aria-label={isWrong ? WRONG_PHONE_ACTION_SELECTED_LABEL : WRONG_PHONE_ACTION_LABEL}
-          className={isWrong ? "active invalid" : ""}
-          disabled={!phoneId}
-          onClick={() => phoneId && onInvalid(phoneId)}
-          title={isWrong ? WRONG_PHONE_ACTION_SELECTED_LABEL : WRONG_PHONE_ACTION_LABEL}
-          type="button"
-        >
-          x
-        </button>
+        {phoneActionMenu}
         {whatsAppAction}
       </div>
     ) : null;
@@ -1511,7 +1639,11 @@ function PhoneCard({
   return (
     <div
       className={`drawer-phone-card ${isEffectiveContacted ? "contacted" : ""} ${isWrong ? "invalid" : ""}`}
-      style={{ display: "block", position: "relative", zIndex: isOutcomeMenuOpen ? 30 : undefined }}
+      style={{
+        display: "block",
+        position: "relative",
+        zIndex: isOutcomeMenuOpen || isActionMenuOpen ? 30 : undefined
+      }}
     >
       <div style={{ display: "grid", gap: 6 }}>
         <div
@@ -1627,7 +1759,9 @@ function PhoneCard({
         >
           <span style={{ flex: "1 1 auto", minWidth: 0 }}>
             {value ? (
-              <small style={{ color: "#64748b", marginTop: 0 }}>Son sonuç: {latestOutcomeLabel?.trim() || "Yok"}</small>
+              <small style={{ color: "#64748b", marginTop: 0 }}>
+                Son görüşme sonucu: {latestOutcomeLabel?.trim() || "Yok"}
+              </small>
             ) : null}
             {displayStatusText ? <small>{displayStatusText}</small> : null}
           </span>
