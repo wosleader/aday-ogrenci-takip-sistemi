@@ -1,8 +1,18 @@
-<!-- Son guncelleme: Dependency Security Program Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Phone Action Simplification UI Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
 Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
+
+## Latest Product Closure - Phone Action Simplification UI
+
+- Phone Action Simplification UI slice `CLOSED`; implementation `810afa0f5cb960417a94733917f483aaf8382bd8` (`ui: simplify phone card actions`) committed/pushed durumdadır.
+- Telefon kartı action row'undaki standalone `X` kaldırıldı; per-phone `MoreVertical` menüsü eski X pozisyonunu alır ve görünür sıra `✓` / `⋮` / WhatsApp olarak kalır. Per-phone menü aksiyonları `Kullanımdan kaldır` ve `Yeniden kullanıma al`dır.
+- UI doğrudan `phone_status`, `is_wrong`, `invalid_reason`, `invalidated_at` veya `call_outcome` mutate etmez; mevcut canonical manual disable/re-enable service path'i yeniden kullanılır. Menü toggle, outside click ve Escape kapanışı destekler; aksiyon yalnız hedeflenen telefona uygulanır ve candidate-level `⋮` menüden ayrıdır.
+- Phone-result dropdown önceki lower-right pozisyonunda kalır; seçenekleri ve data semantiği değişmedi. `wrong_number` / `unused` sonuçları already-closed operational invalid-reason modelini kullanmaya devam eder.
+- `Son sonuç:` etiketi `Son görüşme sonucu:` olarak değişti; kaynak hâlâ gerçek call-history-derived veridir ve manual phone outcome ayrı kavram olarak kalır. `✓` phone selection, WhatsApp, copy, Telefon 1-10 identity, relation badge, selected/contacted styling, import/export, backup/restore, schema, services/data model ve tarihsel call log/snapshot kayıtları korunur.
+- Manual QA `PASS`; focused phone selection `24/24`, relevant phone suite `5` dosya / `61`, canonical `65` dosya / `687`, build `PASS`; Strategy Review `PASS`. Yalnız bilinen non-blocking chunk-size warning görüldü.
+- Bu UI slice production'a deploy edilmedi; production runtime `3a9dd50` olarak kalır ve repository HEAD deployment değildir. Sonraki çalışma ayrı scoped discovery/karar ile seçilmelidir.
 
 ## Latest Product Closure - Phone Operational Status / Invalid Reason
 
@@ -10,7 +20,7 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - `PhoneRecord` optional `invalid_reason` (`wrong_number` | `not_in_use` | `manual`) ve `invalidated_at` alanlarını destekler; DB schema/version bump, migration ve backfill yoktur. Legacy reason'sız invalid kayıtlar guessed reason olmadan desteklenir.
 - Canonical atomic path; wrong number/unused invalidation, manual disable, outcome-caused re-enable, manual re-enable normalization, audit transaction, `callLogWriter` bypass düzeltmesi ve legacy `is_wrong` uyumluluğunu kapsar. Call logs/snapshots tarihsel olarak korunur.
 - Summary export compact Telefon N / Durumu yapısını, detailed export reason/date evidence'ını ve Telefon 1-10 fidelity'sini korur; backup/restore optional fields roundtrip eder. Manual QA `PASS`; focused `5/103`, canonical `65/686`, build `PASS`, import E2E `6/6 PASS`; Strategy Review `PASS WITH NOTES`.
-- Bu slice production'a deploy edilmedi; production runtime `3a9dd50` olarak kalır ve repository HEAD deployment değildir. Sonraki ürün slice'ı `PHONE ACTION SIMPLIFICATION`dır; phone cleanup/quarantine ve hard-delete ayrı kapsamdır.
+- Bu slice production'a deploy edilmedi; production runtime `3a9dd50` olarak kalır ve repository HEAD deployment değildir. Sonraki Phone Action Simplification UI slice'ı ayrı scope'ta tamamlanmıştır; phone cleanup/quarantine ve hard-delete ayrı kapsamdır.
 
 ## Sistem Sağlığı
 
@@ -818,7 +828,7 @@ Yeni Codex oturumlarında mümkünse şu kısa başlangıç kullanılacak:
 - Anlamlı relation değerleri küçük ikincil rozetle gösterilir: `Anne telefonu`, `Baba telefonu`, `Veli telefonu`, `Öğrenci telefonu`, `Yakın telefonu`.
 - Generic veya bilinmeyen relation için ek rozet gösterilmez; `İlişki belirtilmedi` gibi gürültülü bir fallback eklenmez.
 - Excel `source_column` ana UI metni değildir. Mevcutsa yalnızca relation rozeti tooltip'inde `Excel kaynağı: ...` olarak sunulur.
-- Active/current, yanlış-kullanılmıyor, geçersiz format, `Son sonuç`, kopyalama, genişletme/daraltma ve ✓ / x davranışları korunmuştur.
+- Active/current, yanlış-kullanılmıyor, geçersiz format, o dönemki `Son sonuç`, kopyalama, genişletme/daraltma ve ✓ / x davranışları bu clarity slice'ında korunmuştur; sonraki Phone Action Simplification UI closure standalone X'i per-phone `⋮` menüsüne taşıdı.
 - Schema, import, export, backup/restore, reader, persistence ve Telefon 1-10 slot/sıra mantığı değişmemiştir.
 - Validation: focused 3 dosya / 45 test PASS; OOM-safe full unit 45 dosya / 328 test PASS; build PASS. Başlık düzeltmesi sonrası focused 2 dosya / 21 test PASS.
 - Temiz browser profilinde aday verisi bulunmadığı için gerçek veri kartı üzerinde görsel QA tamamlanamadı; uygulama hatasız açıldı. Veri içeren localhost profiliyle manuel kart kontrolü önerilir.

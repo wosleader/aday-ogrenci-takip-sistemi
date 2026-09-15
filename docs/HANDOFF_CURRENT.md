@@ -1,11 +1,21 @@
 ﻿# HANDOFF_CURRENT — Aday Öğrenci Takip Sistemi
 
+## Latest Product Closure - Phone Action Simplification UI
+
+- Phone Action Simplification UI slice `CLOSED`; implementation `810afa0f5cb960417a94733917f483aaf8382bd8` (`ui: simplify phone card actions`) committed/pushed durumdadır.
+- Telefon kartı action row'unda standalone `X` yoktur. Yeni per-phone `MoreVertical` menüsü eski X pozisyonundadır; visible order `✓` / `⋮` / WhatsApp olarak korunur.
+- Per-phone menü usable telefon için `Kullanımdan kaldır`, operationally invalid telefon için `Yeniden kullanıma al` gösterir. Mevcut canonical manual disable/re-enable path'i kullanılır; UI direct operational state mutation eklemez.
+- Phone-result dropdown önceki lower-right pozisyonunda kalır; seçenekler ve canonical data semantics değişmedi. `wrong_number` / `unused` already-closed operational invalid-reason modelini kullanır.
+- `Son sonuç:` etiketi `Son görüşme sonucu:` oldu; source of truth gerçek call history'dir ve manual phone outcome ayrı kavramdır. `✓` seçimi, WhatsApp, copy, Telefon 1-10 identity, relation badges, selected/contacted styling, import/export, backup/restore, schema, services/data model ve historical call logs/snapshots korunur.
+- Interaction: per-phone menü toggle, outside click ve Escape ile kapanır; action yalnız intended phone'a scoped kalır ve candidate-level `⋮` menü ayrı kalır.
+- Manual QA `PASS`; focused phone selection `24/24`, relevant phone suite `5` dosya / `61`, canonical `65` dosya / `687`, build `PASS`; Strategy Review `PASS`. Production deploy edilmedi; production runtime `3a9dd50`dur. Yeni ürün işi ayrı scoped discovery/karar ile seçilmelidir.
+
 ## Latest Product Closure - Phone Operational Status / Invalid Reason
 
 - Phone Operational Status / Invalid Reason `MODEL B` `CLOSED`; implementation `786c2fb32b61b1b3652ea7b422b4b6ac81fd4c2a` (`feat: track phone operational invalid reasons`) committed/pushed durumdadır.
 - Optional `invalid_reason` (`wrong_number` | `not_in_use` | `manual`) ve `invalidated_at` eklendi; schema/version bump, migration/backfill yoktur. Legacy reason'sız invalid kayıtlar desteklenir.
 - Canonical atomic transition/audit transaction kullanılır; `callLogWriter` bypass'ı ve legacy `is_wrong` uyumluluk açığı kapatıldı. Tarihsel call log/snapshot kayıtları değiştirilmez; export Telefon 1-10 fidelity'sini ve backup/restore uyumluluğunu korur.
-- Manual QA `PASS`; focused `5/103`, canonical `65/686`, build `PASS`, import E2E `6/6 PASS`; Strategy Review `PASS WITH NOTES`. Production deploy edilmedi, runtime `3a9dd50` ve sonraki ürün slice'ı `PHONE ACTION SIMPLIFICATION`dır.
+- Manual QA `PASS`; focused `5/103`, canonical `65/686`, build `PASS`, import E2E `6/6 PASS`; Strategy Review `PASS WITH NOTES`. Production deploy edilmedi, runtime `3a9dd50`dir. Phone Action Simplification UI sonraki ayrı slice olarak tamamlanmıştır.
 
 ## Latest Security Closure - Vitest Security Remediation
 
@@ -859,7 +869,7 @@ Repo docs remain the source of truth. The Drive/Obsidian strategy vault is a sep
 - Current safe HEAD/origin: `667d501 fix: polish phone outcome card menu layout`.
 - Implementation chain: `f7eccc2 feat: add phone-level call outcome tracking` followed by `667d501 fix: polish phone outcome card menu layout`.
 - Every phone can now carry its own phone-level `call_outcome` and `call_outcome_updated_at`; legacy missing values display as `Aranmadı`.
-- The compact phone card layout is HEADER slot/relation, BODY phone number plus horizontal ✓ / x, FOOTER `Son sonuç` plus outcome chip.
+- The compact phone card layout is HEADER slot/relation, BODY phone number plus horizontal `✓` / per-phone `⋮` / WhatsApp, FOOTER `Son görüşme sonucu` plus outcome chip.
 - The outcome chip is explicit-click only; it does not write call logs, change candidate general status, trigger quick-call behavior, or cycle values on one click.
 - The outcome menu uses portal/fixed positioning, top/bottom viewport-aware placement, constrained `max-height` / `overflow-y`, and a corrected anchor gap so it remains visually attached to the chip.
 - Backup/restore preserves outcome fields. Import/export mapping was intentionally not changed for this MVP.

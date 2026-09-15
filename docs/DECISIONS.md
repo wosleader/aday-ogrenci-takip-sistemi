@@ -1,4 +1,4 @@
-<!-- Son guncelleme: @babel/core Pre-CI Audit Expectation Amendment Terminalization | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Phone Action Simplification UI Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -8,13 +8,23 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 
 ## Aktif Kararlar
 
+## Latest Product Closure - Phone Action Simplification UI
+
+- Phone Action Simplification UI slice `CLOSED`; implementation `810afa0f5cb960417a94733917f483aaf8382bd8` (`ui: simplify phone card actions`) committed/pushed durumdadır.
+- Standalone phone-card `X` action kaldırıldı. Per-phone `MoreVertical` menüsü eski X pozisyonunu alır; visible action order `✓` / `⋮` / WhatsApp olarak kalır.
+- Menü usable phone için `Kullanımdan kaldır`, invalid phone için `Yeniden kullanıma al` sunar ve existing canonical manual disable/re-enable service path'ini kullanır. UI direct `phone_status`, `is_wrong`, `invalid_reason`, `invalidated_at` veya `call_outcome` mutation path'i eklemez.
+- Phone-result dropdown eski lower-right yerinde kalır; options ve semantics değişmedi. `wrong_number` / `unused` already-closed operational invalid-reason modeline bağlıdır.
+- `Son sonuç:` kullanıcı etiketi `Son görüşme sonucu:` oldu; source of truth real call-history-derived datadır. Manual phone outcome ayrı concept olarak korunur.
+- Preserved boundaries: `✓` selection, WhatsApp, copy, Telefon 1-10 identity, relation badges, selected/contacted styling, import/export, backup/restore, schema, services/data model ve historical call logs/snapshots.
+- Validation: Manual QA `PASS`, focused phone selection `24/24`, relevant phone suite `5` dosya / `61`, canonical `65` dosya / `687`, build `PASS`, Strategy Review `PASS`; known chunk-size warning non-blockingdir. Production deploy edilmedi; production runtime `3a9dd50`dur.
+
 ## Latest Product Closure - Phone Operational Status / Invalid Reason
 
 - Phone Operational Status / Invalid Reason `MODEL B` `CLOSED`; implementation `786c2fb32b61b1b3652ea7b422b4b6ac81fd4c2a` (`feat: track phone operational invalid reasons`) committed/pushed durumdadır.
 - `PhoneRecord` optional `invalid_reason` (`wrong_number` | `not_in_use` | `manual`) ve `invalidated_at` alanlarını destekler; schema/version bump, migration/backfill yoktur ve legacy reason'sız invalid kayıtlar desteklenir.
 - Canonical atomic transition/audit transaction; outcome/manual invariants, `callLogWriter` bypass düzeltmesi ve legacy `is_wrong` uyumluluğu korunur. Call logs/snapshots değiştirilmez; export ve backup/restore sözleşmeleri korunur.
 - Validation: Manual QA `PASS`, focused `5/103`, canonical `65/686`, build `PASS`, import E2E `6/6 PASS`, Strategy Review `PASS WITH NOTES`. Production deploy edilmedi; runtime `3a9dd50`dur.
-- Next product slice: `PHONE ACTION SIMPLIFICATION`; cleanup/quarantine ve hard-delete bu slice'ın dışındadır.
+- Phone Action Simplification UI sonraki ayrı slice olarak tamamlandı; cleanup/quarantine ve hard-delete bu slice'ın dışındadır.
 
 ## Latest Security Closure - Vitest Security Remediation
 
@@ -460,7 +470,7 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Guardian + Phone UI Clarity] Telefon slot kimliği birincildir ve `Telefon 1` ... `Telefon 10` biçiminde korunur. Relation bilgisi slot başlığının yerine geçmez.
 - [Guardian + Phone UI Clarity] Yalnız anlamlı relation değerleri kompakt ikincil rozet üretir: Anne, Baba, Veli, Öğrenci ve Yakın. Generic veya bilinmeyen relation için rozet ve `İlişki belirtilmedi` fallback'i gösterilmez.
 - [Guardian + Phone UI Clarity] Excel `source_column` teknik ana UI metni değildir. Mevcutsa yalnız ilişki rozeti tooltip'inde `Excel kaynağı: ...` olarak gösterilebilir.
-- [Guardian + Phone UI Clarity] Active/current, wrong/unused, invalid format, latest result, copy, expand/collapse ve ✓ / x davranışları değiştirilmez.
+- [Guardian + Phone UI Clarity] Active/current, wrong/unused, invalid format, latest result, copy, expand/collapse ve o dönemki ✓ / x davranışları bu clarity slice'ında değiştirilmedi; sonraki Phone Action Simplification UI closure standalone X'i per-phone `⋮` menüsüne taşıdı.
 - [Guardian + Phone UI Clarity] Bu UI dilimi schema, reader, persistence, import, export, backup/restore veya Telefon 1-10 slot/sıra mantığını değiştirmez.
 - [Context Layers] Google Drive / Obsidian strategy vault `eefd4ed` seviyesine ayrı olarak senkronlanmıştır; `ead391b` UI checkpoint'i için follow-up sync ayrı ve açık görev gerektirir.
 - [Workflow Trial] Sonraki ana adım yeni-chat handoff/disiplin testidir. Yeni chat kod işine başlamadan latest HEAD, branch, working tree, context sync seviyesi ve görev disiplinini doğrular. Reusable safety skeleton denemesi scope drift görülürse sonlandırılır.
@@ -470,8 +480,8 @@ Bir karar değişirse eski madde silinmeden “Eski karar / Yeni karar / Neden d
 - [Phone Outcome Tracking] Kullanıcıya görünen outcome seçenekleri Aranmadı, Cevap Yok, Meşgul, Kapalı, Görüşüldü, Yanlış Numara ve Kullanılmıyor olarak sabitlenmiştir.
 - [Phone Outcome Tracking] Outcome chip seçimi yalnızca seçili telefon kaydını günceller. Call log yazmaz, aday genel görüşme durumunu değiştirmez, quick call sonucunu otomatik üretmez ve aynı numarayı taşıyan başka adayları otomatik güncellemez.
 - [Phone Outcome Tracking] Legacy veya boş `call_outcome` değeri UI'da Aranmadı olarak gösterilir; kullanıcı Aranmadı'yı manuel seçerse bu gerçek reset kabul edilir ve timestamp güncellenir.
-- [Phone Outcome UI] Sağ kart telefon layout'u üç satırlıdır: header slot/relation, body numara + yatay ✓ / x, footer `Son sonuç` + outcome chip. Full-width select kullanılmaz.
-- [Phone Outcome UI] `Son sonuç` call-log-derived read-only bilgidir; phone outcome chip'i ayrı phone-level manuel durumdur. Bu iki anlam UI'da ayrıştırılmış kalır.
+- [Phone Outcome UI] Sağ kart telefon layout'u üç satırlıdır: header slot/relation, body numara + yatay `✓` / per-phone `⋮` / WhatsApp, footer `Son görüşme sonucu` + outcome chip. Full-width select kullanılmaz.
+- [Phone Outcome UI] `Son görüşme sonucu` call-log-derived read-only bilgidir; phone outcome chip'i ayrı phone-level manuel durumdur. Bu iki anlam UI'da ayrıştırılmış kalır.
 - [Phone Outcome UI] Outcome menüsü portal/fixed positioning kullanır, top/bottom placement seçer, alan dar ise `max-height` ve iç scroll kullanır, chip'ten kopuk görünmeyecek şekilde anchor gap korunur.
 - [Phone Outcome Scope] Export/import outcome mapping, call log auto-mapping, outcome history/audit screen, duplicate same-number shared outcome, backend/server persistence ve VDS deploy bu checkpoint'in kapsamı değildir.
 - [VDS Demo Direction] Pilot yönü Windows VDS + domain altında `/demo` path'idir. Vite base path ve deployment planı ayrı görevde doğrulanmalıdır.
