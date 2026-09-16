@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Phone Action Simplification UI Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Phone Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -8,23 +8,15 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 
 ## Aktif Kararlar
 
-## Latest Product Closure - Phone Action Simplification UI
+## Latest Production Closure - Phone Operational Status + Phone Action Simplification UI
 
-- Phone Action Simplification UI slice `CLOSED`; implementation `810afa0f5cb960417a94733917f483aaf8382bd8` (`ui: simplify phone card actions`) committed/pushed durumdadır.
-- Standalone phone-card `X` action kaldırıldı. Per-phone `MoreVertical` menüsü eski X pozisyonunu alır; visible action order `✓` / `⋮` / WhatsApp olarak kalır.
-- Menü usable phone için `Kullanımdan kaldır`, invalid phone için `Yeniden kullanıma al` sunar ve existing canonical manual disable/re-enable service path'ini kullanır. UI direct `phone_status`, `is_wrong`, `invalid_reason`, `invalidated_at` veya `call_outcome` mutation path'i eklemez.
-- Phone-result dropdown eski lower-right yerinde kalır; options ve semantics değişmedi. `wrong_number` / `unused` already-closed operational invalid-reason modeline bağlıdır.
-- `Son sonuç:` kullanıcı etiketi `Son görüşme sonucu:` oldu; source of truth real call-history-derived datadır. Manual phone outcome ayrı concept olarak korunur.
-- Preserved boundaries: `✓` selection, WhatsApp, copy, Telefon 1-10 identity, relation badges, selected/contacted styling, import/export, backup/restore, schema, services/data model ve historical call logs/snapshots.
-- Validation: Manual QA `PASS`, focused phone selection `24/24`, relevant phone suite `5` dosya / `61`, canonical `65` dosya / `687`, build `PASS`, Strategy Review `PASS`; known chunk-size warning non-blockingdir. Production deploy edilmedi; production runtime `3a9dd50`dur.
-
-## Latest Product Closure - Phone Operational Status / Invalid Reason
-
-- Phone Operational Status / Invalid Reason `MODEL B` `CLOSED`; implementation `786c2fb32b61b1b3652ea7b422b4b6ac81fd4c2a` (`feat: track phone operational invalid reasons`) committed/pushed durumdadır.
-- `PhoneRecord` optional `invalid_reason` (`wrong_number` | `not_in_use` | `manual`) ve `invalidated_at` alanlarını destekler; schema/version bump, migration/backfill yoktur ve legacy reason'sız invalid kayıtlar desteklenir.
-- Canonical atomic transition/audit transaction; outcome/manual invariants, `callLogWriter` bypass düzeltmesi ve legacy `is_wrong` uyumluluğu korunur. Call logs/snapshots değiştirilmez; export ve backup/restore sözleşmeleri korunur.
-- Validation: Manual QA `PASS`, focused `5/103`, canonical `65/686`, build `PASS`, import E2E `6/6 PASS`, Strategy Review `PASS WITH NOTES`. Production deploy edilmedi; runtime `3a9dd50`dur.
-- Phone Action Simplification UI sonraki ayrı slice olarak tamamlandı; cleanup/quarantine ve hard-delete bu slice'ın dışındadır.
+- Phone Operational Status / Invalid Reason `MODEL B` ve Phone Action Simplification UI `PRODUCTION CLOSED`; implementation commitleri sırasıyla `786c2fb32b61b1b3652ea7b422b4b6ac81fd4c2a` ve `810afa0f5cb960417a94733917f483aaf8382bd8`dir.
+- Deployed VDS/runtime HEAD `b01adeb788871972126fb05f8611ffbdfcb87b15`; bu closure anında repository HEAD ile production runtime hizalıdır. Production URL `https://netvadi.com/demo/`.
+- Controlled final VDS canonical suite `65` dosya / `687` test `PASS`; production `/demo/` build, static deployment ve HTTP smoke `PASS`; Caddy restart `NOT REQUIRED`.
+- Fresh pre-deploy backup `C:\Backups\netvadi-demo_predeploy_20260916_050309`; user-confirmed production browser QA `PASS`.
+- Live QA'da `✓` / `⋮` / WhatsApp, `Kullanımdan kaldır` / `Yeniden kullanıma al`, `Yanlış Numara` / `Kullanılmıyor`, normal outcomes, `Son görüşme sonucu:` ve refresh persistence doğrulanmıştır.
+- Operational note: VDS system timezone `Pacific Standard Time` olduğundan ilk canonical koşudaki 15 timeout fail'i product regression değildir. Process-only `Europe/Istanbul`, `maxWorkers=1`, `testTimeout=20000` ile problemli `5` dosya / `83` test, ardından controlled full `65/687` `PASS` olmuştur; Windows system timezone değiştirilmemiştir.
+- Schema/version, import/export, backup/restore, services/data model, Telefon 1-10 fidelity ve historical call logs/snapshots korunmuştur. Gelecekte dependency mutation öncesi `PROCESS-CLEAN GATE` zorunludur.
 
 ## Latest Security Closure - Vitest Security Remediation
 
