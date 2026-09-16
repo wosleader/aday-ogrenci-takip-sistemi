@@ -2397,7 +2397,10 @@ export function StudentsPage() {
   async function handlePhoneOutcomeChange(phoneId: number, outcome: PhoneCallOutcome) {
     try {
       setActionMessage(null);
-      await updatePhoneOutcome(phoneId, outcome);
+      const result = await updatePhoneOutcome(phoneId, outcome);
+      if (outcome === "reached" && result.phone_status === "contacted") {
+        setSelectedCallPhoneId(phoneId);
+      }
       if (outcome === "wrong_number" || outcome === "unused") {
         setSelectedCallPhoneId((currentPhoneId) => (currentPhoneId === phoneId ? null : currentPhoneId));
       }

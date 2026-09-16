@@ -83,14 +83,32 @@ describe("studentPhoneStatus", () => {
 
     try {
       const studentId = await database.students.add(student());
-      const phoneId = await database.phones.add(phone(studentId, { phone_status: "contacted" }));
+      const phoneId = await database.phones.add(
+        phone(studentId, {
+          phone_status: "contacted",
+          call_outcome: "reached",
+          call_outcome_updated_at: "2026-05-08T10:00:00.000Z"
+        })
+      );
 
       const result = await markPhoneAsContacted(phoneId, database);
       const updatedPhone = await database.phones.get(phoneId);
 
       expect(result.phone_status).toBe("active");
-      expect(updatedPhone?.phone_status).toBe("active");
+      expect(updatedPhone).toMatchObject({
+        phone_status: "active",
+        call_outcome: "reached",
+        call_outcome_updated_at: "2026-05-08T10:00:00.000Z"
+      });
       expect(await database.audit_logs.count()).toBe(1);
+
+      await markPhoneAsContacted(phoneId, database);
+      expect(await database.phones.get(phoneId)).toMatchObject({
+        phone_status: "contacted",
+        call_outcome: "reached",
+        call_outcome_updated_at: "2026-05-08T10:00:00.000Z"
+      });
+      expect(await database.audit_logs.count()).toBe(2);
     } finally {
       database.close();
       await database.delete();

@@ -164,6 +164,26 @@ export async function applyPhoneStateTransitionInTransaction(
     } else if (transition.outcome === "unused") {
       writesOperationalState = true;
       after = invalidSnapshot("not_in_use", timestamp);
+    } else if (
+      transition.outcome === "reached" &&
+      (!isOperationallyUnusable(before) || isOutcomeCausedInvalid(before))
+    ) {
+      writesOperationalState = true;
+      after = usableSnapshot("contacted");
+      const studentPhones = await database.phones.where("student_id").equals(phone.student_id).toArray();
+      for (const studentPhone of studentPhones) {
+        if (!studentPhone.id || studentPhone.id === phone.id || studentPhone.phone_status !== "contacted") {
+          continue;
+        }
+
+        const otherBefore = getOperationalSnapshot(studentPhone);
+        const otherAfter = usableSnapshot("active");
+        await database.phones.update(studentPhone.id, {
+          ...otherAfter,
+          updated_at: timestamp
+        });
+        await addOperationalAudit(database, studentPhone.id, otherBefore, otherAfter, timestamp);
+      }
     } else if (isOutcomeCausedInvalid(before)) {
       writesOperationalState = true;
       after = usableSnapshot("active");

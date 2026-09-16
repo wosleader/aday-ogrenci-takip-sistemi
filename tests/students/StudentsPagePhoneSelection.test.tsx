@@ -574,13 +574,102 @@ describe("StudentsPage phone selection", () => {
 
       expect(phone3?.reference_label).toBe("Telefon 3");
       expect(phone3?.call_outcome).toBe("reached");
-      expect(phone3?.phone_status).toBe("active");
+      expect(phone3?.phone_status).toBe("contacted");
     });
 
     const student = (await db.students.toArray())[0];
     expect(student.last_call_result).toBe("not_called");
     expect(within(phone3Card).getByText("Son görüşme sonucu: Yok")).toBeInTheDocument();
     expect(within(phone2Card).getByText("Anne telefonu")).toBeInTheDocument();
+  });
+
+  it("synchronizes local call selection when an outcome contacts another phone", async () => {
+    const user = userEvent.setup();
+    await seedStudentWithPhones("MELIS KAYA", "outcome-contact-sync");
+    const phone1Id = await getPhoneId("05321000001");
+    const phone3Id = await getPhoneId("05321000003");
+    await db.phones.update(phone3Id, {
+      call_outcome: "reached",
+      call_outcome_updated_at: "2026-05-10T08:00:00.000Z"
+    });
+
+    renderStudentsPage();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    const phone3Card = getDrawerPhoneCard("Telefon 3");
+
+    await user.click(
+      within(phone3Card).getByRole("button", {
+        name: "Bu görüşmede kullanılacak telefon"
+      })
+    );
+    await waitFor(() => expect(phone3Card).toHaveClass("contacted"));
+
+    await user.click(within(phone1Card).getByRole("button", { name: "Bu telefonun son arama sonucu: Aranmadı" }));
+    await user.click(screen.getByRole("menuitemradio", { name: "Görüşüldü" }));
+
+    await waitFor(async () => {
+      expect(await db.phones.get(phone1Id)).toMatchObject({ phone_status: "contacted", call_outcome: "reached" });
+      expect(await db.phones.get(phone3Id)).toMatchObject({
+        phone_status: "active",
+        call_outcome: "reached",
+        call_outcome_updated_at: "2026-05-10T08:00:00.000Z"
+      });
+      expect(phone1Card).toHaveClass("contacted");
+      expect(phone3Card).not.toHaveClass("contacted");
+      expect(
+        within(phone3Card).getByRole("button", { name: "Bu görüşmede kullanılacak telefon" })
+      ).toHaveAttribute("aria-pressed", "false");
+    });
+
+    await user.selectOptions(getCallResultSelect(), "reached");
+    await user.click(screen.getByRole("button", { name: "Kaydet ve sonrakine geç" }));
+
+    await waitFor(async () => {
+      const callLog = await db.call_logs.orderBy("id").last();
+      expect(callLog?.contacted_phone_id).toBe(phone1Id);
+      expect((await db.phones.get(phone3Id))?.phone_status).toBe("active");
+    });
+  });
+
+  it("does not move local call selection to a manually invalid phone when reached is selected", async () => {
+    const user = userEvent.setup();
+    await seedStudentWithPhones("MELIS KAYA", "manual-invalid-outcome-contact");
+    const phone1Id = await getPhoneId("05321000001");
+    const phone3Id = await getPhoneId("05321000003");
+    await db.phones.update(phone1Id, {
+      phone_status: "invalid",
+      invalid_reason: "manual",
+      invalidated_at: "2026-05-10T08:00:00.000Z",
+      is_wrong: false
+    });
+
+    renderStudentsPage();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    const phone3Card = getDrawerPhoneCard("Telefon 3");
+    await user.click(
+      within(phone3Card).getByRole("button", {
+        name: "Bu görüşmede kullanılacak telefon"
+      })
+    );
+    await waitFor(() => expect(phone3Card).toHaveClass("contacted"));
+
+    await user.click(within(phone1Card).getByRole("button", { name: "Bu telefonun son arama sonucu: Aranmadı" }));
+    await user.click(screen.getByRole("menuitemradio", { name: "Görüşüldü" }));
+
+    await waitFor(async () => {
+      expect(await db.phones.get(phone1Id)).toMatchObject({
+        phone_status: "invalid",
+        invalid_reason: "manual",
+        call_outcome: "reached"
+      });
+      expect(phone1Card).not.toHaveClass("contacted");
+      expect(phone3Card).toHaveClass("contacted");
+      expect(
+        within(phone3Card).getByRole("button", { name: "Bu görüşmede kullanılacak telefon seçili" })
+      ).toHaveAttribute("aria-pressed", "true");
+    });
   });
 
   it("stores manual Aranmadı reset with a timestamp", async () => {

@@ -60,6 +60,71 @@ function phone(studentId: number, overrides: Partial<PhoneRecord> = {}): PhoneRe
 }
 
 describe("studentPhoneOutcome", () => {
+  it("marks an operational phone as contacted when its outcome is reached", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const phoneId = await database.phones.add(phone(studentId));
+
+      await updatePhoneOutcome(phoneId, "reached", database);
+
+      expect(await database.phones.get(phoneId)).toMatchObject({
+        call_outcome: "reached",
+        call_outcome_updated_at: expect.any(String),
+        phone_status: "contacted",
+        invalid_reason: null,
+        invalidated_at: null,
+        is_wrong: false
+      });
+      expect(await database.audit_logs.count()).toBe(1);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
+  it("moves contacted status without rewriting the previous phone outcome", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const firstPhoneId = await database.phones.add(
+        phone(studentId, {
+          phone_status: "contacted",
+          call_outcome: "reached",
+          call_outcome_updated_at: "2026-05-08T10:00:00.000Z"
+        })
+      );
+      const secondPhoneId = await database.phones.add(
+        phone(studentId, {
+          phone_number: "05327654321",
+          normalized_phone_number: "05327654321",
+          phone_label: "Telefon 2",
+          reference_label: "Telefon 2",
+          priority: 2,
+          is_primary: false
+        })
+      );
+
+      await updatePhoneOutcome(secondPhoneId, "reached", database);
+
+      expect(await database.phones.get(firstPhoneId)).toMatchObject({
+        phone_status: "active",
+        call_outcome: "reached",
+        call_outcome_updated_at: "2026-05-08T10:00:00.000Z"
+      });
+      expect(await database.phones.get(secondPhoneId)).toMatchObject({
+        phone_status: "contacted",
+        call_outcome: "reached"
+      });
+      expect(await database.audit_logs.count()).toBe(2);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
   it("updates only the selected phone outcome without changing phone action fields or student summary", async () => {
     const database = await createDatabase();
 
@@ -244,6 +309,36 @@ describe("studentPhoneOutcome", () => {
     }
   });
 
+  it("does not auto-contact a manually invalid phone when reached is selected", async () => {
+    const database = await createDatabase();
+
+    try {
+      const studentId = await database.students.add(student());
+      const phoneId = await database.phones.add(
+        phone(studentId, {
+          phone_status: "invalid",
+          invalid_reason: "manual",
+          invalidated_at: "2026-05-08T08:30:00.000Z",
+          is_wrong: false
+        })
+      );
+
+      await updatePhoneOutcome(phoneId, "reached", database);
+
+      expect(await database.phones.get(phoneId)).toMatchObject({
+        call_outcome: "reached",
+        phone_status: "invalid",
+        invalid_reason: "manual",
+        invalidated_at: "2026-05-08T08:30:00.000Z",
+        is_wrong: false
+      });
+      expect(await database.audit_logs.count()).toBe(0);
+    } finally {
+      database.close();
+      await database.delete();
+    }
+  });
+
   it.each([
     ["wrong_number", "no_answer", "wrong_number", true],
     ["unused", "reached", "not_in_use", false]
@@ -270,7 +365,7 @@ describe("studentPhoneOutcome", () => {
         expect(await database.phones.get(phoneId)).toMatchObject({
           call_outcome: nextOutcome,
           call_outcome_updated_at: expect.any(String),
-          phone_status: "active",
+          phone_status: nextOutcome === "reached" ? "contacted" : "active",
           invalid_reason: null,
           invalidated_at: null,
           is_wrong: false
@@ -283,7 +378,7 @@ describe("studentPhoneOutcome", () => {
           is_wrong: isWrong
         });
         expect(JSON.parse(audit.new_value ?? "{}")).toMatchObject({
-          phone_status: "active",
+          phone_status: nextOutcome === "reached" ? "contacted" : "active",
           invalid_reason: null,
           invalidated_at: null,
           is_wrong: false
