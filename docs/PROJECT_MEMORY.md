@@ -1,10 +1,19 @@
-<!-- Son guncelleme: Phone Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Phone Reached -> Latest Contacted Synchronization Pre-Production Checkpoint | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
 Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
-## Latest Production Closure - Phone Operational Status + Phone Action Simplification UI
+## Current Pre-Production Checkpoint - Phone Reached -> Latest Contacted Synchronization
+
+- Implementation `3f991e565b6d6520dd090c1d92c3ba631a6dc8e1` (`feat: sync reached phone outcome with latest contacted status`) `COMPLETE`; Strategy Review `PASS`; local manual browser QA `PASS`.
+- Production deployment `NOT STARTED` and production browser QA `NOT STARTED`. Deployed VDS/runtime remains `b01adeb788871972126fb05f8611ffbdfcb87b15`; repository HEAD `3f991e5` contains this undeployed follow-up implementation, so repository HEAD and production runtime are separate truths.
+- Validation: focused `3` dosya / `46` test `PASS`; related phone suite `5` dosya / `63` test `PASS`; canonical `65` dosya / `692` test `PASS`; build `PASS`; `git diff --check` `PASS`.
+- Usable telefonda `reached` seçimi canonical phone state'i `contacted` yapar; aynı öğrencide yalnız bir `phone_status=contacted` kalır. Önceki contacted telefon `active` olurken `call_outcome=reached` ve outcome timestamp'i korunur; birden fazla telefonda `reached` bulunabilir.
+- Contacted `✓` manuel kaldırılıp yeniden verilebilir ve reached outcome/timestamp korunur. Manual-invalid telefon reached seçimiyle otomatik contacted olmaz; `wrong_number` / `unused` invalid semantics değişmez. StudentsPage `selectedCallPhoneId` canonical contacted telefonla senkronize olur ve call-save stale local selection ile eski telefona dönmez.
+- Historical `call_logs` / snapshots rewrite edilmez; schema/version, import/export ve backup/restore değişmez. Current gate: production release validation / deployment decision.
+
+## Historical Production Closure - Phone Operational Status + Phone Action Simplification UI
 
 - Phone Operational Status / Invalid Reason `MODEL B` ve Phone Action Simplification UI `PRODUCTION CLOSED` durumundadır. Implementation commitleri sırasıyla `786c2fb32b61b1b3652ea7b422b4b6ac81fd4c2a` ve `810afa0f5cb960417a94733917f483aaf8382bd8`dir.
 - Deployed VDS/runtime HEAD `b01adeb788871972126fb05f8611ffbdfcb87b15`tir; repository HEAD bu closure anında production runtime ile hizalıdır. Production URL: `https://netvadi.com/demo/`.

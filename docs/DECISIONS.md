@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Phone Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Phone Reached -> Latest Contacted Synchronization Pre-Production Checkpoint | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -8,7 +8,15 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 
 ## Aktif Kararlar
 
-## Latest Production Closure - Phone Operational Status + Phone Action Simplification UI
+## Current Pre-Production Decision - Phone Reached -> Latest Contacted Synchronization
+
+- Implementation `3f991e565b6d6520dd090c1d92c3ba631a6dc8e1` (`feat: sync reached phone outcome with latest contacted status`) `COMPLETE`; Strategy Review `PASS`; local manual browser QA `PASS`.
+- Production deployment `NOT STARTED` and production browser QA `NOT STARTED`. Deployed VDS/runtime remains `b01adeb788871972126fb05f8611ffbdfcb87b15`; repository HEAD `3f991e5` is an undeployed follow-up implementation.
+- Canonical rule: usable-phone `reached` selection makes that phone `contacted` and leaves only one contacted phone per student. The previous contacted phone becomes `active` while retaining `call_outcome=reached` and its outcome timestamp; multiple phones may retain `reached`.
+- Manual contacted removal/re-add preserves reached outcome/timestamp. Manual-invalid safety, `wrong_number` / `unused` semantics, historical call logs/snapshots, schema/version, import/export and backup/restore are unchanged. StudentsPage local selection is synchronized from the canonical service result.
+- Validation: focused `3` dosya / `46` test, related phone suite `5` dosya / `63` test, canonical `65` dosya / `692` test and build all `PASS`; current gate is production release validation / deployment decision.
+
+## Historical Production Closure - Phone Operational Status + Phone Action Simplification UI
 
 - Phone Operational Status / Invalid Reason `MODEL B` ve Phone Action Simplification UI `PRODUCTION CLOSED`; implementation commitleri sırasıyla `786c2fb32b61b1b3652ea7b422b4b6ac81fd4c2a` ve `810afa0f5cb960417a94733917f483aaf8382bd8`dir.
 - Deployed VDS/runtime HEAD `b01adeb788871972126fb05f8611ffbdfcb87b15`; bu closure anında repository HEAD ile production runtime hizalıdır. Production URL `https://netvadi.com/demo/`.

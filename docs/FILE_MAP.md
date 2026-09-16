@@ -1,15 +1,27 @@
-<!-- Son guncelleme: SheetJS Security Remediation Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Phone Reached -> Latest Contacted Synchronization Pre-Production Checkpoint | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
 Bu dosya “hangi dosya ne işe yarar?” haritasıdır.
 
-## Latest File Map Addendum - Phone Production Closure
+## Latest File Map Addendum - Phone Reached -> Latest Contacted Synchronization Pre-Production Checkpoint
 
-Son doğrulandı: deployed VDS/runtime `b01adeb788871972126fb05f8611ffbdfcb87b15`. Phone Operational Status / Invalid Reason ve Phone Action Simplification UI `PRODUCTION CLOSED`dur. Repository production runtime sonrasında yalnız docs-only closure/consistency commitleriyle ilerledi; bu repo/runtime farkı runtime kod değişikliği değildir.
+Son doğrulandı: implementation `3f991e565b6d6520dd090c1d92c3ba631a6dc8e1` `COMPLETE`; Strategy Review ve local manual browser QA `PASS`. Production deployment ve production browser QA `NOT STARTED`; deployed VDS/runtime `b01adeb788871972126fb05f8611ffbdfcb87b15` olarak kalır. Repository, production runtime sonrasında bu undeployed code commitiyle ilerlemiştir; repository/runtime farkı runtime kodunun production'da çalıştığı anlamına gelmez.
 
-- Phone card UI visible order `✓` / `⋮` / WhatsApp'tır; standalone X yoktur. Per-phone `⋮` menüsü `Kullanımdan kaldır` / `Yeniden kullanıma al` aksiyonlarını taşır; phone outcome dropdown ayrı kalır ve call-history label'ı `Son görüşme sonucu:`dir. Telefon 1-10 identity, relation ve selected/contacted davranışı korunur.
-- `src/domain/models/phone.ts`, `src/features/students/services/studentPhoneStatus.ts`, `src/features/students/services/studentPhoneOutcome.ts` ve `src/features/calls/services/callLogWriter.ts` kayıtları aşağıdaki güncel phone-state ve transaction sorumluluklarıyla okunmalıdır.
+- `src/features/students/StudentsPage.tsx`
+  Phone card visible action order `✓` / `⋮` / WhatsApp olarak kalır; per-phone menu ve ayrı phone outcome dropdown korunur. Usable telefonda `reached` seçimi sonrası local selected-call-phone state canonical `contacted` telefonla hizalanır; Telefon 1-10 identity, relation ve selected/contacted davranışı korunur.
+- `src/features/students/services/studentPhoneStatus.ts`
+  Canonical atomic operational transition path'ini taşır. Usable `reached` sonucunu tekil student-level `contacted` durumuna senkronize eder; önceki contacted telefonu active yaparken outcome/timestamp'i korur. Manual-invalid safety, wrong/unused invalidation, manual toggle ve audit transaction semantics korunur.
+- `src/features/students/services/studentPhoneOutcome.ts`
+  Phone-level manual outcome persistence/normalization girişidir; status transition servisinin sonucunu tüketerek `reached` sonrası canonical `phone_status` bilgisini UI refresh akışına taşır. Outcome ve operational state ayrı semantiklerini korur.
+- `src/features/calls/services/callLogWriter.ts`
+  Call-save transaction'ı içinde canonical phone-state transition path'ini kullanır; reached/contacted senkronizasyonunu bypass etmez. Historical call logs ve phone snapshots yeniden yazılmaz.
+- `src/domain/models/phone.ts`
+  `invalid_reason` ve `invalidated_at` optional alanlarını, mevcut phone outcome/status alanlarıyla birlikte taşır; schema/version bump veya migration içermez.
+
+## Historical File Map Addendum - Phone Production Closure
+
+Önceki Phone Operational Status / Invalid Reason ve Phone Action Simplification UI production closure kaydıdır; yukarıdaki follow-up pre-production checkpoint'iyle karıştırılmamalıdır.
 
 ## Latest File Map Addendum - SheetJS Security Remediation Production Closure
 
