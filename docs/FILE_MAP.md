@@ -6,7 +6,7 @@ Bu dosya “hangi dosya ne işe yarar?” haritasıdır.
 
 ## Latest File Map Addendum - Phone Production Closure
 
-Son doğrulandı: deployed VDS/runtime `b01adeb788871972126fb05f8611ffbdfcb87b15`; canonical docs HEAD `785d42e9d0700d29d05bd59656c6c42b1a8ac09a`. Phone Operational Status / Invalid Reason ve Phone Action Simplification UI `PRODUCTION CLOSED`dur. Runtime ile repository HEAD farkı bu closure docs commit'idir.
+Son doğrulandı: deployed VDS/runtime `b01adeb788871972126fb05f8611ffbdfcb87b15`. Phone Operational Status / Invalid Reason ve Phone Action Simplification UI `PRODUCTION CLOSED`dur. Repository production runtime sonrasında yalnız docs-only closure/consistency commitleriyle ilerledi; bu repo/runtime farkı runtime kod değişikliği değildir.
 
 - Phone card UI visible order `✓` / `⋮` / WhatsApp'tır; standalone X yoktur. Per-phone `⋮` menüsü `Kullanımdan kaldır` / `Yeniden kullanıma al` aksiyonlarını taşır; phone outcome dropdown ayrı kalır ve call-history label'ı `Son görüşme sonucu:`dir. Telefon 1-10 identity, relation ve selected/contacted davranışı korunur.
 - `src/domain/models/phone.ts`, `src/features/students/services/studentPhoneStatus.ts`, `src/features/students/services/studentPhoneOutcome.ts` ve `src/features/calls/services/callLogWriter.ts` kayıtları aşağıdaki güncel phone-state ve transaction sorumluluklarıyla okunmalıdır.
