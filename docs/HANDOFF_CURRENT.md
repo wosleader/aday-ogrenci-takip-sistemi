@@ -1,15 +1,16 @@
 ﻿# HANDOFF_CURRENT — Aday Öğrenci Takip Sistemi
 
-## Current Pre-Production Checkpoint - Phone Reached -> Latest Contacted Synchronization
+## Current Production Closure - Phone Reached -> Latest Contacted Synchronization
 
-- Implementation `3f991e565b6d6520dd090c1d92c3ba631a6dc8e1` (`feat: sync reached phone outcome with latest contacted status`) `COMPLETE`; Strategy Review `PASS`; local manual browser QA `PASS`.
-- Production deployment `NOT STARTED` and production browser QA `NOT STARTED`. Deployed VDS/runtime remains `b01adeb788871972126fb05f8611ffbdfcb87b15`; repository HEAD `3f991e5` is the undeployed follow-up implementation and must not be described as deployed.
-- Validation: focused `3` dosya / `46` test `PASS`; related phone suite `5` dosya / `63` test `PASS`; canonical `65` dosya / `692` test `PASS`; build `PASS`; `git diff --check` `PASS`.
+- Phone Reached -> Latest Contacted Synchronization `PRODUCTION CLOSED`. Implementation `3f991e565b6d6520dd090c1d92c3ba631a6dc8e1` (`feat: sync reached phone outcome with latest contacted status`) `COMPLETE`; Strategy Review `PASS`; local manual browser QA `PASS`.
+- Production deployment and production browser QA `PASS`. Deployed VDS/runtime HEAD is `0b988191614901d446923d5bfb65aaf9668d1896` at `https://netvadi.com/demo/`; `0b988...` is the deployed implementation/checkpoint HEAD, and this subsequent docs-only closure commit does not change runtime code.
+- Validation: focused `3` dosya / `46` test `PASS`; related phone suite `5` dosya / `63` test `PASS`; local canonical `65` dosya / `692` test `PASS`; local and VDS `/demo/` build `PASS`; VDS controlled canonical `65` dosya / `692` test `PASS`; HTTP smoke and production browser QA `PASS`.
+- VDS deployment used process-only `TZ=Europe/Istanbul`; `npm ci` and static publish `PASS`, fresh backup `C:\Backups\netvadi-demo_predeploy_20260916_080811` exists, `harita.html` was preserved and Caddy restart was `NOT REQUIRED`.
 - `reached` selected on a usable phone makes it the sole `phone_status=contacted` phone for that student. The former contacted phone becomes `active` without changing its `call_outcome=reached` or outcome timestamp; multiple phones may retain `reached` outcomes.
 - Manual contacted toggle preserves reached outcome/timestamp. Manual-invalid phones do not become contacted from the dropdown; `wrong_number` / `unused` invalid semantics, historical call logs/snapshots, schema/version, import/export and backup/restore remain unchanged. StudentsPage local call-phone selection follows the canonical contacted result, preventing stale call-save selection.
-- Next gate: production release validation / deployment decision, followed by user production browser QA.
+- Historical call logs/snapshots, schema/version, import/export and backup/restore remain unchanged. Feature remaining gate: `NONE`.
 
-## Historical Production Closure - Phone Operational Status + Phone Action Simplification UI
+## Previous Production Closure - Phone Operational Status + Phone Action Simplification UI
 
 - Phone Operational Status / Invalid Reason `MODEL B` ve Phone Action Simplification UI `PRODUCTION CLOSED`; implementation commitleri sırasıyla `786c2fb32b61b1b3652ea7b422b4b6ac81fd4c2a` ve `810afa0f5cb960417a94733917f483aaf8382bd8`dir.
 - Deployed VDS/runtime HEAD `b01adeb788871972126fb05f8611ffbdfcb87b15`; bu closure anında repository HEAD ile production runtime hizalıdır. Production URL `https://netvadi.com/demo/`.

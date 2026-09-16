@@ -1,12 +1,12 @@
-<!-- Son guncelleme: Phone Reached -> Latest Contacted Synchronization Pre-Production Checkpoint | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Phone Reached -> Latest Contacted Synchronization Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
 Bu dosya “hangi dosya ne işe yarar?” haritasıdır.
 
-## Latest File Map Addendum - Phone Reached -> Latest Contacted Synchronization Pre-Production Checkpoint
+## Latest File Map Addendum - Phone Reached -> Latest Contacted Synchronization Production Closure
 
-Son doğrulandı: implementation `3f991e565b6d6520dd090c1d92c3ba631a6dc8e1` `COMPLETE`; Strategy Review ve local manual browser QA `PASS`. Production deployment ve production browser QA `NOT STARTED`; deployed VDS/runtime `b01adeb788871972126fb05f8611ffbdfcb87b15` olarak kalır. Repository, production runtime sonrasında bu undeployed code commitiyle ilerlemiştir; repository/runtime farkı runtime kodunun production'da çalıştığı anlamına gelmez.
+Son doğrulandı: Phone Reached -> Latest Contacted Synchronization `PRODUCTION CLOSED`. Implementation `3f991e565b6d6520dd090c1d92c3ba631a6dc8e1` `COMPLETE`; Strategy Review ve local manual browser QA `PASS`. Production deployment ve production browser QA `PASS`; deployed VDS/runtime HEAD `0b988191614901d446923d5bfb65aaf9668d1896`dir. Bu deployed implementation/checkpoint HEAD'idir; sonraki docs-only closure commiti runtime kodunu değiştirmez.
 
 - `src/features/students/StudentsPage.tsx`
   Phone card visible action order `✓` / `⋮` / WhatsApp olarak kalır; per-phone menu ve ayrı phone outcome dropdown korunur. Usable telefonda `reached` seçimi sonrası local selected-call-phone state canonical `contacted` telefonla hizalanır; Telefon 1-10 identity, relation ve selected/contacted davranışı korunur.
@@ -19,9 +19,9 @@ Son doğrulandı: implementation `3f991e565b6d6520dd090c1d92c3ba631a6dc8e1` `COM
 - `src/domain/models/phone.ts`
   `invalid_reason` ve `invalidated_at` optional alanlarını, mevcut phone outcome/status alanlarıyla birlikte taşır; schema/version bump veya migration içermez.
 
-## Historical File Map Addendum - Phone Production Closure
+## Previous File Map Addendum - Phone Production Closure
 
-Önceki Phone Operational Status / Invalid Reason ve Phone Action Simplification UI production closure kaydıdır; yukarıdaki follow-up pre-production checkpoint'iyle karıştırılmamalıdır.
+Önceki Phone Operational Status / Invalid Reason ve Phone Action Simplification UI production closure kaydıdır; yukarıdaki reached/contacted synchronization production closure'ından ayrıdır.
 
 ## Latest File Map Addendum - SheetJS Security Remediation Production Closure
 

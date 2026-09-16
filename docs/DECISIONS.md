@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Phone Reached -> Latest Contacted Synchronization Pre-Production Checkpoint | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Phone Reached -> Latest Contacted Synchronization Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -8,13 +8,13 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 
 ## Aktif Kararlar
 
-## Current Pre-Production Decision - Phone Reached -> Latest Contacted Synchronization
+## Current Production Closure Decision - Phone Reached -> Latest Contacted Synchronization
 
-- Implementation `3f991e565b6d6520dd090c1d92c3ba631a6dc8e1` (`feat: sync reached phone outcome with latest contacted status`) `COMPLETE`; Strategy Review `PASS`; local manual browser QA `PASS`.
-- Production deployment `NOT STARTED` and production browser QA `NOT STARTED`. Deployed VDS/runtime remains `b01adeb788871972126fb05f8611ffbdfcb87b15`; repository HEAD `3f991e5` is an undeployed follow-up implementation.
+- Phone Reached -> Latest Contacted Synchronization `PRODUCTION CLOSED`. Implementation `3f991e565b6d6520dd090c1d92c3ba631a6dc8e1` (`feat: sync reached phone outcome with latest contacted status`) `COMPLETE`; Strategy Review ve local manual browser QA `PASS`.
+- Production deployment and production browser QA `PASS`; deployed VDS/runtime HEAD `0b988191614901d446923d5bfb65aaf9668d1896` is the deployed implementation/checkpoint HEAD. This subsequent docs-only closure commit does not change runtime code.
 - Canonical rule: usable-phone `reached` selection makes that phone `contacted` and leaves only one contacted phone per student. The previous contacted phone becomes `active` while retaining `call_outcome=reached` and its outcome timestamp; multiple phones may retain `reached`.
 - Manual contacted removal/re-add preserves reached outcome/timestamp. Manual-invalid safety, `wrong_number` / `unused` semantics, historical call logs/snapshots, schema/version, import/export and backup/restore are unchanged. StudentsPage local selection is synchronized from the canonical service result.
-- Validation: focused `3` dosya / `46` test, related phone suite `5` dosya / `63` test, canonical `65` dosya / `692` test and build all `PASS`; current gate is production release validation / deployment decision.
+- Validation: focused `3` dosya / `46` test, related phone suite `5` dosya / `63` test, local/VDS canonical `65` dosya / `692` test, `/demo/` build, HTTP smoke and production browser QA all `PASS`. VDS `npm ci` and static publish passed; backup `C:\Backups\netvadi-demo_predeploy_20260916_080811` was created, `harita.html` preserved and Caddy restart was `NOT REQUIRED`. Feature remaining gate: `NONE`.
 
 ## Historical Production Closure - Phone Operational Status + Phone Action Simplification UI
 
