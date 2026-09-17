@@ -4210,25 +4210,33 @@ export function StudentsPage() {
               {smartOperationalAlertsEnabled && operationalHelper ? (
                 <div
                   aria-label="Akıllı operasyon uyarısı"
-                  className={`smart-operational-alert ${operationalHelper.kind === "overdue_call" ? "is-overdue" : "is-today"}`}
+                  className={`smart-operational-alert ${
+                    operationalHelper.kind === "overdue_call" || operationalHelper.kind === "overdue_appointment"
+                      ? "is-overdue"
+                      : "is-today"
+                  }`}
                   role="status"
                 >
                   <span className="smart-operational-alert-icon" aria-hidden="true">
                     <CalendarClock size={14} />
                   </span>
                   <span className="smart-operational-alert-copy">
-                    {operationalHelper.kind === "overdue_call" ? (
+                    {operationalHelper.kind === "overdue_call" || operationalHelper.kind === "overdue_appointment" ? (
                       <>
                         <strong className="smart-operational-alert-title">{operationalHelper.primary_label}</strong>{" "}
                         <span className="smart-operational-alert-detail">
-                          {operationalHelper.reminder.reminder_date_label} {operationalHelper.reminder.reminder_time_label}
+                          {operationalHelper.kind === "overdue_call"
+                            ? `${operationalHelper.reminder?.reminder_date_label} ${operationalHelper.reminder?.reminder_time_label}`
+                            : `${operationalHelper.appointment?.appointment_date_label} ${operationalHelper.appointment?.appointment_time_label}`}
                         </span>
                       </>
                     ) : (
                       <>
                         <strong className="smart-operational-alert-title">Bugün</strong>{" "}
                         <span className="smart-operational-alert-detail">
-                          {operationalHelper.reminder.reminder_time_label}'te aranacak
+                          {operationalHelper.kind === "today_appointment"
+                            ? `${operationalHelper.appointment?.appointment_time_label}'da randevu`
+                            : `${operationalHelper.reminder?.reminder_time_label}'te aranacak`}
                         </span>
                       </>
                     )}

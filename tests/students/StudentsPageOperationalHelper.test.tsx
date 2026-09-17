@@ -91,6 +91,34 @@ async function seedStudent({
   return { phoneId, studentId };
 }
 
+async function seedAppointment(studentId: number, appointmentAt: string) {
+  const callLogId = await db.call_logs.add({
+    uuid: crypto.randomUUID(),
+    student_id: studentId,
+    call_time: now,
+    call_result: "appointment",
+    sync_status: "local",
+    created_at: now,
+    updated_at: now
+  });
+  const appointmentId = await db.appointments.add({
+    uuid: crypto.randomUUID(),
+    student_id: studentId,
+    guardian_id: null,
+    appointment_at: appointmentAt,
+    status: "pending",
+    call_log_id: callLogId,
+    guardian_message_due_at: "2026-05-09T09:00:00.000Z",
+    guardian_message_sent_at: null,
+    guardian_message_generation: 1,
+    created_at: now,
+    updated_at: now,
+    sync_status: "local"
+  });
+  await db.call_logs.update(callLogId, { created_appointment_id: appointmentId });
+  return appointmentId;
+}
+
 describe("StudentsPage operational helper", () => {
   beforeEach(async () => {
     Element.prototype.scrollIntoView = vi.fn();
@@ -149,6 +177,106 @@ describe("StudentsPage operational helper", () => {
     const helper = await screen.findByRole("status", { name: "Akıllı operasyon uyarısı" });
     expect(helper).toHaveClass("smart-operational-alert", "is-overdue");
     expect(helper).toHaveTextContent("Gecikmiş arama");
+  });
+
+  it("renders the highest-priority overdue appointment in the existing single helper area", async () => {
+    const { studentId } = await seedStudent();
+    await seedAppointment(studentId, "2026-05-09T10:00:00.000Z");
+    await db.reminders.add({
+      uuid: crypto.randomUUID(),
+      student_id: studentId,
+      reminder_type: "call",
+      reminder_at: "2026-05-09T09:00:00.000Z",
+      status: "pending",
+      is_default_time_assigned: false,
+      created_at: now,
+      updated_at: now,
+      sync_status: "local"
+    });
+
+    renderStudentsPage();
+
+    const helper = await screen.findByRole("status", { name: "Akıllı operasyon uyarısı" });
+    expect(helper).toHaveTextContent("Gecikmiş randevu");
+    expect(helper).toHaveTextContent("09.05.2026 13:00");
+    expect(screen.getAllByRole("status", { name: "Akıllı operasyon uyarısı" })).toHaveLength(1);
+  });
+
+  it("keeps an overdue appointment ahead of a today call in the single helper area", async () => {
+    const user = userEvent.setup();
+    const { studentId } = await seedStudent();
+    await seedAppointment(studentId, "2026-05-09T10:00:00.000Z");
+    await db.reminders.add({
+      uuid: crypto.randomUUID(),
+      student_id: studentId,
+      reminder_type: "call",
+      reminder_at: "2026-05-10T13:00:00.000Z",
+      status: "pending",
+      is_default_time_assigned: false,
+      created_at: now,
+      updated_at: now,
+      sync_status: "local"
+    });
+
+    renderStudentsPage();
+
+    const studentRow = (await screen.findAllByText("MELIS KAYA"))
+      .map((element) => element.closest("tr"))
+      .find((row): row is HTMLTableRowElement => row !== null);
+    expect(studentRow).toBeDefined();
+    await user.click(studentRow!);
+
+    const helper = await screen.findByRole("status", { name: "Akıllı operasyon uyarısı" });
+    expect(helper).toHaveTextContent("Gecikmiş randevu");
+    expect(helper).not.toHaveTextContent("aranacak");
+    expect(screen.getAllByRole("status", { name: "Akıllı operasyon uyarısı" })).toHaveLength(1);
+    expect(helper.querySelectorAll("button, a")).toHaveLength(0);
+  });
+
+  it("renders a today appointment with Istanbul-local time and excludes future-day appointments", async () => {
+    const { studentId } = await seedStudent();
+    await seedAppointment(studentId, "2026-05-10T13:00:00.000Z");
+
+    renderStudentsPage();
+
+    const helper = await screen.findByRole("status", { name: "Akıllı operasyon uyarısı" });
+    expect(helper).toHaveTextContent("Bugün 16:00'da randevu");
+    expect(helper).toHaveTextContent("16:00'da randevu");
+
+    await act(async () => {
+      await db.appointments.update(1, { appointment_at: "2026-05-11T13:00:00.000Z" });
+    });
+
+    await waitFor(() => expect(screen.queryByRole("status", { name: "Akıllı operasyon uyarısı" })).not.toBeInTheDocument());
+  });
+
+  it("clears an appointment helper when switching from an eligible appointment student", async () => {
+    const user = userEvent.setup();
+    const firstStudent = await seedStudent({ fullName: "DENIZ ARSLAN" });
+    await seedAppointment(firstStudent.studentId, "2026-05-09T10:00:00.000Z");
+    await seedStudent({ fullName: "MELIS KAYA", phoneNumber: "0532 100 0002" });
+
+    renderStudentsPage();
+
+    const firstStudentRow = (await screen.findAllByText("DENIZ ARSLAN"))
+      .map((element) => element.closest("tr"))
+      .find((row): row is HTMLTableRowElement => row !== null);
+    expect(firstStudentRow).toBeDefined();
+    await user.click(firstStudentRow!);
+
+    const helper = await screen.findByRole("status", { name: "Akıllı operasyon uyarısı" });
+    expect(helper).toHaveTextContent("Gecikmiş randevu");
+
+    const secondStudentRow = (await screen.findAllByText("MELIS KAYA"))
+      .map((element) => element.closest("tr"))
+      .find((row): row is HTMLTableRowElement => row !== null);
+    expect(secondStudentRow).toBeDefined();
+    await user.click(secondStudentRow!);
+
+    await waitFor(() => {
+      expect(screen.queryByRole("status", { name: "Akıllı operasyon uyarısı" })).not.toBeInTheDocument();
+      expect(screen.queryByText("Gecikmiş randevu")).not.toBeInTheDocument();
+    });
   });
 
   it("does not render a helper when a student has no reminder, including without a usable phone", async () => {

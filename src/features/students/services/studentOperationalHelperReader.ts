@@ -1,7 +1,10 @@
 import type { AppDatabase } from "../../../db/db";
 import { db } from "../../../db/db";
+import type { AppointmentRecord } from "../../../domain/models/appointment";
+import type { CallLogRecord } from "../../../domain/models/callLog";
 import type { ReminderRecord } from "../../../domain/models/reminder";
 import { createPhoneSnapshotDisplayLabel } from "../../calls/services/callLogPhoneContext";
+import { getIstanbulAppointmentInputValues } from "../../appointments/services/guardianMessageDueTime";
 import {
   classifyReminderTask,
   formatReminderTaskDate,
@@ -9,7 +12,11 @@ import {
   type ReminderTaskBucket
 } from "../../reminders/services/reminderListReader";
 
-export type StudentOperationalHelperKind = "overdue_call" | "today_call";
+export type StudentOperationalHelperKind =
+  | "overdue_appointment"
+  | "overdue_call"
+  | "today_appointment"
+  | "today_call";
 
 export type StudentOperationalHelperReminder = {
   reminder_id: number;
@@ -21,15 +28,26 @@ export type StudentOperationalHelperReminder = {
   phone_context_number: string | null;
 };
 
+export type StudentOperationalHelperAppointment = {
+  appointment_id: number;
+  appointment_at: string;
+  bucket: Exclude<ReminderTaskBucket, "upcoming">;
+  appointment_date_label: string;
+  appointment_time_label: string;
+};
+
 export type StudentOperationalHelper = {
   kind: StudentOperationalHelperKind;
   primary_label: string;
   display_label: string;
-  reminder: StudentOperationalHelperReminder;
+  reminder?: StudentOperationalHelperReminder;
+  appointment?: StudentOperationalHelperAppointment;
 };
 
 export type ResolveStudentOperationalHelperInput = {
   reminders: ReminderRecord[];
+  appointments?: AppointmentRecord[];
+  call_logs?: CallLogRecord[];
   now?: string;
 };
 
@@ -74,10 +92,146 @@ function createReminderContext(
   };
 }
 
-export function resolveStudentOperationalHelper({
-  reminders,
-  now = new Date().toISOString()
-}: ResolveStudentOperationalHelperInput): StudentOperationalHelper | null {
+function isPositiveInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value > 0;
+}
+
+function isValidIsoInstant(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(value) &&
+    !Number.isNaN(new Date(value).getTime())
+  );
+}
+
+function formatIstanbulAppointment(appointmentAt: string): { dateLabel: string; timeLabel: string } | null {
+  try {
+    const { dateValue, timeValue } = getIstanbulAppointmentInputValues(appointmentAt);
+    const [year, month, day] = dateValue.split("-");
+
+    return {
+      dateLabel: `${day}.${month}.${year}`,
+      timeLabel: timeValue
+    };
+  } catch {
+    return null;
+  }
+}
+
+function classifyIstanbulAppointment(
+  appointmentAt: string,
+  now: string
+): Exclude<ReminderTaskBucket, "upcoming"> | null {
+  if (!isValidIsoInstant(appointmentAt) || !isValidIsoInstant(now)) {
+    return null;
+  }
+
+  const appointmentDate = new Date(appointmentAt);
+  const nowDate = new Date(now);
+
+  if (appointmentDate.getTime() < nowDate.getTime()) {
+    return "overdue";
+  }
+
+  const appointmentDisplay = formatIstanbulAppointment(appointmentAt);
+  const nowDisplay = formatIstanbulAppointment(now);
+
+  return appointmentDisplay && nowDisplay && appointmentDisplay.dateLabel === nowDisplay.dateLabel ? "today" : null;
+}
+
+function isModernPendingAppointment(
+  appointment: AppointmentRecord,
+  appointments: AppointmentRecord[],
+  callLogs: CallLogRecord[],
+  callLogsById: Map<number, CallLogRecord>
+): appointment is AppointmentRecord & { id: number; call_log_id: number; guardian_message_generation: number } {
+  const owner = isPositiveInteger(appointment.call_log_id) ? callLogsById.get(appointment.call_log_id) : undefined;
+  const activeOwnerCount = appointments.filter(
+    (candidate) => !candidate.deleted_at && candidate.call_log_id === appointment.call_log_id
+  ).length;
+  const activeBacklinkCount = callLogs.filter(
+    (candidate) => !candidate.deleted_at && candidate.created_appointment_id === appointment.id
+  ).length;
+
+  return Boolean(
+    !appointment.deleted_at &&
+      appointment.status === "pending" &&
+      isPositiveInteger(appointment.id) &&
+      isPositiveInteger(appointment.call_log_id) &&
+      isPositiveInteger(appointment.guardian_message_generation) &&
+      isValidIsoInstant(appointment.appointment_at) &&
+      isValidIsoInstant(appointment.guardian_message_due_at) &&
+      (appointment.guardian_message_sent_at === null || isValidIsoInstant(appointment.guardian_message_sent_at)) &&
+      owner &&
+      !owner.deleted_at &&
+      owner.student_id === appointment.student_id &&
+      owner.call_result === "appointment" &&
+      owner.created_appointment_id === appointment.id &&
+      activeOwnerCount === 1 &&
+      activeBacklinkCount === 1
+  );
+}
+
+function createAppointmentContext(
+  appointment: AppointmentRecord & { id: number },
+  bucket: Exclude<ReminderTaskBucket, "upcoming">,
+  formatted: { dateLabel: string; timeLabel: string }
+): StudentOperationalHelperAppointment {
+  return {
+    appointment_id: appointment.id,
+    appointment_at: appointment.appointment_at,
+    bucket,
+    appointment_date_label: formatted.dateLabel,
+    appointment_time_label: formatted.timeLabel
+  };
+}
+
+function selectAppointment(
+  appointments: AppointmentRecord[],
+  callLogs: CallLogRecord[],
+  now: string
+): { appointment: StudentOperationalHelperAppointment; kind: "overdue_appointment" | "today_appointment" } | null {
+  const callLogsById = new Map(
+    callLogs.flatMap((callLog) => (isPositiveInteger(callLog.id) ? [[callLog.id, callLog] as const] : []))
+  );
+  const candidates = appointments.flatMap((appointment) => {
+    if (!isModernPendingAppointment(appointment, appointments, callLogs, callLogsById)) {
+      return [];
+    }
+
+    const bucket = classifyIstanbulAppointment(appointment.appointment_at, now);
+    const formatted = bucket ? formatIstanbulAppointment(appointment.appointment_at) : null;
+
+    return bucket && formatted ? [{ appointment, bucket, formatted }] : [];
+  });
+
+  const overdue = candidates
+    .filter((candidate) => candidate.bucket === "overdue")
+    .sort((left, right) => left.appointment.appointment_at.localeCompare(right.appointment.appointment_at) || left.appointment.id - right.appointment.id)[0];
+
+  if (overdue) {
+    return {
+      kind: "overdue_appointment",
+      appointment: createAppointmentContext(overdue.appointment, overdue.bucket, overdue.formatted)
+    };
+  }
+
+  const today = candidates
+    .filter((candidate) => candidate.bucket === "today")
+    .sort((left, right) => left.appointment.appointment_at.localeCompare(right.appointment.appointment_at) || left.appointment.id - right.appointment.id)[0];
+
+  return today
+    ? {
+        kind: "today_appointment",
+        appointment: createAppointmentContext(today.appointment, today.bucket, today.formatted)
+      }
+    : null;
+}
+
+function selectCallHelper(
+  reminders: ReminderRecord[],
+  now: string
+): { reminder: StudentOperationalHelperReminder; kind: "overdue_call" | "today_call" } | null {
   const reminder = reminders
     .filter(isActivePendingCallReminder)
     .filter((candidate) => {
@@ -94,22 +248,51 @@ export function resolveStudentOperationalHelper({
   const bucket = classifyReminderTask(reminder.reminder_at, now);
   const activeBucket = bucket === "overdue" || bucket === "today" ? bucket : null;
 
-  if (!activeBucket) {
+  return activeBucket
+    ? { kind: activeBucket === "overdue" ? "overdue_call" : "today_call", reminder: createReminderContext(reminder, activeBucket) }
+    : null;
+}
+
+export function resolveStudentOperationalHelper({
+  reminders,
+  appointments = [],
+  call_logs = [],
+  now = new Date().toISOString()
+}: ResolveStudentOperationalHelperInput): StudentOperationalHelper | null {
+  const appointmentHelper = selectAppointment(appointments, call_logs, now);
+  const callHelper = selectCallHelper(reminders, now);
+
+  if (
+    appointmentHelper?.kind === "overdue_appointment" ||
+    (appointmentHelper?.kind === "today_appointment" && callHelper?.kind !== "overdue_call")
+  ) {
+    const primaryLabel = appointmentHelper.kind === "overdue_appointment" ? "Gecikmiş randevu" : "Bugün";
+
+    return {
+      kind: appointmentHelper.kind,
+      primary_label: primaryLabel,
+      display_label:
+        appointmentHelper.kind === "overdue_appointment"
+          ? `${primaryLabel} · ${appointmentHelper.appointment.appointment_date_label} ${appointmentHelper.appointment.appointment_time_label}`
+          : `${primaryLabel} ${appointmentHelper.appointment.appointment_time_label}'da randevu`,
+      appointment: appointmentHelper.appointment
+    };
+  }
+
+  if (!callHelper) {
     return null;
   }
 
-  const reminderContext = createReminderContext(reminder, activeBucket);
-  const primaryLabel = activeBucket === "overdue" ? "Gecikmiş arama" : "Bugün aranacak";
-  const displayLabel =
-    activeBucket === "overdue"
-      ? `${primaryLabel} · ${reminderContext.reminder_date_label} ${reminderContext.reminder_time_label}`
-      : `Bugün ${reminderContext.reminder_time_label}'te aranacak`;
+  const primaryLabel = callHelper.kind === "overdue_call" ? "Gecikmiş arama" : "Bugün aranacak";
 
   return {
-    kind: activeBucket === "overdue" ? "overdue_call" : "today_call",
+    kind: callHelper.kind,
     primary_label: primaryLabel,
-    display_label: displayLabel,
-    reminder: reminderContext
+    display_label:
+      callHelper.kind === "overdue_call"
+        ? `${primaryLabel} · ${callHelper.reminder.reminder_date_label} ${callHelper.reminder.reminder_time_label}`
+        : `Bugün ${callHelper.reminder.reminder_time_label}'te aranacak`,
+    reminder: callHelper.reminder
   };
 }
 
@@ -127,5 +310,10 @@ export async function readStudentOperationalHelper(
     return null;
   }
 
-  return resolveStudentOperationalHelper({ reminders, now });
+  const [appointments, call_logs] = await Promise.all([
+    database.appointments.where("student_id").equals(studentId).toArray(),
+    database.call_logs.where("student_id").equals(studentId).toArray()
+  ]);
+
+  return resolveStudentOperationalHelper({ reminders, appointments, call_logs, now });
 }

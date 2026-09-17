@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { AppDatabase } from "../../src/db/db";
+import type { AppointmentRecord } from "../../src/domain/models/appointment";
+import type { CallLogRecord } from "../../src/domain/models/callLog";
 import type { PhoneRecord } from "../../src/domain/models/phone";
 import type { ReminderRecord } from "../../src/domain/models/reminder";
 import type { StudentRecord } from "../../src/domain/models/student";
@@ -69,6 +71,49 @@ function reminder(studentId: number, reminderAt: string, overrides: Partial<Remi
     status: "pending",
     note: "Tekrar aranacak",
     is_default_time_assigned: false,
+    sync_status: "local",
+    created_at: createdAt,
+    updated_at: createdAt,
+    deleted_at: null,
+    ...overrides
+  };
+}
+
+function appointment(
+  studentId: number,
+  id: number,
+  appointmentAt: string,
+  overrides: Partial<AppointmentRecord> = {}
+): AppointmentRecord {
+  return {
+    id,
+    uuid: crypto.randomUUID(),
+    student_id: studentId,
+    guardian_id: null,
+    appointment_at: appointmentAt,
+    status: "pending",
+    campaign_id: null,
+    note: null,
+    call_log_id: id,
+    guardian_message_due_at: "2026-05-09T09:00:00.000Z",
+    guardian_message_sent_at: null,
+    guardian_message_generation: 1,
+    sync_status: "local",
+    created_at: createdAt,
+    updated_at: createdAt,
+    deleted_at: null,
+    ...overrides
+  };
+}
+
+function appointmentOwner(studentId: number, appointmentId: number, overrides: Partial<CallLogRecord> = {}): CallLogRecord {
+  return {
+    id: appointmentId,
+    uuid: crypto.randomUUID(),
+    student_id: studentId,
+    call_time: createdAt,
+    call_result: "appointment",
+    created_appointment_id: appointmentId,
     sync_status: "local",
     created_at: createdAt,
     updated_at: createdAt,
@@ -168,6 +213,137 @@ describe("studentOperationalHelperReader", () => {
     expect(helper).toMatchObject({
       kind: "today_call",
       reminder: { reminder_at: "2026-05-10T13:00:00.000Z" }
+    });
+  });
+
+  it("selects a today appointment before a today call reminder", () => {
+    const helper = resolveStudentOperationalHelper({
+      reminders: [reminder(1, "2026-05-10T13:00:00.000Z", { id: 1 })],
+      appointments: [appointment(1, 2, "2026-05-10T13:00:00.000Z")],
+      call_logs: [appointmentOwner(1, 2)],
+      now
+    });
+
+    expect(helper).toMatchObject({
+      kind: "today_appointment",
+      primary_label: "Bugün",
+      display_label: "Bugün 16:00'da randevu",
+      appointment: {
+        appointment_date_label: "10.05.2026",
+        appointment_time_label: "16:00"
+      }
+    });
+  });
+
+  it("selects an overdue appointment before an overdue call and does not infer no-show", () => {
+    const helper = resolveStudentOperationalHelper({
+      reminders: [reminder(1, "2026-05-09T10:00:00.000Z", { id: 1 })],
+      appointments: [appointment(1, 2, "2026-05-09T10:00:00.000Z")],
+      call_logs: [appointmentOwner(1, 2)],
+      now
+    });
+
+    expect(helper).toMatchObject({
+      kind: "overdue_appointment",
+      primary_label: "Gecikmiş randevu",
+      appointment: { bucket: "overdue" }
+    });
+    expect(helper?.display_label).not.toContain("Gelmedi");
+  });
+
+  it("keeps an overdue appointment ahead of a today call", () => {
+    const helper = resolveStudentOperationalHelper({
+      reminders: [reminder(1, "2026-05-10T13:00:00.000Z", { id: 1 })],
+      appointments: [appointment(1, 2, "2026-05-09T10:00:00.000Z")],
+      call_logs: [appointmentOwner(1, 2)],
+      now
+    });
+
+    expect(helper).toMatchObject({
+      kind: "overdue_appointment",
+      primary_label: "Gecikmiş randevu",
+      display_label: "Gecikmiş randevu · 09.05.2026 13:00"
+    });
+  });
+
+  it("keeps an overdue call ahead of a today appointment", () => {
+    const helper = resolveStudentOperationalHelper({
+      reminders: [reminder(1, "2026-05-09T10:00:00.000Z", { id: 1 })],
+      appointments: [appointment(1, 2, "2026-05-10T13:00:00.000Z")],
+      call_logs: [appointmentOwner(1, 2)],
+      now
+    });
+
+    expect(helper).toMatchObject({ kind: "overdue_call", primary_label: "Gecikmiş arama" });
+  });
+
+  it("excludes future-day, terminal, deleted and malformed appointments", () => {
+    const appointments = [
+      appointment(1, 1, "2026-05-11T10:00:00.000Z"),
+      appointment(1, 2, "2026-05-10T13:00:00.000Z", { status: "completed", call_log_id: 2 }),
+      appointment(1, 3, "2026-05-10T13:00:00.000Z", { status: "cancelled", call_log_id: 3 }),
+      appointment(1, 4, "2026-05-10T13:00:00.000Z", { status: "no_show", call_log_id: 4 }),
+      appointment(1, 5, "2026-05-10T13:00:00.000Z", { deleted_at: now, call_log_id: 5 }),
+      appointment(1, 6, "not-a-date", { call_log_id: 6 })
+    ];
+
+    expect(
+      resolveStudentOperationalHelper({
+        reminders: [],
+        appointments,
+        call_logs: appointments.map((candidate) => appointmentOwner(1, candidate.id!)),
+        now
+      })
+    ).toBeNull();
+  });
+
+  it("selects the oldest overdue and earliest today appointment with stable id tie-break", () => {
+    const overdueOldest = appointment(1, 2, "2026-05-08T10:00:00.000Z");
+    const overdueNewer = appointment(1, 1, "2026-05-09T10:00:00.000Z");
+    const todayLater = appointment(1, 4, "2026-05-10T15:00:00.000Z");
+    const todayEarlier = appointment(1, 3, "2026-05-10T13:00:00.000Z");
+    const sameTimeHigherId = appointment(1, 8, "2026-05-10T13:00:00.000Z");
+    const sameTimeLowerId = appointment(1, 7, "2026-05-10T13:00:00.000Z");
+
+    expect(
+      resolveStudentOperationalHelper({
+        reminders: [],
+        appointments: [overdueNewer, todayLater, sameTimeHigherId, overdueOldest, todayEarlier, sameTimeLowerId],
+        call_logs: [1, 2, 3, 4, 7, 8].map((id) => appointmentOwner(1, id)),
+        now
+      })
+    ).toMatchObject({ appointment: { appointment_id: 2 } });
+
+    expect(
+      resolveStudentOperationalHelper({
+        reminders: [],
+        appointments: [todayLater, sameTimeHigherId, todayEarlier, sameTimeLowerId],
+        call_logs: [3, 4, 7, 8].map((id) => appointmentOwner(1, id)),
+        now
+      })
+    ).toMatchObject({ appointment: { appointment_id: 3 } });
+
+    expect(
+      resolveStudentOperationalHelper({
+        reminders: [],
+        appointments: [sameTimeHigherId, sameTimeLowerId],
+        call_logs: [7, 8].map((id) => appointmentOwner(1, id)),
+        now
+      })
+    ).toMatchObject({ appointment: { appointment_id: 7 } });
+  });
+
+  it("classifies appointment boundaries by the Istanbul calendar rather than machine-local date", () => {
+    const helper = resolveStudentOperationalHelper({
+      reminders: [],
+      appointments: [appointment(1, 1, "2026-05-10T20:31:00.000Z")],
+      call_logs: [appointmentOwner(1, 1)],
+      now: "2026-05-10T20:30:00.000Z"
+    });
+
+    expect(helper).toMatchObject({
+      kind: "today_appointment",
+      appointment: { appointment_date_label: "10.05.2026", appointment_time_label: "23:31" }
     });
   });
 

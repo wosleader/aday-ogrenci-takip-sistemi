@@ -335,7 +335,7 @@ export function SettingsPage() {
             <label className="toggle-row">
               <span>
                 <strong>Akıllı operasyon uyarıları</strong>
-                <small>Öğrenci detayında gecikmiş veya bugün yapılacak aramalar için bağlamsal uyarılar gösterir.</small>
+                <small>Öğrenci detayında gecikmiş veya bugün yapılacak arama ve randevular için bağlamsal uyarılar gösterir.</small>
               </span>
               <input
                 aria-label="Akıllı operasyon uyarıları"
