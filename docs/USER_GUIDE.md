@@ -109,25 +109,19 @@ Adayı Aç butonu, ilgili adayı Aday Listesi ekranında açar.
 
 ## 7. Raporlar
 
-Raporlar sayfası günlük operasyon özetidir.
+Raporlar sayfasında iki görünüm bulunur: Yönetici Dashboard ve Detaylı Raporlar.
 
-Tarih seçerek seçilen günün çalışma özetini görebilirsiniz.
+Yönetici Dashboard ilk açılan görünümdür. Burada geçici bir tarih aralığı seçebilir veya 5, 7, 14 ve 30 günlük hazır aralıklardan birini kullanabilirsiniz. Bu seçim yalnız dashboard görünümünü değiştirir; Ayarlar'daki varsayılan tarih aralığını değiştirmez. Daha uzun operasyon incelemeleri için Detaylı Raporlar görünümünü kullanın.
 
-Kavramlar:
+Dashboard'daki KPI kartları seçilen dönem ile aynı uzunluktaki önceki dönemi karşılaştırır. Görüşme sonucu dağılımı, günlük trend ve kampanya performansı aktif görüşme kayıtlarını gösterir. Randevu Verildi bir görüşme sonucudur; Randevu Durumu ise gerçek randevuların bekliyor, geldi, gelmedi, iptal, ertelendi ve kayıt oldu durumlarını gösterir.
 
-- Seçilen gün işlem yapılan aday: o gün kaydı olan farklı aday sayısı.
-- Seçilen gün görüşme kaydı: o gün girilen toplam görüşme kaydı.
-- Görüşüldü: görüşme yapılan kayıtlar.
-- Ulaşılamadı: arandı ama ulaşılamadı kayıtları.
-- Tekrar aranacak: tekrar arama verilmiş kayıtlar.
-- Randevu: randevu verilen kayıtlar.
-- Kayıt oldu: kayıt olduğu işaretlenen adaylar.
-- Aranmayacak / ilgilenmiyor: artık aranmayacak adaylar.
-- Yanlış numara: yanlış numara olarak işaretlenen kayıtlar.
+Hatırlatma Sağlığı açık telefon hatırlatmalarını, Yönetici Dikkat Alanları ise süresi geçen hatırlatmaları, bugünkü bekleyen randevuları ve kullanılabilir telefonu olmayan aktif adayları özetler.
 
-Son görüşmeler listesi, seçilen gün içinde girilen son görüşme kayıtlarını gösterir.
+Temas Verimliliği, ilk sağlıklı telefon temasına ulaşmak için kaç farklı numaranın denendiğini gösterir. Bu bir görüşme süresi veya dakika metriği değildir; yalnız ölçüm başladıktan sonra kaydedilen gerçek telefon denemelerini kapsar. Kampanya bazlı temas tablosu satış başarısını değil, aday datasındaki iletişim erişilebilirliğini gösterir.
 
-Raporlar sayfası Excel dışa aktarma yerine geçmez. Paylaşım veya detaylı rapor için Excel Dışa Aktar ekranı kullanılmalıdır.
+Görünümü Özelleştir ile dashboard bloklarını gizleyebilir, Varsayılan Görünüme Dön ile geri getirebilirsiniz. Yardım düğmesi metriklerin neyi gösterdiğini ve nasıl hesaplandığını açıklar.
+
+Detaylı Raporlar görünümünde günlük rapor, Reporting V2, son görüşmeler ve açık hatırlatma özeti korunur. Raporlar sayfası Excel dışa aktarma yerine geçmez; paylaşım veya daha ayrıntılı dosya için Excel Dışa Aktar ekranını kullanın.
 
 ## 8. Excel Dışa Aktarma
 
