@@ -20,13 +20,15 @@
 - Production `https://netvadi.com/demo/` üzerinde VDS `50911ae4d6baed175c73fde9e257353a604c53a8 -> 6550693845d6d6149c74896c7f861cbc92889a90` fast-forward ile güncellendi; final runtime `6550693845d6d6149c74896c7f861cbc92889a90`, VDS repo `CLEAN`, production build/static deploy, HTTP root `200`, JS/CSS/registerSW asset smoke ve user-confirmed production browser QA `PASS`tir. Backup `C:\Backups\netvadi-demo_predeploy_20260917_134531` `PASS`; Robocopy exit `3` non-failure, Caddy restart `NOT REQUIRED / NOT PERFORMED`; VDS canonical test suite `NOT RUN`dır. `harita.html` deployment öncesinde absent'ti ve sonrasında da absent'tir.
 - Smart Operational Helpers Slice 1: `FULLY CLOSED`; `VAULT CLOSURE COMPLETE`, `REPO + VAULT FINAL VERIFICATION PASS`, `REMAINING CLOSURE GATE NONE`. Verified sync id `obsidian-update-e48ebe7-smart-operational-helpers-slice1-production-closure-2026-09-17-Europe-Istanbul` başarıyla uygulanmış ve kullanıcı tarafından doğrulanmıştır. İkinci vault sync gerekli değildir; historical stale Manager Dashboard package README kaydı current-state kaydı değildir ve non-blockingdir. Current gate: `NONE`. Production runtime `6550693845d6d6149c74896c7f861cbc92889a90` ile final repository docs state-flip commit'i ayrı gerçeklerdir; bu docs-only commit runtime'ı değiştirmez ve redeploy gerektirmez. Appointment Follow-up Helper separate Slice 2 candidate olarak kalır; Mobile Polish aktif değildir.
 
-## Current Product Item - Appointment Follow-up Helper Slice 2
+## Current Production Closure - Appointment Follow-up Helper Slice 2
 
-- Status: `PRODUCT DECISION APPROVED / READY FOR IMPLEMENTATION`; implementation henüz başlamadı.
-- Tek öğrenci-drawer helper alanı korunur. Final precedence: `Gecikmiş randevu` > `Gecikmiş arama` > `Bugün randevu` > `Bugün aranacak`; yalnız en yüksek öncelikli sinyal gösterilir.
-- Appointment sinyali yalnız modern, valid, non-deleted `pending` kayıtlardan gelir. Yalnız overdue ve today appointment gösterilir; future-day ve guardian-message due dahil değildir. Past pending `no_show` olarak yorumlanmaz; terminal, silinmiş ve malformed/legacy kayıtlar dışlanır.
-- `Europe/Istanbul` business-time sınıflandırması, deterministic multiple-appointment/tie-break seçimi ve mevcut `smart_operational_alerts_enabled` toggle'ının call + appointment için birlikte kullanılması zorunludur. Helper read-only kalır; appointment/reminder/student/phone/call-log/audit mutation'ı yoktur.
-- Next gate: `APPOINTMENT FOLLOW-UP HELPER SLICE 2 IMPLEMENTATION`. Mobile Polish Slice 2 sonrasında ve bu iş tamamlanmadan aktif değildir.
+- Status: `PRODUCTION COMPLETE`; final production docs closure `RECORDED`. Implementation, Strategy Review, Local Browser / Manual QA, feature commit/push, production deployment, HTTP/asset smoke ve production browser QA `PASS`tir.
+- Implementation/deployed runtime: `f837fd96dee5cdbf38d22c5ed4f8a44645555684` (`feat: add appointment follow-up helper`); parent `700e338cb2a89829b08d25a6040f6416ce657e2c`. Production URL `https://netvadi.com/demo/`.
+- VDS fast-forward `6550693845d6d6149c74896c7f861cbc92889a90 -> f837fd96dee5cdbf38d22c5ed4f8a44645555684`, exact target verification, VDS build, Vite `8.2.2`, PWA outputs ve static deploy `PASS`tir. Backup: `C:\Backups\netvadi-demo_predeploy_20260917_153104`.
+- HTTP root ve CSS/JS/manifest/registerSW/`sw.js` asset smoke `PASS`tir. İlk PowerShell URI construction error script/URI parsing kaynaklıydı; follow-up doğrulama başarılı oldu ve redeploy gerekmedi. Caddy restart `NOT REQUIRED / NOT PERFORMED`dir. `harita.html` deploy öncesinde absent'ti ve sonrasında da absent'tir.
+- VDS canonical test suite: `NOT RUN`; `PASS` değildir. Local final canonical `75` dosya / `741` test, local build/PWA ve production browser QA `PASS`tir.
+- Tek helper area ve precedence (`Gecikmiş randevu` > `Gecikmiş arama` > `Bugün randevu` > `Bugün aranacak`), valid pending appointment eligibility/exclusions, `Europe/Istanbul`, deterministic selection, settings toggle ve read-only sınır korunur.
+- Vault closure `PENDING`; repo + vault final verification `PENDING`; `FULLY CLOSED: NO`. Remaining gate: `DOCS CLOSURE COMMIT + PUSH -> VAULT CLOSURE -> FINAL REPO STATE-FLIP / REPO + VAULT VERIFY`. Mobile Polish aktif değildir.
 
 ## Previous Production Closure - Phone Reached -> Latest Contacted Synchronization
 
