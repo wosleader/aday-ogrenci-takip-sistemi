@@ -10,7 +10,15 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - Local canonical suite `72` dosya / `709` test, ReportsPage focused `7/7`, local build ve final visual QA `PASS`tir. VDS fast-forward `0b988191614901d446923d5bfb65aaf9668d1896 -> 50911ae4d6baed175c73fde9e257353a604c53a8`; VDS build, static deployment, HTTP smoke ve production browser QA `PASS`tir. VDS üzerinde canonical test suite bu deploy turunda çalıştırılmadı.
 - Production assets `/demo/assets/index-Cveja9ye.js`, `/demo/assets/index-CuckaCXv.css` ve `/demo/registerSW.js` HTTP `200` ile doğrulanmıştır. Backup `C:\Backups\netvadi-demo_predeploy_20260917_032818`dir; Caddy restart `NOT REQUIRED`dir.
 - Dashboard; Manager Dashboard ve Detailed Reports görünümlerini, tarih aralığı/KPI karşılaştırması ve tooltip, trend, kampanya, reminder/health, appointment, attention ve contact-efficiency read model'lerini taşır. Phone Contact Efficiency audit-event based'dir; AI prediction, personnel ranking ve schema migration yoktur.
-- Repo + vault closure chain `COMPLETE`; remaining closure gate `NONE`dir. Production runtime `50911ae4d6baed175c73fde9e257353a604c53a8` ve repository docs closure baseline `b6f68a61ed401de8e92eb241a7de4c88372a24f4` ayrı gerçeklerdir; bu state-flip docs-only commit'i runtime kodunu değiştirmez. Mandatory Completion / Closure Gate tamamlanmıştır. Sonraki roadmap `Smart Operational Helpers` `NEXT / READY FOR DISCOVERY`dır; henüz başlanmamıştır.
+- Repo + vault closure chain `COMPLETE`; remaining closure gate `NONE`dir. Production runtime `50911ae4d6baed175c73fde9e257353a604c53a8` ve repository docs closure baseline `b6f68a61ed401de8e92eb241a7de4c88372a24f4` ayrı gerçeklerdir; bu state-flip docs-only commit'i runtime kodunu değiştirmez. Mandatory Completion / Closure Gate tamamlanmıştır. Smart Operational Helpers Slice 1 Product Decision `COMPLETE`; implementation henüz başlamamıştır.
+
+## Current Roadmap - Smart Operational Helpers Slice 1
+
+- Seçilen slice: `Contextual Next Action Helper v1`; Product Decision `COMPLETE`, implementation henüz başlamadı. Bu yalnız deterministic operasyon context'idir; AI, scoring, prediction veya personel değerlendirmesi değildir.
+- V1 sinyalleri: `Kullanılabilir telefon yok`, `Gecikmiş arama`, `Bugün aranacak`. Öncelik: telefon blocker, sonra overdue, sonra today. Blocker ile reminder birlikteyse reminder secondary context olarak korunur; pending call reminder seçiminde bucket içinde en erken/due kayıt seçilir.
+- Aday kartı / sağ kişi kartında read-only gösterilir. Global queue veya Dashboard widget'ı değildir; Dashboard V3 toplu yönetici görünürlüğü olarak kalır. Mevcut güvenli aksiyona yönlendirme olabilir, fakat otomatik mutation yoktur.
+- Upcoming reminder, appointment helper, contactability phone order, quick workflow, notification engine, schema/index/migration, import/export, backup/restore, historical rewrite, package ve localStorage değişiklikleri kapsam dışıdır. Güncel canonical phone eligibility kullanılır; deleted student ve terminal reminder helper üretmez.
+- Beklenen next gate: `SMART OPERATIONAL HELPERS SLICE 1 IMPLEMENTATION`.
 
 ## Current Production Closure - Phone Reached -> Latest Contacted Synchronization
 
