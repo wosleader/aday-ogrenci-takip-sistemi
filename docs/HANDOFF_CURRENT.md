@@ -6,16 +6,17 @@
 - Local canonical suite `72` dosya / `709` test, ReportsPage focused `7/7`, local build ve final visual QA `PASS`tir. VDS `0b988191614901d446923d5bfb65aaf9668d1896 -> 50911ae4d6baed175c73fde9e257353a604c53a8` fast-forward; VDS build, static deployment, HTTP smoke ve production browser QA `PASS`tir. VDS üzerinde canonical test suite bu deploy turunda çalıştırılmadı.
 - Production asset smoke `/demo/assets/index-Cveja9ye.js`, `/demo/assets/index-CuckaCXv.css` ve `/demo/registerSW.js` için `200` verdi. Backup `C:\Backups\netvadi-demo_predeploy_20260917_032818`dir; Caddy restart `NOT REQUIRED`dir.
 - Dashboard V3 Manager Dashboard'ı default görünüm yapar; Detailed Reports korunur. KPI/date range, call-result, trend, campaign, reminder/health, appointment, attention ve contact-efficiency alanları read model üzerinden sunulur. Phone Contact Efficiency audit-event based'dir; AI prediction/personnel ranking/schema migration yoktur.
-- Repo + vault closure chain `COMPLETE`; remaining closure gate `NONE`dir. Production runtime `50911ae4d6baed175c73fde9e257353a604c53a8`, repository docs closure baseline `b6f68a61ed401de8e92eb241a7de4c88372a24f4` olarak ayrı gerçeklerdir; bu state-flip docs-only commit'i runtime kodunu değiştirmez. Smart Operational Helpers Slice 1 Product Decision `COMPLETE`; implementation henüz başlamamıştır.
+- Repo + vault closure chain `COMPLETE`; remaining closure gate `NONE`dir. Production runtime `50911ae4d6baed175c73fde9e257353a604c53a8`, repository docs closure baseline `b6f68a61ed401de8e92eb241a7de4c88372a24f4` olarak ayrı gerçeklerdir; bu state-flip docs-only commit'i runtime kodunu değiştirmez. Smart Operational Helpers Slice 1 Product Decision `AMENDED`; mevcut implementation WIP'i correction gerektirir ve implementation henüz tamamlanmamıştır.
 
 ## Current Roadmap - Smart Operational Helpers Slice 1
 
-- Product Decision `COMPLETE`: ilk slice `Contextual Next Action Helper v1`dir. Amaç, aday kartında yalnız deterministic ve açıklanabilir bekleyen operasyonel durumu göstermektir; AI prediction, lead/satış skoru veya personel değerlendirmesi değildir.
-- V1 sinyalleri ve önceliği: `Kullanılabilir telefon yok` > `Gecikmiş arama` > `Bugün aranacak`. Telefon blocker ile reminder birlikte varsa blocker primary, reminder secondary context olur. Pending call reminder seçiminde önce overdue, sonra today; bucket içinde en erken/due kayıt kullanılır.
-- Placement aday kartı / sağ kişi kartıdır. Global queue, yeni Dashboard widget'ı ve yeni notification engine yoktur. Dashboard V3 toplu yönetici görünürlüğü, helper ise tek adayın çalışma anı context'idir.
-- V1 read-only'dir; mevcut güvenli ekrana yönlendirme mümkün olsa da otomatik status, reminder, appointment, call result veya phone mutation yoktur. Appointment Follow-up Helper ayrı Slice 2 adayıdır.
-- Schema/table/index/migration, import/export, backup/restore, historical rewrite, package ve localStorage preference değişmez. Deleted student, terminal reminder ve invalid historical phone snapshot helper üretmez; helper güncel canonical phone eligibility kullanır.
-- Slice 1 implementation henüz başlamamıştır. Next gate: `SMART OPERATIONAL HELPERS SLICE 1 IMPLEMENTATION`.
+- Product Decision `AMENDED`: ilk slice `Contextual Next Action Helper v1`dir. Bu AI prediction, lead/satış skoru veya personel değerlendirmesi değildir; yalnız deterministic reminder context'i gösterir.
+- V1 displayed signals yalnız `Gecikmiş arama` ve `Bugün aranacak`tır; `Kullanılabilir telefon yok` helper UI'ı kaldırılmıştır. Öncelik `Gecikmiş arama` > `Bugün aranacak`tır. Phone state helper görünürlüğünü belirlemez.
+- Yalnız pending call reminder kayıtları kullanılır; upcoming, completed/cancelled/terminal ve non-call kayıtlar helper üretmez. Önce overdue, sonra today; aynı bucket içinde en erken/due kayıt seçilir. Reminder yoksa helper yoktur.
+- Placement, öğrenci sağ detay panelinde isim + sınıf sonrasında ve Veli Bilgileri öncesinde kompakt inline alert'tir. Ayrı `Sonraki İşlem` kartı/başlığı, placeholder, navigation veya action yoktur.
+- Settings > `Akıllı Teknolojiler` altında `Akıllı operasyon uyarıları` toggle'ı gerekir; default `AÇIK`tır ve mevcut preference persistence yeniden kullanılmalıdır. Uygun persistence pattern'i yoksa implementation durmalıdır.
+- Slice 1 read-only kalır: reminder/appointment/phone/call-result/call-log/audit mutation'ı, otomatik lifecycle, schema/storage/package/import/export/backup/restore/historical rewrite yoktur. Dashboard V3 değişmez; Appointment Follow-up Helper Slice 2'dir.
+- Mevcut WIP önceki telefon blocker + ayrı card kararına göre olduğu için `IMPLEMENTATION CORRECTION REQUIRED`; implementation tamamlanmış değildir. Next gate: `SMART OPERATIONAL HELPERS SLICE 1 UX/PREFERENCE CORRECTION IMPLEMENTATION`.
 
 ## Previous Production Closure - Phone Reached -> Latest Contacted Synchronization
 
