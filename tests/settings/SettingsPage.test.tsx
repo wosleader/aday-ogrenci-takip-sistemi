@@ -3,6 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TABLE_NAMES } from "../../src/db/backup";
 import { db } from "../../src/db/db";
+import {
+  DASHBOARD_DEFAULT_RANGE_KEY,
+  readDashboardDefaultRange
+} from "../../src/features/reports/services/dashboardPreferences";
 import { SettingsPage } from "../../src/features/settings/SettingsPage";
 import { RESTORE_SYSTEM_BACKUP_CONFIRMATION } from "../../src/features/settings/services/dataManagement";
 
@@ -37,11 +41,13 @@ describe("SettingsPage", () => {
   beforeEach(async () => {
     downloadTextFileMock.mockReset();
     downloadTextFileMock.mockImplementation(() => undefined);
+    window.localStorage.removeItem(DASHBOARD_DEFAULT_RANGE_KEY);
     await db.delete();
     await db.open();
   });
 
   afterEach(async () => {
+    window.localStorage.removeItem(DASHBOARD_DEFAULT_RANGE_KEY);
     await db.delete();
   });
 
@@ -84,6 +90,18 @@ describe("SettingsPage", () => {
     expect(screen.getByRole("tab", { name: "Veri Sağlığı / Bakım" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("heading", { name: "Veri Sağlığı / Bakım" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Tümü \(0\)/ })).toBeInTheDocument();
+  });
+
+  it("persists the default dashboard date range from General settings", () => {
+    render(<SettingsPage />);
+
+    const input = screen.getByLabelText("Varsayılan tarih aralığı");
+    expect(input).toHaveValue(7);
+
+    fireEvent.change(input, { target: { value: "14" } });
+
+    expect(input).toHaveValue(14);
+    expect(readDashboardDefaultRange()).toBe(14);
   });
 
   it("shows visible shortcut validation messages", async () => {

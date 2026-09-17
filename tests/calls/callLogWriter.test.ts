@@ -124,6 +124,7 @@ describe("callLogWriter", () => {
           (audit) => audit.entity_type === "phone" && audit.field_name === "operational_status"
         )
       ).toHaveLength(1);
+      expect((await database.audit_logs.toArray()).filter((audit) => audit.entity_type === "phone_attempt")).toHaveLength(0);
     } finally {
       database.close();
       await database.delete();

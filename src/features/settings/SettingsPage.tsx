@@ -19,6 +19,12 @@ import {
   updateShortcutForAction
 } from "../shortcuts/services/shortcutSettings";
 import {
+  DASHBOARD_DEFAULT_RANGE_MAX,
+  DASHBOARD_DEFAULT_RANGE_MIN,
+  readDashboardDefaultRange,
+  writeDashboardDefaultRange
+} from "../reports/services/dashboardPreferences";
+import {
   clearCandidateData,
   createDataCleanupBackup,
   DELETE_ALL_STUDENTS_CONFIRMATION,
@@ -54,6 +60,7 @@ export function SettingsPage() {
   const reminderSettings = useLiveQuery(() => readReminderNotificationSettings(), []);
   const shortcuts = useLiveQuery(() => readActiveOperationShortcuts(), [], getDefaultOperationShortcuts());
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
+  const [dashboardDefaultRange, setDashboardDefaultRange] = useState(() => String(readDashboardDefaultRange()));
   const [editingShortcut, setEditingShortcut] = useState<ShortcutActionKey | null>(null);
   const [shortcutMessage, setShortcutMessage] = useState<string | null>(null);
   const [shortcutMessageType, setShortcutMessageType] = useState<"info" | "success" | "error">("info");
@@ -287,6 +294,31 @@ export function SettingsPage() {
           <p className="muted-text">
             Sistem yerel-first çalışır; aday, görüşme ve export verileri cihazdaki IndexedDB veritabanından okunur.
           </p>
+          <section className="dashboard-preferences" aria-labelledby="dashboard-preferences-title">
+            <h3 id="dashboard-preferences-title">Yönetici Dashboard</h3>
+            <label htmlFor="dashboard-default-range">Varsayılan tarih aralığı</label>
+            <div className="dashboard-preferences-control">
+              <input
+                id="dashboard-default-range"
+                max={DASHBOARD_DEFAULT_RANGE_MAX}
+                min={DASHBOARD_DEFAULT_RANGE_MIN}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setDashboardDefaultRange(value);
+                  const numericValue = Number(value);
+                  if (Number.isInteger(numericValue) && writeDashboardDefaultRange(numericValue)) {
+                    setDashboardDefaultRange(String(numericValue));
+                  }
+                }}
+                type="number"
+                value={dashboardDefaultRange}
+              />
+              <span>gün</span>
+            </div>
+            <p className="muted-text">
+              Performans için varsayılan Dashboard aralığı en fazla 30 gün olarak ayarlanabilir. Daha uzun dönemleri incelemek için Detaylı Raporlar bölümünden özel tarih aralığı seçebilirsiniz.
+            </p>
+          </section>
         </section>
       ) : null}
 

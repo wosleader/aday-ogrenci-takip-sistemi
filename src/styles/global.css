@@ -135,6 +135,30 @@ textarea {
   color: #59676f;
 }
 
+.dashboard-preferences {
+  display: grid;
+  gap: 8px;
+  max-width: 520px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #d9e2e5;
+}
+
+.dashboard-preferences h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.dashboard-preferences-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-preferences-control input {
+  width: 88px;
+}
+
 .empty-state p {
   margin: 0 0 18px;
   color: #61717a;

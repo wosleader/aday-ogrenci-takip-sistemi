@@ -43,6 +43,20 @@ describe("backup and restore hardening", () => {
     try {
       await database.students.add(student("Ayşe Yılmaz"));
       await database.settings.add({ key: "theme", value: "light", updated_at: timestamp });
+      await database.audit_logs.add({
+        entity_type: "phone_attempt",
+        entity_id: 7,
+        action_type: "create",
+        field_name: "phone_attempt_v1",
+        new_value: JSON.stringify({
+          event_version: 1,
+          student_id: 1,
+          outcome: "no_answer",
+          campaign_id_at_attempt: null,
+          contact_established: false
+        }),
+        created_at: timestamp
+      });
 
       const snapshot = await createBackupSnapshot(database);
 
@@ -56,6 +70,10 @@ describe("backup and restore hardening", () => {
       expect(snapshot.metadata.created_at).toBeTruthy();
       expect(snapshot.metadata.counts.students).toBe(1);
       expect(snapshot.metadata.counts.settings).toBe(1);
+      expect(snapshot.metadata.counts.audit_logs).toBe(1);
+      expect(snapshot.tables.audit_logs).toEqual([
+        expect.objectContaining({ entity_type: "phone_attempt", field_name: "phone_attempt_v1" })
+      ]);
 
       for (const tableName of TABLE_NAMES) {
         expect(Array.isArray(snapshot.tables[tableName])).toBe(true);
