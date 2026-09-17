@@ -6,11 +6,11 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Current Production Closure - Manager Dashboard V3
 
-- Manager Dashboard V3 `PRODUCTION CLOSED`dur. Implementation ve deployed VDS/runtime commit'i `50911ae4d6baed175c73fde9e257353a604c53a8` (`feat: add manager dashboard v3 ui`)dir; production URL `https://netvadi.com/demo/`dir.
+- Manager Dashboard V3 `FULLY CLOSED`dur. Production implementation/deploy, production browser QA, final production docs closure, docs closure commit/push, Obsidian / Strategy Knowledge Vault closure ve user-confirmed vault apply/verification `PASS`tir. Implementation ve deployed VDS/runtime commit'i `50911ae4d6baed175c73fde9e257353a604c53a8` (`feat: add manager dashboard v3 ui`)dir; production URL `https://netvadi.com/demo/`dir.
 - Local canonical suite `72` dosya / `709` test, ReportsPage focused `7/7`, local build ve final visual QA `PASS`tir. VDS fast-forward `0b988191614901d446923d5bfb65aaf9668d1896 -> 50911ae4d6baed175c73fde9e257353a604c53a8`; VDS build, static deployment, HTTP smoke ve production browser QA `PASS`tir. VDS üzerinde canonical test suite bu deploy turunda çalıştırılmadı.
 - Production assets `/demo/assets/index-Cveja9ye.js`, `/demo/assets/index-CuckaCXv.css` ve `/demo/registerSW.js` HTTP `200` ile doğrulanmıştır. Backup `C:\Backups\netvadi-demo_predeploy_20260917_032818`dir; Caddy restart `NOT REQUIRED`dir.
 - Dashboard; Manager Dashboard ve Detailed Reports görünümlerini, tarih aralığı/KPI karşılaştırması ve tooltip, trend, kampanya, reminder/health, appointment, attention ve contact-efficiency read model'lerini taşır. Phone Contact Efficiency audit-event based'dir; AI prediction, personnel ranking ve schema migration yoktur.
-- Main implementation/production closure tamamlanmıştır. Docs-only closure commit'i runtime kodunu değiştirmez; knowledge-vault closure tamamlanana kadar feature `FULLY CLOSED` sayılmaz. Mandatory Completion / Closure Gate uygulanır. Sonraki roadmap `Smart Operational Helpers` `NOT STARTED`dır.
+- Repo + vault closure chain `COMPLETE`; remaining closure gate `NONE`dir. Production runtime `50911ae4d6baed175c73fde9e257353a604c53a8` ve repository docs closure baseline `b6f68a61ed401de8e92eb241a7de4c88372a24f4` ayrı gerçeklerdir; bu state-flip docs-only commit'i runtime kodunu değiştirmez. Mandatory Completion / Closure Gate tamamlanmıştır. Sonraki roadmap `Smart Operational Helpers` `NEXT / READY FOR DISCOVERY`dır; henüz başlanmamıştır.
 
 ## Current Production Closure - Phone Reached -> Latest Contacted Synchronization
 
