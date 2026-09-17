@@ -1,8 +1,12 @@
-<!-- Son guncelleme: Phone Reached -> Latest Contacted Synchronization Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Manager Dashboard V3 Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # FILE_MAP — Aday Öğrenci Takip Sistemi
 
 Bu dosya “hangi dosya ne işe yarar?” haritasıdır.
+
+## Latest File Map Addendum - Manager Dashboard V3 Production Closure
+
+Manager Dashboard V3 production runtime `50911ae4d6baed175c73fde9e257353a604c53a8` ile `https://netvadi.com/demo/` altında yayınlanmıştır. Manager Dashboard default Reports görünümüdür; Detailed Reports korunur. Production build, HTTP smoke ve production browser QA `PASS`tir. Sonraki docs-only closure repository HEAD'ini ilerletse de runtime kodunu değiştirmez.
 
 ## Latest File Map Addendum - Phone Reached -> Latest Contacted Synchronization Production Closure
 
@@ -190,14 +194,36 @@ Son doğrulandı: Adaptive Summary Export Columns
 
 ## 9. Reports
 
-Son doğrulandı: Reporting V2 Summary MVP
+Son doğrulandı: Manager Dashboard V3 Production Closure; Reporting V2 Summary MVP ve Detailed Reports korunur.
 
 - `src/features/reports/ReportsPage.tsx`
-  Günlük raporlar sayfası; seçilen gün diliyle günlük özet, son görüşmeler ve açık hatırlatma özeti gösterir. `13c53e5` itibarıyla Reporting V2 read-only yönetici özeti, tarih aralığı, kampanya filtresi, özet metrik kartları, görüşme sonucu dağılımı, kampanya kırılımı ve günlük trend tablolarını render eder. `68d2899` itibarıyla Reporting V2 alanı ayrı profesyonel panel düzeni ve `reporting-v2-*` CSS sınıflarıyla polish edilir; günlük rapor alanı korunur.
+  Reports alanının view switch'ini taşır; Manager Dashboard default görünüm, Detailed Reports mevcut günlük rapor/Reporting V2/detail akışıdır.
+- `src/features/reports/ManagerDashboardView.tsx`
+  Yönetici Dashboard V3 görünümü; date range, previous equal-period KPI comparison/tooltip, result distribution, daily trend, campaign performance, reminder/health, appointment lifecycle, Manager Attention Areas, Contact Efficiency, Campaign Contact Efficiency, customization ve help alanlarını render eder.
+- `src/features/reports/DetailedReportsView.tsx`
+  Günlük rapor, Reporting V2 ve ayrıntılı rapor işlevlerini Manager Dashboard'dan ayrı görünüm olarak korur.
+- `src/features/reports/dashboardUi.ts`
+  Dashboard widget anahtarları, etiketleri, varsayılan görünürlük ve localStorage tabanlı customization yardımcıları.
 - `src/features/reports/services/dailyReportReader.ts`
   Seçilen gün için `call_logs` üzerinden günlük operasyon özetini üretir; `call_time` birincil, `created_at` fallback kullanır.
 - `src/features/reports/services/reportingV2Reader.ts`
   Reporting V2 read-only summary servisidir. Aktif `call_logs` kayıtlarını kullanır, `deleted_at` kayıtları dışlar, tarih aralığını `call_time` / `created_at` fallback ve local day sınırlarıyla hesaplar. `İşlem gören tekil aday`, result distribution, kampanya kırılımı ve günlük trend modellerini üretir. Kampanya kırılımı adayın güncel `students.campaign_id` değerine dayanır; call log campaign snapshot üretmez.
+- `src/features/reports/services/dashboardDateRange.ts`
+  Dashboard preset/custom date-range normalization, equal-period hesaplama ve tarih seçim sınırlarını taşır.
+- `src/features/reports/services/dashboardOverviewReader.ts`
+  Dashboard KPI, previous equal-period comparison, call-result distribution, daily trend ve campaign summary read model'lerini üretir.
+- `src/features/reports/services/dashboardReminderReader.ts`
+  Dashboard reminder/health summary read model'ini üretir.
+- `src/features/reports/services/dashboardAppointmentReader.ts`
+  Dashboard appointment lifecycle summary'sini gerçek appointment kayıtlarından üretir.
+- `src/features/reports/services/dashboardAttentionReader.ts`
+  Dashboard Manager Attention Areas ve operasyonel dikkat sinyallerini üretir.
+- `src/features/reports/services/dashboardPreferences.ts`
+  Dashboard widget görünürlük tercihlerinin localStorage persistence/reset akışını taşır.
+- `src/features/reports/services/phoneAttemptContract.ts`
+  Phone Contact Efficiency için audit-event tabanlı attempt ölçüm sözleşmesini tanımlar.
+- `src/features/reports/services/phoneAttemptReader.ts`
+  Phone Contact Efficiency ve campaign contact efficiency read model'lerini audit event'lerden üretir; satış veya call-duration metriği değildir.
 
 ## 10. Settings / Data Management
 

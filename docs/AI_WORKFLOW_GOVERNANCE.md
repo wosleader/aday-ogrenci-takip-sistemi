@@ -121,6 +121,34 @@ Her sprint sonunda Strategy AI şu 5 soruyu kontrol eder:
 4. Working tree durumu net mi?
 5. Docs/checkpoint/handoff güncellemesi gerekiyorsa yapıldı mı?
 
+Bu hafif kontrol listesi, önemli işlerde Mandatory Completion / Closure Gate'in yerine geçmez; yalnızca onun altında uygulanır.
+
+## Mandatory Completion / Closure Gate
+
+Önemli feature, checkpoint, sprint veya production değişikliklerinde aşağıdaki sıra tamamlanmadan iş `FULLY CLOSED` sayılmaz:
+
+1. Gerekliyse Discovery / Plan tamamlanır.
+2. Implementation tamamlanır.
+3. Strategy Review yapılır.
+4. Local browser/manual QA tamamlanır.
+5. Feature commit + push tamamlanır.
+6. Gerekliyse pre-production checkpoint ve docs hazırlanır.
+7. VDS/production deployment tamamlanır.
+8. Production HTTP/smoke validation tamamlanır.
+9. Production browser QA tamamlanır.
+10. Final Production Docs Closure tamamlanır.
+11. Docs closure commit + push tamamlanır.
+12. Obsidian / Strategy Knowledge Vault closure tamamlanır.
+13. Repo + vault final verification tamamlanır.
+14. Ancak bundan sonra `FULLY CLOSED` yazılır.
+15. Sonraki roadmap işi ancak bundan sonra aktif hale gelir.
+
+Production browser QA `PASS` tek başına `FULLY CLOSED` anlamına gelmez. Docs closure ve knowledge-vault closure atlanamaz. Strategy AI, önemli iş tamamlandığında bu closure zincirini otomatik olarak başlatır; sonraki roadmap işi zincir tamamlanmadan `ACTIVE` olamaz.
+
+Runtime commit'i ile docs-only closure commit'i ayrı gerçeklerdir. Production runtime ile repository HEAD'in eşit olması zorunlu değildir; docs-only closure repository HEAD'i ilerletebilir ancak runtime kodunu değiştirmez. Docs, closure durumunu açıkça yazmalı ve `CLOSED`, `PRODUCTION CLOSED` ile `FULLY CLOSED` ifadelerini belirsiz biçimde kullanmamalıdır.
+
+Micro copy/CSS ve production'a çıkmayan küçük işler riskine göre daraltılabilir; ancak önemli işlerin ana closure gate'i atlanamaz. Bu bölüm, aşağıdaki hafif sprint kontrol listesinin nihai otoritesidir.
+
 ## 8. Vault Read Checklist Gate
 
 Bu gate yeni bir paralel sistem kurmak için değil, mevcut repo docs / strateji hafızası disiplinini uygulanabilir hale getirmek içindir.

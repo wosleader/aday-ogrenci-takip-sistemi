@@ -1,10 +1,17 @@
-<!-- Son guncelleme: Phone Reached -> Latest Contacted Synchronization Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Manager Dashboard V3 Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
 ## Amaç
 
 Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntılı sprint geçmişi için checkpoint dosyaları, güncel kısa bağlam için `docs/PROJECT_MEMORY.md` kullanılır.
+
+## Current Production Closure Decision - Manager Dashboard V3
+
+- [Decision State] Manager Dashboard V3 `PRODUCTION CLOSED`dur. Implementation/deployed runtime commit `50911ae4d6baed175c73fde9e257353a604c53a8` (`feat: add manager dashboard v3 ui`) ile production'a alınmıştır; URL `https://netvadi.com/demo/`dir.
+- [Architecture] Reports alanında Manager Dashboard default görünüm, Detailed Reports ise mevcut günlük rapor/Reporting V2/detail akışlarını koruyan ayrı görünümdür. Dashboard; date range, previous equal-period KPI comparison/tooltip, result distribution, daily trend, campaign performance, reminder/health, appointment lifecycle, Manager Attention Areas, Contact Efficiency, Campaign Contact Efficiency, customization ve help alanlarını kapsar. Phone Contact Efficiency audit-event based'dir; satış performansı/call-duration metriği değildir.
+- [Evidence] Local canonical validation `72` dosya / `709` test, focused ReportsPage `7/7`, local build ve final visual QA `PASS`tir. VDS `0b988191614901d446923d5bfb65aaf9668d1896 -> 50911ae4d6baed175c73fde9e257353a604c53a8` fast-forward; VDS build, HTTP smoke, production browser QA ve static deployment `PASS`tir. VDS üzerinde canonical test suite bu deploy turunda çalıştırılmadı. Backup `C:\Backups\netvadi-demo_predeploy_20260917_032818`; Caddy restart `NOT REQUIRED`dir.
+- [Closure Boundary] Production runtime commit ile sonraki docs-only closure commit'i ayrı gerçeklerdir. Knowledge-vault closure tamamlanana kadar feature `FULLY CLOSED` değildir; Mandatory Completion / Closure Gate tamamlanmadan `Smart Operational Helpers` aktif edilemez. Smart Operational Helpers `NOT STARTED`dır.
 
 ## Aktif Kararlar
 

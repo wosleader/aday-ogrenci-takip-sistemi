@@ -1,8 +1,16 @@
-<!-- Son guncelleme: Phone Reached -> Latest Contacted Synchronization Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Manager Dashboard V3 Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
 Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
+
+## Current Production Closure - Manager Dashboard V3
+
+- Manager Dashboard V3 `PRODUCTION CLOSED`dur. Implementation ve deployed VDS/runtime commit'i `50911ae4d6baed175c73fde9e257353a604c53a8` (`feat: add manager dashboard v3 ui`)dir; production URL `https://netvadi.com/demo/`dir.
+- Local canonical suite `72` dosya / `709` test, ReportsPage focused `7/7`, local build ve final visual QA `PASS`tir. VDS fast-forward `0b988191614901d446923d5bfb65aaf9668d1896 -> 50911ae4d6baed175c73fde9e257353a604c53a8`; VDS build, static deployment, HTTP smoke ve production browser QA `PASS`tir. VDS üzerinde canonical test suite bu deploy turunda çalıştırılmadı.
+- Production assets `/demo/assets/index-Cveja9ye.js`, `/demo/assets/index-CuckaCXv.css` ve `/demo/registerSW.js` HTTP `200` ile doğrulanmıştır. Backup `C:\Backups\netvadi-demo_predeploy_20260917_032818`dir; Caddy restart `NOT REQUIRED`dir.
+- Dashboard; Manager Dashboard ve Detailed Reports görünümlerini, tarih aralığı/KPI karşılaştırması ve tooltip, trend, kampanya, reminder/health, appointment, attention ve contact-efficiency read model'lerini taşır. Phone Contact Efficiency audit-event based'dir; AI prediction, personnel ranking ve schema migration yoktur.
+- Main implementation/production closure tamamlanmıştır. Docs-only closure commit'i runtime kodunu değiştirmez; knowledge-vault closure tamamlanana kadar feature `FULLY CLOSED` sayılmaz. Mandatory Completion / Closure Gate uygulanır. Sonraki roadmap `Smart Operational Helpers` `NOT STARTED`dır.
 
 ## Current Production Closure - Phone Reached -> Latest Contacted Synchronization
 
