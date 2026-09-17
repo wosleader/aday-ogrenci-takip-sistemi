@@ -2983,6 +2983,69 @@ body {
   font-size: 12px;
 }
 
+.smart-operational-alert {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  margin: 8px 0;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: var(--aots-radius-lg);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.smart-operational-alert-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.smart-operational-alert-copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: baseline;
+  min-width: 0;
+  gap: 2px 7px;
+}
+
+.smart-operational-alert-title {
+  font-weight: 700;
+}
+
+.smart-operational-alert-detail {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.smart-operational-alert.is-overdue {
+  background: #fff4ee;
+  color: #955439;
+}
+
+.smart-operational-alert.is-overdue .smart-operational-alert-detail {
+  color: #876f64;
+}
+
+.smart-operational-alert.is-today {
+  background: #f2f7ff;
+  color: #326b95;
+}
+
+.smart-operational-alert.is-today .smart-operational-alert-detail {
+  color: #6a859a;
+}
+
+@media (max-width: 520px) {
+  .smart-operational-alert-copy {
+    gap: 1px 6px;
+  }
+}
+
 .drawer-header-actions {
   position: relative;
   display: inline-flex;

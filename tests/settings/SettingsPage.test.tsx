@@ -9,6 +9,7 @@ import {
 } from "../../src/features/reports/services/dashboardPreferences";
 import { SettingsPage } from "../../src/features/settings/SettingsPage";
 import { RESTORE_SYSTEM_BACKUP_CONFIRMATION } from "../../src/features/settings/services/dataManagement";
+import { SMART_OPERATIONAL_ALERTS_ENABLED_KEY } from "../../src/features/settings/services/smartTechnologySettings";
 
 const { downloadTextFileMock } = vi.hoisted(() => ({ downloadTextFileMock: vi.fn() }));
 
@@ -102,6 +103,31 @@ describe("SettingsPage", () => {
 
     expect(input).toHaveValue(14);
     expect(readDashboardDefaultRange()).toBe(14);
+  });
+
+  it("shows and persists the smart operational alerts preference", async () => {
+    const { unmount } = render(<SettingsPage />);
+    const toggle = screen.getByRole("checkbox", { name: "Akıllı operasyon uyarıları" });
+
+    expect(screen.getByRole("heading", { name: "Akıllı Teknolojiler" })).toBeInTheDocument();
+    expect(toggle).toBeChecked();
+
+    await userEvent.click(toggle);
+    await waitFor(async () => {
+      expect(await db.settings.get(SMART_OPERATIONAL_ALERTS_ENABLED_KEY)).toMatchObject({ value: "false" });
+    });
+    await waitFor(() => expect(toggle).not.toBeChecked());
+
+    unmount();
+    render(<SettingsPage />);
+    const persistedToggle = await screen.findByRole("checkbox", { name: "Akıllı operasyon uyarıları" });
+    await waitFor(() => expect(persistedToggle).not.toBeChecked());
+
+    await userEvent.click(persistedToggle);
+    await waitFor(async () => {
+      expect(await db.settings.get(SMART_OPERATIONAL_ALERTS_ENABLED_KEY)).toMatchObject({ value: "true" });
+    });
+    await waitFor(() => expect(persistedToggle).toBeChecked());
   });
 
   it("shows visible shortcut validation messages", async () => {

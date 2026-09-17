@@ -25,6 +25,10 @@ import {
   writeDashboardDefaultRange
 } from "../reports/services/dashboardPreferences";
 import {
+  readSmartOperationalAlertsEnabled,
+  updateSmartOperationalAlertsEnabled
+} from "./services/smartTechnologySettings";
+import {
   clearCandidateData,
   createDataCleanupBackup,
   DELETE_ALL_STUDENTS_CONFIRMATION,
@@ -59,6 +63,7 @@ const SETTINGS_TABS: Array<{ key: SettingsTab; label: string }> = [
 export function SettingsPage() {
   const reminderSettings = useLiveQuery(() => readReminderNotificationSettings(), []);
   const shortcuts = useLiveQuery(() => readActiveOperationShortcuts(), [], getDefaultOperationShortcuts());
+  const smartOperationalAlertsEnabled = useLiveQuery(() => readSmartOperationalAlertsEnabled(), [], true);
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
   const [dashboardDefaultRange, setDashboardDefaultRange] = useState(() => String(readDashboardDefaultRange()));
   const [editingShortcut, setEditingShortcut] = useState<ShortcutActionKey | null>(null);
@@ -75,6 +80,7 @@ export function SettingsPage() {
   const [dataManagementMessage, setDataManagementMessage] = useState<string | null>(null);
   const [dataManagementNotice, setDataManagementNotice] = useState<DataManagementNotice | null>(null);
   const [reminderSettingsMessage, setReminderSettingsMessage] = useState<string | null>(null);
+  const [smartOperationalAlertsMessage, setSmartOperationalAlertsMessage] = useState<string | null>(null);
   const [cleanupBackupGateState, setCleanupBackupGateState] = useState<StudentGroupCleanupBackupGateState>("locked");
   const [cleanupBackupGateError, setCleanupBackupGateError] = useState<string | null>(null);
   const [isPreparingCleanupBackup, setIsPreparingCleanupBackup] = useState(false);
@@ -204,6 +210,11 @@ export function SettingsPage() {
     setReminderSettingsMessage("Hatırlatma ayarları kaydedildi.");
   }
 
+  async function updateSmartOperationalAlertsSetting(value: boolean) {
+    await updateSmartOperationalAlertsEnabled(value);
+    setSmartOperationalAlertsMessage("Akıllı operasyon uyarıları kaydedildi.");
+  }
+
   useEffect(() => {
     if (!editingShortcut) {
       return;
@@ -318,6 +329,22 @@ export function SettingsPage() {
             <p className="muted-text">
               Performans için varsayılan Dashboard aralığı en fazla 30 gün olarak ayarlanabilir. Daha uzun dönemleri incelemek için Detaylı Raporlar bölümünden özel tarih aralığı seçebilirsiniz.
             </p>
+          </section>
+          <section className="dashboard-preferences" aria-labelledby="smart-technology-title">
+            <h3 id="smart-technology-title">Akıllı Teknolojiler</h3>
+            <label className="toggle-row">
+              <span>
+                <strong>Akıllı operasyon uyarıları</strong>
+                <small>Öğrenci detayında gecikmiş veya bugün yapılacak aramalar için bağlamsal uyarılar gösterir.</small>
+              </span>
+              <input
+                aria-label="Akıllı operasyon uyarıları"
+                checked={smartOperationalAlertsEnabled}
+                onChange={(event) => void updateSmartOperationalAlertsSetting(event.target.checked)}
+                type="checkbox"
+              />
+            </label>
+            {smartOperationalAlertsMessage ? <p className="muted-text">{smartOperationalAlertsMessage}</p> : null}
           </section>
         </section>
       ) : null}

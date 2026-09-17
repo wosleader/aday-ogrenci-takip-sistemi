@@ -90,6 +90,8 @@ import {
 } from "./services/studentListReader";
 import { updatePhoneOutcome } from "./services/studentPhoneOutcome";
 import { markPhoneAsContacted, markPhoneAsInvalid } from "./services/studentPhoneStatus";
+import { readStudentOperationalHelper } from "./services/studentOperationalHelperReader";
+import { readSmartOperationalAlertsEnabled } from "../settings/services/smartTechnologySettings";
 import {
   createWhatsAppDraftLog,
   readLatestManualSentWhatsAppDraftsForStudent,
@@ -1992,6 +1994,19 @@ export function StudentsPage() {
     () => (selectedRow ? readCallHistoryForStudent(selectedRow.student_id) : Promise.resolve([])),
     [selectedRow?.student_id],
     []
+  );
+  const operationalHelper = useLiveQuery(
+    () =>
+      selectedRow
+        ? readStudentOperationalHelper(selectedRow.student_id)
+        : Promise.resolve(null),
+    [selectedRow?.student_id],
+    null
+  );
+  const smartOperationalAlertsEnabled = useLiveQuery(
+    () => readSmartOperationalAlertsEnabled(),
+    [],
+    true
   );
   const whatsAppManualSentLookup = useLiveQuery(
     () =>
@@ -4192,6 +4207,34 @@ export function StudentsPage() {
                   </button>
                 </div>
               </div>
+              {smartOperationalAlertsEnabled && operationalHelper ? (
+                <div
+                  aria-label="Akıllı operasyon uyarısı"
+                  className={`smart-operational-alert ${operationalHelper.kind === "overdue_call" ? "is-overdue" : "is-today"}`}
+                  role="status"
+                >
+                  <span className="smart-operational-alert-icon" aria-hidden="true">
+                    <CalendarClock size={14} />
+                  </span>
+                  <span className="smart-operational-alert-copy">
+                    {operationalHelper.kind === "overdue_call" ? (
+                      <>
+                        <strong className="smart-operational-alert-title">{operationalHelper.primary_label}</strong>{" "}
+                        <span className="smart-operational-alert-detail">
+                          {operationalHelper.reminder.reminder_date_label} {operationalHelper.reminder.reminder_time_label}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <strong className="smart-operational-alert-title">Bugün</strong>{" "}
+                        <span className="smart-operational-alert-detail">
+                          {operationalHelper.reminder.reminder_time_label}'te aranacak
+                        </span>
+                      </>
+                    )}
+                  </span>
+                </div>
+              ) : null}
               <div className="contact-card">
                 <span className="form-label">Veli Bilgileri</span>
                 <div className="veli-row">
