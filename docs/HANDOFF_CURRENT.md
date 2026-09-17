@@ -22,13 +22,12 @@
 
 ## Current Production Closure - Appointment Follow-up Helper Slice 2
 
-- Status: `PRODUCTION COMPLETE`; final production docs closure `RECORDED`. Implementation, Strategy Review, Local Browser / Manual QA, feature commit/push, production deployment, HTTP/asset smoke ve production browser QA `PASS`tir.
-- Implementation/deployed runtime: `f837fd96dee5cdbf38d22c5ed4f8a44645555684` (`feat: add appointment follow-up helper`); parent `700e338cb2a89829b08d25a6040f6416ce657e2c`. Production URL `https://netvadi.com/demo/`.
-- VDS fast-forward `6550693845d6d6149c74896c7f861cbc92889a90 -> f837fd96dee5cdbf38d22c5ed4f8a44645555684`, exact target verification, VDS build, Vite `8.2.2`, PWA outputs ve static deploy `PASS`tir. Backup: `C:\Backups\netvadi-demo_predeploy_20260917_153104`.
-- HTTP root ve CSS/JS/manifest/registerSW/`sw.js` asset smoke `PASS`tir. İlk PowerShell URI construction error script/URI parsing kaynaklıydı; follow-up doğrulama başarılı oldu ve redeploy gerekmedi. Caddy restart `NOT REQUIRED / NOT PERFORMED`dir. `harita.html` deploy öncesinde absent'ti ve sonrasında da absent'tir.
-- VDS canonical test suite: `NOT RUN`; `PASS` değildir. Local final canonical `75` dosya / `741` test, local build/PWA ve production browser QA `PASS`tir.
-- Tek helper area ve precedence (`Gecikmiş randevu` > `Gecikmiş arama` > `Bugün randevu` > `Bugün aranacak`), valid pending appointment eligibility/exclusions, `Europe/Istanbul`, deterministic selection, settings toggle ve read-only sınır korunur.
-- Vault closure `PENDING`; repo + vault final verification `PENDING`; `FULLY CLOSED: NO`. Remaining gate: `DOCS CLOSURE COMMIT + PUSH -> VAULT CLOSURE -> FINAL REPO STATE-FLIP / REPO + VAULT VERIFY`. Mobile Polish aktif değildir.
+- `APPOINTMENT FOLLOW-UP HELPER SLICE 2 — FULLY CLOSED`. Implementation, Strategy Review, Local Browser / Manual QA, feature commit/push, production deployment, HTTP/asset smoke, production browser QA, final production docs closure, docs closure commit/push, vault closure ve repo + vault final verification `PASS`tir.
+- Production runtime: `f837fd96dee5cdbf38d22c5ed4f8a44645555684` (`feat: add appointment follow-up helper`). Production docs closure baseline: `3b32ee8f84d23cd3faf2e8c410891d273b5f4a0b`; final repo state-flip docs-only commit'i runtime kodunu değiştirmez. URL: `https://netvadi.com/demo/`.
+- Vault sync `obsidian-update-3b32ee8-appointment-follow-up-helper-slice2-production-closure-2026-09-18-Europe-Istanbul` kullanıcı tarafından doğrulanmış `PASS`tir; ikinci vault sync yapılmamıştır. VDS canonical suite `NOT RUN`dır.
+- Local canonical `75` dosya / `741` test, local build/PWA, VDS build, static deploy, HTTP/asset smoke ve production browser QA `PASS`tir. Backup `C:\Backups\netvadi-demo_predeploy_20260917_153104`; Caddy restart `NOT REQUIRED / NOT PERFORMED`dir. `harita.html` deploy öncesinde absent'ti ve sonrasında da absent'tir.
+- İlk HTTP smoke PowerShell URI parsing issue nedeniyle geçersizdi; bu deploy failure değildir, follow-up smoke `PASS` olmuş ve redeploy gerekmemiştir.
+- Tek helper area, precedence, appointment eligibility/exclusions, `Europe/Istanbul`, deterministic selection, settings toggle ve read-only sınır korunur. Mandatory Completion / Closure Gate `COMPLETE`; remaining closure gate: NONE. Smart Operational Helpers Slice 1 ve Manager Dashboard V3 `FULLY CLOSED`; Mobile Polish `NEXT CANDIDATE / NOT ACTIVE`.
 
 ## Previous Production Closure - Phone Reached -> Latest Contacted Synchronization
 

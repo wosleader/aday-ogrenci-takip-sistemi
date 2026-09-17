@@ -24,11 +24,11 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Current Production Closure - Appointment Follow-up Helper Slice 2
 
-- Appointment Follow-up Helper Slice 2 `PRODUCTION COMPLETE`; final production docs closure `RECORDED`. Implementation/runtime `f837fd96dee5cdbf38d22c5ed4f8a44645555684` (`feat: add appointment follow-up helper`), Strategy Review, local QA, production deploy, HTTP/asset smoke ve production browser QA `PASS`tir.
-- VDS fast-forward `6550693845d6d6149c74896c7f861cbc92889a90 -> f837fd96dee5cdbf38d22c5ed4f8a44645555684`; backup `C:\Backups\netvadi-demo_predeploy_20260917_153104`. Local canonical `75/741 PASS`, build/PWA `PASS`; VDS canonical suite `NOT RUN`.
-- Production URL `https://netvadi.com/demo/`; Caddy restart `NOT REQUIRED / NOT PERFORMED`; `harita.html` deploy öncesinde ve sonrasında absent'tir. İlk HTTP smoke script/URI parsing error verdi, follow-up root ve CSS/JS/manifest/registerSW/`sw.js` doğrulaması `200 PASS` oldu.
-- Tek helper area, precedence, appointment eligibility/exclusions, `Europe/Istanbul`, deterministic selection, existing settings toggle ve read-only boundary korunur. Vault closure ve repo + vault final verification `PENDING`; `FULLY CLOSED: NO`.
-- Remaining gate: `DOCS CLOSURE COMMIT + PUSH -> VAULT CLOSURE -> FINAL REPO STATE-FLIP / REPO + VAULT VERIFY`. Mobile Polish aktif değildir.
+- Appointment Follow-up Helper Slice 2 `FULLY CLOSED`; implementation/runtime `f837fd96dee5cdbf38d22c5ed4f8a44645555684` (`feat: add appointment follow-up helper`), Strategy Review, local QA, production deploy, HTTP/asset smoke, production browser QA, final production docs closure, docs closure commit/push, vault closure ve repo + vault final verification `PASS`tir.
+- Production docs closure baseline `3b32ee8f84d23cd3faf2e8c410891d273b5f4a0b`; final state-flip docs-only commit'i runtime kodunu değiştirmez. Vault sync `obsidian-update-3b32ee8-appointment-follow-up-helper-slice2-production-closure-2026-09-18-Europe-Istanbul` kullanıcı doğrulamasıyla `PASS`; No second vault sync.
+- Local canonical `75/741 PASS`, local build/PWA, VDS build, static deploy, HTTP/asset smoke ve production browser QA `PASS`; VDS canonical suite `NOT RUN`. Backup `C:\Backups\netvadi-demo_predeploy_20260917_153104`; Caddy restart `NOT REQUIRED / NOT PERFORMED`dir.
+- Production URL `https://netvadi.com/demo/`; `harita.html` deploy öncesinde ve sonrasında absent'tir. İlk HTTP smoke PowerShell URI parsing issue nedeniyle geçersizdi; follow-up smoke `PASS`, redeploy gerekmedi.
+- Single helper area, precedence, eligibility/exclusions, `Europe/Istanbul`, deterministic selection, settings toggle ve read-only boundary korunur. Mandatory Completion / Closure Gate `COMPLETE`; Remaining closure gate: NONE. Smart Operational Helpers Slice 1 ve Manager Dashboard V3 `FULLY CLOSED`; Mobile Polish `NOT ACTIVE`.
 
 ## Current Production Closure - Phone Reached -> Latest Contacted Synchronization
 
