@@ -34,11 +34,14 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 - `Mobile Polish Slice 1 — Student List Mobile Framing` Product Decision `APPROVED`; implementation `NOT STARTED`. Bu bir UX redesign degil, ogrenci listesi ekranini dar telefon viewportlarinda guvenli bicimde frame etme calismasidir.
 - UX preservation rule baglayicidir: mevcut kontrol sirasi, label/metin, icon anlami, arama, kampanya/sinif/durum filtreleri, reset, filtre semantics, student row acma/secme davranisi, tablo kolonlari/sirasi, Telefon 1-10 fidelity, phone/contacted/selected, reminder, appointment, call-log, helper precedence, settings persistence, audit ve import/export semantics degismez.
+- Product Decision Amendment: student-list keyboard shortcut helper/legend desktop/tablet'ta korunur; `<=640px` mobil viewportta gizlenebilir. Bu dar exception, keyboard shortcut behavior, event handling ve shortcut semantics'i degistirmez.
+- Search, kampanya/sinif/durum filtreleri, reset, pagination controls, table columns ve row actions gizlenemez; student data, drawer, business logic ve shortcut listener'lari korunur.
 - In scope: student list toolbar, search/filter/reset framing, responsive container sizing, spacing/gap/padding, table outer framing ve controlled horizontal table scroll. Body/page-level horizontal overflow olmayacak; yatay scroll yalniz table container icinde serbesttir.
+- Shortcut helper mobile visibility Slice 1 kapsamindadir. Tercih edilen mevcut breakpoint `640px`dir; yeni breakpoint yoktur ve CSS-only visibility rule hedeflenir; JSX/shortcut registry kaldirilmaz.
 - Out of scope: toolbar redesign, filter grouping/hiding/reordering, label/icon degisikligi, column hiding/deletion, mobile-card conversion, student row veya drawer redesign, app shell/navigation, dashboard, reminders, settings, business logic, schema/DB/package/routing/PWA/import/export/backup/restore.
 - Existing breakpoints tercih edilir (`1180`, `1100`, `1024`, `860`, `768`, `700`, `640`, `520`, `480`, `430`). Yeni breakpoint mevcut sistemle cozum mumkun degilse once neden, etkilenen selector, viewport etkisi ve product contract etkisi raporlanmadan eklenemez.
 - QA viewports: `320x720`, `390x844`, `430x932`, `768x1024`, `1280x800`, `1440x900`. Basari; ilk ucunda body/page horizontal overflow olmamasi, toolbar/filter/search/reset kullanilabilirligi, table scroll'un kendi container'inda kalmasi ve tablet/desktop regresyonu olmamasidir. Student drawer bu slice'ta degismez.
-- Next gate: `MOBILE POLISH SLICE 1 IMPLEMENTATION — STUDENT LIST MOBILE FRAMING`.
+- Next gate: `MOBILE POLISH SLICE 1 CONTRACT AMENDMENT COMMIT/PUSH`; then `CORRECTIVE IMPLEMENTATION — MOBILE SHORTCUT HELPER VISIBILITY`.
 
 ## Current Production Closure - Phone Reached -> Latest Contacted Synchronization
 

@@ -34,11 +34,14 @@
 - Mobile Polish: `ACTIVE — DISCOVERY COMPLETE / SLICE 1 PRODUCT DECISION APPROVED`.
 - Slice 1: `Student List Mobile Framing`; implementation `NOT STARTED`. Amaç, mevcut ogrenci listesi UX'ini yeniden tasarlamadan dar telefon viewportlarinda guvenli bicimde frame etmektir.
 - Hard UX preservation: kontrol sirasi, label/metin, icon anlamlari, arama, kampanya/sinif/durum filtreleri, reset, filtre semantics, student row interaction, tablo kolonlari/sirasi, Telefon 1-10 fidelity, phone/contacted/selected, reminder, appointment, call-log, helper precedence, settings persistence, audit ve import/export semantics korunur.
+- Product Decision Amendment: student-list keyboard shortcut helper/legend desktop/tablet'ta korunur; `<=640px` mobil viewportta gizlenebilir. Bu istisna yalniz keyboard-only instructional UI icindir; shortcut behavior, event handling ve shortcut semantics korunur.
+- Search, kampanya/sinif/durum filtreleri, reset, pagination controls, table columns ve row actions gizlenemez. Student data, drawer, business logic ve shortcut listener'lari degismez.
 - In scope: student list toolbar, search/filter/reset framing, responsive sizing, spacing/gap/padding, table outer framing ve controlled horizontal table scroll. Body/page horizontal overflow kabul edilmez; table kendi scroll container'inda yatay kayabilir.
+- Shortcut helper mobile visibility Slice 1 kapsamindadir. Tercih edilen mevcut breakpoint `640px`dir; yeni breakpoint yoktur ve uygulama CSS-only visibility kuralıyla yapılacaktır. JSX kaldirilmayacak unless technically necessary.
 - Out of scope: toolbar/filter redesign, control reorder/hide, label/icon degisikligi, column hiding/deletion, mobile-card conversion, student row/drawer/app shell/navigation/dashboard/reminder/settings redesign, business logic, schema/DB/package/routing/PWA/import/export/backup/restore.
 - Existing breakpoints tercih edilir: `1180`, `1100`, `1024`, `860`, `768`, `700`, `640`, `520`, `480`, `430`. Yeni breakpoint ancak mevcut sistemle cozum olmadigi raporlanip onaylandiktan sonra dusunulebilir.
 - QA matrix: `320x720`, `390x844`, `430x932`, `768x1024`, `1280x800`, `1440x900`. Ilk ucunda body/page overflow olmamali; toolbar, filtreler, reset ve search kullanilabilir kalmali; tablo scroll'u container icinde kalmali; tablet/desktop ve drawer davranisi regresyona ugramamali.
-- Next gate: `MOBILE POLISH SLICE 1 IMPLEMENTATION — STUDENT LIST MOBILE FRAMING`.
+- Next gate: `MOBILE POLISH SLICE 1 CONTRACT AMENDMENT COMMIT/PUSH`; then `CORRECTIVE IMPLEMENTATION — MOBILE SHORTCUT HELPER VISIBILITY`.
 
 ## Previous Production Closure - Phone Reached -> Latest Contacted Synchronization
 

@@ -41,11 +41,14 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 
 - `Mobile Polish Slice 1 — Student List Mobile Framing`: `PRODUCT DECISION APPROVED`; implementation `NOT STARTED`. Bu bir UX redesign degil, mevcut ogrenci listesi UX'ini dar telefon viewportlarinda guvenli bicimde frame etme calismasidir.
 - UX Preservation Rule hard contract'tir: kontrol sirasi, mevcut label/metin ve icon anlamlari, arama, kampanya/sinif/durum filtreleri, reset, filtre semantics, student row interaction, tablo kolonlari/sirasi, Telefon 1-10 fidelity, contacted/selected, phone, reminder, appointment, call-log, helper precedence, settings persistence, audit ve import/export semantics degismez.
+- Product Decision Amendment — `MOBILE KEYBOARD SHORTCUTS HELPER VISIBILITY`: student-list keyboard shortcut helper/legend UI'i desktop/tablet'ta korunur; mobilde `<=640px` gizlenebilir. Bu, klavye shortcut behavior, event handling veya shortcut semantics'i degistirmez.
+- UX Preservation Rule exception'i yalniz bu keyboard-only instructional UI icindir. Search, campaign/class/status filters, reset, pagination controls, table columns ve row actions gizlenemez; student data, drawer ve business logic degismez.
 - In scope: student list toolbar, search/filter/reset framing, responsive container sizing, spacing/gap/padding, table outer framing, controlled horizontal table scroll ve bu yuzeylerle dogrudan ilgili touch target iyilestirmeleri. Body/page-level horizontal overflow yoktur; table kendi scroll container'inda yatay kayabilir.
+- Amendment scope: shortcut helper mobile visibility Slice 1 kapsamindadir; tercih edilen mevcut breakpoint `640px`dir, yeni breakpoint yoktur ve CSS-only presentation change hedeflenir. JSX, shortcut listener'lari ve shortcut registry kaldirilmaz.
 - Out of scope: toolbar redesign, filter grouping/hiding/reordering, label/icon degisikligi, table column hiding/deletion, mobile-card conversion, student row/drawer/app shell/navigation/dashboard/reminder/settings redesign, new action, business logic, schema/DB/package/routing/PWA/import/export/backup/restore.
 - Existing breakpoint system tercih edilir: `1180`, `1100`, `1024`, `860`, `768`, `700`, `640`, `520`, `480`, `430`. Yeni breakpoint mevcut esiklerle cozum olmadigi; etkilenen selector, desktop/tablet etkisi ve contract etkisi raporlanmadan eklenemez.
 - QA viewport matrix: `320x720`, `390x844`, `430x932`, `768x1024`, `1280x800`, `1440x900`. Success criteria: ilk ucunda body/page horizontal overflow yok, toolbar/filter/search/reset kullanilabilir, tablo yatay scroll'u kendi container'inda kalir, student row interaction korunur ve tablet/desktop regresyonu yoktur. Drawer bu slice'ta degismez.
-- Next gate: `MOBILE POLISH SLICE 1 IMPLEMENTATION — STUDENT LIST MOBILE FRAMING`.
+- Next gate: `MOBILE POLISH SLICE 1 CONTRACT AMENDMENT COMMIT/PUSH`; then `CORRECTIVE IMPLEMENTATION — MOBILE SHORTCUT HELPER VISIBILITY`.
 
 ## Current Production Closure Decision - Phone Reached -> Latest Contacted Synchronization
 
