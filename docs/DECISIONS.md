@@ -37,9 +37,9 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 - Tek contextual helper area ve precedence (`Gecikmiş randevu` > `Gecikmiş arama` > `Bugün randevu` > `Bugün aranacak`), valid pending appointment eligibility/exclusions, `Europe/Istanbul`, deterministic selection, mevcut `smart_operational_alerts_enabled` ayarı ve read-only sınır korunur. Smart Operational Helpers Slice 1 ve Manager Dashboard V3 `FULLY CLOSED`. Mobile Polish Slice 1 product decision approved; implementation not started.
 - Mandatory Completion / Closure Gate: `COMPLETE`. Remaining closure gate: `NONE`; current gate: `NONE`. Remaining closure gate: NONE.
 
-## Approved Product Decision - Mobile Polish Slice 1
+## Current Pre-Production Checkpoint - Mobile Polish Slice 1
 
-- `Mobile Polish Slice 1 — Student List Mobile Framing`: `PRODUCT DECISION APPROVED`; implementation `NOT STARTED`. Bu bir UX redesign degil, mevcut ogrenci listesi UX'ini dar telefon viewportlarinda guvenli bicimde frame etme calismasidir.
+- `Mobile Polish Slice 1 — Student List Mobile Framing`: `PRE-PRODUCTION READY`; implementation `COMPLETE / COMMITTED / PUSHED` at `05c9d01a93cff8f35f4f881b211f4f3c90c8239e` (`style: polish student list mobile framing`). Product Decision baseline `ff42510253a00e728a84710b17a16ff2857a0735`; shortcut visibility amendment baseline `51f91ff901e6f662c23a9d66f5108564a501ced9`.
 - UX Preservation Rule hard contract'tir: kontrol sirasi, mevcut label/metin ve icon anlamlari, arama, kampanya/sinif/durum filtreleri, reset, filtre semantics, student row interaction, tablo kolonlari/sirasi, Telefon 1-10 fidelity, contacted/selected, phone, reminder, appointment, call-log, helper precedence, settings persistence, audit ve import/export semantics degismez.
 - Product Decision Amendment — `MOBILE KEYBOARD SHORTCUTS HELPER VISIBILITY`: student-list keyboard shortcut helper/legend UI'i desktop/tablet'ta korunur; mobilde `<=640px` gizlenebilir. Bu, klavye shortcut behavior, event handling veya shortcut semantics'i degistirmez.
 - UX Preservation Rule exception'i yalniz bu keyboard-only instructional UI icindir. Search, campaign/class/status filters, reset, pagination controls, table columns ve row actions gizlenemez; student data, drawer ve business logic degismez.
@@ -47,8 +47,13 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 - Amendment scope: shortcut helper mobile visibility Slice 1 kapsamindadir; tercih edilen mevcut breakpoint `640px`dir, yeni breakpoint yoktur ve CSS-only presentation change hedeflenir. JSX, shortcut listener'lari ve shortcut registry kaldirilmaz.
 - Out of scope: toolbar redesign, filter grouping/hiding/reordering, label/icon degisikligi, table column hiding/deletion, mobile-card conversion, student row/drawer/app shell/navigation/dashboard/reminder/settings redesign, new action, business logic, schema/DB/package/routing/PWA/import/export/backup/restore.
 - Existing breakpoint system tercih edilir: `1180`, `1100`, `1024`, `860`, `768`, `700`, `640`, `520`, `480`, `430`. Yeni breakpoint mevcut esiklerle cozum olmadigi; etkilenen selector, desktop/tablet etkisi ve contract etkisi raporlanmadan eklenemez.
-- QA viewport matrix: `320x720`, `390x844`, `430x932`, `768x1024`, `1280x800`, `1440x900`. Success criteria: ilk ucunda body/page horizontal overflow yok, toolbar/filter/search/reset kullanilabilir, tablo yatay scroll'u kendi container'inda kalir, student row interaction korunur ve tablet/desktop regresyonu yoktur. Drawer bu slice'ta degismez.
-- Next gate: `MOBILE POLISH SLICE 1 CONTRACT AMENDMENT COMMIT/PUSH`; then `CORRECTIVE IMPLEMENTATION — MOBILE SHORTCUT HELPER VISIBILITY`.
+- QA viewport matrix and Local Browser / Manual QA `PASS`: `320x720`, `390x844`, `430x932`, `640px`, `641px`, `768x1024`, `1280x800`, `1440x900`; filters usable, student-list framing contained, table scroll internal, pagination/footer visible, shortcut helper hidden at `<=640px` and visible at `>640px`, with no observed tablet/desktop regression.
+- Final Strategy Review `PASS`; focused validation `4` files / `79` tests `PASS`, final canonical `75` files / `741` tests `PASS`, Build/PWA and `/demo/` base `PASS`; known Vite chunk-size warning is `NON-BLOCKING`.
+- Implementation scope is CSS-only in `src/styles/global.css`: toolbar/filter containment, student table internal horizontal framing, pagination/footer mobile wrapping and the approved `.student-kbdbar` visibility exception. No new breakpoint, JSX, business logic or data contract change was introduced.
+- Production deployment is `COMPLETE` at runtime `05c9d01a93cff8f35f4f881b211f4f3c90c8239e`; production HTTP/asset/PWA smoke and production browser QA are `PASS`. Backup: `C:\Backups\netvadi-demo_predeploy_20260919_154553`; VDS canonical suite `NOT RUN`; Caddy `NOT REQUIRED / NOT PERFORMED`; `harita.html` was absent before deployment and remains absent afterward.
+- Final production docs closure is recorded, while Vault Closure and Repo + Vault Final Verification remain `PENDING`; `FULLY CLOSED: NO`. Remaining gates: `DOCS CLOSURE COMMIT + PUSH` -> `VAULT CLOSURE` -> `FINAL REPO STATE-FLIP / REPO + VAULT VERIFY`.
+- Mobile Polish Slice 2 — App Shell + Mobile Navigation and Slice 3 — Student Drawer Mobile Fit remain candidate findings, `NOT ACTIVE`, and are not claimed as fixed by Slice 1.
+- Next gate: `DOCS CLOSURE COMMIT + PUSH`.
 
 ## Current Production Closure Decision - Phone Reached -> Latest Contacted Synchronization
 

@@ -32,7 +32,7 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Current Roadmap - Mobile Polish Slice 1
 
-- `Mobile Polish Slice 1 — Student List Mobile Framing` Product Decision `APPROVED`; implementation `NOT STARTED`. Bu bir UX redesign degil, ogrenci listesi ekranini dar telefon viewportlarinda guvenli bicimde frame etme calismasidir.
+- `Mobile Polish Slice 1 — Student List Mobile Framing` `PRE-PRODUCTION READY`; implementation `COMPLETE / COMMITTED / PUSHED` at `05c9d01a93cff8f35f4f881b211f4f3c90c8239e` (`style: polish student list mobile framing`). Product Decision baseline `ff42510253a00e728a84710b17a16ff2857a0735`; shortcut visibility amendment baseline `51f91ff901e6f662c23a9d66f5108564a501ced9`.
 - UX preservation rule baglayicidir: mevcut kontrol sirasi, label/metin, icon anlami, arama, kampanya/sinif/durum filtreleri, reset, filtre semantics, student row acma/secme davranisi, tablo kolonlari/sirasi, Telefon 1-10 fidelity, phone/contacted/selected, reminder, appointment, call-log, helper precedence, settings persistence, audit ve import/export semantics degismez.
 - Product Decision Amendment: student-list keyboard shortcut helper/legend desktop/tablet'ta korunur; `<=640px` mobil viewportta gizlenebilir. Bu dar exception, keyboard shortcut behavior, event handling ve shortcut semantics'i degistirmez.
 - Search, kampanya/sinif/durum filtreleri, reset, pagination controls, table columns ve row actions gizlenemez; student data, drawer, business logic ve shortcut listener'lari korunur.
@@ -40,8 +40,12 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - Shortcut helper mobile visibility Slice 1 kapsamindadir. Tercih edilen mevcut breakpoint `640px`dir; yeni breakpoint yoktur ve CSS-only visibility rule hedeflenir; JSX/shortcut registry kaldirilmaz.
 - Out of scope: toolbar redesign, filter grouping/hiding/reordering, label/icon degisikligi, column hiding/deletion, mobile-card conversion, student row veya drawer redesign, app shell/navigation, dashboard, reminders, settings, business logic, schema/DB/package/routing/PWA/import/export/backup/restore.
 - Existing breakpoints tercih edilir (`1180`, `1100`, `1024`, `860`, `768`, `700`, `640`, `520`, `480`, `430`). Yeni breakpoint mevcut sistemle cozum mumkun degilse once neden, etkilenen selector, viewport etkisi ve product contract etkisi raporlanmadan eklenemez.
-- QA viewports: `320x720`, `390x844`, `430x932`, `768x1024`, `1280x800`, `1440x900`. Basari; ilk ucunda body/page horizontal overflow olmamasi, toolbar/filter/search/reset kullanilabilirligi, table scroll'un kendi container'inda kalmasi ve tablet/desktop regresyonu olmamasidir. Student drawer bu slice'ta degismez.
-- Next gate: `MOBILE POLISH SLICE 1 CONTRACT AMENDMENT COMMIT/PUSH`; then `CORRECTIVE IMPLEMENTATION — MOBILE SHORTCUT HELPER VISIBILITY`.
+- Final Strategy Review `PASS`; focused `4` files / `79` tests `PASS`; canonical `75` files / `741` tests `PASS`; Build/PWA and `/demo/` base `PASS`; Local Browser / Manual QA `PASS`. Verified viewports: `320x720`, `390x844`, `430x932`, `640px`, `641px`, `768x1024`, `1280x800`, `1440x900`. Filters remained usable, framing stayed contained, table scroll remained internal, pagination/footer stayed visible, and `.student-kbdbar` was hidden at `<=640px` and visible at `>640px`; known Vite chunk-size warning is `NON-BLOCKING`.
+- Implementation scope is CSS-only in `src/styles/global.css`: student toolbar/filter containment, table framing, pagination/footer mobile wrapping and the approved shortcut-helper visibility exception. No new breakpoint, JSX, business logic or data contract change was introduced.
+- Production deployment is `COMPLETE` at runtime `05c9d01a93cff8f35f4f881b211f4f3c90c8239e`; production HTTP/asset/PWA smoke and production browser QA are `PASS`. Backup: `C:\Backups\netvadi-demo_predeploy_20260919_154553`; VDS canonical suite `NOT RUN`; Caddy `NOT REQUIRED / NOT PERFORMED`; `harita.html` was absent before deployment and remains absent afterward.
+- Final production docs closure is recorded, while Vault Closure and Repo + Vault Final Verification remain `PENDING`; `FULLY CLOSED: NO`. Remaining gates: `DOCS CLOSURE COMMIT + PUSH` -> `VAULT CLOSURE` -> `FINAL REPO STATE-FLIP / REPO + VAULT VERIFY`.
+- Mobile Polish Slice 2 — App Shell + Mobile Navigation and Slice 3 — Student Drawer Mobile Fit remain candidate findings, `NOT ACTIVE`; they are not claimed as fixed by Slice 1.
+- Next gate: `DOCS CLOSURE COMMIT + PUSH`.
 
 ## Current Production Closure - Phone Reached -> Latest Contacted Synchronization
 
