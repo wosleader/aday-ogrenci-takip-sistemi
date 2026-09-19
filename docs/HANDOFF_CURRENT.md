@@ -31,7 +31,7 @@
 
 ## Current Roadmap - Mobile Polish Slice 1
 
-- Mobile Polish Slice 1 — Student List Mobile Framing: `PRE-PRODUCTION READY`. Product Decision baseline `ff42510253a00e728a84710b17a16ff2857a0735`; shortcut visibility amendment baseline `51f91ff901e6f662c23a9d66f5108564a501ced9`.
+- Mobile Polish Slice 1 — Student List Mobile Framing: `FULLY CLOSED`. Product Decision baseline `ff42510253a00e728a84710b17a16ff2857a0735`; shortcut visibility amendment baseline `51f91ff901e6f662c23a9d66f5108564a501ced9`.
 - Implementation `COMPLETE / COMMITTED / PUSHED`: `05c9d01a93cff8f35f4f881b211f4f3c90c8239e` (`style: polish student list mobile framing`).
 - Hard UX preservation: kontrol sirasi, label/metin, icon anlamlari, arama, kampanya/sinif/durum filtreleri, reset, filtre semantics, student row interaction, tablo kolonlari/sirasi, Telefon 1-10 fidelity, phone/contacted/selected, reminder, appointment, call-log, helper precedence, settings persistence, audit ve import/export semantics korunur.
 - Product Decision Amendment: student-list keyboard shortcut helper/legend desktop/tablet'ta korunur; `<=640px` mobil viewportta gizlenebilir. Bu istisna yalniz keyboard-only instructional UI icindir; shortcut behavior, event handling ve shortcut semantics korunur.
@@ -44,9 +44,9 @@
 - Final Strategy Review `PASS`; focused `4` files / `79` tests `PASS`; canonical `75` files / `741` tests `PASS`; Build/PWA and `/demo/` base `PASS`; known Vite chunk-size warning `NON-BLOCKING`.
 - Implementation scope was CSS-only in `src/styles/global.css`: toolbar/filter containment, table framing, pagination/footer mobile wrapping and the approved `.student-kbdbar` visibility exception. No new breakpoint, JSX, business logic or data contract change was introduced.
 - Production deployment is `COMPLETE` at runtime `05c9d01a93cff8f35f4f881b211f4f3c90c8239e`; production HTTP/asset/PWA smoke and production browser QA are `PASS`. Backup: `C:\Backups\netvadi-demo_predeploy_20260919_154553`; VDS canonical suite `NOT RUN`; Caddy `NOT REQUIRED / NOT PERFORMED`; `harita.html` was absent before deployment and remains absent afterward.
-- Final production docs closure is recorded. Vault Closure and Repo + Vault Final Verification are `PENDING`; `FULLY CLOSED: NO`. Remaining gates: `DOCS CLOSURE COMMIT + PUSH` -> `VAULT CLOSURE` -> `FINAL REPO STATE-FLIP / REPO + VAULT VERIFY`.
+- Final production docs closure, Docs Closure Commit + Push, Vault Closure and Repo + Vault Final Verification are `COMPLETE / PASS`. Production docs closure baseline: `754edc8a309cb616356eb118b4d3ffd8b5ff23be`; verified vault sync ID: `obsidian-update-754edc8-mobile-polish-slice1-production-closure-2026-09-20-Europe-Istanbul`; snapshot apply/verification `PASS`. `FULLY CLOSED: YES`; Mandatory Completion / Closure Gate `COMPLETE`; Remaining closure gate `NONE`. No second vault sync or redeploy is required.
 - Mobile Polish Slice 2 — App Shell + Mobile Navigation and Slice 3 — Student Drawer Mobile Fit remain candidate findings, `NOT ACTIVE`; Slice 1 does not claim either finding as fixed.
-- Next gate: `DOCS CLOSURE COMMIT + PUSH`.
+- Production runtime remains `05c9d01a93cff8f35f4f881b211f4f3c90c8239e`; this final state-flip is docs-only and does not change runtime or require redeploy. Current closure gate: `NONE`.
 
 ## Previous Production Closure - Phone Reached -> Latest Contacted Synchronization
 
