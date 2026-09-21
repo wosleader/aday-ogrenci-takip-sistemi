@@ -48,16 +48,15 @@
 - Mobile Polish Slice 2 — App Shell + Mobile Navigation and Slice 3 — Student Drawer Mobile Fit remain candidate findings, `NOT ACTIVE`; Slice 1 does not claim either finding as fixed.
 - Production runtime remains `05c9d01a93cff8f35f4f881b211f4f3c90c8239e`; this final state-flip is docs-only and does not change runtime or require redeploy. Current closure gate: `NONE`.
 
-## Current Roadmap - Mobile Polish Slice 2 — App Shell + Mobile Navigation
+## Current Production Closure WIP - Mobile Polish Slice 2 — App Shell + Mobile Navigation
 
-- Product Decision Amendment: `APPROVED`; Amendment `Mobile Collapsible Navigation`; Discovery `COMPLETE`; original Product Decision `APPROVED / COMMITTED / PUSHED` at `e8b6d5a55d5a167943f54031cd961b05ca22aca1`.
-- The original always-visible navigation rule is preserved as pre-amendment history and is superseded only for `<=768px`. Current amended state: Controlled Implementation `WIP / REQUIRES REVISION`; Local Browser QA `PAUSED / NOT COMPLETE`; previous Strategy Review `PASS WITH NON-BLOCKING NOTES` applies only to the pre-amendment implementation; Feature Commit `NOT DONE`; Production `NOT STARTED`; `FULLY CLOSED: NO`.
-- At `<=768px`, navigation defaults `CLOSED / HIDDEN` and opens through a visible `Menü` + chevron disclosure control. At `>=769px`, existing visible navigation remains. Opening/closing toggles locally; selecting a route closes navigation; fresh load/refresh returns closed; no persistence is required.
-- The control must be keyboard-accessible, visibly focusable, have an accessible name and expose accurate `aria-expanded`; `aria-controls` may be used. When open, existing labels, icons, order, routes, active-route behavior and link semantics remain unchanged. This is not hamburger, off-canvas drawer, bottom-nav or tab redesign.
-- Global search, notifications, connection indicator, avatar and their semantics remain unchanged. No global store, storage, settings/database field, route-state architecture or dependency is allowed solely for menu state.
-- Existing `768px` is the approved threshold; no new breakpoint. The existing CSS containment WIP may be reused, and minimal local presentation state in `src/app/AppLayout.tsx` is now authorized/expected. Slice 3 — Student Drawer Mobile Fit remains `NOT ACTIVE`.
-- Browser QA is reset because the contract changed before acceptance. Re-run the full matrix: `320x720`, `390x844`, `430x932`, `640x900`, `768x1024`, `860x900`, `1280x800`, `1440x900`, including default closed/open/aria-expanded/route-close/refresh and overflow checks.
-- Current gate: `PRODUCT DECISION AMENDMENT DOCS COMMIT + PUSH`. After amendment commit/push: `CONTROLLED IMPLEMENTATION REVISION — MOBILE POLISH SLICE 2`.
+- Discovery is `COMPLETE`; Product Decision is `APPROVED / COMMITTED / PUSHED` at `e8b6d5a55d5a167943f54031cd961b05ca22aca1`; the Mobile Collapsible Navigation amendment is `APPROVED / COMMITTED / PUSHED` at `2947848af77f32608abfbf831fd29409c5e64e56`.
+- Implementation is `COMPLETE / COMMITTED / PUSHED` at `99f1734c7ebce57de5d84f6e79e5c497a8eff118` (`feat: polish mobile app shell navigation`). Strategy Review is `PASS WITH NON-BLOCKING NOTES`; local browser QA, production deployment, HTTP/asset smoke and production browser QA are `PASS`.
+- Validation: focused `2 files / 24 tests PASS`; canonical `75 files / 744 tests PASS` with `0` failures and `0` skips; TypeScript, Vite `/demo/` build and PWA generation `PASS`; known chunk-size warning is non-blocking. The VDS canonical test suite was `NOT RUN`; VDS build and static deployment passed.
+- Production moved by exact VDS fast-forward from `05c9d01a93cff8f35f4f881b211f4f3c90c8239e` to `99f1734c7ebce57de5d84f6e79e5c497a8eff118`. Backup: `C:\Backups\netvadi-demo_predeploy_20260921_032754`. HTTP URL: `https://netvadi.com/demo/?v=99f1734c`; JS/CSS/registerSW/manifest/service-worker smoke was `PASS`. Caddy restart was `NOT REQUIRED / NOT PERFORMED`.
+- Mobile contract is preserved: `<=768px` defaults closed behind `Menü` + chevron; open/close, route-close, route/location-close, mobile re-entry reset and refresh-default closed work without persistence. `>=769px` keeps visible navigation. Labels, icons, order, routes, active route, keyboard semantics and shell controls remain unchanged.
+- No duplicate navigation, off-canvas redesign, new breakpoint, global state/store, persistence, dependency or business change was introduced. Slice 3 — Student Drawer Mobile Fit remains `NOT ACTIVE`. Separate reports padding, student-filter and first-visible-student auto-drawer findings remain pre-existing/out of scope.
+- Final Production Docs Closure is `WIP / READY TO COMMIT`; Vault is `PENDING`; repo + vault final verification and final state flip are `PENDING`; `FULLY CLOSED: NO`. Next gate: `FINAL PRODUCTION DOCS CLOSURE COMMIT + PUSH`. Do not start Slice 3.
 
 ## Previous Production Closure - Phone Reached -> Latest Contacted Synchronization
 
