@@ -1151,6 +1151,10 @@ body {
   transition: width 0.14s ease;
 }
 
+.mobile-nav-toggle {
+  display: none;
+}
+
 .sidebar-collapsed .sidebar {
   width: 64px;
 }
@@ -4259,14 +4263,22 @@ body {
 @media (max-width: 860px) {
   .topbar {
     height: auto;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    min-width: 0;
     padding: 10px;
   }
 
+  .topbar-brand {
+    min-width: 0;
+  }
+
   .topbar-search {
-    order: 3;
-    max-width: none;
-    flex-basis: 100%;
+    min-width: 0;
+    margin-inline: 0;
+  }
+
+  .topbar-right {
+    min-width: max-content;
   }
 
   .app-body,
@@ -4276,16 +4288,48 @@ body {
 
   .sidebar {
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .sidebar-collapsed .sidebar {
+    width: 100%;
   }
 
   .nav-section-group {
-    display: inline;
+    display: flex;
+    flex: 0 0 auto;
   }
 
   .nav-list {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
     padding: 6px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .nav-link {
+    flex: 0 0 auto;
+  }
+
+  .sidebar-collapsed .nav-link,
+  .sidebar-collapsed .nav-link.active {
+    justify-content: flex-start;
+    min-height: 34px;
+    margin: 1px 6px;
+    padding: 8px 16px;
+    border-left-width: 2px;
+    border-radius: var(--aots-radius);
+  }
+
+  .sidebar-collapsed .nav-label,
+  .sidebar-collapsed .nav-link kbd {
+    display: inline;
   }
 
   .nav-section,
@@ -4417,12 +4461,57 @@ body {
   }
 
   .topbar {
+    flex-wrap: wrap;
     gap: 8px;
+    padding: 8px;
+  }
+
+  .topbar-search {
+    order: 3;
+    max-width: none;
+    flex-basis: 100%;
   }
 
   .topbar-right {
     gap: 6px;
     margin-left: auto;
+  }
+
+  .mobile-nav-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: calc(100% - 12px);
+    min-height: 38px;
+    margin: 0 6px 4px;
+    padding: 8px 12px;
+    border: 1px solid var(--aots-border);
+    border-radius: var(--aots-radius);
+    background: var(--aots-surface);
+    color: var(--aots-text);
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: left;
+  }
+
+  .mobile-nav-toggle:focus-visible {
+    outline: 2px solid var(--aots-accent);
+    outline-offset: 2px;
+  }
+
+  .mobile-nav-toggle svg {
+    flex: 0 0 auto;
+  }
+
+  .mobile-nav-toggle + .nav-list {
+    display: none;
+  }
+
+  .mobile-nav-open .mobile-nav-toggle + .nav-list {
+    display: flex;
   }
 
   .global-search-popover {

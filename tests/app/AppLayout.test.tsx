@@ -142,6 +142,37 @@ function renderLayout(initialEntry = "/") {
   );
 }
 
+function installMatchMediaMock(initialMatches = false) {
+  let matches = initialMatches;
+  const listeners = new Set<(event: MediaQueryListEvent) => void>();
+  const mediaQuery = {
+    get matches() {
+      return matches;
+    },
+    media: "(max-width: 768px)",
+    onchange: null,
+    addEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => listeners.add(listener),
+    removeEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => listeners.delete(listener),
+    addListener: (listener: (event: MediaQueryListEvent) => void) => listeners.add(listener),
+    removeListener: (listener: (event: MediaQueryListEvent) => void) => listeners.delete(listener),
+    dispatchEvent: () => true
+  } as unknown as MediaQueryList;
+  const matchMedia = vi.fn().mockReturnValue(mediaQuery);
+
+  vi.stubGlobal("matchMedia", matchMedia);
+  Object.defineProperty(window, "matchMedia", { configurable: true, value: matchMedia });
+
+  return {
+    setMatches(nextMatches: boolean) {
+      matches = nextMatches;
+      listeners.forEach((listener) => listener({
+        matches: nextMatches,
+        media: "(max-width: 768px)"
+      } as MediaQueryListEvent));
+    }
+  };
+}
+
 describe("AppLayout notifications", () => {
   beforeEach(async () => {
     window.localStorage.clear();
@@ -151,7 +182,46 @@ describe("AppLayout notifications", () => {
 
   afterEach(async () => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     await db.delete();
+  });
+
+  it("keeps the mobile navigation closed until the disclosure is activated", async () => {
+    installMatchMediaMock(false);
+    renderLayout();
+
+    const menuButton = screen.getByRole("button", { name: "Menüyü aç" });
+    expect(menuButton).toHaveAttribute("aria-expanded", "false");
+    expect(menuButton).toHaveAttribute("aria-controls", "primary-navigation");
+
+    await userEvent.click(menuButton);
+    expect(screen.getByRole("button", { name: "Menüyü kapat" })).toHaveAttribute("aria-expanded", "true");
+
+    await userEvent.click(screen.getByRole("button", { name: "Menüyü kapat" }));
+    expect(screen.getByRole("button", { name: "Menüyü aç" })).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("closes the mobile navigation after selecting a destination", async () => {
+    installMatchMediaMock(false);
+    renderLayout("/settings");
+
+    await userEvent.click(screen.getByRole("button", { name: "Menüyü aç" }));
+    await userEvent.click(screen.getByRole("link", { name: /Raporlar/i }));
+
+    expect(screen.getByText("Raporlar içerik")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Menüyü aç" })).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("closes the mobile navigation when entering the mobile media state", async () => {
+    const media = installMatchMediaMock(false);
+    renderLayout();
+
+    await userEvent.click(screen.getByRole("button", { name: "Menüyü aç" }));
+    expect(screen.getByRole("button", { name: "Menüyü kapat" })).toHaveAttribute("aria-expanded", "true");
+
+    media.setMatches(true);
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Menüyü aç" })).toHaveAttribute("aria-expanded", "false"));
   });
 
   it("hides the call screen and duplicate topbar import/export actions", () => {

@@ -1,6 +1,8 @@
 import {
   Bell,
   CalendarClock,
+  ChevronDown,
+  ChevronUp,
   ClipboardList,
   FileDown,
   FileSpreadsheet,
@@ -127,6 +129,7 @@ export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
   const [hasDismissedReminderBadge, setHasDismissedReminderBadge] = useState(() => readDismissedReminderBadge());
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
@@ -229,6 +232,39 @@ export function AppLayout() {
       window.removeEventListener("offline", updateOnlineStatus);
     };
   }, []);
+
+  useEffect(() => {
+    const mediaQuery = typeof window.matchMedia === "function"
+      ? window.matchMedia("(max-width: 768px)")
+      : null;
+
+    if (!mediaQuery) {
+      return;
+    }
+
+    let wasMobile = mediaQuery.matches;
+    const handleViewportChange = (event: MediaQueryListEvent) => {
+      if (event.matches && !wasMobile) {
+        setIsMobileNavOpen(false);
+      }
+
+      wasMobile = event.matches;
+    };
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", handleViewportChange);
+
+      return () => mediaQuery.removeEventListener("change", handleViewportChange);
+    }
+
+    mediaQuery.addListener(handleViewportChange);
+
+    return () => mediaQuery.removeListener(handleViewportChange);
+  }, []);
+
+  useEffect(() => {
+    setIsMobileNavOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     setActiveGlobalSearchIndex(0);
@@ -551,9 +587,20 @@ export function AppLayout() {
         </div>
       </header>
 
-      <div className={`app-body ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`}>
+      <div className={`app-body ${isSidebarCollapsed ? "sidebar-collapsed" : ""} ${isMobileNavOpen ? "mobile-nav-open" : ""}`}>
         <aside className="sidebar">
-          <nav className="nav-list" aria-label="Ana menü">
+          <button
+            aria-controls="primary-navigation"
+            aria-expanded={isMobileNavOpen}
+            aria-label={isMobileNavOpen ? "Menüyü kapat" : "Menüyü aç"}
+            className="mobile-nav-toggle"
+            onClick={() => setIsMobileNavOpen((current) => !current)}
+            type="button"
+          >
+            <span>Menü</span>
+            {isMobileNavOpen ? <ChevronUp aria-hidden="true" size={16} /> : <ChevronDown aria-hidden="true" size={16} />}
+          </button>
+          <nav className="nav-list" id="primary-navigation" aria-label="Ana menü">
             {navSections.map((section) => (
               <div className="nav-section-group" key={section.title}>
                 <div className="nav-section">{section.title}</div>
@@ -574,7 +621,14 @@ export function AppLayout() {
                   }
 
                   return (
-                    <NavLink end key={`${section.title}-${item.label}`} to={item.to} className="nav-link" title={item.label}>
+                    <NavLink
+                      end
+                      key={`${section.title}-${item.label}`}
+                      onClick={() => setIsMobileNavOpen(false)}
+                      to={item.to}
+                      className="nav-link"
+                      title={item.label}
+                    >
                       <Icon aria-hidden="true" size={17} />
                       <span className="nav-label">{item.label}</span>
                       {item.shortcut ? <kbd>{item.shortcut}</kbd> : null}
