@@ -51,15 +51,16 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 - The original Product Decision was `APPROVED`, Discovery `COMPLETE`, with CSS-first implementation preferred and navigation always visible. Its always-visible rule is retained as history and is superseded only for `<=768px` by the user-approved amendment below.
 
-## Current Production Closure WIP - Mobile Polish Slice 2 — App Shell + Mobile Navigation
+## Current Final Closure - Mobile Polish Slice 2 — App Shell + Mobile Navigation
 
-- Mobile Polish Slice 1 is `FULLY CLOSED`. Slice 2 Discovery is `COMPLETE`; Product Decision is `APPROVED / COMMITTED / PUSHED` at `e8b6d5a55d5a167943f54031cd961b05ca22aca1`; the Mobile Collapsible Navigation amendment is `APPROVED / COMMITTED / PUSHED` at `2947848af77f32608abfbf831fd29409c5e64e56`.
+- Mobile Polish Slice 1 is `FULLY CLOSED`. Mobile Polish Slice 2 is `FULLY CLOSED`; Discovery, Product Decision, Collapsible Navigation Amendment and Implementation are `COMPLETE`. Product Decision commit: `e8b6d5a55d5a167943f54031cd961b05ca22aca1`; amendment commit: `2947848af77f32608abfbf831fd29409c5e64e56`.
 - Implementation is `COMPLETE / COMMITTED / PUSHED` at `99f1734c7ebce57de5d84f6e79e5c497a8eff118`; Strategy Review is `PASS WITH NON-BLOCKING NOTES`; local browser QA, production deployment, HTTP/asset smoke and production browser QA are `PASS`.
 - Focused validation is `2 files / 24 tests PASS`; canonical validation is `75 files / 744 tests PASS` with `0` failures and `0` skips; TypeScript, Vite `/demo/` build and PWA generation are `PASS`; the known chunk-size warning is non-blocking. VDS canonical tests were `NOT RUN`; VDS build and deployment passed.
 - Production moved from `05c9d01a93cff8f35f4f881b211f4f3c90c8239e` to `99f1734c7ebce57de5d84f6e79e5c497a8eff118` by exact fast-forward. Backup: `C:\Backups\netvadi-demo_predeploy_20260921_032754`; HTTP/asset smoke passed at `https://netvadi.com/demo/?v=99f1734c`; Caddy restart was `NOT REQUIRED / NOT PERFORMED`.
 - Contract: at `<=768px`, existing navigation defaults closed behind `Menü` + chevron, route selection/location changes close it, mobile re-entry resets it closed, and refresh starts closed without persistence. At `>=769px`, visible navigation remains. Labels, icons, order, routes, active route, keyboard semantics and shell controls are preserved; no new navigation architecture, breakpoint, dependency, global state or business behavior was added.
 - Separate narrow Reports padding, student-filter and first-visible-student auto-drawer findings remain pre-existing/out of scope. Mobile Polish Slice 3 — Student Drawer Mobile Fit remains `NOT ACTIVE`.
-- Final Production Docs Closure is `WIP / READY TO COMMIT`; Vault, repo + vault final verification and final state flip are `PENDING`; `FULLY CLOSED: NO`. Current gate: `FINAL PRODUCTION DOCS CLOSURE COMMIT + PUSH`; do not start Slice 3.
+- Production docs closure baseline is `628e8a2f206815e0abce7a29917d054fd8cafe43`; Final Production Docs Closure and Vault Closure are `COMPLETE`; Repo + Vault Final Verification is `PASS`; Mandatory Completion / Closure Gate and Final State-Flip are `COMPLETE`; Remaining Closure Gate is `NONE`; `FULLY CLOSED: YES`. Vault Sync ID: `obsidian-update-628e8a2-mobile-polish-slice2-production-closure-2026-09-21-Europe-Istanbul`.
+- The vault snapshot intentionally predates this final repo state-flip; no second vault sync is required. The final repo closure commit is docs-only, is not production runtime, and requires no redeploy. Slice 3 — Student Drawer Mobile Fit remains `NOT ACTIVE`; separate QA findings remain unresolved and out of scope.
 
 ## Current Production Closure - Phone Reached -> Latest Contacted Synchronization
 

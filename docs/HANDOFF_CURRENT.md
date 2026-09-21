@@ -48,15 +48,16 @@
 - Mobile Polish Slice 2 — App Shell + Mobile Navigation and Slice 3 — Student Drawer Mobile Fit remain candidate findings, `NOT ACTIVE`; Slice 1 does not claim either finding as fixed.
 - Production runtime remains `05c9d01a93cff8f35f4f881b211f4f3c90c8239e`; this final state-flip is docs-only and does not change runtime or require redeploy. Current closure gate: `NONE`.
 
-## Current Production Closure WIP - Mobile Polish Slice 2 — App Shell + Mobile Navigation
+## Current Final Closure - Mobile Polish Slice 2 — App Shell + Mobile Navigation
 
-- Discovery is `COMPLETE`; Product Decision is `APPROVED / COMMITTED / PUSHED` at `e8b6d5a55d5a167943f54031cd961b05ca22aca1`; the Mobile Collapsible Navigation amendment is `APPROVED / COMMITTED / PUSHED` at `2947848af77f32608abfbf831fd29409c5e64e56`.
+- Discovery, Product Decision, Collapsible Navigation Amendment and Implementation are `COMPLETE`; Product Decision commit: `e8b6d5a55d5a167943f54031cd961b05ca22aca1`; amendment commit: `2947848af77f32608abfbf831fd29409c5e64e56`.
 - Implementation is `COMPLETE / COMMITTED / PUSHED` at `99f1734c7ebce57de5d84f6e79e5c497a8eff118` (`feat: polish mobile app shell navigation`). Strategy Review is `PASS WITH NON-BLOCKING NOTES`; local browser QA, production deployment, HTTP/asset smoke and production browser QA are `PASS`.
 - Validation: focused `2 files / 24 tests PASS`; canonical `75 files / 744 tests PASS` with `0` failures and `0` skips; TypeScript, Vite `/demo/` build and PWA generation `PASS`; known chunk-size warning is non-blocking. The VDS canonical test suite was `NOT RUN`; VDS build and static deployment passed.
 - Production moved by exact VDS fast-forward from `05c9d01a93cff8f35f4f881b211f4f3c90c8239e` to `99f1734c7ebce57de5d84f6e79e5c497a8eff118`. Backup: `C:\Backups\netvadi-demo_predeploy_20260921_032754`. HTTP URL: `https://netvadi.com/demo/?v=99f1734c`; JS/CSS/registerSW/manifest/service-worker smoke was `PASS`. Caddy restart was `NOT REQUIRED / NOT PERFORMED`.
 - Mobile contract is preserved: `<=768px` defaults closed behind `Menü` + chevron; open/close, route-close, route/location-close, mobile re-entry reset and refresh-default closed work without persistence. `>=769px` keeps visible navigation. Labels, icons, order, routes, active route, keyboard semantics and shell controls remain unchanged.
 - No duplicate navigation, off-canvas redesign, new breakpoint, global state/store, persistence, dependency or business change was introduced. Slice 3 — Student Drawer Mobile Fit remains `NOT ACTIVE`. Separate reports padding, student-filter and first-visible-student auto-drawer findings remain pre-existing/out of scope.
-- Final Production Docs Closure is `WIP / READY TO COMMIT`; Vault is `PENDING`; repo + vault final verification and final state flip are `PENDING`; `FULLY CLOSED: NO`. Next gate: `FINAL PRODUCTION DOCS CLOSURE COMMIT + PUSH`. Do not start Slice 3.
+- State: `FULLY CLOSED`. Production docs closure baseline: `628e8a2f206815e0abce7a29917d054fd8cafe43`; Final Production Docs Closure, Vault Closure and Mandatory Completion / Closure Gate are `COMPLETE`; Repo + Vault Final Verification is `PASS`; Final State-Flip is `COMPLETE`; Remaining Closure Gate is `NONE`. Vault Sync ID: `obsidian-update-628e8a2-mobile-polish-slice2-production-closure-2026-09-21-Europe-Istanbul`.
+- The vault snapshot intentionally records the pre-state-flip production-docs baseline; no second vault sync is required. The final repo closure commit is docs-only, is not production runtime, and requires no redeploy. Slice 3 — Student Drawer Mobile Fit remains `NOT ACTIVE`; separate QA findings remain unresolved and out of scope.
 
 ## Previous Production Closure - Phone Reached -> Latest Contacted Synchronization
 
