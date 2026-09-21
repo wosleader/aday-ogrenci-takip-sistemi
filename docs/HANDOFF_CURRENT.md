@@ -8,6 +8,16 @@
 - Dashboard V3 Manager Dashboard'ı default görünüm yapar; Detailed Reports korunur. KPI/date range, call-result, trend, campaign, reminder/health, appointment, attention ve contact-efficiency alanları read model üzerinden sunulur. Phone Contact Efficiency audit-event based'dir; AI prediction/personnel ranking/schema migration yoktur.
 - Manager Dashboard V3 repo + vault closure chain `COMPLETE`; remaining closure gate `NONE`dir. Production runtime `50911ae4d6baed175c73fde9e257353a604c53a8`, repository docs closure baseline `b6f68a61ed401de8e92eb241a7de4c88372a24f4` olarak ayrı gerçeklerdir; bu state-flip docs-only commit'i runtime kodunu değiştirmez. Smart Operational Helpers Slice 1 ayrı bir production-complete, final-docs-closure-ready kaydıdır ve Manager Dashboard production closure'ına dahil değildir.
 
+## Current Roadmap - Mobile Polish Slice 3 — Student Drawer Mobile Fit
+
+- Discovery `COMPLETE`; user-approved Product Decision `APPROVED`; implementation `NOT STARTED`; Strategy Review, Local QA and Production are `NOT STARTED`; `FULLY CLOSED: NO`.
+- At `<=860px`, the Student Drawer remains full-width and stacked below the student list. The confirmed risk is that the stacked drawer lacks a definite usable height/max-height while `.students-workbench` clips overflow, making long content potentially inaccessible. The drawer must fit the usable viewport without page-level scrolling or horizontal overflow.
+- `.drawer-header` and its close control remain visible/reachable; `.drawer-body` remains the internal vertical scroll region. No sticky footer is authorized initially, and existing action/save semantics remain unchanged.
+- Initial implementation is CSS-first and limited to `src/styles/global.css`; `StudentsPage.tsx` is not initially authorized. Existing `860px` behavior is reused with no new breakpoint. Desktop/right-side drawer behavior, navigation/shell, state, data and business semantics remain unchanged.
+- Approved browser QA matrix: `320x720`, `390x844`, `430x932`, `640x900`, `768x1024`, `769x1024`, `860x900`, `1280x800`, `1440x900`. The exact height formula remains an implementation question; `100dvh` is not pre-authorized.
+- Separate findings remain outside this slice: pre-existing first-visible-student auto-drawer behavior, mobile filter disclosure and Reports narrow-width padding.
+- Next gate: `PRODUCT DECISION COMMIT + PUSH — MOBILE POLISH SLICE 3`.
+
 ## Current Roadmap - Smart Operational Helpers Slice 1
 
 - Product Decision `AMENDED and IMPLEMENTED`: ilk slice `Contextual Next Action Helper v1`dir. Bu AI prediction, lead/satış skoru veya personel değerlendirmesi değildir; yalnız deterministic reminder context'i gösterir.
@@ -45,7 +55,7 @@
 - Implementation scope was CSS-only in `src/styles/global.css`: toolbar/filter containment, table framing, pagination/footer mobile wrapping and the approved `.student-kbdbar` visibility exception. No new breakpoint, JSX, business logic or data contract change was introduced.
 - Production deployment is `COMPLETE` at runtime `05c9d01a93cff8f35f4f881b211f4f3c90c8239e`; production HTTP/asset/PWA smoke and production browser QA are `PASS`. Backup: `C:\Backups\netvadi-demo_predeploy_20260919_154553`; VDS canonical suite `NOT RUN`; Caddy `NOT REQUIRED / NOT PERFORMED`; `harita.html` was absent before deployment and remains absent afterward.
 - Final production docs closure, Docs Closure Commit + Push, Vault Closure and Repo + Vault Final Verification are `COMPLETE / PASS`. Production docs closure baseline: `754edc8a309cb616356eb118b4d3ffd8b5ff23be`; verified vault sync ID: `obsidian-update-754edc8-mobile-polish-slice1-production-closure-2026-09-20-Europe-Istanbul`; snapshot apply/verification `PASS`. `FULLY CLOSED: YES`; Mandatory Completion / Closure Gate `COMPLETE`; Remaining closure gate `NONE`. No second vault sync or redeploy is required.
-- Mobile Polish Slice 2 — App Shell + Mobile Navigation and Slice 3 — Student Drawer Mobile Fit remain candidate findings, `NOT ACTIVE`; Slice 1 does not claim either finding as fixed.
+- Mobile Polish Slice 2 remains closed. Slice 3 is now covered by the approved current Product Decision above and is not claimed as fixed by Slice 1.
 - Production runtime remains `05c9d01a93cff8f35f4f881b211f4f3c90c8239e`; this final state-flip is docs-only and does not change runtime or require redeploy. Current closure gate: `NONE`.
 
 ## Current Final Closure - Mobile Polish Slice 2 — App Shell + Mobile Navigation
@@ -55,9 +65,9 @@
 - Validation: focused `2 files / 24 tests PASS`; canonical `75 files / 744 tests PASS` with `0` failures and `0` skips; TypeScript, Vite `/demo/` build and PWA generation `PASS`; known chunk-size warning is non-blocking. The VDS canonical test suite was `NOT RUN`; VDS build and static deployment passed.
 - Production moved by exact VDS fast-forward from `05c9d01a93cff8f35f4f881b211f4f3c90c8239e` to `99f1734c7ebce57de5d84f6e79e5c497a8eff118`. Backup: `C:\Backups\netvadi-demo_predeploy_20260921_032754`. HTTP URL: `https://netvadi.com/demo/?v=99f1734c`; JS/CSS/registerSW/manifest/service-worker smoke was `PASS`. Caddy restart was `NOT REQUIRED / NOT PERFORMED`.
 - Mobile contract is preserved: `<=768px` defaults closed behind `Menü` + chevron; open/close, route-close, route/location-close, mobile re-entry reset and refresh-default closed work without persistence. `>=769px` keeps visible navigation. Labels, icons, order, routes, active route, keyboard semantics and shell controls remain unchanged.
-- No duplicate navigation, off-canvas redesign, new breakpoint, global state/store, persistence, dependency or business change was introduced. Slice 3 — Student Drawer Mobile Fit remains `NOT ACTIVE`. Separate reports padding, student-filter and first-visible-student auto-drawer findings remain pre-existing/out of scope.
+- No duplicate navigation, off-canvas redesign, new breakpoint, global state/store, persistence, dependency or business change was introduced. Separate reports padding, student-filter and first-visible-student auto-drawer findings remain pre-existing/out of scope; Slice 3 is separately approved but not implemented.
 - State: `FULLY CLOSED`. Production docs closure baseline: `628e8a2f206815e0abce7a29917d054fd8cafe43`; Final Production Docs Closure, Vault Closure and Mandatory Completion / Closure Gate are `COMPLETE`; Repo + Vault Final Verification is `PASS`; Final State-Flip is `COMPLETE`; Remaining Closure Gate is `NONE`. Vault Sync ID: `obsidian-update-628e8a2-mobile-polish-slice2-production-closure-2026-09-21-Europe-Istanbul`.
-- The vault snapshot intentionally records the pre-state-flip production-docs baseline; no second vault sync is required. The final repo closure commit is docs-only, is not production runtime, and requires no redeploy. Slice 3 — Student Drawer Mobile Fit remains `NOT ACTIVE`; separate QA findings remain unresolved and out of scope.
+- The vault snapshot intentionally records the pre-state-flip production-docs baseline; no second vault sync is required. The final repo closure commit is docs-only, is not production runtime, and requires no redeploy. Slice 3 is approved but not implemented; separate QA findings remain unresolved and out of scope.
 
 ## Previous Production Closure - Phone Reached -> Latest Contacted Synchronization
 
