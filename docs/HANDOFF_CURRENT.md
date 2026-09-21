@@ -50,13 +50,14 @@
 
 ## Current Roadmap - Mobile Polish Slice 2 — App Shell + Mobile Navigation
 
-- State: Product Decision `APPROVED`; Discovery `COMPLETE`; Implementation `NOT STARTED`; Production `NOT STARTED`; `FULLY CLOSED: NO`.
-- The approved contract addresses pre-existing narrow-shell presentation issues: excessive topbar height, full-width search wrapping, vertically stacked navigation, unclear narrow navigation containment, collapsed-sidebar mobile strip behavior and possible `100vh` mobile browser-chrome reachability effects. It does not change business logic, routing semantics, student-list framing or the Student Drawer Mobile Fit slice.
-- Navigation remains always visible. Existing labels, icons, order, destinations, active-route behavior and keyboard semantics are preserved. Contained horizontal scrolling inside the navigation container is allowed at narrow widths; hamburger, bottom-nav, drawer-nav, tab-bar redesign, hidden/shortened/icon-only items and reordering are not authorized.
-- Global search remains visible and semantically unchanged. Topbar may be compacted with CSS/layout so controls remain reachable and unnecessary multi-row stacking is reduced. The existing desktop collapsed state must not present as an unintended narrow mobile strip.
-- Preferred implementation is CSS/layout-only in `src/styles/global.css`. A minimal `AppLayout.tsx` presentation/accessibility hook is allowed only if CSS-only work is insufficient; structural navigation changes are not authorized. Prefer existing `860px`, `768px` and `430px` breakpoints. No new breakpoint without evidence and approval; `100vh` changes only with reproduced browser evidence.
-- Future QA targets: `320x720`, `390x844`, `430x932`, `640x900`, `768x1024`, `860x900`, `1280x800`, `1440x900`. Slice 3 — Student Drawer Mobile Fit remains `NOT ACTIVE` and is not included.
-- Next gate: `IMPLEMENTATION PRE-GATE / CONTROLLED IMPLEMENTATION`. No implementation, production or browser QA has started for Slice 2.
+- Product Decision Amendment: `APPROVED`; Amendment `Mobile Collapsible Navigation`; Discovery `COMPLETE`; original Product Decision `APPROVED / COMMITTED / PUSHED` at `e8b6d5a55d5a167943f54031cd961b05ca22aca1`.
+- The original always-visible navigation rule is preserved as pre-amendment history and is superseded only for `<=768px`. Current amended state: Controlled Implementation `WIP / REQUIRES REVISION`; Local Browser QA `PAUSED / NOT COMPLETE`; previous Strategy Review `PASS WITH NON-BLOCKING NOTES` applies only to the pre-amendment implementation; Feature Commit `NOT DONE`; Production `NOT STARTED`; `FULLY CLOSED: NO`.
+- At `<=768px`, navigation defaults `CLOSED / HIDDEN` and opens through a visible `Menü` + chevron disclosure control. At `>=769px`, existing visible navigation remains. Opening/closing toggles locally; selecting a route closes navigation; fresh load/refresh returns closed; no persistence is required.
+- The control must be keyboard-accessible, visibly focusable, have an accessible name and expose accurate `aria-expanded`; `aria-controls` may be used. When open, existing labels, icons, order, routes, active-route behavior and link semantics remain unchanged. This is not hamburger, off-canvas drawer, bottom-nav or tab redesign.
+- Global search, notifications, connection indicator, avatar and their semantics remain unchanged. No global store, storage, settings/database field, route-state architecture or dependency is allowed solely for menu state.
+- Existing `768px` is the approved threshold; no new breakpoint. The existing CSS containment WIP may be reused, and minimal local presentation state in `src/app/AppLayout.tsx` is now authorized/expected. Slice 3 — Student Drawer Mobile Fit remains `NOT ACTIVE`.
+- Browser QA is reset because the contract changed before acceptance. Re-run the full matrix: `320x720`, `390x844`, `430x932`, `640x900`, `768x1024`, `860x900`, `1280x800`, `1440x900`, including default closed/open/aria-expanded/route-close/refresh and overflow checks.
+- Current gate: `PRODUCT DECISION AMENDMENT DOCS COMMIT + PUSH`. After amendment commit/push: `CONTROLLED IMPLEMENTATION REVISION — MOBILE POLISH SLICE 2`.
 
 ## Previous Production Closure - Phone Reached -> Latest Contacted Synchronization
 

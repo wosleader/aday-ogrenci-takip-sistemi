@@ -55,7 +55,7 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 - Mobile Polish Slice 2 — App Shell + Mobile Navigation and Slice 3 — Student Drawer Mobile Fit remain candidate findings, `NOT ACTIVE`, and are not claimed as fixed by Slice 1.
 - Runtime/docs-only SHA distinction: production remains on `05c9d01a93cff8f35f4f881b211f4f3c90c8239e`; this final state-flip is docs-only, advances repository HEAD, and does not require redeploy. Current gate: `NONE`.
 
-## Current Product Decision - Mobile Polish Slice 2 — App Shell + Mobile Navigation
+## Historical Product Decision - Mobile Polish Slice 2 — App Shell + Mobile Navigation (Pre-Amendment)
 
 - Product Decision `APPROVED`; Discovery `COMPLETE`; Implementation `NOT STARTED`; Production `NOT STARTED`; `FULLY CLOSED: NO`. This is a responsive shell/navigation presentation slice, not a redesign or business-logic change.
 - Hard preservation contract: navigation labels, order, icons and meaning, route destinations, active-route behavior, navigation semantics, global search semantics, notifications, settings/reports/import/export navigation, keyboard/navigation semantics and desktop behavior remain unchanged.
@@ -67,6 +67,19 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 - Approved future QA matrix: `320x720`, `390x844`, `430x932`, `640x900`, `768x1024`, `860x900`, `1280x800`, `1440x900`. No browser QA is implied by this docs-only decision.
 - Out of scope: Mobile Polish Slice 3 — Student Drawer Mobile Fit, drawer height/vertical fit, phone cards, call-log content, student-list framing, dashboard/reminders/settings content redesign, business logic, route/database/schema/import/export/backup/restore/package/PWA changes. Slice 3 remains `NOT ACTIVE`.
 - Next gate: `IMPLEMENTATION PRE-GATE / CONTROLLED IMPLEMENTATION`.
+
+## Current Product Decision Amendment - Mobile Polish Slice 2 — Mobile Collapsible Navigation
+
+- User-approved amendment: the original always-visible navigation rule is superseded only for `<=768px`. The pre-amendment decision remains historical and is not erased. Discovery remains `COMPLETE`; the original Product Decision is `APPROVED / COMMITTED / PUSHED` at `e8b6d5a55d5a167943f54031cd961b05ca22aca1`.
+- Amended state: Controlled Implementation `WIP / REQUIRES REVISION`; Local Browser QA `PAUSED / NOT COMPLETE`; previous Strategy Review `PASS WITH NON-BLOCKING NOTES` applies only to the pre-amendment implementation; Feature Commit `NOT DONE`; Production `NOT STARTED`; `FULLY CLOSED: NO`.
+- At `<=768px`, the existing navigation becomes collapsible and defaults `CLOSED / HIDDEN`. At `>=769px`, the existing visible navigation behavior remains. This is a disclosure of the shared navigation area, not a new navigation architecture.
+- The mobile control is a visible `Menü` control with a chevron/down-up indicator. It opens and closes the existing navigation; navigation selection closes it; fresh load/page refresh returns it to closed; no open-state persistence is required.
+- The control must be a real accessible interactive control with keyboard access, visible focus, an accessible name and `aria-expanded` reflecting actual state. `aria-controls` may be used when practical. Existing nav links retain their semantics.
+- When open, labels, icons, order, destinations, active-route behavior, route semantics and keyboard/link semantics remain unchanged. Hamburger redesign, off-canvas/overlay drawer, side-sheet, bottom navigation, tab bar, duplicated mobile route list, hidden items, shortened labels, icon-only replacement and reordering remain out of scope.
+- The existing `768px` breakpoint is the approved threshold; no new breakpoint is allowed. Global search, notifications, connection indicator, avatar and their semantics remain unchanged. The existing CSS containment WIP may be reused, but AppLayout local presentation state is now authorized/expected for the toggle.
+- No global store, context architecture, route state, database/schema/settings field, localStorage/sessionStorage, persistence layer or dependency may be added for the menu state. Slice 3 — Student Drawer Mobile Fit remains `NOT ACTIVE`.
+- Because the product behavior changed before browser QA completed, the previous browser QA is reset to `PAUSED / NOT COMPLETE`; the amended implementation requires a new Strategy Review and full browser QA against `320x720`, `390x844`, `430x932`, `640x900`, `768x1024`, `860x900`, `1280x800`, `1440x900`.
+- Current gate: `PRODUCT DECISION AMENDMENT DOCS COMMIT + PUSH`. After this amendment is committed/pushed, the next gate is `CONTROLLED IMPLEMENTATION REVISION — MOBILE POLISH SLICE 2`.
 
 ## Current Production Closure Decision - Phone Reached -> Latest Contacted Synchronization
 
