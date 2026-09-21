@@ -47,6 +47,18 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - Mobile Polish Slice 2 — App Shell + Mobile Navigation and Slice 3 — Student Drawer Mobile Fit remain candidate findings, `NOT ACTIVE`; they are not claimed as fixed by Slice 1.
 - Production runtime remains `05c9d01a93cff8f35f4f881b211f4f3c90c8239e`; this final state-flip is docs-only, advances repository HEAD, and does not change runtime or require redeploy. Current gate: `NONE`.
 
+## Current Product Decision - Mobile Polish Slice 2 — App Shell + Mobile Navigation
+
+- Product Decision `APPROVED`; Discovery `COMPLETE`; Implementation `NOT STARTED`; Production `NOT STARTED`; `FULLY CLOSED: NO`.
+- Problem boundary: the shared shell has narrow-width presentation issues around `320–430px`: topbar/search can consume excessive height, navigation can wrap into awkward vertical rows, the navigation container can lose discoverability, collapsed desktop state can leave a narrow mobile strip, and `100vh` may interact poorly with mobile browser chrome. This is not business logic, routing, student-list framing or Student Drawer Mobile Fit.
+- Discovery root causes are the existing `<=860px` topbar/search wrapping and flex navigation, inline section grouping, the more-specific collapsed-sidebar width, and the `<=430px` horizontal-nav containment rule. Existing `min-width: 0`/content scrolling remains a containment safeguard. No new breakpoint is approved by this decision.
+- Approved UX contract preserves navigation labels, order, icons/meaning, routes, active-route behavior, keyboard/navigation semantics, global search, notifications and desktop behavior. Navigation stays always visible; contained horizontal scrolling within the navigation container is allowed at narrow widths so every destination remains reachable. Hamburger, bottom, drawer or tab navigation, hidden/shortened/icon-only items and reordering are not approved.
+- Global search remains visible with unchanged semantics. Topbar/layout compaction is allowed to reduce unnecessary vertical footprint while keeping existing controls reachable. The existing collapsed-sidebar feature remains, but mobile presentation must normalize the unintended narrow strip without changing route meaning.
+- CSS-first implementation boundary: prefer `src/styles/global.css`; a minimal `AppLayout.tsx` presentation/accessibility hook is allowed only if CSS-only work proves insufficient. Structural navigation, business logic, route, data, schema, import/export, backup/restore, package and PWA changes are out of scope.
+- Breakpoint policy prefers existing shell breakpoints `860px`, `768px` and `430px`. A new breakpoint requires evidence, affected selectors, desktop/tablet impact and explicit approval. `100vh` remains unless browser measurement reproduces a mobile browser-chrome height/reachability issue that justifies `100dvh`.
+- Approved future QA matrix: `320x720`, `390x844`, `430x932`, `640x900`, `768x1024`, `860x900`, `1280x800`, `1440x900`. This docs-only decision does not claim browser QA or implementation validation.
+- Out of scope and still `NOT ACTIVE`: Mobile Polish Slice 3 — Student Drawer Mobile Fit, drawer height/vertical fit, phone cards, call-log content, student-list toolbar/table framing, dashboard, reminders/settings content redesign and PWA redesign. Next gate: `IMPLEMENTATION PRE-GATE / CONTROLLED IMPLEMENTATION`.
+
 ## Current Production Closure - Phone Reached -> Latest Contacted Synchronization
 
 - Phone Reached -> Latest Contacted Synchronization `PRODUCTION CLOSED`. Implementation `3f991e565b6d6520dd090c1d92c3ba631a6dc8e1` (`feat: sync reached phone outcome with latest contacted status`) `COMPLETE`; Strategy Review `PASS`; local manual browser QA `PASS`.

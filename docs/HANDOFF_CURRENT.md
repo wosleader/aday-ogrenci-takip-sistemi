@@ -48,6 +48,16 @@
 - Mobile Polish Slice 2 — App Shell + Mobile Navigation and Slice 3 — Student Drawer Mobile Fit remain candidate findings, `NOT ACTIVE`; Slice 1 does not claim either finding as fixed.
 - Production runtime remains `05c9d01a93cff8f35f4f881b211f4f3c90c8239e`; this final state-flip is docs-only and does not change runtime or require redeploy. Current closure gate: `NONE`.
 
+## Current Roadmap - Mobile Polish Slice 2 — App Shell + Mobile Navigation
+
+- State: Product Decision `APPROVED`; Discovery `COMPLETE`; Implementation `NOT STARTED`; Production `NOT STARTED`; `FULLY CLOSED: NO`.
+- The approved contract addresses pre-existing narrow-shell presentation issues: excessive topbar height, full-width search wrapping, vertically stacked navigation, unclear narrow navigation containment, collapsed-sidebar mobile strip behavior and possible `100vh` mobile browser-chrome reachability effects. It does not change business logic, routing semantics, student-list framing or the Student Drawer Mobile Fit slice.
+- Navigation remains always visible. Existing labels, icons, order, destinations, active-route behavior and keyboard semantics are preserved. Contained horizontal scrolling inside the navigation container is allowed at narrow widths; hamburger, bottom-nav, drawer-nav, tab-bar redesign, hidden/shortened/icon-only items and reordering are not authorized.
+- Global search remains visible and semantically unchanged. Topbar may be compacted with CSS/layout so controls remain reachable and unnecessary multi-row stacking is reduced. The existing desktop collapsed state must not present as an unintended narrow mobile strip.
+- Preferred implementation is CSS/layout-only in `src/styles/global.css`. A minimal `AppLayout.tsx` presentation/accessibility hook is allowed only if CSS-only work is insufficient; structural navigation changes are not authorized. Prefer existing `860px`, `768px` and `430px` breakpoints. No new breakpoint without evidence and approval; `100vh` changes only with reproduced browser evidence.
+- Future QA targets: `320x720`, `390x844`, `430x932`, `640x900`, `768x1024`, `860x900`, `1280x800`, `1440x900`. Slice 3 — Student Drawer Mobile Fit remains `NOT ACTIVE` and is not included.
+- Next gate: `IMPLEMENTATION PRE-GATE / CONTROLLED IMPLEMENTATION`. No implementation, production or browser QA has started for Slice 2.
+
 ## Previous Production Closure - Phone Reached -> Latest Contacted Synchronization
 
 - Phone Reached -> Latest Contacted Synchronization `PRODUCTION CLOSED`. Implementation `3f991e565b6d6520dd090c1d92c3ba631a6dc8e1` (`feat: sync reached phone outcome with latest contacted status`) `COMPLETE`; Strategy Review `PASS`; local manual browser QA `PASS`.

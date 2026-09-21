@@ -55,6 +55,19 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 - Mobile Polish Slice 2 — App Shell + Mobile Navigation and Slice 3 — Student Drawer Mobile Fit remain candidate findings, `NOT ACTIVE`, and are not claimed as fixed by Slice 1.
 - Runtime/docs-only SHA distinction: production remains on `05c9d01a93cff8f35f4f881b211f4f3c90c8239e`; this final state-flip is docs-only, advances repository HEAD, and does not require redeploy. Current gate: `NONE`.
 
+## Current Product Decision - Mobile Polish Slice 2 — App Shell + Mobile Navigation
+
+- Product Decision `APPROVED`; Discovery `COMPLETE`; Implementation `NOT STARTED`; Production `NOT STARTED`; `FULLY CLOSED: NO`. This is a responsive shell/navigation presentation slice, not a redesign or business-logic change.
+- Hard preservation contract: navigation labels, order, icons and meaning, route destinations, active-route behavior, navigation semantics, global search semantics, notifications, settings/reports/import/export navigation, keyboard/navigation semantics and desktop behavior remain unchanged.
+- Navigation remains always visible. Contained horizontal scrolling inside the navigation container is allowed at narrow widths so every existing destination remains reachable. Hamburger navigation, bottom navigation, drawer navigation, tab-bar redesign, hidden items, shortened labels, reordered items and icon-only replacement are not approved.
+- Global search remains visible with unchanged semantics. CSS/layout compaction and responsive sizing may reduce its vertical footprint; hiding or replacing it is out of scope. Existing topbar controls remain reachable without semantic redesign.
+- The existing desktop collapsed-sidebar feature remains, but narrow/mobile presentation must not leave an unintended `64px` vertical strip. The underlying routes and navigation meaning remain unchanged.
+- Preferred implementation boundary is CSS/layout-only in `src/styles/global.css`; a minimal `AppLayout.tsx` presentation/accessibility hook is allowed only if CSS-only work proves insufficient. Structural navigation changes are not authorized.
+- Prefer existing shell breakpoints `860px`, `768px` and `430px`. No new breakpoint may be added without evidence that the existing thresholds cannot satisfy the contract, identified selector/viewport effects, desktop/tablet impact and explicit approval. `100vh` may change to `100dvh` only if browser evidence proves a mobile browser-chrome height/reachability problem; otherwise it remains unchanged.
+- Approved future QA matrix: `320x720`, `390x844`, `430x932`, `640x900`, `768x1024`, `860x900`, `1280x800`, `1440x900`. No browser QA is implied by this docs-only decision.
+- Out of scope: Mobile Polish Slice 3 — Student Drawer Mobile Fit, drawer height/vertical fit, phone cards, call-log content, student-list framing, dashboard/reminders/settings content redesign, business logic, route/database/schema/import/export/backup/restore/package/PWA changes. Slice 3 remains `NOT ACTIVE`.
+- Next gate: `IMPLEMENTATION PRE-GATE / CONTROLLED IMPLEMENTATION`.
+
 ## Current Production Closure Decision - Phone Reached -> Latest Contacted Synchronization
 
 - Phone Reached -> Latest Contacted Synchronization `PRODUCTION CLOSED`. Implementation `3f991e565b6d6520dd090c1d92c3ba631a6dc8e1` (`feat: sync reached phone outcome with latest contacted status`) `COMPLETE`; Strategy Review ve local manual browser QA `PASS`.
