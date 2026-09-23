@@ -4,6 +4,15 @@
 
 Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
+## Current Workstream - Student List Auto-Drawer Follow-Up
+
+- Aday Listesi ilk açıldığında ilk görünür adayın otomatik açılması problemi için discovery ve root-cause analizi `COMPLETE`; root cause `isDrawerOpen` başlangıç değerinin açık olması, `selectedRow` first-visible fallback'i, `visibleRows[0]` auto-selection effect'i ve ID'siz `openStudentDrawer` fallback'idir.
+- Implementation `COMPLETE / COMMITTED / PUSHED` at `b03f938d472bfbfff618d885a03c2281d4e8a529` (`fix: prevent automatic first student drawer open`). Normal entry'de seçim yok ve drawer kapalıdır; explicit row click, `pendingOpenStudentId`, explicit student-opening flows ve call-save next-candidate davranışı korunur. Seçim yokken filter/search/pagination değişimi ilk adayı seçmez; ID'siz reopen yalnız mevcut geçerli seçimi yeniden açabilir.
+- Regression evidence `5` dosya / `91` focused test, canonical `75` dosya / `750` test, `/demo/` build ve PWA `PASS`tir. Strategy / Implementation Review `PASS WITH NON-BLOCKING NOTES`; bilinen chunk-size warning `NON-BLOCKING`dir.
+- Previous production runtime `024e8cef5c16e0819318ffb10e16ce1a1d6002d3`; current production runtime `b03f938d472bfbfff618d885a03c2281d4e8a529`. Production deployment, build/Vite/PWA, static publish ve final HTTP/asset/PWA smoke `PASS`tir. Backup `C:\Backups\netvadi-demo_predeploy_20260923_010836`dir; VDS canonical test suite `NOT RUN`, Caddy restart `NOT REQUIRED / NOT PERFORMED`, `harita.html` deployment öncesinde ve sonrasında absent'tir.
+- User-confirmed production browser QA `PASS`tir; yalnız kritik `390x844` viewport doğrulanmıştır: ilk aday otomatik açılmaz, explicit aday click doğru drawer'ı açar, close sonrası otomatik reopen olmaz ve route re-entry kapalı başlar. Final production docs closure `RECORDED / READY FOR COMMIT`; vault closure ve repo + vault final verification `PENDING`; `FULLY CLOSED: NO`.
+- Mobile Polish Slice 1, Slice 2 ve Slice 3 closure state'leri korunur. Ayrı unresolved follow-ups: Mobile Filter Disclosure ve Reports Narrow-Width / Mobile Padding. Bu workstream bunları çözmez.
+
 ## Current Production Closure - Manager Dashboard V3
 
 - Manager Dashboard V3 `FULLY CLOSED`dur. Production implementation/deploy, production browser QA, final production docs closure, docs closure commit/push, Obsidian / Strategy Knowledge Vault closure ve user-confirmed vault apply/verification `PASS`tir. Implementation ve deployed VDS/runtime commit'i `50911ae4d6baed175c73fde9e257353a604c53a8` (`feat: add manager dashboard v3 ui`)dir; production URL `https://netvadi.com/demo/`dir.

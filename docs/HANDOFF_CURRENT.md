@@ -1,5 +1,13 @@
 ﻿# HANDOFF_CURRENT — Aday Öğrenci Takip Sistemi
 
+## Current Workstream - Student List Auto-Drawer Follow-Up
+
+- Implementation `COMPLETE / COMMITTED / PUSHED` at `b03f938d472bfbfff618d885a03c2281d4e8a529` (`fix: prevent automatic first student drawer open`); regression tests and Implementation Review `PASS WITH NON-BLOCKING NOTES`.
+- Normal entry drawer kapalı ve selected student yoktur. Explicit row click, `pendingOpenStudentId`, global search/notification/reminder explicit opens ve call-save next-candidate davranışı korunur; no-ID reopen seçim yokken ilk adayı seçmez.
+- Previous production runtime `024e8cef5c16e0819318ffb10e16ce1a1d6002d3`; current production runtime `b03f938d472bfbfff618d885a03c2281d4e8a529`. Production deployment, build/Vite/PWA, static publish ve HTTP/asset/PWA smoke `PASS`tir. Backup `C:\Backups\netvadi-demo_predeploy_20260923_010836`; VDS canonical test suite `NOT RUN`; Caddy restart `NOT REQUIRED / NOT PERFORMED`; `harita.html` absent before/after deployment.
+- Production browser QA `PASS`tir, yalnız kritik `390x844` viewport doğrulanmıştır. Final Production Docs Closure `RECORDED / READY FOR COMMIT`; Vault Closure ve Repo + Vault Final Verification `PENDING`; `FULLY CLOSED: NO`. Next gate: `DOCS CLOSURE COMMIT + PUSH — STUDENT LIST AUTO-DRAWER FIX`.
+- Mobile Polish Slice 1, Slice 2 ve Slice 3 `FULLY CLOSED` olarak korunur. Mobile Filter Disclosure ve Reports Narrow-Width / Mobile Padding ayrı unresolved follow-up'lardır.
+
 ## Current Production Closure - Manager Dashboard V3
 
 - Manager Dashboard V3 `FULLY CLOSED`; production implementation/deploy, production browser QA, final production docs closure, docs closure commit/push, Obsidian / Strategy Knowledge Vault closure ve user-confirmed vault apply/verification `PASS`tir. Implementation/deployed VDS runtime commit `50911ae4d6baed175c73fde9e257353a604c53a8` (`feat: add manager dashboard v3 ui`) ve URL `https://netvadi.com/demo/`dir.

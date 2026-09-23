@@ -6,6 +6,16 @@
 
 Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntılı sprint geçmişi için checkpoint dosyaları, güncel kısa bağlam için `docs/PROJECT_MEMORY.md` kullanılır.
 
+## Current Product Decision - Student List Auto-Drawer Follow-Up
+
+- [Decision State] Feature contract `COMPLETE`; implementation `COMPLETE / COMMITTED / PUSHED` at `b03f938d472bfbfff618d885a03c2281d4e8a529` (`fix: prevent automatic first student drawer open`).
+- [Root Cause] Initial `isDrawerOpen=true`, `selectedRow` first-visible fallback'i, `visibleRows[0]` auto-selection effect'i ve ID'siz `openStudentDrawer` first-row fallback'i ilk adayı kullanıcı seçmeden açıyordu. Fix yalnız selection/drawer-open semantics ve regression test kapsamındadır.
+- [Behavior] Normal entry selected student yok ve drawer kapalıdır. Explicit row click doğru adayı açar; close sonrası otomatik reopen yoktur; selection yokken filter/search/pagination first-row auto-select yapmaz; route re-entry kapalı başlar; `pendingOpenStudentId`, explicit student-opening flows ve call-save next-candidate davranışı korunur. ID'siz reopen yalnız mevcut geçerli seçimi yeniden açabilir.
+- [Validation] Focused `5` dosya / `91` test, canonical `75` dosya / `750` test, `/demo/` build ve PWA `PASS`; Strategy / Implementation Review `PASS WITH NON-BLOCKING NOTES`; chunk-size warning `NON-BLOCKING`dir.
+- [Production Closure Evidence] Previous runtime `024e8cef5c16e0819318ffb10e16ce1a1d6002d3`; current production runtime `b03f938d472bfbfff618d885a03c2281d4e8a529`. Production deployment, production build/Vite/PWA, static publish ve HTTP/asset/PWA smoke `PASS`tir. Backup `C:\Backups\netvadi-demo_predeploy_20260923_010836`; VDS canonical test suite `NOT RUN`; Caddy restart `NOT REQUIRED / NOT PERFORMED`; `harita.html` absent before/after deployment.
+- [Browser QA + Closure Boundary] User-confirmed production browser QA `PASS`tir; yalnız kritik `390x844` viewport doğrulanmıştır. Final Production Docs Closure `RECORDED / READY FOR COMMIT`; Vault Closure ve Repo + Vault Final Verification `PENDING`; `FULLY CLOSED: NO`. Next gate `DOCS CLOSURE COMMIT + PUSH — STUDENT LIST AUTO-DRAWER FIX`dir.
+- [Preserved Scope] Mobile Polish Slice 1, Slice 2 ve Slice 3 closure state'leri değişmez. Mobile Filter Disclosure ve Reports Narrow-Width / Mobile Padding ayrı unresolved follow-up'lardır ve bu kararla çözülmüş sayılmaz.
+
 ## Current Production Closure Decision - Manager Dashboard V3
 
 - [Decision State] Manager Dashboard V3 `FULLY CLOSED`dur. Production implementation/deploy, production browser QA, final production docs closure, docs closure commit/push, Obsidian / Strategy Knowledge Vault closure ve user-confirmed vault apply/verification `PASS`tir. Implementation/deployed runtime commit `50911ae4d6baed175c73fde9e257353a604c53a8` (`feat: add manager dashboard v3 ui`) ile production'a alınmıştır; URL `https://netvadi.com/demo/`dir.
