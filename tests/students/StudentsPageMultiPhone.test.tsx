@@ -269,6 +269,67 @@ describe("StudentsPage right card multi-phone display", () => {
     expect(screen.getByRole("button", { name: "Aday detayını aç" })).toBeInTheDocument();
   });
 
+  it("toggles the mobile filter disclosure without opening the drawer", async () => {
+    const user = userEvent.setup();
+    await seedStudentWithPhones(1, "FIRST STUDENT");
+
+    renderStudentsPage();
+
+    await screen.findByText("FIRST STUDENT");
+    const disclosure = screen.getByRole("button", { name: "Filtreler" });
+    const panel = document.getElementById("student-list-filters");
+
+    expect(panel).not.toBeNull();
+    expect(disclosure).toHaveAttribute("aria-expanded", "false");
+    expect(disclosure).toHaveAttribute("aria-controls", "student-list-filters");
+    expect(panel).not.toHaveClass("is-open");
+    expect(document.querySelector(".student-drawer")).toBeNull();
+
+    await user.click(disclosure);
+
+    expect(disclosure).toHaveAttribute("aria-expanded", "true");
+    expect(panel).toHaveClass("is-open");
+    expect(document.querySelector(".student-drawer")).toBeNull();
+
+    await user.click(disclosure);
+
+    expect(disclosure).toHaveAttribute("aria-expanded", "false");
+    expect(panel).not.toHaveClass("is-open");
+  });
+
+  it("preserves filter selections across disclosure toggles and keeps reset semantics", async () => {
+    const user = userEvent.setup();
+    await seedStudentWithPhones(1, "FIRST STUDENT");
+    await seedStudentWithPhones(1, "SECOND STUDENT");
+
+    renderStudentsPage();
+
+    await screen.findByText("FIRST STUDENT");
+    const disclosure = screen.getByRole("button", { name: "Filtreler" });
+    const campaignSelect = screen.getByRole("combobox", { name: "Kampanya" });
+    const studentGroupSelect = screen.getByRole("combobox", { name: "Sınıf / Şube" });
+    const statusSelect = getStatusFilterSelect();
+
+    await user.click(disclosure);
+    await user.selectOptions(campaignSelect, "Diğer");
+    await user.selectOptions(studentGroupSelect, "class:11");
+    await user.selectOptions(statusSelect, "duplicate_phone");
+
+    await user.click(disclosure);
+    await user.click(disclosure);
+
+    expect(disclosure).toHaveAttribute("aria-expanded", "true");
+    expect(campaignSelect).toHaveValue("Diğer");
+    expect(studentGroupSelect).toHaveValue("class:11");
+    expect(statusSelect).toHaveValue("duplicate_phone");
+
+    await user.click(screen.getByRole("button", { name: "Filtreyi sıfırla" }));
+
+    expect(statusSelect).toHaveValue("all");
+    expect(campaignSelect).toHaveValue("Diğer");
+    expect(studentGroupSelect).toHaveValue("class:11");
+  });
+
   it("opens the clicked student and does not reopen the first student after close", async () => {
     await seedStudentWithPhones(1, "FIRST STUDENT");
     await seedStudentWithPhones(1, "SECOND STUDENT");

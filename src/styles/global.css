@@ -2362,6 +2362,10 @@ body {
   gap: 5px;
 }
 
+.student-filter-disclosure {
+  display: none;
+}
+
 .campaign-filter {
   display: inline-flex;
   align-items: center;
@@ -4625,7 +4629,16 @@ body {
   }
 
   .student-filter-selects {
+    display: none;
     grid-template-columns: 1fr;
+  }
+
+  .student-filter-selects.is-open {
+    display: grid;
+  }
+
+  .student-filter-disclosure {
+    display: inline-flex;
   }
 
   .campaign-filter {

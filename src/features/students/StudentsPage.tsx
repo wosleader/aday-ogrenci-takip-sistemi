@@ -1856,6 +1856,7 @@ export function StudentsPage() {
   const [duplicateGroupFilterKey, setDuplicateGroupFilterKey] = useState<string | null>(null);
   const [campaignFilter, setCampaignFilter] = useState("all");
   const [studentGroupFilter, setStudentGroupFilter] = useState<StudentGroupFilterValue>(ALL_STUDENT_GROUPS_FILTER);
+  const [isStudentFiltersOpen, setIsStudentFiltersOpen] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isExtraPhonesExpanded, setIsExtraPhonesExpanded] = useState(false);
@@ -3859,9 +3860,19 @@ export function StudentsPage() {
             </span>
           </div>
           <div className="student-filters">
+            <button
+              aria-controls="student-list-filters"
+              aria-expanded={isStudentFiltersOpen}
+              className="student-filter-disclosure"
+              onClick={() => setIsStudentFiltersOpen((previous) => !previous)}
+              type="button"
+            >
+              Filtreler
+            </button>
             <div
-              className="student-filter-selects"
+              className={`student-filter-selects${isStudentFiltersOpen ? " is-open" : ""}`}
               aria-label="Liste filtreleri"
+              id="student-list-filters"
               style={{ alignItems: "center", columnGap: 6, flexWrap: "nowrap" }}
             >
               <label className="campaign-filter" style={{ boxSizing: "border-box", width: 200 }}>
