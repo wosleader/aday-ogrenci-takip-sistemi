@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Manager Dashboard V3 Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Student List Auto-Drawer Final Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -13,8 +13,9 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 - [Behavior] Normal entry selected student yok ve drawer kapalıdır. Explicit row click doğru adayı açar; close sonrası otomatik reopen yoktur; selection yokken filter/search/pagination first-row auto-select yapmaz; route re-entry kapalı başlar; `pendingOpenStudentId`, explicit student-opening flows ve call-save next-candidate davranışı korunur. ID'siz reopen yalnız mevcut geçerli seçimi yeniden açabilir.
 - [Validation] Focused `5` dosya / `91` test, canonical `75` dosya / `750` test, `/demo/` build ve PWA `PASS`; Strategy / Implementation Review `PASS WITH NON-BLOCKING NOTES`; chunk-size warning `NON-BLOCKING`dir.
 - [Production Closure Evidence] Previous runtime `024e8cef5c16e0819318ffb10e16ce1a1d6002d3`; current production runtime `b03f938d472bfbfff618d885a03c2281d4e8a529`. Production deployment, production build/Vite/PWA, static publish ve HTTP/asset/PWA smoke `PASS`tir. Backup `C:\Backups\netvadi-demo_predeploy_20260923_010836`; VDS canonical test suite `NOT RUN`; Caddy restart `NOT REQUIRED / NOT PERFORMED`; `harita.html` absent before/after deployment.
-- [Browser QA + Closure Boundary] User-confirmed production browser QA `PASS`tir; yalnız kritik `390x844` viewport doğrulanmıştır. Final Production Docs Closure `RECORDED / READY FOR COMMIT`; Vault Closure ve Repo + Vault Final Verification `PENDING`; `FULLY CLOSED: NO`. Next gate `DOCS CLOSURE COMMIT + PUSH — STUDENT LIST AUTO-DRAWER FIX`dir.
-- [Preserved Scope] Mobile Polish Slice 1, Slice 2 ve Slice 3 closure state'leri değişmez. Mobile Filter Disclosure ve Reports Narrow-Width / Mobile Padding ayrı unresolved follow-up'lardır ve bu kararla çözülmüş sayılmaz.
+- [Final Closure] Production runtime `b03f938d472bfbfff618d885a03c2281d4e8a529`; production docs closure baseline `eb0a3d2d5653fadad3fcbc00897e8080202a6705`. Final Production Docs Closure `COMPLETE / COMMITTED / PUSHED`; Vault Closure `COMPLETE`; Repo + Vault Final Verification `PASS`; Final State-Flip `COMPLETE`. Vault Sync ID: `obsidian-update-eb0a3d2-student-list-auto-drawer-production-closure-2026-09-23-Europe-Istanbul`. `FULLY CLOSED: YES`; remaining closure gate `NONE`.
+- [Production Evidence / No Repeat Work] User-confirmed production browser QA `PASS`tir; yalnız kritik `390x844` viewport doğrulanmıştır. VDS canonical suite `NOT RUN`; Caddy restart `NOT REQUIRED / NOT PERFORMED`; `harita.html` deploy öncesi ve sonrası absent'tir. Redeploy `NOT REQUIRED`; second vault sync `NOT REQUIRED`.
+- [Preserved Scope] Mobile Polish Slice 1, Slice 2 ve Slice 3 `FULLY CLOSED` kalır. Mobile Filter Disclosure ve Reports Narrow-Width / Mobile Padding ayrı `UNRESOLVED / NOT IMPLEMENTED / NOT ACTIVE` follow-up'lardır; bu kapanış bunları çözmez veya yeni roadmap item aktive etmez.
 
 ## Current Production Closure Decision - Manager Dashboard V3
 
@@ -38,7 +39,7 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 - VDS `npm run build`, Vite and PWA are `PASS`; deployed assets `/demo/assets/index-BatCo0h7.css`, `/demo/assets/index-hGGCPEzl.js`, `/demo/manifest.webmanifest`, `/demo/registerSW.js` and `/demo/sw.js` passed HTTP smoke. VDS canonical suite was `NOT RUN`; local evidence remains focused `5` files / `85` tests and canonical `75` files / `744` tests `PASS`.
 - Production browser QA is `PASS` for the user-confirmed critical `390x844` check: student list context remains visible, drawer stays usable with internal scrolling, drawer header/close control remain accessible and document-level horizontal overflow is absent. Broader viewport evidence remains local QA only. `harita.html` was absent before and after; Caddy restart was `NOT REQUIRED / NOT PERFORMED`.
 - Slice 3 state: `FULLY CLOSED`. Current production runtime remains `024e8cef5c16e0819318ffb10e16ce1a1d6002d3`; production docs closure baseline is `b6c93764a00032fd50d642c2931af18986f0f06a`. Final Production Docs Closure is `COMPLETE / COMMITTED / PUSHED`; Vault Closure is `COMPLETE` via `obsidian-update-b6c9376-mobile-polish-slice3-production-closure-2026-09-23-Europe-Istanbul`; Repo + Vault Final Verification is `PASS`; Mandatory Completion / Closure Gate and Final State-Flip are `COMPLETE`; Remaining Closure Gate is `NONE`; `FULLY CLOSED: YES`.
-- The final repository state-flip is docs-only and is not the production runtime; no redeploy or second vault sync is required. Separate findings remain unresolved and out of scope: first-visible-student auto-drawer behavior, mobile filter disclosure and Reports narrow-width padding. No new roadmap item is activated.
+- At the time of Slice 3 closure, separate findings included first-visible-student auto-drawer behavior, mobile filter disclosure and Reports narrow-width padding. Auto-Drawer was subsequently fixed and fully closed as an independent workstream; Mobile Filter Disclosure and Reports Narrow-Width / Mobile Padding remain unresolved. Slice 3's runtime and closure records remain historical and unchanged.
 
 ## Current Product Decision - Smart Operational Helpers Slice 1
 

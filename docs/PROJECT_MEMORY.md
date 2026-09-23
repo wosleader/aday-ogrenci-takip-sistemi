@@ -1,17 +1,18 @@
-<!-- Son guncelleme: Manager Dashboard V3 Production Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Student List Auto-Drawer Final Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
 Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
-## Current Workstream - Student List Auto-Drawer Follow-Up
+## Latest Closure - Student List Auto-Drawer Follow-Up
 
 - Aday Listesi ilk açıldığında ilk görünür adayın otomatik açılması problemi için discovery ve root-cause analizi `COMPLETE`; root cause `isDrawerOpen` başlangıç değerinin açık olması, `selectedRow` first-visible fallback'i, `visibleRows[0]` auto-selection effect'i ve ID'siz `openStudentDrawer` fallback'idir.
 - Implementation `COMPLETE / COMMITTED / PUSHED` at `b03f938d472bfbfff618d885a03c2281d4e8a529` (`fix: prevent automatic first student drawer open`). Normal entry'de seçim yok ve drawer kapalıdır; explicit row click, `pendingOpenStudentId`, explicit student-opening flows ve call-save next-candidate davranışı korunur. Seçim yokken filter/search/pagination değişimi ilk adayı seçmez; ID'siz reopen yalnız mevcut geçerli seçimi yeniden açabilir.
 - Regression evidence `5` dosya / `91` focused test, canonical `75` dosya / `750` test, `/demo/` build ve PWA `PASS`tir. Strategy / Implementation Review `PASS WITH NON-BLOCKING NOTES`; bilinen chunk-size warning `NON-BLOCKING`dir.
 - Previous production runtime `024e8cef5c16e0819318ffb10e16ce1a1d6002d3`; current production runtime `b03f938d472bfbfff618d885a03c2281d4e8a529`. Production deployment, build/Vite/PWA, static publish ve final HTTP/asset/PWA smoke `PASS`tir. Backup `C:\Backups\netvadi-demo_predeploy_20260923_010836`dir; VDS canonical test suite `NOT RUN`, Caddy restart `NOT REQUIRED / NOT PERFORMED`, `harita.html` deployment öncesinde ve sonrasında absent'tir.
-- User-confirmed production browser QA `PASS`tir; yalnız kritik `390x844` viewport doğrulanmıştır: ilk aday otomatik açılmaz, explicit aday click doğru drawer'ı açar, close sonrası otomatik reopen olmaz ve route re-entry kapalı başlar. Final production docs closure `RECORDED / READY FOR COMMIT`; vault closure ve repo + vault final verification `PENDING`; `FULLY CLOSED: NO`.
-- Mobile Polish Slice 1, Slice 2 ve Slice 3 closure state'leri korunur. Ayrı unresolved follow-ups: Mobile Filter Disclosure ve Reports Narrow-Width / Mobile Padding. Bu workstream bunları çözmez.
+- User-confirmed production browser QA `PASS`tir; yalnız kritik `390x844` viewport doğrulanmıştır: ilk aday otomatik açılmaz, explicit aday click doğru drawer'ı açar, close sonrası otomatik reopen olmaz ve route re-entry kapalı başlar.
+- Production docs closure baseline `eb0a3d2d5653fadad3fcbc00897e8080202a6705`; Vault Sync ID `obsidian-update-eb0a3d2-student-list-auto-drawer-production-closure-2026-09-23-Europe-Istanbul`. Vault Closure `COMPLETE`; Repo + Vault Final Verification `PASS`; Final State-Flip `COMPLETE`; Student List Auto-Drawer Follow-Up `FULLY CLOSED`.
+- Redeploy `NOT REQUIRED`; second vault sync `NOT REQUIRED`; remaining closure gate `NONE`. Mobile Polish Slice 1, Slice 2 ve Slice 3 `FULLY CLOSED` kalır. Mobile Filter Disclosure ve Reports Narrow-Width / Mobile Padding ayrı `UNRESOLVED / NOT IMPLEMENTED / NOT ACTIVE` follow-up'lardır; yeni roadmap item aktive edilmemiştir.
 
 ## Current Production Closure - Manager Dashboard V3
 
@@ -81,7 +82,7 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - Focused validation is `2 files / 24 tests PASS`; canonical validation is `75 files / 744 tests PASS` with `0` failures and `0` skips; TypeScript, Vite `/demo/` build and PWA generation are `PASS`; the known chunk-size warning is non-blocking. VDS canonical tests were `NOT RUN`; VDS build and deployment passed.
 - Production moved from `05c9d01a93cff8f35f4f881b211f4f3c90c8239e` to `99f1734c7ebce57de5d84f6e79e5c497a8eff118` by exact fast-forward. Backup: `C:\Backups\netvadi-demo_predeploy_20260921_032754`; HTTP/asset smoke passed at `https://netvadi.com/demo/?v=99f1734c`; Caddy restart was `NOT REQUIRED / NOT PERFORMED`.
 - Contract: at `<=768px`, existing navigation defaults closed behind `Menü` + chevron, route selection/location changes close it, mobile re-entry resets it closed, and refresh starts closed without persistence. At `>=769px`, visible navigation remains. Labels, icons, order, routes, active route, keyboard semantics and shell controls are preserved; no new navigation architecture, breakpoint, dependency, global state or business behavior was added.
-- Separate narrow Reports padding, student-filter and first-visible-student auto-drawer findings remain pre-existing/out of scope. Slice 3 is implemented and pre-production ready but not production closed.
+- At the time of Slice 3 closure, separate findings included narrow Reports padding, student-filter disclosure and first-visible-student auto-drawer behavior. Auto-Drawer was subsequently fixed and fully closed independently; Reports padding and filter disclosure remain unresolved. Slice 3 remains fully closed with its own historical runtime and closure evidence.
 - Production docs closure baseline is `628e8a2f206815e0abce7a29917d054fd8cafe43`; Final Production Docs Closure and Vault Closure are `COMPLETE`; Repo + Vault Final Verification is `PASS`; Mandatory Completion / Closure Gate and Final State-Flip are `COMPLETE`; Remaining Closure Gate is `NONE`; `FULLY CLOSED: YES`. Vault Sync ID: `obsidian-update-628e8a2-mobile-polish-slice2-production-closure-2026-09-21-Europe-Istanbul`.
 - The vault snapshot intentionally records the production-docs closure baseline before this final repository state-flip. The verified vault sync remains authoritative and no second vault sync is required. Slice 3 is fully closed; separate QA findings remain unresolved and out of scope.
 

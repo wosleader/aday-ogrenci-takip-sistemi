@@ -1,11 +1,12 @@
 ﻿# HANDOFF_CURRENT — Aday Öğrenci Takip Sistemi
 
-## Current Workstream - Student List Auto-Drawer Follow-Up
+## Latest Closure - Student List Auto-Drawer Follow-Up
 
 - Implementation `COMPLETE / COMMITTED / PUSHED` at `b03f938d472bfbfff618d885a03c2281d4e8a529` (`fix: prevent automatic first student drawer open`); regression tests and Implementation Review `PASS WITH NON-BLOCKING NOTES`.
 - Normal entry drawer kapalı ve selected student yoktur. Explicit row click, `pendingOpenStudentId`, global search/notification/reminder explicit opens ve call-save next-candidate davranışı korunur; no-ID reopen seçim yokken ilk adayı seçmez.
 - Previous production runtime `024e8cef5c16e0819318ffb10e16ce1a1d6002d3`; current production runtime `b03f938d472bfbfff618d885a03c2281d4e8a529`. Production deployment, build/Vite/PWA, static publish ve HTTP/asset/PWA smoke `PASS`tir. Backup `C:\Backups\netvadi-demo_predeploy_20260923_010836`; VDS canonical test suite `NOT RUN`; Caddy restart `NOT REQUIRED / NOT PERFORMED`; `harita.html` absent before/after deployment.
-- Production browser QA `PASS`tir, yalnız kritik `390x844` viewport doğrulanmıştır. Final Production Docs Closure `RECORDED / READY FOR COMMIT`; Vault Closure ve Repo + Vault Final Verification `PENDING`; `FULLY CLOSED: NO`. Next gate: `DOCS CLOSURE COMMIT + PUSH — STUDENT LIST AUTO-DRAWER FIX`.
+- Production browser QA `PASS`tir, yalnız kritik `390x844` viewport doğrulanmıştır. Final Production Docs Closure `COMPLETE / COMMITTED / PUSHED`; Vault Closure `COMPLETE`; Repo + Vault Final Verification `PASS`; Final State-Flip `COMPLETE`; `FULLY CLOSED: YES`; remaining closure gate `NONE`.
+- Vault Sync ID: `obsidian-update-eb0a3d2-student-list-auto-drawer-production-closure-2026-09-23-Europe-Istanbul`. Redeploy `NOT REQUIRED`; second vault sync `NOT REQUIRED`. No new roadmap item is activated.
 - Mobile Polish Slice 1, Slice 2 ve Slice 3 `FULLY CLOSED` olarak korunur. Mobile Filter Disclosure ve Reports Narrow-Width / Mobile Padding ayrı unresolved follow-up'lardır.
 
 ## Current Production Closure - Manager Dashboard V3
@@ -27,7 +28,7 @@
 - VDS build, Vite and PWA are `PASS`; HTTP/asset/PWA smoke is `PASS` for the deployed CSS, JS, manifest, registerSW and service-worker resources. VDS canonical tests were `NOT RUN`; local focused `5` files / `85` tests and canonical `75` files / `744` tests remain `PASS`.
 - Production browser QA is `PASS` for the user-confirmed critical `390x844` verification. The student list remains visible, the drawer scrolls internally, its header/close control remains accessible and there is no document-level horizontal overflow. `harita.html` remained absent; Caddy restart was `NOT REQUIRED / NOT PERFORMED`.
 - Mobile Polish Slice 3 is `FULLY CLOSED`. Current production runtime remains `024e8cef5c16e0819318ffb10e16ce1a1d6002d3`; production docs closure baseline is `b6c93764a00032fd50d642c2931af18986f0f06a`. Final Production Docs Closure is `COMPLETE / COMMITTED / PUSHED`; Vault Closure is `COMPLETE` via `obsidian-update-b6c9376-mobile-polish-slice3-production-closure-2026-09-23-Europe-Istanbul`; Repo + Vault Final Verification is `PASS`; Mandatory Completion / Closure Gate and Final State-Flip are `COMPLETE`; Remaining Closure Gate is `NONE`.
-- The final repository state-flip is docs-only and is not the production runtime. No redeploy or second vault sync is required. Separate findings remain unresolved and out of scope: first-visible-student auto-drawer behavior, mobile filter disclosure and Reports narrow-width padding. No new roadmap item is activated.
+- At the time of Slice 3 closure, separate findings included first-visible-student auto-drawer behavior, mobile filter disclosure and Reports narrow-width padding. Auto-Drawer was subsequently fixed and fully closed as an independent workstream; Mobile Filter Disclosure and Reports Narrow-Width / Mobile Padding remain unresolved. Slice 3's runtime and closure records remain historical and unchanged.
 
 ## Current Roadmap - Smart Operational Helpers Slice 1
 
