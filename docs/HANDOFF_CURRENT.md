@@ -10,13 +10,16 @@
 
 ## Current Roadmap - Mobile Polish Slice 3 — Student Drawer Mobile Fit
 
-- Discovery `COMPLETE`; user-approved Product Decision `APPROVED`; implementation `NOT STARTED`; Strategy Review, Local QA and Production are `NOT STARTED`; `FULLY CLOSED: NO`.
-- At `<=860px`, the Student Drawer remains full-width and stacked below the student list. The confirmed risk is that the stacked drawer lacks a definite usable height/max-height while `.students-workbench` clips overflow, making long content potentially inaccessible. The drawer must fit the usable viewport without page-level scrolling or horizontal overflow.
-- `.drawer-header` and its close control remain visible/reachable; `.drawer-body` remains the internal vertical scroll region. No sticky footer is authorized initially, and existing action/save semantics remain unchanged.
-- Initial implementation is CSS-first and limited to `src/styles/global.css`; `StudentsPage.tsx` is not initially authorized. Existing `860px` behavior is reused with no new breakpoint. Desktop/right-side drawer behavior, navigation/shell, state, data and business semantics remain unchanged.
-- Approved browser QA matrix: `320x720`, `390x844`, `430x932`, `640x900`, `768x1024`, `769x1024`, `860x900`, `1280x800`, `1440x900`. The exact height formula remains an implementation question; `100dvh` is not pre-authorized.
-- Separate findings remain outside this slice: pre-existing first-visible-student auto-drawer behavior, mobile filter disclosure and Reports narrow-width padding.
-- Next gate: `PRODUCT DECISION COMMIT + PUSH — MOBILE POLISH SLICE 3`.
+- Discovery `COMPLETE`; Product Decision `APPROVED / COMMITTED / PUSHED` at `9e98fb0d85c0b809f72851b65a357c3afd929b88`; implementation `COMPLETE / COMMITTED / PUSHED` at `024e8cef5c16e0819318ffb10e16ce1a1d6002d3` (`fix: constrain mobile student drawer height`).
+- Implementation is CSS-only in `src/styles/global.css`: the existing `<=860px` full-width stacked drawer now uses `min-height: 0`, `max-height: 50%` and `overflow: hidden`. The 50% value is a validated containment bound, not an exact visual ratio requirement; desktop/right-side behavior, drawer semantics and all business/data behavior remain unchanged.
+- Strategy Review is `UNBLOCKED / PASS`. Authoritative local Playwright QA with the isolated 100-candidate DEV fixture passed at `360x800`, `390x844` and `430x932`: list context remained visible, drawer/body heights were positive, internal scrolling worked, document widths matched viewport widths, and no pageerror or unexpected console.error occurred.
+- Validation is `PASS`: focused `5` files / `85` tests, canonical `75` files / `744` tests, `/demo/` build, PWA generation and `git diff --check`. Known chunk-size warning is non-blocking.
+- Production deployment is `PASS`: VDS fast-forward `99f1734c7ebce57de5d84f6e79e5c497a8eff118 -> 024e8cef5c16e0819318ffb10e16ce1a1d6002d3`; final VDS/origin HEAD is `024e8cef5c16e0819318ffb10e16ce1a1d6002d3`, ahead/behind `0/0`, and the VDS repo is `CLEAN`.
+- Backup `C:\Backups\netvadi-demo_predeploy_20260923_000034` is present. Backup robocopy exit `1` and static deploy robocopy exit `3` are `SUCCESS`; copy-only `/E` was used, `/MIR` was not used and unknown/stale live files were not deleted.
+- VDS build, Vite and PWA are `PASS`; HTTP/asset/PWA smoke is `PASS` for the deployed CSS, JS, manifest, registerSW and service-worker resources. VDS canonical tests were `NOT RUN`; local focused `5` files / `85` tests and canonical `75` files / `744` tests remain `PASS`.
+- Production browser QA is `PASS` for the user-confirmed critical `390x844` verification. The student list remains visible, the drawer scrolls internally, its header/close control remains accessible and there is no document-level horizontal overflow. `harita.html` remained absent; Caddy restart was `NOT REQUIRED / NOT PERFORMED`.
+- Slice 3 is `PRODUCTION COMPLETE`; current runtime is `024e8cef5c16e0819318ffb10e16ce1a1d6002d3`. Final Production Docs Closure is `RECORDED / READY TO COMMIT`; Vault Closure, Repo + Vault Final Verification and Final State-Flip are `PENDING`; `FULLY CLOSED: NO`.
+- Separate findings remain unresolved and out of scope: first-visible-student auto-drawer behavior, mobile filter disclosure and Reports narrow-width padding. Next gate: `FINAL PRODUCTION DOCS CLOSURE COMMIT + PUSH — MOBILE POLISH SLICE 3`.
 
 ## Current Roadmap - Smart Operational Helpers Slice 1
 
@@ -55,7 +58,7 @@
 - Implementation scope was CSS-only in `src/styles/global.css`: toolbar/filter containment, table framing, pagination/footer mobile wrapping and the approved `.student-kbdbar` visibility exception. No new breakpoint, JSX, business logic or data contract change was introduced.
 - Production deployment is `COMPLETE` at runtime `05c9d01a93cff8f35f4f881b211f4f3c90c8239e`; production HTTP/asset/PWA smoke and production browser QA are `PASS`. Backup: `C:\Backups\netvadi-demo_predeploy_20260919_154553`; VDS canonical suite `NOT RUN`; Caddy `NOT REQUIRED / NOT PERFORMED`; `harita.html` was absent before deployment and remains absent afterward.
 - Final production docs closure, Docs Closure Commit + Push, Vault Closure and Repo + Vault Final Verification are `COMPLETE / PASS`. Production docs closure baseline: `754edc8a309cb616356eb118b4d3ffd8b5ff23be`; verified vault sync ID: `obsidian-update-754edc8-mobile-polish-slice1-production-closure-2026-09-20-Europe-Istanbul`; snapshot apply/verification `PASS`. `FULLY CLOSED: YES`; Mandatory Completion / Closure Gate `COMPLETE`; Remaining closure gate `NONE`. No second vault sync or redeploy is required.
-- Mobile Polish Slice 2 remains closed. Slice 3 is now covered by the approved current Product Decision above and is not claimed as fixed by Slice 1.
+- Mobile Polish Slice 2 remains closed. Slice 3 implementation is now complete and pre-production ready; it is not claimed as production closed by Slice 1.
 - Production runtime remains `05c9d01a93cff8f35f4f881b211f4f3c90c8239e`; this final state-flip is docs-only and does not change runtime or require redeploy. Current closure gate: `NONE`.
 
 ## Current Final Closure - Mobile Polish Slice 2 — App Shell + Mobile Navigation
@@ -65,9 +68,9 @@
 - Validation: focused `2 files / 24 tests PASS`; canonical `75 files / 744 tests PASS` with `0` failures and `0` skips; TypeScript, Vite `/demo/` build and PWA generation `PASS`; known chunk-size warning is non-blocking. The VDS canonical test suite was `NOT RUN`; VDS build and static deployment passed.
 - Production moved by exact VDS fast-forward from `05c9d01a93cff8f35f4f881b211f4f3c90c8239e` to `99f1734c7ebce57de5d84f6e79e5c497a8eff118`. Backup: `C:\Backups\netvadi-demo_predeploy_20260921_032754`. HTTP URL: `https://netvadi.com/demo/?v=99f1734c`; JS/CSS/registerSW/manifest/service-worker smoke was `PASS`. Caddy restart was `NOT REQUIRED / NOT PERFORMED`.
 - Mobile contract is preserved: `<=768px` defaults closed behind `Menü` + chevron; open/close, route-close, route/location-close, mobile re-entry reset and refresh-default closed work without persistence. `>=769px` keeps visible navigation. Labels, icons, order, routes, active route, keyboard semantics and shell controls remain unchanged.
-- No duplicate navigation, off-canvas redesign, new breakpoint, global state/store, persistence, dependency or business change was introduced. Separate reports padding, student-filter and first-visible-student auto-drawer findings remain pre-existing/out of scope; Slice 3 is separately approved but not implemented.
+- No duplicate navigation, off-canvas redesign, new breakpoint, global state/store, persistence, dependency or business change was introduced. Separate reports padding, student-filter and first-visible-student auto-drawer findings remain pre-existing/out of scope; Slice 3 is implemented and pre-production ready but not production closed.
 - State: `FULLY CLOSED`. Production docs closure baseline: `628e8a2f206815e0abce7a29917d054fd8cafe43`; Final Production Docs Closure, Vault Closure and Mandatory Completion / Closure Gate are `COMPLETE`; Repo + Vault Final Verification is `PASS`; Final State-Flip is `COMPLETE`; Remaining Closure Gate is `NONE`. Vault Sync ID: `obsidian-update-628e8a2-mobile-polish-slice2-production-closure-2026-09-21-Europe-Istanbul`.
-- The vault snapshot intentionally records the pre-state-flip production-docs baseline; no second vault sync is required. The final repo closure commit is docs-only, is not production runtime, and requires no redeploy. Slice 3 is approved but not implemented; separate QA findings remain unresolved and out of scope.
+- The vault snapshot intentionally records the pre-state-flip production-docs baseline; no vault mutation is part of this checkpoint. Slice 3 is pre-production ready but not production or vault closed; separate QA findings remain unresolved and out of scope.
 
 ## Previous Production Closure - Phone Reached -> Latest Contacted Synchronization
 
