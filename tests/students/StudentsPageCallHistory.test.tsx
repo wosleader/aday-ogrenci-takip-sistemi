@@ -369,6 +369,21 @@ function renderStudentsPage() {
   );
 }
 
+async function renderStudentsPageAndOpenFirst() {
+  const view = renderStudentsPage();
+  const firstRow = await waitFor(() => {
+    const row = document.querySelector("tbody tr[data-student-row-id]");
+    if (!row) {
+      throw new Error("Student row is not ready");
+    }
+
+    return row;
+  });
+  fireEvent.click(firstRow);
+  await waitFor(() => expect(document.querySelector(".student-drawer")).not.toBeNull());
+  return view;
+}
+
 describe("StudentsPage call history phone context", () => {
   beforeEach(async () => {
     Element.prototype.scrollIntoView = vi.fn();
@@ -386,8 +401,7 @@ describe("StudentsPage call history phone context", () => {
   it("shows phone context label and number in the call history", async () => {
     await seedCallHistoryWithPhoneContext();
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     expect(await screen.findByText("Telefon 3 · Öğrenci: 0555 123 4567")).toBeInTheDocument();
     expect(screen.getByText("Öğrenci telefonu üzerinden görüşüldü.")).toBeInTheDocument();
   });
@@ -398,8 +412,7 @@ describe("StudentsPage call history phone context", () => {
     const note = `İlk satır.\n${longToken}\n${longUrl}\nSon satır.`;
     await seedCallHistoryWithPhoneContext(note);
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     const noteElement = await screen.findByText((_, element) => element?.textContent === note);
 
     expect(noteElement).toHaveClass("tl-text");
@@ -412,8 +425,7 @@ describe("StudentsPage call history phone context", () => {
   it("keeps the no-phone fallback when call history has no phone context", async () => {
     await seedCallHistoryWithoutPhoneContext();
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     expect(await screen.findByText("Telefon seçilmedi")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Hatırlatmayı tamamla" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Hatırlatmayı düzenle" })).not.toBeInTheDocument();
@@ -423,8 +435,7 @@ describe("StudentsPage call history phone context", () => {
     const user = userEvent.setup();
     await seedCallHistoryWithPhoneContext();
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     expect(await screen.findByText("Telefon 3 · Öğrenci: 0555 123 4567")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "İletişim kaydını geçersiz say / sil" }));
@@ -453,8 +464,7 @@ describe("StudentsPage call history phone context", () => {
     const user = userEvent.setup();
     await seedCallHistoryWithPhoneContext();
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     expect(await screen.findByText("Öğrenci telefonu üzerinden görüşüldü.")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "İletişim kaydını düzelt" }));
@@ -483,8 +493,7 @@ describe("StudentsPage call history phone context", () => {
       const originalCallLog = await db.call_logs.where("uuid").equals("call-history-with-pending-reminder").first();
       const originalStudent = await db.students.get(originalCallLog!.student_id);
 
-      renderStudentsPage();
-
+      await renderStudentsPageAndOpenFirst();
       await screen.findByText("Güncellenmiş terminal reminder notu");
       await user.click(screen.getByRole("button", { name: "İletişim kaydını düzelt" }));
 
@@ -537,8 +546,7 @@ describe("StudentsPage call history phone context", () => {
     const user = userEvent.setup();
     await seedCallHistoryWithPendingReminder();
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     await screen.findByText("Hatırlatma bağlı görüşme.");
     await user.click(screen.getByRole("button", { name: "İletişim kaydını düzelt" }));
 
@@ -551,8 +559,7 @@ describe("StudentsPage call history phone context", () => {
     const { appointmentId, callLogId } = await seedCallHistoryWithAppointment("pending");
     const appointmentBefore = await db.appointments.get(appointmentId);
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     expect(await screen.findByText("Görüşme notu:")).toBeInTheDocument();
     expect(screen.getByText("Randevu bağlı görüşme.")).toBeInTheDocument();
     expect(screen.getByText("Randevu notu: Bağlı randevu")).toBeInTheDocument();
@@ -581,8 +588,7 @@ describe("StudentsPage call history phone context", () => {
     const { appointmentId, callLogId } = await seedCallHistoryWithAppointment("pending");
     const ownerBefore = await db.call_logs.get(callLogId);
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     expect(await screen.findByText("Görüşme notu:")).toBeInTheDocument();
     expect(screen.getByText("Randevu bağlı görüşme.")).toBeInTheDocument();
     expect(screen.getByText("Randevu notu: Bağlı randevu")).toBeInTheDocument();
@@ -626,8 +632,7 @@ describe("StudentsPage call history phone context", () => {
     const { appointmentId } = await seedCallHistoryWithAppointment("pending");
     await db.appointments.update(appointmentId, { appointment_at: "2099-05-11T21:30:00.000Z" });
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     await user.click(await screen.findByRole("button", { name: "Randevuyu yönet" }));
     const dialog = await screen.findByRole("dialog", { name: "Randevuyu yönet" });
 
@@ -643,8 +648,7 @@ describe("StudentsPage call history phone context", () => {
     const user = userEvent.setup();
     const { appointmentId } = await seedCallHistoryWithAppointment("pending");
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     await user.click(await screen.findByRole("button", { name: "Randevuyu yönet" }));
     const manageDialog = await screen.findByRole("dialog", { name: "Randevuyu yönet" });
     await user.click(within(manageDialog).getByRole("button", { name: label }));
@@ -662,8 +666,7 @@ describe("StudentsPage call history phone context", () => {
   it("keeps terminal and legacy appointment rows read-only", async () => {
     await seedCallHistoryWithAppointment("attended");
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     expect(await screen.findByText(/Randevu:.*Geldi/)).toBeInTheDocument();
     expect(screen.getByText("Görüşme notu:")).toBeInTheDocument();
     expect(screen.getByText("Randevu bağlı görüşme.")).toBeInTheDocument();
@@ -675,8 +678,7 @@ describe("StudentsPage call history phone context", () => {
     const { appointmentId } = await seedCallHistoryWithAppointment("pending");
     await db.appointments.update(appointmentId, { call_log_id: null });
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     expect(await screen.findByText("Randevu bağlı görüşme.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Randevuyu yönet" })).not.toBeInTheDocument();
   });
@@ -687,8 +689,7 @@ describe("StudentsPage call history phone context", () => {
     const appointmentBefore = await db.appointments.get(appointmentId);
     const callLogBefore = await db.call_logs.get(callLogId);
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     await screen.findByText("Randevu bağlı görüşme.");
     await user.click(screen.getByRole("button", { name: "İletişim kaydını düzelt" }));
 
@@ -721,8 +722,7 @@ describe("StudentsPage call history phone context", () => {
     const reminder = await db.reminders.where("uuid").equals("linked-pending-reminder").first();
     await db.reminders.delete(reminder!.id!);
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     await screen.findByText("Hatırlatma bağlı görüşme.");
     await user.click(screen.getByRole("button", { name: "İletişim kaydını düzelt" }));
 
@@ -735,8 +735,7 @@ describe("StudentsPage call history phone context", () => {
     await seedCallHistoryWithPendingReminder();
     const originalCallLog = await db.call_logs.where("uuid").equals("call-history-with-pending-reminder").first();
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     expect(await screen.findByText("Hatırlatma bağlı görüşme.")).toBeInTheDocument();
     expect(screen.queryByText(/^Tekrar düzenlendi:/)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Hatırlatmayı tamamla" })).toBeInTheDocument();
@@ -975,8 +974,7 @@ describe("StudentsPage call history phone context", () => {
     async (status) => {
       const editedAt = await seedTerminalReminderWithEditAudit(status);
 
-      renderStudentsPage();
-
+      await renderStudentsPageAndOpenFirst();
       expect(await screen.findByText("Güncellenmiş terminal reminder notu")).toBeInTheDocument();
       expect(screen.queryByText("Açık hatırlatma")).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Hatırlatmayı tamamla" })).not.toBeInTheDocument();
@@ -1025,7 +1023,7 @@ describe("StudentsPage call history phone context", () => {
       created_at: "2026-05-12T10:00:00.000Z"
     });
 
-    const view = renderStudentsPage();
+    const view = await renderStudentsPageAndOpenFirst();
     const trigger = await screen.findByRole("button", { name: /Tekrar düzenlendi:/ });
     const addEventListener = vi.spyOn(window, "addEventListener");
     const removeEventListener = vi.spyOn(window, "removeEventListener");
@@ -1083,8 +1081,7 @@ describe("StudentsPage call history phone context", () => {
       created_at: editedAt
     });
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     expect(await screen.findByText("Güncellenmiş reminder notu")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Hatırlatmayı tamamla" }));
@@ -1133,8 +1130,7 @@ describe("StudentsPage call history phone context", () => {
     const reminder = await db.reminders.where("uuid").equals("linked-pending-reminder").first();
     const callLog = await db.call_logs.where("uuid").equals("call-history-with-pending-reminder").first();
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     const cancelButton = await screen.findByRole("button", { name: "Hatırlatmayı iptal et" });
     expect(cancelButton).toHaveAttribute("title", "Hatırlatmayı iptal et");
     await user.click(cancelButton);
@@ -1205,8 +1201,7 @@ describe("StudentsPage call history phone context", () => {
       created_at: "2026-05-12T10:00:00.000Z"
     });
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     await user.click(await screen.findByRole("button", { name: "Hatırlatmayı iptal et" }));
     expect(screen.getByRole("dialog", { name: "Hatırlatma iptal edilsin mi?" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Hatırlatmayı İptal Et" }));
@@ -1238,8 +1233,7 @@ describe("StudentsPage call history phone context", () => {
       deleted_at: null
     });
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     expect(await screen.findByText("Eski hatırlatma bağlı görüşme.")).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.queryByRole("button", { name: "Hatırlatmayı iptal et" })).not.toBeInTheDocument();
@@ -1274,8 +1268,7 @@ describe("StudentsPage call history phone context", () => {
       deleted_at: null
     });
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     expect(await screen.findByText("Eski hatırlatma bağlı görüşme.")).toBeInTheDocument();
     expect(screen.getByText("Tarihsel paylaşılan hatırlatma satırı.")).toBeInTheDocument();
     const ownerHistoryRow = screen.getByText("Eski hatırlatma bağlı görüşme.").closest(".tl-item") as HTMLElement | null;
@@ -1297,8 +1290,7 @@ describe("StudentsPage call history phone context", () => {
     await seedCallHistoryWithPendingReminder();
     const reminder = await db.reminders.where("uuid").equals("linked-pending-reminder").first();
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     await user.click(await screen.findByRole("button", { name: "Hatırlatmayı iptal et" }));
     await db.reminders.update(reminder!.id!, { status: "completed" });
     await user.click(screen.getByRole("button", { name: "Hatırlatmayı İptal Et" }));
@@ -1311,7 +1303,7 @@ describe("StudentsPage call history phone context", () => {
     const user = userEvent.setup();
     await seedStudent();
 
-    const view = renderStudentsPage();
+    const view = await renderStudentsPageAndOpenFirst();
 
     expect(await screen.findByText("Aday genel görüşme sonucu")).toBeInTheDocument();
 
@@ -1342,8 +1334,7 @@ describe("StudentsPage call history phone context", () => {
     const user = userEvent.setup();
     await seedCallHistoryWithPendingReminder();
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     expect(await screen.findByText("Hatırlatma bağlı görüşme.")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Hatırlatmayı tamamla" }));
@@ -1406,8 +1397,7 @@ describe("StudentsPage call history phone context", () => {
       created_at: "2026-05-12T10:00:00.000Z"
     });
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     expect(await screen.findByText("Hatırlatma sahibi satır.")).toBeInTheDocument();
     expect(screen.getByText("Eski hatırlatma satırı.")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Hatırlatmayı tamamla" })).toHaveLength(1);

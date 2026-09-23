@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -95,6 +95,20 @@ function renderStudentsPage() {
   );
 }
 
+async function renderStudentsPageAndOpenFirst() {
+  renderStudentsPage();
+  const firstRow = await waitFor(() => {
+    const row = document.querySelector("tbody tr[data-student-row-id]");
+    if (!row) {
+      throw new Error("Student row is not ready");
+    }
+
+    return row;
+  });
+  fireEvent.click(firstRow);
+  await waitFor(() => expect(document.querySelector(".student-drawer")).not.toBeNull());
+}
+
 async function openProfileEdit(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole("button", { name: "Aday işlemleri" }));
 
@@ -143,8 +157,7 @@ describe("StudentsPage profile editing", () => {
         })
     );
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     const dialog = await openProfileEdit(user);
 
     expect(readStudentProfileForEdit).toHaveBeenCalledWith(studentId);
@@ -187,8 +200,7 @@ describe("StudentsPage profile editing", () => {
     const user = userEvent.setup();
     await seedStudent({ source_file_name: null, source_sheet_name: null, source_row_number: null });
 
-    renderStudentsPage();
-
+    await renderStudentsPageAndOpenFirst();
     const dialog = await openProfileEdit(user);
     expect(within(dialog).queryByText("Kaynak Bilgisi")).not.toBeInTheDocument();
     await user.click(within(dialog).getByRole("button", { name: "Vazgeç" }));
@@ -206,7 +218,7 @@ describe("StudentsPage profile editing", () => {
     const user = userEvent.setup();
     const studentId = await seedStudent();
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
     const dialog = await openProfileEdit(user);
 
     await setInputValue(user, "Ad Soyad", "DENIZ KAYA");
@@ -250,7 +262,7 @@ describe("StudentsPage profile editing", () => {
     const user = userEvent.setup();
     const studentId = await seedStudent();
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
     const dialog = await openProfileEdit(user);
 
     await setInputValue(user, "Ad Soyad", "");
@@ -285,7 +297,7 @@ describe("StudentsPage profile editing", () => {
     const user = userEvent.setup();
     await seedStudent();
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
     const dialog = await openProfileEdit(user);
     await setInputValue(user, "Mahalle", "Çekirge");
     await user.type(within(dialog).getByLabelText("Değişiklik Nedeni"), "Adres düzeltildi.");
@@ -327,7 +339,7 @@ describe("StudentsPage profile editing", () => {
     const user = userEvent.setup();
     await seedStudent();
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
     const dialog = await openProfileEdit(user);
     await setInputValue(user, "Ad Soyad", "SENA YILDIRIM");
     await setInputValue(user, "Sınıf", "9");

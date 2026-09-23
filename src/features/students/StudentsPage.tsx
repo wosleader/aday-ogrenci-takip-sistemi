@@ -1857,7 +1857,7 @@ export function StudentsPage() {
   const [campaignFilter, setCampaignFilter] = useState("all");
   const [studentGroupFilter, setStudentGroupFilter] = useState<StudentGroupFilterValue>(ALL_STUDENT_GROUPS_FILTER);
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(true);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isExtraPhonesExpanded, setIsExtraPhonesExpanded] = useState(false);
   const [selectedCallPhoneId, setSelectedCallPhoneId] = useState<number | null>(null);
   const [isStudentActionsOpen, setIsStudentActionsOpen] = useState(false);
@@ -1982,8 +1982,8 @@ export function StudentsPage() {
       return null;
     }
 
-    return (rows ?? []).find((row) => row.student_id === selectedStudentId) ?? visibleRows[0] ?? null;
-  }, [isDrawerOpen, rows, selectedStudentId, visibleRows]);
+    return (rows ?? []).find((row) => row.student_id === selectedStudentId) ?? null;
+  }, [isDrawerOpen, rows, selectedStudentId]);
   const readonlyDrawerPhones = useMemo(
     () => (selectedRow ? getReadonlyDrawerPhones(selectedRow, isExtraPhonesExpanded) : []),
     [isExtraPhonesExpanded, selectedRow]
@@ -2061,12 +2061,6 @@ export function StudentsPage() {
       }`
     });
   }, [activeFilter, campaignFilter, filteredRows, studentGroupFilter, studentGroupOptions]);
-
-  useEffect(() => {
-    if (!selectedStudentId && visibleRows[0]) {
-      setSelectedStudentId(visibleRows[0].student_id);
-    }
-  }, [selectedStudentId, visibleRows]);
 
   useEffect(() => {
     if (!selectedRow) {
@@ -3006,8 +3000,6 @@ export function StudentsPage() {
   function openStudentDrawer(studentId?: number) {
     if (studentId) {
       setSelectedStudentId(studentId);
-    } else if (!selectedStudentId && visibleRows[0]) {
-      setSelectedStudentId(visibleRows[0].student_id);
     }
 
     setIsDrawerOpen(true);

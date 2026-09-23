@@ -116,7 +116,7 @@ function StudentsPageHost() {
 }
 
 function renderStudentsPage() {
-  render(
+  return render(
     <MemoryRouter initialEntries={["/students"]}>
       <Routes>
         <Route element={<StudentsPageHost />}>
@@ -126,6 +126,20 @@ function renderStudentsPage() {
       </Routes>
     </MemoryRouter>
   );
+}
+
+async function renderStudentsPageAndOpenFirst() {
+  renderStudentsPage();
+  const firstRow = await waitFor(() => {
+    const row = document.querySelector("tbody tr[data-student-row-id]");
+    if (!row) {
+      throw new Error("Student row is not ready");
+    }
+
+    return row;
+  });
+  fireEvent.click(firstRow);
+  await waitFor(() => expect(document.querySelector(".student-drawer")).not.toBeNull());
 }
 
 function getCallResultSelect(): HTMLSelectElement {
@@ -219,7 +233,7 @@ describe("StudentsPage phone selection", () => {
     const user = userEvent.setup();
     await seedStudentWithPhones("MELIS KAYA", "selection");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone3Card = (await screen.findByText("Telefon 3")).closest(".drawer-phone-card");
     expect(phone3Card).not.toBeNull();
@@ -257,7 +271,7 @@ describe("StudentsPage phone selection", () => {
     const user = userEvent.setup();
     await seedStudentWithPhones("MELIS KAYA", "status-labels");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
     const phone3Card = getDrawerPhoneCard("Telefon 3");
@@ -301,7 +315,7 @@ describe("StudentsPage phone selection", () => {
   it("shows an empty latest outcome state when a phone has no call log", async () => {
     await seedStudentWithPhones("MELIS KAYA", "empty-outcome");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
     const phone3Card = getDrawerPhoneCard("Telefon 3");
@@ -348,7 +362,7 @@ describe("StudentsPage phone selection", () => {
     const originalInnerHeight = window.innerHeight;
     await seedStudentWithPhones("MELIS KAYA", "outcome-bottom-anchor");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
     const outcomeChip = within(phone1Card).getByRole("button", { name: "Bu telefonun son arama sonucu: Aranmadı" });
@@ -391,7 +405,7 @@ describe("StudentsPage phone selection", () => {
     const originalInnerHeight = window.innerHeight;
     await seedStudentWithPhones("MELIS KAYA", "outcome-placement");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
     const outcomeChip = within(phone1Card).getByRole("button", { name: "Bu telefonun son arama sonucu: Aranmadı" });
@@ -465,7 +479,7 @@ describe("StudentsPage phone selection", () => {
     const originalInnerHeight = window.innerHeight;
     await seedStudentWithPhones("MELIS KAYA", "outcome-constrained");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
     const outcomeChip = within(phone1Card).getByRole("button", { name: "Bu telefonun son arama sonucu: Aranmadı" });
@@ -509,7 +523,7 @@ describe("StudentsPage phone selection", () => {
     const user = userEvent.setup();
     await seedStudentWithPhones("MELIS KAYA", "manual-phone-outcome");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
     const phone2Card = getDrawerPhoneCard("Telefon 2");
@@ -593,7 +607,7 @@ describe("StudentsPage phone selection", () => {
       call_outcome_updated_at: "2026-05-10T08:00:00.000Z"
     });
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
     const phone3Card = getDrawerPhoneCard("Telefon 3");
@@ -644,7 +658,7 @@ describe("StudentsPage phone selection", () => {
       is_wrong: false
     });
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
     const phone3Card = getDrawerPhoneCard("Telefon 3");
@@ -681,7 +695,7 @@ describe("StudentsPage phone selection", () => {
       call_outcome_updated_at: "2026-05-10T08:00:00.000Z"
     });
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
     expect(within(phone1Card).getByRole("button", { name: "Bu telefonun son arama sonucu: Görüşüldü" })).toBeInTheDocument();
@@ -702,7 +716,7 @@ describe("StudentsPage phone selection", () => {
     const user = userEvent.setup();
     await seedStudentWithPhones("MELIS KAYA", "invalidating-outcome-selection");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone3Card = await waitFor(() => getDrawerPhoneCard("Telefon 3"));
     await user.click(within(phone3Card).getByRole("button", { name: "Bu görüşmede kullanılacak telefon" }));
@@ -811,7 +825,7 @@ describe("StudentsPage phone selection", () => {
       "2026-05-10T12:00:00.000Z"
     );
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
     const phone2Card = getDrawerPhoneCard("Telefon 2");
@@ -834,7 +848,7 @@ describe("StudentsPage phone selection", () => {
       is_wrong: false
     });
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone3Card = await waitFor(() => getDrawerPhoneCard("Telefon 3"));
 
@@ -846,7 +860,7 @@ describe("StudentsPage phone selection", () => {
     const user = userEvent.setup();
     await seedStudentWithPhones("MELIS KAYA", "parity");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
     expect(within(phone1Card).getByRole("button", { name: "Bu görüşmede kullanılacak telefon" })).toHaveAttribute(
@@ -912,7 +926,7 @@ describe("StudentsPage phone selection", () => {
     const user = userEvent.setup();
     await seedStudentWithPhones("MELIS KAYA", "readonly");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone3Card = (await screen.findByText("Telefon 3")).closest(".drawer-phone-card");
     expect(phone3Card).not.toBeNull();
@@ -960,7 +974,7 @@ describe("StudentsPage phone selection", () => {
     const user = userEvent.setup();
     await seedStudentWithPhones("MELIS KAYA", "phone-action-menu-dismissal");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
     const trigger = within(phone1Card).getByRole("button", { name: "Telefon 1 telefon işlemleri" });
@@ -990,7 +1004,7 @@ describe("StudentsPage phone selection", () => {
     const writeText = mockClipboard();
     await seedStudentWithPhones("MELIS KAYA", "copy");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
     const phone1Number = within(phone1Card).getByText("0532 100 0001");
@@ -1048,7 +1062,7 @@ describe("StudentsPage phone selection", () => {
     const openSpy = vi.spyOn(window, "open").mockReturnValue({} as Window);
     await seedStudentWithPhones("MELIS KAYA", "whatsapp-draft");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
     const phone3Card = getDrawerPhoneCard("Telefon 3");
@@ -1173,7 +1187,7 @@ describe("StudentsPage phone selection", () => {
     });
     await seedStudentWithPhones("MELIS KAYA", "no-clipboard");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
     const phone1Number = within(phone1Card).getByText("0532 100 0001");
@@ -1187,7 +1201,7 @@ describe("StudentsPage phone selection", () => {
     mockClipboard();
     await seedStudentWithPhones("MELIS KAYA", "copy-timer");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
     const phone1Number = within(phone1Card).getByText("0532 100 0001");
@@ -1216,7 +1230,7 @@ describe("StudentsPage phone selection", () => {
     const writeText = mockClipboard();
     await seedStudentWithPhones("MELIS KAYA", "copy-success-timer");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
     const phone1Number = within(phone1Card).getByText("0532 100 0001");
@@ -1263,7 +1277,7 @@ describe("StudentsPage phone selection", () => {
     const user = userEvent.setup();
     const studentId = await seedStudentWithPhones("MELIS KAYA", "not-reached-validation");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     await screen.findByText("Telefon 3");
     await user.selectOptions(getCallResultSelect(), "not_reached");
@@ -1287,7 +1301,7 @@ describe("StudentsPage phone selection", () => {
     const user = userEvent.setup();
     const studentId = await seedStudentWithPhones("MELIS KAYA", "appointment-payload");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     await screen.findByText("Telefon 3");
     await user.selectOptions(getCallResultSelect(), "appointment");
@@ -1330,7 +1344,7 @@ describe("StudentsPage phone selection", () => {
       )
     );
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     await screen.findByText("Telefon 3");
     await user.selectOptions(getCallResultSelect(), "wrong_number");
@@ -1357,7 +1371,7 @@ describe("StudentsPage phone selection", () => {
     const user = userEvent.setup();
     await seedStudentWithPhones("MELIS KAYA", "validation");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     await screen.findByText("Telefon 3");
     await user.selectOptions(getCallResultSelect(), "reached");
@@ -1373,7 +1387,7 @@ describe("StudentsPage phone selection", () => {
     await seedStudentWithPhones("DENIZ ARSLAN", "second");
     await seedStudentWithPhones("MELIS KAYA", "first");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const phone3Card = (await screen.findByText("Telefon 3")).closest(".drawer-phone-card");
     expect(phone3Card).not.toBeNull();

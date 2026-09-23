@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom";
@@ -175,14 +175,20 @@ async function seedStudentWithSlotPhone(fullName: string, uuidPrefix: string, ph
   return { phoneId: phone!.id!, studentId };
 }
 
-function StudentsPageHost({ initialGlobalSearch = "" }: { initialGlobalSearch?: string }) {
+function StudentsPageHost({
+  initialGlobalSearch = "",
+  pendingOpenStudentId = null
+}: {
+  initialGlobalSearch?: string;
+  pendingOpenStudentId?: number | null;
+}) {
   const [globalSearch, setGlobalSearch] = useState(initialGlobalSearch);
   const context: AppOutletContext = {
     globalSearch,
     focusGlobalSearch: vi.fn(),
     clearGlobalSearch: () => setGlobalSearch(""),
     openStudentById: vi.fn(),
-    pendingOpenStudentId: null,
+    pendingOpenStudentId,
     consumePendingOpenStudentId: vi.fn(),
     pendingSearchListRequestId: null,
     consumePendingSearchListRequest: vi.fn()
@@ -191,17 +197,31 @@ function StudentsPageHost({ initialGlobalSearch = "" }: { initialGlobalSearch?: 
   return <Outlet context={context} />;
 }
 
-function renderStudentsPage(initialGlobalSearch?: string) {
-  render(
+function renderStudentsPage(initialGlobalSearch?: string, pendingOpenStudentId?: number | null) {
+  return render(
     <MemoryRouter initialEntries={["/students"]}>
       <Routes>
-        <Route element={<StudentsPageHost initialGlobalSearch={initialGlobalSearch} />}>
+        <Route element={<StudentsPageHost initialGlobalSearch={initialGlobalSearch} pendingOpenStudentId={pendingOpenStudentId} />}>
           <Route path="/students" element={<StudentsPage />} />
         </Route>
         <Route path="/import" element={<div>Import</div>} />
       </Routes>
     </MemoryRouter>
   );
+}
+
+async function renderStudentsPageAndOpenFirst(initialGlobalSearch?: string) {
+  renderStudentsPage(initialGlobalSearch);
+  const firstRow = await waitFor(() => {
+    const row = document.querySelector("tbody tr[data-student-row-id]");
+    if (!row) {
+      throw new Error("Student row is not ready");
+    }
+
+    return row;
+  });
+  fireEvent.click(firstRow);
+  await waitFor(() => expect(document.querySelector(".student-drawer")).not.toBeNull());
 }
 
 async function getStudentTable() {
@@ -239,6 +259,80 @@ describe("StudentsPage right card multi-phone display", () => {
     await db.delete();
   });
 
+  it("keeps the drawer closed until a student row is explicitly selected", async () => {
+    await seedStudentWithPhones(1, "FIRST STUDENT");
+
+    renderStudentsPage();
+
+    await screen.findByText("FIRST STUDENT");
+    expect(document.querySelector(".student-drawer")).toBeNull();
+    expect(screen.getByRole("button", { name: "Aday detayını aç" })).toBeInTheDocument();
+  });
+
+  it("opens the clicked student and does not reopen the first student after close", async () => {
+    await seedStudentWithPhones(1, "FIRST STUDENT");
+    await seedStudentWithPhones(1, "SECOND STUDENT");
+
+    renderStudentsPage();
+
+    const secondRow = (await screen.findAllByText("SECOND STUDENT"))
+      .find((element) => element.closest("tr")) as HTMLElement;
+    fireEvent.click(secondRow.closest("tr") as HTMLTableRowElement);
+    await waitFor(() => expect(document.querySelector(".drawer-name")).toHaveTextContent("SECOND STUDENT"));
+    await userEvent.setup().click(screen.getByRole("button", { name: "Kişi kartını kapat" }));
+
+    await waitFor(() => expect(document.querySelector(".student-drawer")).toBeNull());
+    expect(screen.getByRole("button", { name: "Aday detayını aç" })).toBeInTheDocument();
+  });
+
+  it("does not select the first student when the no-id reopen control is used", async () => {
+    await seedStudentWithPhones(1, "FIRST STUDENT");
+
+    renderStudentsPage();
+
+    await screen.findByText("FIRST STUDENT");
+    await userEvent.setup().click(screen.getByRole("button", { name: "Aday detayını aç" }));
+
+    expect(await screen.findByText("Detayları görmek için listeden bir aday seçin.")).toBeInTheDocument();
+    expect(document.querySelector(".drawer-name")).toBeNull();
+  });
+
+  it("keeps the drawer closed when a filter changes without an explicit selection", async () => {
+    await seedStudentWithPhones(0, "NO PHONE");
+    await seedStudentWithPhones(1, "WITH PHONE");
+
+    renderStudentsPage();
+
+    await screen.findByText("NO PHONE");
+    await userEvent.setup().selectOptions(getStatusFilterSelect(), "missing_phone");
+
+    await waitFor(() => expect(document.querySelector(".student-drawer")).toBeNull());
+    expect(document.querySelector(".active-row")).toBeNull();
+  });
+
+  it("opens an explicitly requested pending student without selecting the first row", async () => {
+    const firstId = await seedStudentWithPhones(1, "FIRST STUDENT");
+    const requestedId = await seedStudentWithPhones(1, "REQUESTED STUDENT");
+
+    renderStudentsPage(undefined, requestedId);
+
+    await waitFor(() => expect(document.querySelector(".drawer-name")).toHaveTextContent("REQUESTED STUDENT"));
+    expect(document.querySelector(`[data-student-row-id="${requestedId}"]`)).toHaveClass("active-row");
+    expect(document.querySelector(`[data-student-row-id="${firstId}"]`)).not.toHaveClass("active-row");
+  });
+
+  it("starts closed again when the Students route is remounted", async () => {
+    await seedStudentWithPhones(1, "FIRST STUDENT");
+
+    const view = renderStudentsPage();
+    await screen.findByText("FIRST STUDENT");
+    view.unmount();
+    renderStudentsPage();
+
+    await screen.findByText("FIRST STUDENT");
+    expect(document.querySelector(".student-drawer")).toBeNull();
+  });
+
   it.each([
     { fullName: "MINA CELIK", slot: 3, phoneNumber: "0530 000 0004" },
     { fullName: "BORA DEMIR", slot: 10, phoneNumber: "0530 000 0005" }
@@ -248,7 +342,7 @@ describe("StudentsPage right card multi-phone display", () => {
       const user = userEvent.setup();
       const { phoneId } = await seedStudentWithSlotPhone(fullName, `slot-${slot}`, phoneNumber, slot);
 
-      renderStudentsPage();
+      await renderStudentsPageAndOpenFirst();
 
       expect(await screen.findAllByText(fullName)).toHaveLength(2);
       const drawer = getStudentDrawer();
@@ -275,7 +369,7 @@ describe("StudentsPage right card multi-phone display", () => {
     const user = userEvent.setup();
     await seedStudentWithPhones(5);
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     expect(await screen.findAllByText("MELIS KAYA")).toHaveLength(2);
     const drawer = getStudentDrawer();
@@ -345,7 +439,7 @@ describe("StudentsPage right card multi-phone display", () => {
       student_group: ""
     });
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     expect(await screen.findAllByText("YAREN BEREN KIZIL")).toHaveLength(2);
     const drawer = getStudentDrawer();
@@ -361,7 +455,7 @@ describe("StudentsPage right card multi-phone display", () => {
       student_group: "8. Sınıf LGS Hazırlık"
     });
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     expect(await screen.findAllByText("YAREN BEREN KIZIL")).toHaveLength(2);
     const drawer = getStudentDrawer();
@@ -396,7 +490,7 @@ describe("StudentsPage right card multi-phone display", () => {
       }
     ]);
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
     expect(await screen.findAllByText("MELIS KAYA")).toHaveLength(2);
 
     const contactCard = getStudentDrawer().querySelector(".contact-card");
@@ -412,7 +506,7 @@ describe("StudentsPage right card multi-phone display", () => {
   it("hides empty Anne and Baba rows in the right drawer", async () => {
     await seedStudentWithPhones(1);
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
     expect(await screen.findAllByText("MELIS KAYA")).toHaveLength(2);
 
     const contactCard = getStudentDrawer().querySelector(".contact-card");
@@ -426,7 +520,7 @@ describe("StudentsPage right card multi-phone display", () => {
   it("does not show an expand button when there are no hidden phones", async () => {
     await seedStudentWithPhones(3);
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     expect(await screen.findByText("Telefon 3")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /\+\d+ numara daha göster/ })).not.toBeInTheDocument();
@@ -435,7 +529,7 @@ describe("StudentsPage right card multi-phone display", () => {
   it("keeps the existing no-phone fallback", async () => {
     await seedStudentWithPhones(0, "TELEFONSUZ ADAY");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     expect(await screen.findAllByText("TELEFONSUZ ADAY")).toHaveLength(2);
     expect(screen.getAllByText("Telefon yok").length).toBeGreaterThanOrEqual(2);
@@ -450,7 +544,7 @@ describe("StudentsPage right card multi-phone display", () => {
     await seedStudentWithSinglePhone("DENIZ DEMIR", "deniz", "0532 222 2222");
     await seedStudentWithSinglePhone("ECE YILMAZ", "ece", "0532 333 3333");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const table = await getStudentTable();
     expect(await within(table).findByText("BEGUM KOLEF")).toBeInTheDocument();
@@ -506,7 +600,7 @@ describe("StudentsPage right card multi-phone display", () => {
     await seedStudentWithSinglePhone("ELIF KAYRAN", "elif", "0532 444 4444");
     await seedStudentWithSinglePhone("ZEYNEP ARSLAN", "zeynep", "0532 555 5555");
 
-    renderStudentsPage("MEDINE KAYRAN");
+    await renderStudentsPageAndOpenFirst("MEDINE KAYRAN");
 
     const table = await getStudentTable();
     expect(await within(table).findByText("MEDINE KAYRAN")).toBeInTheDocument();
@@ -524,7 +618,7 @@ describe("StudentsPage right card multi-phone display", () => {
   it("does not show the drawer duplicate badge for a unique phone", async () => {
     await seedStudentWithSinglePhone("ECE YILMAZ", "unique-ece", "0532 333 3333");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     expect(await screen.findAllByText("ECE YILMAZ")).toHaveLength(2);
     expect(within(getStudentDrawer()).queryByRole("button", { name: "Mükerrer" })).not.toBeInTheDocument();

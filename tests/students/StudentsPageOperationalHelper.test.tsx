@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -31,7 +31,7 @@ function StudentsPageHost() {
 }
 
 function renderStudentsPage() {
-  render(
+  return render(
     <MemoryRouter initialEntries={["/students"]}>
       <Routes>
         <Route element={<StudentsPageHost />}>
@@ -40,6 +40,20 @@ function renderStudentsPage() {
       </Routes>
     </MemoryRouter>
   );
+}
+
+async function renderStudentsPageAndOpenFirst() {
+  renderStudentsPage();
+  const firstRow = await waitFor(() => {
+    const row = document.querySelector("tbody tr[data-student-row-id]");
+    if (!row) {
+      throw new Error("Student row is not ready");
+    }
+
+    return row;
+  });
+  fireEvent.click(firstRow);
+  await waitFor(() => expect(document.querySelector(".student-drawer")).not.toBeNull());
 }
 
 async function seedStudent({
@@ -150,7 +164,7 @@ describe("StudentsPage operational helper", () => {
       sync_status: "local"
     });
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const helper = await screen.findByRole("status", { name: "Akıllı operasyon uyarısı" });
     expect(helper).toHaveClass("smart-operational-alert", "is-today");
@@ -172,7 +186,7 @@ describe("StudentsPage operational helper", () => {
       sync_status: "local"
     });
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const helper = await screen.findByRole("status", { name: "Akıllı operasyon uyarısı" });
     expect(helper).toHaveClass("smart-operational-alert", "is-overdue");
@@ -194,7 +208,7 @@ describe("StudentsPage operational helper", () => {
       sync_status: "local"
     });
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const helper = await screen.findByRole("status", { name: "Akıllı operasyon uyarısı" });
     expect(helper).toHaveTextContent("Gecikmiş randevu");
@@ -218,7 +232,7 @@ describe("StudentsPage operational helper", () => {
       sync_status: "local"
     });
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const studentRow = (await screen.findAllByText("MELIS KAYA"))
       .map((element) => element.closest("tr"))
@@ -237,7 +251,7 @@ describe("StudentsPage operational helper", () => {
     const { studentId } = await seedStudent();
     await seedAppointment(studentId, "2026-05-10T13:00:00.000Z");
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const helper = await screen.findByRole("status", { name: "Akıllı operasyon uyarısı" });
     expect(helper).toHaveTextContent("Bugün 16:00'da randevu");
@@ -256,7 +270,7 @@ describe("StudentsPage operational helper", () => {
     await seedAppointment(firstStudent.studentId, "2026-05-09T10:00:00.000Z");
     await seedStudent({ fullName: "MELIS KAYA", phoneNumber: "0532 100 0002" });
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const firstStudentRow = (await screen.findAllByText("DENIZ ARSLAN"))
       .map((element) => element.closest("tr"))
@@ -282,7 +296,7 @@ describe("StudentsPage operational helper", () => {
   it("does not render a helper when a student has no reminder, including without a usable phone", async () => {
     await seedStudent({ phoneStatus: "invalid" });
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     await screen.findAllByText("MELIS KAYA");
     expect(screen.queryByRole("status", { name: "Akıllı operasyon uyarısı" })).not.toBeInTheDocument();
@@ -302,7 +316,7 @@ describe("StudentsPage operational helper", () => {
       sync_status: "local"
     });
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
     const helper = await screen.findByRole("status", { name: "Akıllı operasyon uyarısı" });
     expect(helper).toHaveTextContent(/Bugün .*aranacak/);
 
@@ -337,7 +351,7 @@ describe("StudentsPage operational helper", () => {
       phoneStatus: "invalid"
     });
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
 
     const firstStudentRow = (await screen.findAllByText("DENIZ ARSLAN"))
       .map((element) => element.closest("tr"))
@@ -372,7 +386,7 @@ describe("StudentsPage operational helper", () => {
       sync_status: "local"
     });
 
-    renderStudentsPage();
+    await renderStudentsPageAndOpenFirst();
     await screen.findByRole("status", { name: "Akıllı operasyon uyarısı" });
 
     await act(async () => {
