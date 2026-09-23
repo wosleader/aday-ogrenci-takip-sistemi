@@ -15,7 +15,7 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 - [Production Closure Evidence] Previous runtime `024e8cef5c16e0819318ffb10e16ce1a1d6002d3`; current production runtime `b03f938d472bfbfff618d885a03c2281d4e8a529`. Production deployment, production build/Vite/PWA, static publish ve HTTP/asset/PWA smoke `PASS`tir. Backup `C:\Backups\netvadi-demo_predeploy_20260923_010836`; VDS canonical test suite `NOT RUN`; Caddy restart `NOT REQUIRED / NOT PERFORMED`; `harita.html` absent before/after deployment.
 - [Final Closure] Production runtime `b03f938d472bfbfff618d885a03c2281d4e8a529`; production docs closure baseline `eb0a3d2d5653fadad3fcbc00897e8080202a6705`. Final Production Docs Closure `COMPLETE / COMMITTED / PUSHED`; Vault Closure `COMPLETE`; Repo + Vault Final Verification `PASS`; Final State-Flip `COMPLETE`. Vault Sync ID: `obsidian-update-eb0a3d2-student-list-auto-drawer-production-closure-2026-09-23-Europe-Istanbul`. `FULLY CLOSED: YES`; remaining closure gate `NONE`.
 - [Production Evidence / No Repeat Work] User-confirmed production browser QA `PASS`tir; yalnız kritik `390x844` viewport doğrulanmıştır. VDS canonical suite `NOT RUN`; Caddy restart `NOT REQUIRED / NOT PERFORMED`; `harita.html` deploy öncesi ve sonrası absent'tir. Redeploy `NOT REQUIRED`; second vault sync `NOT REQUIRED`.
-- [Preserved Scope] Mobile Polish Slice 1, Slice 2 ve Slice 3 `FULLY CLOSED` kalır. Mobile Filter Disclosure ve Reports Narrow-Width / Mobile Padding ayrı `UNRESOLVED / NOT IMPLEMENTED / NOT ACTIVE` follow-up'lardır; bu kapanış bunları çözmez veya yeni roadmap item aktive etmez.
+- [Preserved Scope] Mobile Polish Slice 1, Slice 2 ve Slice 3 `FULLY CLOSED` kalır. Mobile Filter Disclosure için Product Decision `APPROVED / PREPARED`, implementation `NOT STARTED`dır. Reports Narrow-Width / Mobile Padding ayrı `UNRESOLVED / NOT IMPLEMENTED / NOT ACTIVE` follow-up'tır.
 
 ## Current Production Closure Decision - Manager Dashboard V3
 
@@ -25,6 +25,18 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 - [Closure Boundary] Manager Dashboard V3 repo + vault closure chain `COMPLETE` ve remaining closure gate `NONE`dir. Production runtime `50911ae4d6baed175c73fde9e257353a604c53a8`, repository docs closure baseline `b6f68a61ed401de8e92eb241a7de4c88372a24f4` olarak ayrı gerçeklerdir; bu state-flip docs-only değişikliği runtime kodunu değiştirmez. Mandatory Completion / Closure Gate tamamlanmıştır. Smart Operational Helpers Slice 1 ayrı bir production-complete, final-docs-closure-ready kaydıdır; Manager Dashboard production closure'ının parçası değildir.
 
 ## Aktif Kararlar
+
+## Current Product Decision - Mobile Filter Disclosure — Student List
+
+- Discovery `COMPLETE`; Product Decision `APPROVED / PREPARED`; implementation `NOT STARTED`; commit/push `NOT DONE`.
+- Seçilen model `MODEL B`: React boolean state + CSS class/display toggle. Yeni presentation state `isStudentFiltersOpen = false` yalnız disclosure görünürlüğünü yönetir; `campaignFilter`, `studentGroupFilter`, `activeFilter`, `duplicateGroupFilterKey`, search/debounced query ve `currentPage` değerlerine dokunmaz.
+- Mobile `max-width: 640px` altında başlangıç state'i `CLOSED` olur. Native `Filtreler` button'ı `aria-expanded` ve sabit `aria-controls` panel id'si kullanır. Panel DOM'da mounted kalır; kapalıyken CSS/class ile gizlenir, açılınca görünür.
+- Desktop/tablet'ta mevcut filtre kontrolleri görünür ve trigger gizlidir. Yeni breakpoint, filter/query/read-model semantiği, pagination, student selection veya drawer davranışı eklenmez/değişmez.
+- Disclosure state filtre state'inden bağımsızdır: açma/kapatma filtre değerlerini, aramayı, sayfayı veya drawer'ı değiştirmez. Route entry/remount disclosure state'i yeniden `CLOSED` başlatır; localStorage, sessionStorage ve URL persistence yoktur.
+- Mevcut `resetStatusFilter()` semantiği korunur: yalnız `activeFilter = all`, `duplicateGroupFilterKey = null` ve `currentPage = 1`; campaign/class reset kapsamına alınmaz. Active-filter indicator (`Filtreler (2)`, badge, dot/count) `OUT OF SCOPE`dur.
+- Beklenen minimum implementation scope `src/features/students/StudentsPage.tsx` ve `src/styles/global.css`; focused regression scope `tests/students/StudentsPageMultiPhone.test.tsx`dir. Reusable disclosure abstraction, AppLayout component reuse, service/data/schema/package/import/export/backup/restore değişikliği yoktur.
+- Auto-Drawer Follow-Up `FULLY CLOSED` kalır; disclosure interaction ilk adayı seçmez veya drawer'ı açmaz. Reports Narrow-Width / Mobile Padding `SEPARATE / UNRESOLVED / NOT ACTIVE` kalır.
+- Next gate: `PRODUCT DECISION COMMIT + PUSH — MOBILE FILTER DISCLOSURE`.
 
 ## Current Product Decision - Mobile Polish Slice 3 — Student Drawer Mobile Fit
 
