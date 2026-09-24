@@ -26,7 +26,7 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 
 ## Aktif Kararlar
 
-## Current Pre-Production Reconciliation - Mobile Filter Disclosure — Visual Correction
+## Current Final Production Docs Closure Preparation - Mobile Filter Disclosure — Visual Correction
 
 - Discovery `COMPLETE`; Product Decision `APPROVED / COMMITTED / PUSHED` with baseline `c86f7067bc40da2a6580d299a9d87d74a51ac35e`; original implementation `COMPLETE / COMMITTED / PUSHED` at `141d59c5cf5d07a97c736be824560b3f30f25c2f` (`feat: add mobile filter disclosure`). Selected model remains `MODEL B`.
 - Seçilen model `MODEL B`: React boolean state + CSS class/display toggle. Yeni presentation state `isStudentFiltersOpen = false` yalnız disclosure görünürlüğünü yönetir; `campaignFilter`, `studentGroupFilter`, `activeFilter`, `duplicateGroupFilterKey`, search/debounced query ve `currentPage` değerlerine dokunmaz.
@@ -44,8 +44,10 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 - Visual Correction: implementation `COMPLETE / COMMITTED / PUSHED` at `cf5a8ef74e66abbc17c0a636a7baede3c814eb0f` (`fix: align mobile student filters with list header`), parent `f06b530a303a3e20b8b0abd8262b58f8fda3060f`; source-only commit/push `COMPLETE`; Strategy Review `PASS WITH NON-BLOCKING NOTES`; blocking findings `NONE`.
 - Visual Correction contract: mobile header uses `minmax(0, 1fr) auto`, the candidate count remains single-line on the left, the icon plus `Filtreler` button remains on the right, the panel opens below the header, desktop layout is preserved, no new breakpoint or `overflow-x: hidden` workaround was introduced, and filter/reset/pagination/Auto-Drawer/phone-card behavior is unchanged.
 - Visual Correction validation: focused `2` files / `46` tests, canonical `75` files / `752` tests, `/demo/` build/PWA and local browser QA `PASS`; user visual approval for `360x800` closed/open states `PASS`. The prior Brave clipping was browser visual zoom and was resolved by zoom reset.
-- Current state: original production runtime remains `141d59c5cf5d07a97c736be824560b3f30f25c2f`; Visual Correction production deployment and production HTTP/PWA smoke are `NOT STARTED`; updated production browser QA is `PENDING`; Production Docs Closure `RECONCILIATION IN PROGRESS`; Vault Closure `PENDING`; Repo + Vault Final Verification `PENDING`; Final Repo State-Flip `PENDING`; `FULLY CLOSED: NO`. OperationalAlertHost console observation remains `UNRELATED / NON-BLOCKING / NOT FIXED`. Reports Narrow-Width / Mobile Padding `SEPARATE / UNRESOLVED / NOT ACTIVE`.
-- Next gate: `PRE-PRODUCTION DOCS RECONCILIATION COMMIT + PUSH — MOBILE FILTER VISUAL CORRECTION`.
+- Visual Correction production evidence: deployed runtime `cf5a8ef74e66abbc17c0a636a7baede3c814eb0f`; VDS exact-SHA fast-forward `PASS`; backup `C:\Backups\netvadi-demo_predeploy_20260924_023855`; backup robocopy exit `1` and static deploy robocopy exit `3` are successful; copy-only `/E` was used and `/MIR` was not; production build/PWA, production file hash verification and HTTP root/assets/PWA smoke `PASS`; `harita.html` remained absent; VDS repo `CLEAN`; VDS canonical tests `NOT RUN`; Caddy restart `NOT PERFORMED`.
+- Updated production browser QA: `USER-CONFIRMED PASS` for `360x800` closed/open layout, `390x844`, `430x932`, `1440x900` and functional regression checks. This is user-reported production evidence, not automated QA or archived screenshot evidence.
+- Current state: production runtime is `cf5a8ef74e66abbc17c0a636a7baede3c814eb0f`; Visual Correction production deployment and HTTP/PWA smoke `PASS`; updated production browser QA `USER-CONFIRMED PASS`; Production Docs Closure `PREPARED / NOT COMMITTED`; Vault Closure `PENDING`; Repo + Vault Final Verification `PENDING`; Final Repo State-Flip `PENDING`; `FULLY CLOSED: NO`. OperationalAlertHost console observation remains `UNRELATED / NON-BLOCKING / NOT FIXED`. Reports Narrow-Width / Mobile Padding `SEPARATE / UNRESOLVED / NOT ACTIVE`.
+- Next gate: `FINAL PRODUCTION DOCS CLOSURE COMMIT + PUSH — MOBILE FILTER VISUAL CORRECTION`.
 
 ## Current Product Decision - Mobile Polish Slice 3 — Student Drawer Mobile Fit
 
