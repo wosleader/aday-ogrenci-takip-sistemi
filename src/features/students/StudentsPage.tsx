@@ -13,7 +13,7 @@ import {
 import { createPortal } from "react-dom";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Ban, CalendarClock, Check, ChevronsRight, Copy, MoreVertical, Pencil, Trash2, X } from "lucide-react";
+import { Ban, CalendarClock, Check, ChevronsRight, Copy, MoreVertical, Pencil, SlidersHorizontal, Trash2, X } from "lucide-react";
 import type { AppOutletContext } from "../../app/AppLayout";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/EmptyState";
@@ -3853,7 +3853,7 @@ export function StudentsPage() {
       ) : null}
       <section className="student-main">
         <div className="student-toolbar">
-          <div className="toolbar-left" style={{ flex: "0 0 170px", width: 170 }}>
+          <div className="toolbar-left">
             <h2>Aday Listesi</h2>
             <span className="count-badge" style={{ boxSizing: "border-box", width: 76, textAlign: "center" }}>
               {filteredRows.length} aday
@@ -3867,6 +3867,7 @@ export function StudentsPage() {
               onClick={() => setIsStudentFiltersOpen((previous) => !previous)}
               type="button"
             >
+              <SlidersHorizontal aria-hidden="true" size={14} />
               Filtreler
             </button>
             <div
