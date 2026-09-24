@@ -15,7 +15,7 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 - [Production Closure Evidence] Previous runtime `024e8cef5c16e0819318ffb10e16ce1a1d6002d3`; current production runtime `b03f938d472bfbfff618d885a03c2281d4e8a529`. Production deployment, production build/Vite/PWA, static publish ve HTTP/asset/PWA smoke `PASS`tir. Backup `C:\Backups\netvadi-demo_predeploy_20260923_010836`; VDS canonical test suite `NOT RUN`; Caddy restart `NOT REQUIRED / NOT PERFORMED`; `harita.html` absent before/after deployment.
 - [Final Closure] Production runtime `b03f938d472bfbfff618d885a03c2281d4e8a529`; production docs closure baseline `eb0a3d2d5653fadad3fcbc00897e8080202a6705`. Final Production Docs Closure `COMPLETE / COMMITTED / PUSHED`; Vault Closure `COMPLETE`; Repo + Vault Final Verification `PASS`; Final State-Flip `COMPLETE`. Vault Sync ID: `obsidian-update-eb0a3d2-student-list-auto-drawer-production-closure-2026-09-23-Europe-Istanbul`. `FULLY CLOSED: YES`; remaining closure gate `NONE`.
 - [Production Evidence / No Repeat Work] User-confirmed production browser QA `PASS`tir; yalnız kritik `390x844` viewport doğrulanmıştır. VDS canonical suite `NOT RUN`; Caddy restart `NOT REQUIRED / NOT PERFORMED`; `harita.html` deploy öncesi ve sonrası absent'tir. Redeploy `NOT REQUIRED`; second vault sync `NOT REQUIRED`.
-- [Preserved Scope] Mobile Polish Slice 1, Slice 2 ve Slice 3 `FULLY CLOSED` kalır. Mobile Filter Disclosure için Product Decision `APPROVED / PREPARED`, implementation `NOT STARTED`dır. Reports Narrow-Width / Mobile Padding ayrı `UNRESOLVED / NOT IMPLEMENTED / NOT ACTIVE` follow-up'tır.
+- [Preserved Scope] Mobile Polish Slice 1, Slice 2 ve Slice 3 `FULLY CLOSED` kalır. Mobile Filter Disclosure için mevcut pre-production checkpoint kaydı aşağıdadır; Reports Narrow-Width / Mobile Padding ayrı `UNRESOLVED / NOT IMPLEMENTED / NOT ACTIVE` follow-up'tır.
 
 ## Current Production Closure Decision - Manager Dashboard V3
 
@@ -26,9 +26,9 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 
 ## Aktif Kararlar
 
-## Current Product Decision - Mobile Filter Disclosure — Student List
+## Current Pre-Production Checkpoint - Mobile Filter Disclosure — Student List
 
-- Discovery `COMPLETE`; Product Decision `APPROVED / PREPARED`; implementation `NOT STARTED`; commit/push `NOT DONE`.
+- Discovery `COMPLETE`; Product Decision `APPROVED / COMMITTED / PUSHED` with baseline `c86f7067bc40da2a6580d299a9d87d74a51ac35e`; implementation `COMPLETE / COMMITTED / PUSHED` at `141d59c5cf5d07a97c736be824560b3f30f25c2f` (`feat: add mobile filter disclosure`). Selected model remains `MODEL B`.
 - Seçilen model `MODEL B`: React boolean state + CSS class/display toggle. Yeni presentation state `isStudentFiltersOpen = false` yalnız disclosure görünürlüğünü yönetir; `campaignFilter`, `studentGroupFilter`, `activeFilter`, `duplicateGroupFilterKey`, search/debounced query ve `currentPage` değerlerine dokunmaz.
 - Mobile `max-width: 640px` altında başlangıç state'i `CLOSED` olur. Native `Filtreler` button'ı `aria-expanded` ve sabit `aria-controls` panel id'si kullanır. Panel DOM'da mounted kalır; kapalıyken CSS/class ile gizlenir, açılınca görünür.
 - Desktop/tablet'ta mevcut filtre kontrolleri görünür ve trigger gizlidir. Yeni breakpoint, filter/query/read-model semantiği, pagination, student selection veya drawer davranışı eklenmez/değişmez.
@@ -36,7 +36,11 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 - Mevcut `resetStatusFilter()` semantiği korunur: yalnız `activeFilter = all`, `duplicateGroupFilterKey = null` ve `currentPage = 1`; campaign/class reset kapsamına alınmaz. Active-filter indicator (`Filtreler (2)`, badge, dot/count) `OUT OF SCOPE`dur.
 - Beklenen minimum implementation scope `src/features/students/StudentsPage.tsx` ve `src/styles/global.css`; focused regression scope `tests/students/StudentsPageMultiPhone.test.tsx`dir. Reusable disclosure abstraction, AppLayout component reuse, service/data/schema/package/import/export/backup/restore değişikliği yoktur.
 - Auto-Drawer Follow-Up `FULLY CLOSED` kalır; disclosure interaction ilk adayı seçmez veya drawer'ı açmaz. Reports Narrow-Width / Mobile Padding `SEPARATE / UNRESOLVED / NOT ACTIVE` kalır.
-- Next gate: `PRODUCT DECISION COMMIT + PUSH — MOBILE FILTER DISCLOSURE`.
+- Validation: focused `1` dosya / `20` test, related focused `5` dosya / `93` test, canonical `75` dosya / `752` test, `/demo/` build/PWA (`Vite base /demo/`, `registerSW.js`, `sw.js`, Workbox generated) `PASS`; known `>500 kB` chunk warning `NON-BLOCKING`dir.
+- Strategy Review `PASS WITH NON-BLOCKING NOTES`; Local Browser QA `PASS WITH NON-BLOCKING NOTES`. Exact verified browser evidence `639x482`dir. Exact `360x800`, `390x844`, `430x932`, desktop reference viewport, multi-page pagination ve explicit candidate row drawer flow browser'da doğrulanmamıştır.
+- Production deployment `NOT STARTED`; current production runtime `b03f938d472bfbfff618d885a03c2281d4e8a529` olarak kalır. Production smoke, production browser QA, production docs closure ve vault closure `NOT STARTED`dır; `FULLY CLOSED: NO`. Bu kayıt deployment claim'i değildir.
+- OperationalAlertHost console error unrelated/non-blockingdir. Reports Narrow-Width / Mobile Padding `SEPARATE / UNRESOLVED / NOT ACTIVE` kalır.
+- Next gate: `PRE-PRODUCTION DOCS CHECKPOINT COMMIT + PUSH — MOBILE FILTER DISCLOSURE`.
 
 ## Current Product Decision - Mobile Polish Slice 3 — Student Drawer Mobile Fit
 

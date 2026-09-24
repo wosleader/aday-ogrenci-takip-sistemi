@@ -7,18 +7,22 @@
 - Previous production runtime `024e8cef5c16e0819318ffb10e16ce1a1d6002d3`; current production runtime `b03f938d472bfbfff618d885a03c2281d4e8a529`. Production deployment, build/Vite/PWA, static publish ve HTTP/asset/PWA smoke `PASS`tir. Backup `C:\Backups\netvadi-demo_predeploy_20260923_010836`; VDS canonical test suite `NOT RUN`; Caddy restart `NOT REQUIRED / NOT PERFORMED`; `harita.html` absent before/after deployment.
 - Production browser QA `PASS`tir, yalnız kritik `390x844` viewport doğrulanmıştır. Final Production Docs Closure `COMPLETE / COMMITTED / PUSHED`; Vault Closure `COMPLETE`; Repo + Vault Final Verification `PASS`; Final State-Flip `COMPLETE`; `FULLY CLOSED: YES`; remaining closure gate `NONE`.
 - Vault Sync ID: `obsidian-update-eb0a3d2-student-list-auto-drawer-production-closure-2026-09-23-Europe-Istanbul`. Redeploy `NOT REQUIRED`; second vault sync `NOT REQUIRED`. No new roadmap item is activated.
-- Mobile Polish Slice 1, Slice 2 ve Slice 3 `FULLY CLOSED` olarak korunur. Mobile Filter Disclosure Product Decision `APPROVED / PREPARED`, implementation `NOT STARTED`dır; Reports Narrow-Width / Mobile Padding ayrı unresolved follow-up'tır.
+- Mobile Polish Slice 1, Slice 2 ve Slice 3 `FULLY CLOSED` olarak korunur. Mobile Filter Disclosure pre-production checkpoint'indedir: Product Decision ve implementation committed/pushed, production deployment `NOT STARTED`dır; Reports Narrow-Width / Mobile Padding ayrı unresolved follow-up'tır.
 
-## Current Product Decision - Mobile Filter Disclosure — Student List
+## Current Pre-Production Checkpoint - Mobile Filter Disclosure — Student List
 
-- Discovery `COMPLETE`; Product Decision `APPROVED / PREPARED`; implementation `NOT STARTED`; commit/push `NOT DONE`.
+- Discovery `COMPLETE`; Product Decision `APPROVED / COMMITTED / PUSHED` with baseline `c86f7067bc40da2a6580d299a9d87d74a51ac35e`; implementation `COMPLETE / COMMITTED / PUSHED` at `141d59c5cf5d07a97c736be824560b3f30f25c2f` (`feat: add mobile filter disclosure`). Selected model remains `MODEL B`.
 - Chosen model `MODEL B`: React boolean state + CSS class/display toggle. `isStudentFiltersOpen = false` presentation-only state'tir ve mevcut campaign, class/section, status, duplicate, search/debounced query ve pagination state'lerinden bağımsızdır.
 - Mobile `max-width: 640px` altında filtre paneli route entry/remount sırasında `CLOSED` başlar. Native `Filtreler` button'ı `aria-expanded` ve `aria-controls` kullanır; panel DOM'da mounted kalır ve CSS/class ile gizlenir/gösterilir. Desktop/tablet'ta kontroller görünür, trigger gizlidir; yeni breakpoint yoktur.
 - Disclosure açma/kapatma filtre değerlerini, current page'i, student selection'ı veya drawer'ı değiştirmez. Persistence eklenmez: localStorage, sessionStorage ve URL state yoktur.
 - `resetStatusFilter()` mevcut semantiğiyle korunur: `activeFilter` ve `duplicateGroupFilterKey` temizlenir, `currentPage` 1 olur; campaign/class filter'ları temizlenmez. Active-filter indicator `OUT OF SCOPE`dur.
 - Minimum implementation files `src/features/students/StudentsPage.tsx` ve `src/styles/global.css`; focused tests `tests/students/StudentsPageMultiPhone.test.tsx` içinde tutulacaktır. AppLayout disclosure component'i yeniden kullanılmayacak; yalnız erişilebilirlik deseni referans alınacaktır. Data/service/schema/package/import/export/backup/restore değişikliği yoktur.
 - Auto-Drawer Follow-Up `FULLY CLOSED` ve regression boundary olarak korunur. Reports Narrow-Width / Mobile Padding `SEPARATE / UNRESOLVED / NOT ACTIVE` kalır.
-- Next gate: `PRODUCT DECISION COMMIT + PUSH — MOBILE FILTER DISCLOSURE`.
+- Validation: focused `1` dosya / `20` test, related focused `5` dosya / `93` test, canonical `75` dosya / `752` test, `/demo/` build/PWA (`Vite base /demo/`, `registerSW.js`, `sw.js`, Workbox generated) `PASS`; known `>500 kB` chunk warning `NON-BLOCKING`dir.
+- Strategy Review `PASS WITH NON-BLOCKING NOTES`; Local Browser QA `PASS WITH NON-BLOCKING NOTES`. Exact verified browser evidence `639x482`dir. Exact `360x800`, `390x844`, `430x932`, desktop reference viewport, multi-page pagination ve explicit candidate row drawer flow browser'da doğrulanmamıştır.
+- Production deployment `NOT STARTED`; current production runtime `b03f938d472bfbfff618d885a03c2281d4e8a529` olarak kalır. Production smoke, production browser QA, production docs closure ve vault closure `NOT STARTED`dır; `FULLY CLOSED: NO`. Bu kayıt deployment claim'i değildir.
+- OperationalAlertHost console error unrelated/non-blockingdir.
+- Next gate: `PRE-PRODUCTION DOCS CHECKPOINT COMMIT + PUSH — MOBILE FILTER DISCLOSURE`.
 
 ## Current Production Closure - Manager Dashboard V3
 
