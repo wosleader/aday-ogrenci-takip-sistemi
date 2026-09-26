@@ -1,5 +1,15 @@
 ﻿# HANDOFF_CURRENT — Aday Öğrenci Takip Sistemi
 
+## Current Product Decision Preparation - Phone Card Interaction — Stage 1 Copy
+
+- Discovery: `COMPLETE`; Product Decision: `APPROVED`; Product Decision Docs Commit/Push: `IN PROGRESS`; Implementation: `NOT STARTED`; Implementation Commit/Push: `NOT STARTED`; Production: `NOT STARTED`; Vault: `NOT STARTED`; `FULLY CLOSED: NO`.
+- Stage 1 yalnız phone card'da gösterilen değerin kopyalanmasını kapsar: `<=640px` mobile single tap/click kopyalar; `>=641px` desktop single click inert, double-click kopyalar. Davranış pointer-coarse detection yerine viewport sözleşmesine bağlıdır; dar desktop viewport mobile davranışını izler.
+- Mevcut `PhoneCard` yapısında displayed number focusable wrapper içindedir; `Telefon numarasını kopyala` nested button'ı mevcut keyboard-accessible fallback'tir. `copyPhoneNumber()` mevcut `navigator.clipboard.writeText(value)` akışını kullanır, değer normalize edilmez; unavailable/rejected clipboard no-crash davranışı ve `Kopyalandı` feedback korunur.
+- Gelecek UI event'leri mevcut copy button'ı, phone actions, More menu, outcome menu, drawer ve parent handlers ile çakışmamalıdır. Copy button'ın `stopPropagation()` koruması korunur; PhoneCard root'unda mevcut parent click action yoktur. Numara wrapper'ına keyboard activation eklemek nested interactive semantics ve duplicate copy açısından ayrıca onay gerektirir.
+- Implementation scope `src/features/students/StudentsPage.tsx`, focused tests `tests/students/StudentsPagePhoneSelection.test.tsx`; başka dosya için açık gerekçe gerekir. Acceptance: mobile tap, desktop inert single click, desktop double-click, icon fallback, success/error/no-crash, parent/drawer izolasyonu, `640px`/`641px` boundary ve keyboard fallback.
+- Stage 2 `NOT ACTIVE`: permanent mobile copy icon, mobile Ara, `tel:`, Turkish normalization, invalid-number handling ve yeni mobile action layout. Bu hazırlıkta source/test değişikliği ve test çalıştırma yoktur.
+- Next gate: `PHONE CARD INTERACTION — STAGE 1 IMPLEMENTATION`.
+
 ## Latest Closure - Student List Auto-Drawer Follow-Up
 
 - Implementation `COMPLETE / COMMITTED / PUSHED` at `b03f938d472bfbfff618d885a03c2281d4e8a529` (`fix: prevent automatic first student drawer open`); regression tests and Implementation Review `PASS WITH NON-BLOCKING NOTES`.

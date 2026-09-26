@@ -4,6 +4,16 @@
 
 Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
+## Current Product Decision Preparation - Phone Card Interaction — Stage 1 Copy
+
+- Discovery: `COMPLETE`; Product Decision: `APPROVED`; Product Decision Docs Commit/Push: `IN PROGRESS`; Implementation: `NOT STARTED`; Implementation Commit/Push: `NOT STARTED`; Production: `NOT STARTED`; Vault: `NOT STARTED`; `FULLY CLOSED: NO`.
+- Stage 1: `<=640px` mobile'de gösterilen telefon numarasına single tap/click copy; `>=641px` desktop'ta single click inert, double-click copy. Bu bir viewport contract'tır; narrow desktop mobile davranışını izler.
+- Mevcut `PhoneCard` numara wrapper'ı focusable'dır ve nested `Telefon numarasını kopyala` button'ı keyboard fallback olarak çalışır. Gelecek davranış mevcut `copyPhoneNumber()` ve `Kopyalandı` feedback'ini reuse eder; displayed value aynen kopyalanır. Normalize, DB mutation, call/tel URL, drawer, selection, outcome, reminder ve appointment etkisi yoktur.
+- Copy button `stopPropagation()` ile korunur; phone actions, More menu, outcome menu, drawer ve parent event'leri ayrıdır. Numara wrapper'ına keyboard activation eklenmesi nested interactive semantics/duplicate copy riski nedeniyle user approval olmadan yapılmaz. Clipboard unavailable/rejected mevcut no-crash davranışını korur.
+- Implementation: `src/features/students/StudentsPage.tsx`; focused tests: `tests/students/StudentsPagePhoneSelection.test.tsx`. Test acceptance: mobile tap once, desktop single inert, desktop double once, icon/feedback, clipboard failure, parent/drawer isolation, `640px`/`641px` boundary ve keyboard fallback. Viewport `window.innerWidth` ile mock'lanmalıdır.
+- Stage 2 `NOT ACTIVE`: permanent mobile copy icon, mobile Ara, `tel:`, Turkish phone normalization, invalid-number call handling ve yeni mobile action layout. Bu docs-only hazırlıkta source/test değişikliği veya test çalıştırma yapılmadı.
+- Next gate: `PHONE CARD INTERACTION — STAGE 1 IMPLEMENTATION`.
+
 ## Latest Closure - Student List Auto-Drawer Follow-Up
 
 - Aday Listesi ilk açıldığında ilk görünür adayın otomatik açılması problemi için discovery ve root-cause analizi `COMPLETE`; root cause `isDrawerOpen` başlangıç değerinin açık olması, `selectedRow` first-visible fallback'i, `visibleRows[0]` auto-selection effect'i ve ID'siz `openStudentDrawer` fallback'idir.

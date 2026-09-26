@@ -26,6 +26,19 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 
 ## Aktif Kararlar
 
+## Current Product Decision Preparation - Phone Card Interaction — Stage 1 Copy
+
+- Discovery: `COMPLETE`; Product Decision: `APPROVED`; Product Decision Docs Commit/Push: `IN PROGRESS`; Implementation: `NOT STARTED`; Implementation Commit/Push: `NOT STARTED`; Production: `NOT STARTED`; Vault: `NOT STARTED`; `FULLY CLOSED: NO`.
+- Stage 1 kapsamı yalnız gösterilen telefon numarasına doğrudan dokunma veya çift tıklamayla kopyalamadır. Mobile `max-width: 640px` altında tek tap/click kopyalar; desktop `min-width: 641px` altında tek click inert kalır, double-click kopyalar. Dar desktop tarayıcı bu viewport sözleşmesiyle mobile davranışını izler.
+- Mevcut `PhoneCard` numara değeri focusable bir wrapper içinde gösterilir; nested `Telefon numarasını kopyala` button'ı mevcut keyboard-accessible fallback olarak kalır. Mevcut copy icon event propagation'ı `stopPropagation()` ile keser; PhoneCard root'unda numara click'iyle tetiklenen bir parent action yoktur.
+- Gelecek uygulama mevcut `copyPhoneNumber()` handler'ını ve mevcut `Kopyalandı` feedback döngüsünü reuse eder; gösterilen `value` aynen kopyalanır. Normalize etme, phone record/database yazma, arama başlatma, `tel:` URL, drawer/selection/outcome/reminder/appointment değişikliği yoktur. Clipboard unavailable veya rejected olduğunda mevcut no-crash/error davranışı korunur.
+- Accessibility kararı: mevcut copy button'ı hem mobile hem desktop'ta keyboard ile çalışır ve zorunlu fallback'tir. Numara wrapper'ına ayrıca keyboard activation eklenmesi bu karar onaylanmadan yapılmaz; böylece nested interactive semantics ve duplicate copy riski açılmaz. Desktop double-click'in keyboard eşdeğeri bu hazırlıkta ayrıca ürün kararı gerektirir.
+- Event sınırı: mevcut explicit copy button, phone actions, More menu, phone outcome menu, drawer ve parent handlers korunur; tek kullanıcı hareketi duplicate copy üretmemelidir.
+- Gelecek implementation scope: `src/features/students/StudentsPage.tsx`; focused test scope: `tests/students/StudentsPagePhoneSelection.test.tsx`. Başka implementation dosyası ancak ayrıca gerekçelendirilirse açılabilir. Bu docs-only turda source/test değiştirilmedi ve test çalıştırılmadı.
+- Acceptance: mobile single tap bir kez kopyalar; desktop single click kopyalamaz; desktop double-click bir kez kopyalar; mevcut copy icon ve success feedback çalışır; clipboard unavailable/rejected crash üretmez; phone card/drawer parent action tetiklenmez; `640px` mobile, `641px` desktop davranışını izler; keyboard fallback kullanılabilir kalır. Viewport testleri `window.innerWidth` mock'u ile deterministik kurulmalıdır.
+- Stage 2 aktif değildir: permanent mobile copy icon, mobile Ara, `tel:` handling, Turkish phone normalization, invalid-number call handling ve yeni mobile action layout bu karara dahil değildir.
+- Next gate: `PHONE CARD INTERACTION — STAGE 1 IMPLEMENTATION`.
+
 ## Current Final Repository State-Flip - Mobile Filter Disclosure — Visual Correction
 
 - Discovery `COMPLETE`; Product Decision `APPROVED / COMMITTED / PUSHED` with baseline `c86f7067bc40da2a6580d299a9d87d74a51ac35e`; original implementation `COMPLETE / COMMITTED / PUSHED` at `141d59c5cf5d07a97c736be824560b3f30f25c2f` (`feat: add mobile filter disclosure`). Selected model remains `MODEL B`.
