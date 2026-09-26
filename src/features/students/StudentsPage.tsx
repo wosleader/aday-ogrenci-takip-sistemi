@@ -1706,7 +1706,19 @@ function PhoneCard({
                 style={{ alignItems: "center", display: "inline-flex", gap: 4, lineHeight: 1.2, maxWidth: "100%" }}
                 tabIndex={0}
               >
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis", userSelect: "text", whiteSpace: "nowrap" }}>
+                <span
+                  onClick={() => {
+                    if (window.innerWidth <= 640) {
+                      void copyPhoneNumber();
+                    }
+                  }}
+                  onDoubleClick={() => {
+                    if (window.innerWidth >= 641) {
+                      void copyPhoneNumber();
+                    }
+                  }}
+                  style={{ overflow: "hidden", textOverflow: "ellipsis", userSelect: "text", whiteSpace: "nowrap" }}
+                >
                   {value}
                 </span>
                 <span

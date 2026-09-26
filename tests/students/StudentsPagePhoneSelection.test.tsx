@@ -8,6 +8,11 @@ import { StudentsPage } from "../../src/features/students/StudentsPage";
 import { createSearchText, normalizeText } from "../../src/utils/normalizeText";
 
 const now = "2026-05-10T10:00:00.000Z";
+const originalInnerWidth = window.innerWidth;
+
+function setViewportWidth(width: number) {
+  Object.defineProperty(window, "innerWidth", { configurable: true, value: width });
+}
 
 const phoneSeeds = [
   {
@@ -221,6 +226,7 @@ describe("StudentsPage phone selection", () => {
   afterEach(async () => {
     vi.restoreAllMocks();
     vi.useRealTimers();
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: originalInnerWidth });
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
       value: undefined
@@ -1054,6 +1060,109 @@ describe("StudentsPage phone selection", () => {
     await user.click(screen.getByRole("menuitem", { name: "Kullanımdan kaldır" }));
 
     expect(writeText).not.toHaveBeenCalled();
+  });
+
+  it.each([390, 640])("copies the displayed phone number once on mobile width %s", async (width) => {
+    const user = userEvent.setup();
+    const writeText = mockClipboard();
+    setViewportWidth(width);
+    await seedStudentWithPhones("MELIS KAYA", `mobile-copy-${width}`);
+
+    await renderStudentsPageAndOpenFirst();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    await user.click(within(phone1Card).getByText("0532 100 0001"));
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+    expect(writeText).toHaveBeenCalledWith("0532 100 0001");
+  });
+
+  it.each([641, 1440])("keeps a desktop single click inert at width %s", async (width) => {
+    const user = userEvent.setup();
+    const writeText = mockClipboard();
+    setViewportWidth(width);
+    await seedStudentWithPhones("MELIS KAYA", `desktop-single-${width}`);
+
+    await renderStudentsPageAndOpenFirst();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    await user.click(within(phone1Card).getByText("0532 100 0001"));
+
+    expect(writeText).not.toHaveBeenCalled();
+    expect(await db.phones.where("normalized_phone_number").equals("05321000001").first()).toMatchObject({
+      phone_status: "active"
+    });
+  });
+
+  it("copies once on a desktop double click after inert preceding clicks", async () => {
+    const user = userEvent.setup();
+    const writeText = mockClipboard();
+    setViewportWidth(1440);
+    await seedStudentWithPhones("MELIS KAYA", "desktop-double");
+
+    await renderStudentsPageAndOpenFirst();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    await user.dblClick(within(phone1Card).getByText("0532 100 0001"));
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+    expect(writeText).toHaveBeenCalledWith("0532 100 0001");
+  });
+
+  it("does not add a double-click copy on mobile beyond the two tap copies", async () => {
+    const user = userEvent.setup();
+    const writeText = mockClipboard();
+    setViewportWidth(390);
+    await seedStudentWithPhones("MELIS KAYA", "mobile-double");
+
+    await renderStudentsPageAndOpenFirst();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    await user.dblClick(within(phone1Card).getByText("0532 100 0001"));
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(2));
+    expect(writeText).not.toHaveBeenCalledTimes(3);
+  });
+
+  it("keeps the keyboard-accessible copy button as the fallback", async () => {
+    const user = userEvent.setup();
+    const writeText = mockClipboard();
+    await seedStudentWithPhones("MELIS KAYA", "keyboard-copy");
+
+    await renderStudentsPageAndOpenFirst();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    const phone1Number = within(phone1Card).getByText("0532 100 0001");
+    await user.hover(phone1Number);
+    const copyButton = within(phone1Card).getByRole("button", { name: "Telefon numarasını kopyala" });
+
+    copyButton.focus();
+    await user.keyboard("{Enter}");
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+    expect(copyButton).toHaveAttribute("title", "Kopyalandı");
+  });
+
+  it.each(["unavailable", "rejected"] as const)("does not crash when clipboard is %s", async (mode) => {
+    const user = userEvent.setup();
+    const writeText = mode === "unavailable" ? undefined : vi.fn().mockRejectedValue(new Error("denied"));
+    if (writeText) {
+      mockClipboard(writeText);
+    } else {
+      Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
+    }
+    setViewportWidth(390);
+    await seedStudentWithPhones("MELIS KAYA", `clipboard-${mode}`);
+
+    await renderStudentsPageAndOpenFirst();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    await user.click(within(phone1Card).getByText("0532 100 0001"));
+
+    expect(within(phone1Card).getByText("0532 100 0001")).toBeInTheDocument();
+    if (writeText) {
+      expect(writeText).toHaveBeenCalledTimes(1);
+    }
   });
 
   it("opens WhatsApp drafts without outbound navigation while copy and manual sent logs keep working", async () => {
