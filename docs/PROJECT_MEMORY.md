@@ -1,10 +1,22 @@
-<!-- Son guncelleme: Student List Auto-Drawer Final Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Phone Card Stage 1 Desktop Copy Correction Post-QA Reconciliation | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
 Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
-## Current Implementation - Phone Card Interaction — Stage 1 Copy
+## Current Correction - Phone Card Interaction — Stage 1 Desktop Copy Fallback
+
+- Original Stage 1 remains historical and deployed at `f4ec2035ee1987b81ce81eeb484e18592061588a`; original production smoke was `PASS`, while original Production Browser QA was `BLOCKED` by the deployed desktop double-click failure. Current production runtime remains `f4ec2035ee1987b81ce81eeb484e18592061588a`; pre-production docs checkpoint remains `353d2e82efe3851ea73a19ac2aa238e48ad9df1c`.
+- Correction is `APPROVED / IMPLEMENTED / COMMITTED / PUSHED / NOT DEPLOYED`; user approval is `YES`, and user acceptance of the controlled local QA is `APPROVED`. Independent Strategy Review and Controlled Local Chromium QA are `PASS WITH NON-BLOCKING NOTES`; Feature commit is `COMPLETED`; GitHub push is `COMPLETED`.
+- Mobile `<=640px`: each displayed-number click copies once. Desktop `>=641px`: first qualifying click arms only; a second click within `400ms` on the same element, phone identity and exact value copies once. `event.detail` is ignored and native `onDoubleClick` is no longer the copy source.
+- A lifecycle-safe coordinator cancels across phone cards and unrelated controls; identity/value/element changes, focus/pointer loss, pointer leave, unmount and viewport transition also clear. A post-success guard blocks triple-copy while allowing a later fresh pair. Existing copy, keyboard, feedback and clipboard no-crash behavior remain intact.
+- Controlled Local Chromium QA used disposable port `7426`; `390x844`, `640x800`, `641x800` and `1440x900` passed, including detail=1 desktop pairs, native double-click, expired sequence, triple/fourth guard, later fresh pair, cross-card/control cancellation, mobile taps, exact clipboard readback and no observed IndexedDB writes.
+- Non-blocking notes: exact `400ms` boundary was not independently browser-timed; an existing reminder overlay may intercept some mobile row clicks; the existing `OperationalAlertHost` warning remains unresolved; and the hidden copy-control `aria-hidden`/focused warning remains unresolved. These remain separate and were not fixed.
+- Scope: `src/features/students/StudentsPage.tsx` and `tests/students/StudentsPagePhoneSelection.test.tsx` only. Feature commit: `02711d5931cde6f72876146d423224bc5c0e6362` (`fix: make desktop phone copy independent of native dblclick`); the three docs remain outside that feature commit and reserved for a separate docs-only checkpoint. Stage 2 remains separate and not started.
+- Validation: focused `StudentsPagePhoneSelection` `1` file / `45` tests `PASS`; related `StudentsPageMultiPhone` `1` file / `20` tests `PASS`; canonical `75` files / `771` tests `PASS`; TypeScript, Vite `/demo/` build and PWA `PASS`; known chunk-size warning `NON-BLOCKING`.
+- Preproduction docs checkpoint: `USER AUTHORIZED / READY FOR COMMIT`; Docs commit/push: `USER AUTHORIZED / EXECUTION TO BE VERIFIED BY THE ACTUAL GIT RESULT`; Corrected VDS deployment: `NOT STARTED`; Corrected production QA: `PENDING`; Production docs closure: `PENDING`; Vault closure: `PENDING`; `FULLY CLOSED: NO`. Next gate: `PHONE CARD STAGE 1 — PREPRODUCTION DOCS CHECKPOINT COMMIT/PUSH`.
+
+## Historical Original Implementation - Phone Card Interaction — Stage 1 Copy
 
 - Product Decision baseline: `bb4907df744be0d83747af431bb6b4425a3f5ba3`; Discovery: `COMPLETE`; Product Decision: `APPROVED / COMMITTED / PUSHED`; Implementation: `COMPLETE / COMMITTED / PUSHED`; Feature commit `f4ec2035ee1987b81ce81eeb484e18592061588a` (`feat: enable direct phone number copy`), parent `bb4907df744be0d83747af431bb6b4425a3f5ba3`; Strategy Review: `PASS WITH NON-BLOCKING NOTES`; Controlled Local Browser QA: `PASS WITH NON-BLOCKING NOTES`; Feature Commit/Push: `COMPLETE / PUSHED`; Pre-production Docs Reconciliation: `PREPARED / NOT COMMITTED`; Pre-production Docs Checkpoint: `PENDING`; Production: `NOT STARTED`; Production Browser QA: `NOT STARTED`; Vault: `NOT STARTED`; `FULLY CLOSED: NO`.
 - Stage 1: `<=640px` mobile'de gösterilen telefon numarasına single tap/click copy; `>=641px` desktop'ta single click inert, double-click copy. Bu bir viewport contract'tır; narrow desktop mobile davranışını izler.

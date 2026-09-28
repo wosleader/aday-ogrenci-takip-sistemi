@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Student List Auto-Drawer Final Closure | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Phone Card Stage 1 Desktop Copy Correction Post-QA Reconciliation | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -26,7 +26,20 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 
 ## Aktif Kararlar
 
-## Current Implementation - Phone Card Interaction — Stage 1 Copy
+## Current Correction Decision - Phone Card Interaction — Stage 1 Desktop Copy Fallback
+
+- Original Stage 1 remains historical and deployed at `f4ec2035ee1987b81ce81eeb484e18592061588a`; original production smoke was `PASS`, while original Production Browser QA was `BLOCKED` by the deployed desktop double-click failure. Current production runtime and existing feature SHA remain `f4ec2035ee1987b81ce81eeb484e18592061588a`; pre-production docs checkpoint remains `353d2e82efe3851ea73a19ac2aa238e48ad9df1c`.
+- The correction is `APPROVED / IMPLEMENTED / COMMITTED / PUSHED / NOT DEPLOYED`; user approval is `YES`, and user acceptance of the controlled local QA is `APPROVED`. Independent Strategy Review and Controlled Local Chromium QA are `PASS WITH NON-BLOCKING NOTES`; Feature commit is `COMPLETED`; GitHub push is `COMPLETED`.
+- Approved behavior: mobile `<=640px` copies once per displayed-number click. Desktop `>=641px` arms on the first qualifying click and copies exactly once on a second click within `400ms` only when phone identity, exact displayed value and the same number element match. `event.detail` is ignored and native `onDoubleClick` is removed as the copy source.
+- A lifecycle-safe coordinator cancels pending sequences across other phones and controls, unrelated focus/pointer interactions, value/element changes, pointer leave, unmount and viewport transition. A bounded post-success guard prevents triple-copy while allowing a later fresh pair. Existing `copyPhoneNumber()`, exact value, keyboard button, feedback timers and clipboard failure handling are preserved.
+- Controlled QA used fresh isolated Chromium on disposable port `7426`; required `390x844`, `640x800`, `641x800` and `1440x900` checks passed. Explicit `detail=1` desktop pair, native double-click, expired sequence, triple/fourth guard, later pair, cross-card/control cancellation, mobile tap behavior, exact clipboard readback and no observed IndexedDB writes passed.
+- Non-blocking notes remain: exact `400ms` boundary was not independently browser-timed; an existing reminder overlay may intercept some mobile row clicks; the existing `OperationalAlertHost` warning remains unresolved; and the existing hidden copy-control `aria-hidden`/focused warning remains unresolved. None was fixed or folded into this correction.
+- No phone/data/database, call-log, drawer, selection, reminder, appointment, schema, import/export, package or accessibility-refactor change was introduced.
+- Scope is exactly `src/features/students/StudentsPage.tsx` and `tests/students/StudentsPagePhoneSelection.test.tsx`; feature commit is `02711d5931cde6f72876146d423224bc5c0e6362` (`fix: make desktop phone copy independent of native dblclick`). The three docs remain reserved for a separate docs-only checkpoint. Stage 2 remains `SEPARATE / PRODUCT DECISION NOT APPROVED / IMPLEMENTATION NOT STARTED`.
+- Validation passed: focused `StudentsPagePhoneSelection` `1` file / `45` tests, related `StudentsPageMultiPhone` `1` file / `20` tests, canonical `75` files / `771` tests, TypeScript, Vite `/demo/` build and PWA generation. Known chunk-size warning is `NON-BLOCKING`.
+- Preproduction docs checkpoint: `USER AUTHORIZED / READY FOR COMMIT`; Docs commit/push: `USER AUTHORIZED / EXECUTION TO BE VERIFIED BY THE ACTUAL GIT RESULT`; Corrected VDS deployment: `NOT STARTED`; Corrected production QA: `PENDING`; Production docs closure: `PENDING`; Vault closure: `PENDING`; `FULLY CLOSED: NO`. Next gate: `PHONE CARD STAGE 1 — PREPRODUCTION DOCS CHECKPOINT COMMIT/PUSH`.
+
+## Historical Original Implementation - Phone Card Interaction — Stage 1 Copy
 
 - Product Decision baseline: `bb4907df744be0d83747af431bb6b4425a3f5ba3`; Discovery: `COMPLETE`; Product Decision: `APPROVED / COMMITTED / PUSHED`; Implementation: `COMPLETE / COMMITTED / PUSHED`; Feature commit `f4ec2035ee1987b81ce81eeb484e18592061588a` (`feat: enable direct phone number copy`), parent `bb4907df744be0d83747af431bb6b4425a3f5ba3`; Strategy Review: `PASS WITH NON-BLOCKING NOTES`; Controlled Local Browser QA: `PASS WITH NON-BLOCKING NOTES`; Feature Commit/Push: `COMPLETE / PUSHED`; Pre-production Docs Reconciliation: `PREPARED / NOT COMMITTED`; Pre-production Docs Checkpoint: `PENDING`; Production: `NOT STARTED`; Production Browser QA: `NOT STARTED`; Vault: `NOT STARTED`; `FULLY CLOSED: NO`.
 - Stage 1 kapsamı yalnız gösterilen telefon numarasına doğrudan dokunma veya çift tıklamayla kopyalamadır. Mobile `max-width: 640px` altında tek tap/click kopyalar; desktop `min-width: 641px` altında tek click inert kalır, double-click kopyalar. Dar desktop tarayıcı bu viewport sözleşmesiyle mobile davranışını izler.
