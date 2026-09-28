@@ -1109,6 +1109,181 @@ describe("StudentsPage phone selection", () => {
     expect(writeText).toHaveBeenCalledWith("0532 100 0001");
   });
 
+  it.each([641, 1440])("copies once for two detail=1 desktop clicks within 400ms at %s", async (width) => {
+    const writeText = mockClipboard();
+    const nowSpy = vi.spyOn(performance, "now");
+    nowSpy.mockReturnValueOnce(1000).mockReturnValueOnce(1180);
+    setViewportWidth(width);
+    await seedStudentWithPhones("MELIS KAYA", "desktop-detail-one-" + width);
+
+    await renderStudentsPageAndOpenFirst();
+
+    const phone1Number = within(await waitFor(() => getDrawerPhoneCard("Telefon 1"))).getByText("0532 100 0001");
+    fireEvent.click(phone1Number, { detail: 1 });
+    expect(writeText).not.toHaveBeenCalled();
+
+    fireEvent.click(phone1Number, { detail: 1 });
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+    expect(writeText).toHaveBeenCalledWith("0532 100 0001");
+  });
+
+  it("treats a slow second desktop click as a new first click", async () => {
+    const writeText = mockClipboard();
+    setViewportWidth(1440);
+    await seedStudentWithPhones("MELIS KAYA", "desktop-slow-pair");
+
+    await renderStudentsPageAndOpenFirst();
+
+    const phone1Number = within(await waitFor(() => getDrawerPhoneCard("Telefon 1"))).getByText("0532 100 0001");
+    vi.useFakeTimers();
+    fireEvent.click(phone1Number, { detail: 1 });
+    await act(async () => {
+      vi.advanceTimersByTime(401);
+    });
+    vi.useRealTimers();
+    fireEvent.click(phone1Number, { detail: 1 });
+
+    expect(writeText).not.toHaveBeenCalled();
+  });
+
+  it("ignores a native dblclick after the click-sequence copy", async () => {
+    const writeText = mockClipboard();
+    const nowSpy = vi.spyOn(performance, "now");
+    nowSpy.mockReturnValueOnce(1000).mockReturnValueOnce(1180);
+    setViewportWidth(1440);
+    await seedStudentWithPhones("MELIS KAYA", "desktop-native-dblclick");
+
+    await renderStudentsPageAndOpenFirst();
+
+    const phone1Number = within(await waitFor(() => getDrawerPhoneCard("Telefon 1"))).getByText("0532 100 0001");
+    fireEvent.click(phone1Number, { detail: 1 });
+    fireEvent.click(phone1Number, { detail: 1 });
+    fireEvent.dblClick(phone1Number, { detail: 2 });
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+  });
+
+  it("guards a triple click and allows a later fresh desktop pair", async () => {
+    const writeText = mockClipboard();
+    setViewportWidth(1440);
+    await seedStudentWithPhones("MELIS KAYA", "desktop-triple-guard");
+
+    await renderStudentsPageAndOpenFirst();
+
+    const phone1Number = within(await waitFor(() => getDrawerPhoneCard("Telefon 1"))).getByText("0532 100 0001");
+    vi.useFakeTimers();
+    fireEvent.click(phone1Number, { detail: 1 });
+    fireEvent.click(phone1Number, { detail: 1 });
+    fireEvent.click(phone1Number, { detail: 1 });
+    expect(writeText).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      vi.advanceTimersByTime(401);
+    });
+    vi.useRealTimers();
+    fireEvent.click(phone1Number, { detail: 1 });
+    fireEvent.click(phone1Number, { detail: 1 });
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(2));
+  });
+
+  it("cancels a pending pair when switching between phone cards", async () => {
+    const writeText = mockClipboard();
+    const nowSpy = vi.spyOn(performance, "now");
+    nowSpy.mockReturnValueOnce(1000).mockReturnValueOnce(1100).mockReturnValueOnce(1200);
+    setViewportWidth(1440);
+    await seedStudentWithPhones("MELIS KAYA", "desktop-cross-card");
+
+    await renderStudentsPageAndOpenFirst();
+
+    const phone1Number = within(await waitFor(() => getDrawerPhoneCard("Telefon 1"))).getByText("0532 100 0001");
+    const phone2Number = within(getDrawerPhoneCard("Telefon 2")).getByText("0532 100 0002");
+    fireEvent.click(phone1Number, { detail: 1 });
+    fireEvent.click(phone2Number, { detail: 1 });
+    fireEvent.click(phone1Number, { detail: 1 });
+
+    expect(writeText).not.toHaveBeenCalled();
+  });
+
+  it("does not pair a number click across the existing copy control", async () => {
+    const user = userEvent.setup();
+    const writeText = mockClipboard();
+    const nowSpy = vi.spyOn(performance, "now");
+    nowSpy.mockReturnValueOnce(1000).mockReturnValueOnce(1100);
+    setViewportWidth(1440);
+    await seedStudentWithPhones("MELIS KAYA", "desktop-copy-control-boundary");
+
+    await renderStudentsPageAndOpenFirst();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    const phone1Number = within(phone1Card).getByText("0532 100 0001");
+    fireEvent.click(phone1Number, { detail: 1 });
+    await user.hover(phone1Number);
+    await user.click(within(phone1Card).getByRole("button", { name: "Telefon numarasını kopyala" }));
+    fireEvent.click(phone1Number, { detail: 1 });
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+  });
+
+  it("cancels a pending pair when another phone control is used", async () => {
+    const user = userEvent.setup();
+    const writeText = mockClipboard();
+    const nowSpy = vi.spyOn(performance, "now");
+    nowSpy.mockReturnValueOnce(1000).mockReturnValueOnce(1100);
+    setViewportWidth(1440);
+    await seedStudentWithPhones("MELIS KAYA", "desktop-control-boundary");
+
+    await renderStudentsPageAndOpenFirst();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    const phone1Number = within(phone1Card).getByText("0532 100 0001");
+    fireEvent.click(phone1Number, { detail: 1 });
+    await user.click(within(phone1Card).getByRole("button", { name: "Telefon 1 telefon işlemleri" }));
+    fireEvent.click(phone1Number, { detail: 1 });
+
+    expect(writeText).not.toHaveBeenCalled();
+  });
+
+  it("keeps a valid pair after the first click reveals the copy control", async () => {
+    const user = userEvent.setup();
+    const writeText = mockClipboard();
+    const nowSpy = vi.spyOn(performance, "now");
+    nowSpy.mockReturnValueOnce(1000).mockReturnValueOnce(1180);
+    setViewportWidth(1440);
+    await seedStudentWithPhones("MELIS KAYA", "desktop-rerender");
+
+    await renderStudentsPageAndOpenFirst();
+
+    const phone1Card = await waitFor(() => getDrawerPhoneCard("Telefon 1"));
+    const phone1Number = within(phone1Card).getByText("0532 100 0001");
+    await user.click(phone1Number);
+    await waitFor(() =>
+      expect(within(phone1Card).getByRole("button", { name: "Telefon numarasını kopyala" })).toBeVisible()
+    );
+    fireEvent.click(phone1Number, { detail: 1 });
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+  });
+
+  it("clears a desktop sequence when the viewport changes to mobile", async () => {
+    const writeText = mockClipboard();
+    const nowSpy = vi.spyOn(performance, "now");
+    nowSpy.mockReturnValueOnce(1000).mockReturnValueOnce(1100);
+    setViewportWidth(1440);
+    await seedStudentWithPhones("MELIS KAYA", "desktop-mobile-transition");
+
+    await renderStudentsPageAndOpenFirst();
+
+    const phone1Number = within(await waitFor(() => getDrawerPhoneCard("Telefon 1"))).getByText("0532 100 0001");
+    fireEvent.click(phone1Number, { detail: 1 });
+    setViewportWidth(390);
+    fireEvent(window, new Event("resize"));
+    setViewportWidth(1440);
+    fireEvent.click(phone1Number, { detail: 1 });
+
+    expect(writeText).not.toHaveBeenCalled();
+  });
+
   it("does not add a double-click copy on mobile beyond the two tap copies", async () => {
     const user = userEvent.setup();
     const writeText = mockClipboard();

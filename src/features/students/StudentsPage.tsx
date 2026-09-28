@@ -113,6 +113,7 @@ import {
 
 const PAGE_SIZE = 100;
 const SHORTCUT_HELP_STORAGE_KEY = "aots-shortcut-help-expanded";
+const DESKTOP_PHONE_COPY_WINDOW_MS = 400;
 
 const FILTER_OPTIONS: Array<{ key: StudentListFilter; label: string }> = [
   { key: "all", label: "Tümü" },
@@ -679,6 +680,7 @@ type PhoneCardProps = {
   onOutcomeChange?: (phoneId: number, outcome: PhoneCallOutcome) => void;
   onWhatsAppDraft?: () => void;
   whatsAppSentInfo?: WhatsAppManualSentSummary | null;
+  desktopCopyCoordinator: DesktopPhoneCopySequenceCoordinator;
 };
 
 type WhatsAppDraftContext = {
@@ -707,6 +709,36 @@ type PhoneActionMenuPosition = {
   top: number;
   width: number;
 };
+
+type DesktopPhoneCopySequenceCoordinator = {
+  begin: (token: symbol, clear: () => void) => void;
+  end: (token: symbol) => void;
+  clear: () => void;
+};
+
+function createDesktopPhoneCopySequenceCoordinator(): DesktopPhoneCopySequenceCoordinator {
+  let activeSequence: { token: symbol; clear: () => void } | null = null;
+
+  return {
+    begin(token, clear) {
+      if (activeSequence && activeSequence.token !== token) {
+        activeSequence.clear();
+      }
+
+      activeSequence = { token, clear };
+    },
+    end(token) {
+      if (activeSequence?.token === token) {
+        activeSequence = null;
+      }
+    },
+    clear() {
+      const sequence = activeSequence;
+      activeSequence = null;
+      sequence?.clear();
+    }
+  };
+}
 
 type OperationToast = {
   id: number;
@@ -1088,7 +1120,8 @@ function PhoneCard({
   onSelectForCall,
   onOutcomeChange,
   onWhatsAppDraft,
-  whatsAppSentInfo
+  whatsAppSentInfo,
+  desktopCopyCoordinator
 }: PhoneCardProps) {
   const relationText = getPhoneRelationText(relationLabel);
   const isEffectiveContacted = isContacted || isSelectedForCall;
@@ -1109,6 +1142,16 @@ function PhoneCard({
   const [outcomeMenuPosition, setOutcomeMenuPosition] = useState<PhoneOutcomeMenuPosition | null>(null);
   const hideCopyControlTimeoutRef = useRef<number | null>(null);
   const copySuccessTimeoutRef = useRef<number | null>(null);
+  const desktopCopySequenceTokenRef = useRef(Symbol("desktop-phone-copy"));
+  const desktopCopySequenceRef = useRef<{
+    element: HTMLSpanElement;
+    phoneId: number | null;
+    value: string;
+    at: number;
+    mode: "pending" | "guarded";
+    guardUntil: number;
+  } | null>(null);
+  const desktopCopySequenceTimeoutRef = useRef<number | null>(null);
   const actionMenuTriggerRef = useRef<HTMLButtonElement | null>(null);
   const actionMenuRef = useRef<HTMLDivElement | null>(null);
   const outcomeChipRef = useRef<HTMLButtonElement | null>(null);
@@ -1129,9 +1172,98 @@ function PhoneCard({
       if (copySuccessTimeoutRef.current != null) {
         window.clearTimeout(copySuccessTimeoutRef.current);
       }
+
+      if (desktopCopySequenceTimeoutRef.current != null) {
+        window.clearTimeout(desktopCopySequenceTimeoutRef.current);
+      }
+
+      desktopCopyCoordinator.end(desktopCopySequenceTokenRef.current);
     },
     []
   );
+
+  function clearDesktopCopySequence() {
+    if (desktopCopySequenceTimeoutRef.current != null) {
+      window.clearTimeout(desktopCopySequenceTimeoutRef.current);
+      desktopCopySequenceTimeoutRef.current = null;
+    }
+
+    desktopCopySequenceRef.current = null;
+    desktopCopyCoordinator.end(desktopCopySequenceTokenRef.current);
+  }
+
+  function scheduleDesktopCopySequenceClear(delay: number) {
+    if (desktopCopySequenceTimeoutRef.current != null) {
+      window.clearTimeout(desktopCopySequenceTimeoutRef.current);
+    }
+
+    desktopCopySequenceTimeoutRef.current = window.setTimeout(() => {
+      desktopCopySequenceTimeoutRef.current = null;
+      desktopCopySequenceRef.current = null;
+      desktopCopyCoordinator.end(desktopCopySequenceTokenRef.current);
+    }, delay);
+  }
+
+  function getDesktopCopySequenceTime() {
+    return performance.now();
+  }
+
+  function handlePhoneNumberClick(event: React.MouseEvent<HTMLSpanElement>) {
+    if (window.innerWidth <= 640) {
+      desktopCopyCoordinator.clear();
+      clearDesktopCopySequence();
+      void copyPhoneNumber();
+      return;
+    }
+
+    const now = getDesktopCopySequenceTime();
+    const currentSequence = desktopCopySequenceRef.current;
+    const phoneIdentity = phoneId ?? null;
+    const isSameTarget =
+      currentSequence?.element === event.currentTarget &&
+      currentSequence.phoneId === phoneIdentity &&
+      currentSequence.value === value;
+
+    if (currentSequence?.mode === "guarded" && isSameTarget && now < currentSequence.guardUntil) {
+      return;
+    }
+
+    if (
+      currentSequence?.mode === "pending" &&
+      isSameTarget &&
+      now >= currentSequence.at &&
+      now - currentSequence.at <= DESKTOP_PHONE_COPY_WINDOW_MS
+    ) {
+      clearDesktopCopySequence();
+      desktopCopySequenceRef.current = {
+        element: event.currentTarget,
+        phoneId: phoneIdentity,
+        value: value ?? "",
+        at: now,
+        mode: "guarded",
+        guardUntil: now + DESKTOP_PHONE_COPY_WINDOW_MS
+      };
+      scheduleDesktopCopySequenceClear(DESKTOP_PHONE_COPY_WINDOW_MS);
+      void copyPhoneNumber();
+      return;
+    }
+
+    clearDesktopCopySequence();
+    desktopCopySequenceRef.current = {
+      element: event.currentTarget,
+      phoneId: phoneIdentity,
+      value: value ?? "",
+      at: now,
+      mode: "pending",
+      guardUntil: 0
+    };
+    desktopCopyCoordinator.begin(desktopCopySequenceTokenRef.current, clearDesktopCopySequence);
+    scheduleDesktopCopySequenceClear(DESKTOP_PHONE_COPY_WINDOW_MS);
+  }
+
+  useEffect(() => {
+    clearDesktopCopySequence();
+  }, [phoneId, value]);
 
   function clearCopyControlHideTimeout() {
     if (hideCopyControlTimeoutRef.current == null) {
@@ -1707,16 +1839,9 @@ function PhoneCard({
                 tabIndex={0}
               >
                 <span
-                  onClick={() => {
-                    if (window.innerWidth <= 640) {
-                      void copyPhoneNumber();
-                    }
-                  }}
-                  onDoubleClick={() => {
-                    if (window.innerWidth >= 641) {
-                      void copyPhoneNumber();
-                    }
-                  }}
+                  data-phone-copy-number="true"
+                  onClick={handlePhoneNumberClick}
+                  onMouseLeave={clearDesktopCopySequence}
                   style={{ overflow: "hidden", textOverflow: "ellipsis", userSelect: "text", whiteSpace: "nowrap" }}
                 >
                   {value}
@@ -1929,6 +2054,11 @@ export function StudentsPage() {
   const drawerPhoneListRef = useRef<HTMLDivElement | null>(null);
   const shouldScrollPhoneListAfterCollapseRef = useRef(false);
   const studentProfileEditRequestRef = useRef(0);
+  const desktopCopyCoordinatorRef = useRef<DesktopPhoneCopySequenceCoordinator | null>(null);
+  if (!desktopCopyCoordinatorRef.current) {
+    desktopCopyCoordinatorRef.current = createDesktopPhoneCopySequenceCoordinator();
+  }
+  const desktopCopyCoordinator = desktopCopyCoordinatorRef.current;
   const rows = useLiveQuery(
     async () => {
       try {
@@ -2048,6 +2178,46 @@ export function StudentsPage() {
   const shortcutHelpGroups = useMemo(() => createShortcutHelpGroups(shortcutBarItems), [shortcutBarItems]);
   const [isShortcutHelpExpanded, setIsShortcutHelpExpanded] = useState(readShortcutHelpExpandedPreference);
   const canResetStatusFilter = activeFilter !== "all" || Boolean(duplicateGroupFilterKey);
+
+  useEffect(() => {
+    if (!isDrawerOpen) {
+      desktopCopyCoordinator.clear();
+      return;
+    }
+
+    function isDisplayedNumberTarget(target: EventTarget | null): boolean {
+      return target instanceof Element && target.closest('[data-phone-copy-number="true"]') !== null;
+    }
+
+    function clearOnExternalPointer(event: PointerEvent) {
+      if (!isDisplayedNumberTarget(event.target)) {
+        desktopCopyCoordinator.clear();
+      }
+    }
+
+    function clearOnExternalFocus(event: FocusEvent) {
+      if (!isDisplayedNumberTarget(event.target)) {
+        desktopCopyCoordinator.clear();
+      }
+    }
+
+    function clearOnViewportChange() {
+      if (window.innerWidth <= 640) {
+        desktopCopyCoordinator.clear();
+      }
+    }
+
+    document.addEventListener("pointerdown", clearOnExternalPointer);
+    document.addEventListener("focusin", clearOnExternalFocus);
+    window.addEventListener("resize", clearOnViewportChange);
+
+    return () => {
+      document.removeEventListener("pointerdown", clearOnExternalPointer);
+      document.removeEventListener("focusin", clearOnExternalFocus);
+      window.removeEventListener("resize", clearOnViewportChange);
+      desktopCopyCoordinator.clear();
+    };
+  }, [desktopCopyCoordinator, isDrawerOpen]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -4316,6 +4486,7 @@ export function StudentsPage() {
                   selectedRow.phone_1_id,
                   selectedRow.phone_1
                 )}
+                desktopCopyCoordinator={desktopCopyCoordinator}
               />
               <PhoneCard
                 label={phone2Row?.reference_label || "Telefon 2"}
@@ -4353,6 +4524,7 @@ export function StudentsPage() {
                   selectedRow.phone_2_id,
                   selectedRow.phone_2
                 )}
+                desktopCopyCoordinator={desktopCopyCoordinator}
               />
               {readonlyDrawerPhones.map((phone) => (
                 <PhoneCard
@@ -4396,6 +4568,7 @@ export function StudentsPage() {
                     )
                   }
                   whatsAppSentInfo={getWhatsAppManualSentInfo(whatsAppManualSentLookup, phone.id, phone.phone_number)}
+                  desktopCopyCoordinator={desktopCopyCoordinator}
                 />
               ))}
               {selectedRow.hidden_phone_count > 0 ? (
