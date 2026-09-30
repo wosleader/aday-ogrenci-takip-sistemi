@@ -6,6 +6,15 @@
 
 Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntılı sprint geçmişi için checkpoint dosyaları, güncel kısa bağlam için `docs/PROJECT_MEMORY.md` kullanılır.
 
+## Current Product Decision - Reports Narrow-Width / Mobile Padding
+
+- [Decision State] Discovery `COMPLETE`; Product Decision `APPROVED`; Implementation `NOT STARTED`; Strategy Review `NOT STARTED`; Local Browser QA `NOT STARTED`; Feature commit/push `NOT STARTED`; Preproduction docs `NOT STARTED`; Production `NOT STARTED`; Production Browser QA `NOT STARTED`; Vault closure `NOT STARTED`; `FULLY CLOSED: NO`.
+- [Approved Contract] Existing breakpoints only: preserve current wide Reports behavior above `1180px`; use a `22px` horizontal Reports gutter at `<=1180px`, `18px` at `<=768px`, and `14px` at `<=430px`. No new breakpoint and no `clamp()`.
+- [Scope] Apply the same outer gutter to Yönetici Dashboard and Detaylı Raporlar. This is presentation-only: preserve contained cards, tabs, date/filter controls, Reporting V2 and dialogs; document-level horizontal overflow remains disallowed.
+- [Discovery] Final `.content` uses `padding: 0`; ReportsPage uses `.reports-page`, not `.page`; `.reports-page` currently has `padding: 2px 2px 12px`, so generic `.page` responsive gutters do not apply. The defect is insufficient narrow-width visual outer gutter, not document overflow. Large-table scrolling remains contained by `.dashboard-table-scroll`, `.daily-call-table-wrap` and `.reporting-v2-table-wrap`; table min-widths are unchanged. The pilot reminder overlay observation is separate and out of scope.
+- [Future Boundary] Future implementation is CSS-only in `src/styles/global.css`; no TS/TSX, reader/service, business/data, schema, package, import/export or backup/restore changes. Future QA targets `320x720`, `390x844`, `430x932`, `640x900`, `768x1024`, `769x1024`, `1024x900` and `1440x900` across both views. This docs-only decision claims no browser QA.
+- [Next Gate] `REPORTS NARROW-WIDTH / MOBILE PADDING PRODUCT DECISION COMMIT/PUSH APPROVAL`.
+
 ## Current Product Decision - Student List Auto-Drawer Follow-Up
 
 - [Decision State] Feature contract `COMPLETE`; implementation `COMPLETE / COMMITTED / PUSHED` at `b03f938d472bfbfff618d885a03c2281d4e8a529` (`fix: prevent automatic first student drawer open`).

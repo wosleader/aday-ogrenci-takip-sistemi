@@ -4,6 +4,14 @@
 
 Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
+## Current Product Decision - Reports Narrow-Width / Mobile Padding
+
+- [Decision State] Discovery `COMPLETE`; Product Decision `APPROVED`; Implementation `NOT STARTED`; Strategy Review `NOT STARTED`; Local Browser QA `NOT STARTED`; Feature commit/push `NOT STARTED`; Preproduction docs `NOT STARTED`; Production `NOT STARTED`; Production Browser QA `NOT STARTED`; Vault closure `NOT STARTED`; `FULLY CLOSED: NO`.
+- [Approved Contract] Existing breakpoints only: preserve current wide Reports behavior above `1180px`; use a `22px` horizontal Reports gutter at `<=1180px`, `18px` at `<=768px`, and `14px` at `<=430px`. No new breakpoint and no `clamp()`.
+- [Scope] Apply the same outer gutter to Yönetici Dashboard and Detaylı Raporlar. This is presentation-only: preserve contained cards, tabs, date/filter controls, Reporting V2 and dialogs; document-level horizontal overflow remains disallowed. Existing wrapper-local scrolling remains authoritative for `.dashboard-table-scroll`, `.daily-call-table-wrap` and `.reporting-v2-table-wrap`; table min-widths remain unchanged.
+- [Discovery] Final `.content` uses `padding: 0`; ReportsPage uses `.reports-page`, not `.page`; `.reports-page` currently has `padding: 2px 2px 12px`, so generic `.page` responsive gutters do not apply. The defect is insufficient narrow-width visual outer gutter, not document overflow. The pilot reminder overlay observation is separate and out of scope.
+- [Future Boundary] Future implementation is CSS-only in `src/styles/global.css`; no TS/TSX, reader/service, business/data, schema, package, import/export or backup/restore changes. Future QA targets `320x720`, `390x844`, `430x932`, `640x900`, `768x1024`, `769x1024`, `1024x900` and `1440x900` across both views. This docs-only decision claims no browser QA. Next gate: `REPORTS NARROW-WIDTH / MOBILE PADDING PRODUCT DECISION COMMIT/PUSH APPROVAL`.
+
 ## Current Correction - Phone Card Interaction — Stage 1 Desktop Copy Fallback
 
 - Original Stage 1 remains historical and was previously deployed at `f4ec2035ee1987b81ce81eeb484e18592061588a`; original production smoke was `PASS`, while original Production Browser QA was `BLOCKED` by the deployed desktop double-click failure. Corrected production runtime is now `02711d5931cde6f72876146d423224bc5c0e6362`; correction was deployed to VDS `WIN-96F4PB1N7MU`; pre-production docs checkpoint was `fde1b404815553b29681fb6e8e98bf2329f56eb6`. Production JavaScript is `index-BsAbDDl1.js`; production index SHA256 is `38DA4A926DF083EB0C70D8C20A2069C47E07B825D1ABD63D3296C1B74F77090A`; generated/published file-hash verification is `8/8 PASS`; HTTP/PWA content-hash smoke is `8/8 PASS`; old unrelated assets and existing backups were preserved; VDS canonical tests were `NOT RUN`.
