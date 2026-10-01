@@ -1,5 +1,12 @@
 # Çoklu Telefon Mimarisi Planı
 
+> **HISTORICAL / SUPERSEDED ROADMAP NOTICE**
+>
+> Bu dosya çoklu telefon mimarisinin planlama dönemi ürün/teknik kararlarını korur.
+> İçindeki Sprint 9.3 / 9.4 / 9.5 / 9.6 sıralaması güncel execution roadmap'i değildir.
+> Tamamlanmış işleri yeniden açmaz ve hiçbir işi otomatik `ACTIVE` yapmaz.
+> Güncel work selection için yalnız `docs/CURRENT_BACKLOG.md` kullanılır.
+
 Bu doküman, Aday Öğrenci Takip Sistemi’nde çoklu telefon desteğinin ürün, UX ve teknik mimari kararlarını içerir.
 
 ## 1. Neden Bu Mimari Gerekli?
@@ -382,9 +389,12 @@ Karar:
   - Telefon satırına dokunarak seçim
 - Masaüstü kısayollar mobil tasarımın temeli olmayacak.
 
-## 15. Uygulama Sprintlerine Bölme Önerisi
+## 15. Historical Uygulama Sprintlerine Bölme Önerisi
 
-Önerilen sıra:
+> Aşağıdaki sıra 9.2 planlama döneminin tarihsel önerisidir.
+> Güncel roadmap / next-work listesi değildir ve uygulanmış işleri yeniden açmaz.
+
+Önerilen sıra (historical):
 
 ### Sprint 9.3 — Çoklu Telefon Core
 

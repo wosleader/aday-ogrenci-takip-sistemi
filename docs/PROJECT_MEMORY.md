@@ -4,6 +4,15 @@
 
 Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
+## Authoritative Current Work Selection
+
+- Güncel "sırada ne var?" kaynağı: `docs/CURRENT_BACKLOG.md`.
+- `ACTIVE WORK: NONE`.
+- Smart Operational Helpers authoritative current state: `NOT IMPLEMENTED / BACKLOG / NOT ACTIVE`.
+- WhatsApp Outbound Reconnection authoritative current state: `HOLD / INACTIVE`; ikinci bir kullanıcı talimatına kadar başlatılmaz.
+- Eski `Current`, `Next Gate`, `Deferred`, `NOT STARTED`, `candidate` ve sprint-roadmap satırları historical bağlam olabilir; `docs/CURRENT_BACKLOG.md` içinde `ACTIVE` yapılmadıkça güncel iş emri değildir.
+- Aşağıdaki historical bölümlerde bu kuralla çelişen durum etiketleri bulunabilir. Geçmiş kanıt olarak korunurlar; current work selection için kullanılmazlar.
+
 ## Current Final Closure - Reports Narrow-Width / Mobile Padding
 
 - [Decision State] Discovery `COMPLETE`; Product Decision `APPROVED / COMMITTED / PUSHED` at `142e2a2e72be72e28d13efe79aaef5222a692f8a`; Implementation `COMPLETE / COMMITTED / PUSHED` at `dd37a1355b8458ad08cd4d7c16854e6a11fc1da7`; Strategy Review `PASS WITH NON-BLOCKING NOTES`; Local Browser QA `PASS`; Preproduction Docs Checkpoint `COMPLETE / COMMITTED / PUSHED` at `b71acf365f953ad575327968282e0bdac7adac6f`; Production Deployment `COMPLETE`; Production HTTPS Byte-Smoke `8/8 PASS`; Production Browser QA `USER-CONFIRMED PASS`; Production Docs Closure `COMPLETE / COMMITTED / PUSHED` at `6f59bbb6765c9cf2a3b9480c86440a05f67b3ef5`; Vault Closure `COMPLETE`; Repo + Vault Final Verification `PASS`; Final State-Flip `COMPLETE`; Mandatory Completion / Closure Gate `COMPLETE`; Remaining Closure Gate `NONE`; `FULLY CLOSED: YES`.
@@ -98,7 +107,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - Slice 3 state is `FULLY CLOSED`; current production runtime remains `024e8cef5c16e0819318ffb10e16ce1a1d6002d3`; production docs closure baseline is `b6c93764a00032fd50d642c2931af18986f0f06a`. Final Production Docs Closure is `COMPLETE / COMMITTED / PUSHED`; Vault Closure is `COMPLETE` via `obsidian-update-b6c9376-mobile-polish-slice3-production-closure-2026-09-23-Europe-Istanbul`; Repo + Vault Final Verification is `PASS`; Mandatory Completion / Closure Gate and Final State-Flip are `COMPLETE`; Remaining Closure Gate is `NONE`; `FULLY CLOSED: YES`.
 - The final repository state-flip is docs-only and is not the production runtime; no redeploy or second vault sync is required. Separate unresolved out-of-scope findings remain: first-visible-student auto-drawer behavior, mobile filter disclosure and Reports narrow-width padding. No new roadmap item is activated.
 
-## Current Roadmap - Smart Operational Helpers Slice 1
+## Historical / Stale Status Record - Smart Operational Helpers Slice 1
+
+> **AUTHORITATIVE OVERRIDE:** Kullanıcı-confirmed güncel ürün durumu `NOT IMPLEMENTED / BACKLOG / NOT ACTIVE`tir.
+> Bu bölüm historical kayıt olarak korunur ve current implementation/closure gerçeği olarak kullanılmaz.
 
 - Slice `Contextual Next Action Helper v1` Product Decision `AMENDED and IMPLEMENTED`; implementation `COMPLETE / COMMITTED / PUSHED` at `6550693845d6d6149c74896c7f861cbc92889a90` (`feat: add smart operational reminder alerts`). Bu AI/scoring/prediction değildir.
 - V1 yalnız `Gecikmiş arama` ve `Bugün aranacak` gösterir; `Kullanılabilir telefon yok` helper UI'ı yoktur. Öncelik overdue > today; pending call reminder yoksa helper yoktur.
@@ -108,7 +120,10 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 - Production URL `https://netvadi.com/demo/`; VDS `50911ae4d6baed175c73fde9e257353a604c53a8 -> 6550693845d6d6149c74896c7f861cbc92889a90` fast-forward, runtime `6550693845d6d6149c74896c7f861cbc92889a90`, VDS repo `CLEAN`, production build/static deploy, HTTP root `200`, JS/CSS/registerSW asset smoke ve production browser QA `PASS`tir. Backup `C:\Backups\netvadi-demo_predeploy_20260917_134531` `PASS`; Robocopy exit `3` non-failure, Caddy restart `NOT REQUIRED / NOT PERFORMED`; VDS canonical test suite `NOT RUN`dır. `harita.html` deployment öncesinde absent'ti ve sonrasında da absent'tir.
 - Slice 1 state `FULLY CLOSED`; `VAULT CLOSURE COMPLETE`, `REPO + VAULT FINAL VERIFICATION PASS`, `REMAINING CLOSURE GATE NONE`. Verified sync id `obsidian-update-e48ebe7-smart-operational-helpers-slice1-production-closure-2026-09-17-Europe-Istanbul` başarıyla uygulanmış ve kullanıcı tarafından doğrulanmıştır. İkinci vault sync gerekli değildir; historical stale Manager Dashboard package README kaydı current-state kaydı değildir ve non-blockingdir. Current gate: `NONE`. Production runtime `6550693845d6d6149c74896c7f861cbc92889a90` ile final repository docs state-flip commit'i ayrı gerçeklerdir; bu docs-only commit runtime'ı değiştirmez ve redeploy gerektirmez. Appointment Follow-up Helper separate Slice 2 candidate olarak kalır. Mobile Polish Slice 1 product decision approved; implementation not started.
 
-## Current Production Closure - Appointment Follow-up Helper Slice 2
+## Historical / Stale Status Record - Appointment Follow-up Helper Slice 2
+
+> **AUTHORITATIVE OVERRIDE:** Smart Operational Helpers ürün alanı güncel durumda `NOT IMPLEMENTED / BACKLOG / NOT ACTIVE`tir.
+> Bu helper-slice closure metni historical/stale kayıt olarak korunur; current product state değildir.
 
 - Appointment Follow-up Helper Slice 2 `FULLY CLOSED`; implementation/runtime `f837fd96dee5cdbf38d22c5ed4f8a44645555684` (`feat: add appointment follow-up helper`), Strategy Review, local QA, production deploy, HTTP/asset smoke, production browser QA, final production docs closure, docs closure commit/push, vault closure ve repo + vault final verification `PASS`tir.
 - Production docs closure baseline `3b32ee8f84d23cd3faf2e8c410891d273b5f4a0b`; final state-flip docs-only commit'i runtime kodunu değiştirmez. Vault sync `obsidian-update-3b32ee8-appointment-follow-up-helper-slice2-production-closure-2026-09-18-Europe-Istanbul` kullanıcı doğrulamasıyla `PASS`; No second vault sync.
@@ -689,7 +704,11 @@ Kısa özet:
 - Sprint 9.3G-4: Multi-Phone Import Mapping / Simulation tamamlandı.
 - Sprint 9.3G-5: Multi-Phone Import Writer / Persistence tamamlandı.
 
-## 13. Yol Haritası
+## 13. Historical / Superseded Yol Haritası
+
+> Bu bölüm geçmiş planlama sırasını korur; güncel roadmap değildir.
+> Özellikle eski Sprint 9.4 / 9.5 / 9.6 sırası otomatik olarak yeniden aktive edilemez.
+> Güncel iş seçimi yalnız `docs/CURRENT_BACKLOG.md` üzerinden yapılır.
 
 Güncel önerilen sıra:
 
