@@ -11,13 +11,13 @@
 
 ## Current Workstream - Phone Card Stage 2A — Permanent Mobile Copy Control
 
-- Discovery `COMPLETE`; discovery/technical recommendation Strategy Review `PASS WITH NON-BLOCKING NOTES`; Product Decision `USER APPROVED`; Implementation `NOT STARTED`. Docs checkpoint `PREPARATION ONLY`; commit/push `NOT RUN`; production/vault `NOT STARTED`; `FULLY CLOSED: NO`.
+- Discovery `COMPLETE`; discovery/technical recommendation Strategy Review `PASS WITH NON-BLOCKING NOTES`; Product Decision `USER APPROVED`; Product Decision docs checkpoint `COMMITTED / PUSHED` at `ddd42253f7f3c10875afb32da24f2f2dcca745cf`. Implementation `NOT STARTED`; production/vault `NOT STARTED`; `FULLY CLOSED: NO`.
 - Mobile `<=640px`: mevcut `18x18 px` copy icon number yanında sürekli görünür; number/icon tap mevcut copy yoluyla birer write yapar. Yaklaşık `200ms` Check/`Kopyalandı` ardından görünür Copy'ye dönüş; mouseleave/blur gizleme yok; touch target büyütme yok.
 - Desktop `>=641px`: corrected Stage 1 single-click inert, `400ms` second-click copy, identity/value/element matching, coordinator/triple guard, hover/focus icon ve keyboard fallback değişmez. Exact displayed value kopyalanır; normalization veya DB/call-log/phone-state/selection mutation yok; clipboard failure no-crash kalır.
 - React viewport-aware visual/aria visibility tek derived sonucu kullanmalı. Mobile görünür button `aria-hidden` olmamalı; desktop hidden/focused warning ayrı ve unresolved'dır, broad accessibility refactor yoktur.
 - Expected implementation: yalnız `src/features/students/StudentsPage.tsx` ve `tests/students/StudentsPagePhoneSelection.test.tsx`. `global.css` `NOT CURRENTLY REQUIRED`; yeni scope ihtiyacında `STOP / approval`. Planlanan QA `390x844`, `640x800`, `641x800`, `1440x900`; Stage 2A test/build/browser QA bu tur `NOT RUN`.
 - Broader Phone Card Stage 2 `PARTIALLY ACTIVATED AS STAGE 2A ONLY`, broader paket `NOT ACTIVE`; Stage 1 ve closed workstreams korunur. Contract/out-of-scope checkpoint: `docs/CHECKPOINT_PHONE_CARD_STAGE_2A_PERMANENT_MOBILE_COPY.md`.
-- Next Gate: `PRODUCT DECISION DOCS REVIEW -> USER COMMIT/PUSH APPROVAL`. `STOP`: kullanıcı ve Strategy AI diff'i incelemeden implementation'a geçme; stage/commit/push yapma.
+- Next Gate: `PHONE CARD STAGE 2A IMPLEMENTATION PROMPT PREPARATION`. Implementation prompt preparation tamamlanmadan implementation'a geçme; implementation `NOT STARTED`.
 
 ## Current Final Closure - Reports Narrow-Width / Mobile Padding
 

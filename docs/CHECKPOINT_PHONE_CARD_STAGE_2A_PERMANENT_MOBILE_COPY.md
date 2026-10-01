@@ -8,7 +8,8 @@
 - Strategy Review: `PASS WITH NON-BLOCKING NOTES` (discovery/technical recommendation review, not a completed implementation review).
 - Product Decision: `USER APPROVED`.
 - Implementation: `NOT STARTED`.
-- Docs checkpoint: `PREPARATION ONLY`; Commit/push: `NOT RUN`.
+- Docs checkpoint: `COMMITTED / PUSHED`.
+- Checkpoint SHA: `ddd42253f7f3c10875afb32da24f2f2dcca745cf`.
 - Production: `NOT STARTED`; Vault: `NOT STARTED`; `FULLY CLOSED: NO`.
 - Stage 2A tests/build/browser QA: `NOT RUN`; the QA matrix below is a future acceptance plan, not executed evidence.
 - This activates only permanent mobile copy control, not the historical full Phone Card Stage 2 package. Stage 1 and previously closed workstreams remain preserved.
@@ -82,8 +83,8 @@ Preferred direction: React viewport-aware derived visibility for both visual vis
 - Smart Operational Helpers: `NOT IMPLEMENTED / BACKLOG / NOT ACTIVE`; `NEXT AFTER STAGE 2A FULL CLOSURE`, with separate explicit user activation required.
 - WhatsApp Outbound Reconnection: `HOLD / INACTIVE`; no reopening without a new explicit user instruction.
 
-## Next Gate / Stop Rule
+## Next Gate
 
-`PRODUCT DECISION DOCS REVIEW -> USER COMMIT/PUSH APPROVAL`
+`PHONE CARD STAGE 2A IMPLEMENTATION PROMPT PREPARATION`
 
-STOP after preparation. Do not stage, commit, push or start source/test implementation until the user and Strategy AI review the diff and separately authorize the next gate. No server/5173, browser storage, VDS/production or vault operations are part of this checkpoint task. `dev-server.log` must remain unread and untouched.
+Implementation remains `NOT STARTED` and requires separate authorization after implementation-prompt preparation. No server/5173, browser storage, VDS/production or vault operations are part of this checkpoint. `dev-server.log` must remain unread and untouched.

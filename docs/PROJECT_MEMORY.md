@@ -15,13 +15,13 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 
 ## Current Product Decision Checkpoint - Phone Card Stage 2A — Permanent Mobile Copy Control
 
-- Discovery `COMPLETE`; discovery/technical recommendation Strategy Review `PASS WITH NON-BLOCKING NOTES`; Product Decision `USER APPROVED`. Implementation `NOT STARTED`; docs checkpoint `PREPARATION ONLY`; commit/push `NOT RUN`; production/vault `NOT STARTED`; `FULLY CLOSED: NO`. Yeni implementation review veya test/build/browser QA yapılmış sayılmaz.
+- Discovery `COMPLETE`; discovery/technical recommendation Strategy Review `PASS WITH NON-BLOCKING NOTES`; Product Decision `USER APPROVED`. Product Decision docs checkpoint `COMMITTED / PUSHED` at `ddd42253f7f3c10875afb32da24f2f2dcca745cf`. Implementation `NOT STARTED`; production/vault `NOT STARTED`; `FULLY CLOSED: NO`. Yeni implementation review veya test/build/browser QA yapılmış sayılmaz.
 - Mobile `<=640px`: mevcut number-adjacent `18x18 px` copy control kalıcı görünür; number tap ve icon tap mevcut `copyPhoneNumber()` yoluyla ayrı ayrı bir write yapar. Yaklaşık `200ms` Check/`Kopyalandı` ardından görünür Copy'ye döner; mouseleave/blur mobile control'ü gizlemez. Touch target büyütme yoktur.
 - Desktop `>=641px`: Stage 1 corrected single-click inert, `400ms` qualifying second-click, same element/phoneId/value matching, coordinator, triple-click guard ve hover/focus keyboard fallback aynen korunur. Displayed value normalize edilmeden kopyalanır; DB/call-log/phone-state/selection mutation yoktur; clipboard unavailable/rejected no-crash davranışı korunur.
 - Preferred direction: React viewport-aware derived visibility hem inline visual visibility hem `aria-hidden` için aynı sonucu kullanır; CSS-only override güvenli değildir. Desktop hidden/focused warning ayrı ve unresolved kalır; yalnız doğrudan gerekli mobile semantik düzeltme in-scope, broad accessibility refactor out-of-scope'dur.
 - Expected implementation scope: yalnız `src/features/students/StudentsPage.tsx` ve `tests/students/StudentsPagePhoneSelection.test.tsx`; `global.css` `NOT CURRENTLY REQUIRED`, yeni scope kanıtında `STOP / approval` gerekir. QA planı `390x844`, `640x800`, `641x800`, `1440x900`; henüz çalıştırılmadı.
 - Historical broader Stage 2 `PARTIALLY ACTIVATED AS STAGE 2A ONLY`; broader paket `NOT ACTIVE`. Stage 1 ve önceki closed workstream kanıtları korunur; current override eski Stage 2 notlarını implementation emrine dönüştürmez. Ayrıntılı contract ve out-of-scope: `docs/CHECKPOINT_PHONE_CARD_STAGE_2A_PERMANENT_MOBILE_COPY.md`.
-- Next Gate: `PRODUCT DECISION DOCS REVIEW -> USER COMMIT/PUSH APPROVAL`. Kullanıcı ve Strategy AI diff review tamamlanmadan implementation'a geçilmez; bu tur stage/commit/push yoktur.
+- Next Gate: `PHONE CARD STAGE 2A IMPLEMENTATION PROMPT PREPARATION`. Implementation prompt preparation tamamlanmadan implementation'a geçilmez; implementation hâlâ `NOT STARTED`dır.
 
 ## Current Final Closure - Reports Narrow-Width / Mobile Padding
 

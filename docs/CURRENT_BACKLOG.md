@@ -14,8 +14,9 @@ ACTIVE: `Phone Card Stage 2A — Permanent Mobile Copy Control`
 - State: `PRODUCT DECISION APPROVED / IMPLEMENTATION NOT STARTED`.
 - Activation: explicit kullanıcı onayı yalnız permanent mobile copy control alt dilimi içindir; historical broader Phone Card Stage 2 paketini aktive etmez.
 - Checkpoint: `docs/CHECKPOINT_PHONE_CARD_STAGE_2A_PERMANENT_MOBILE_COPY.md`.
-- Next Gate: `PRODUCT DECISION DOCS REVIEW -> USER COMMIT/PUSH APPROVAL`.
-- Docs checkpoint `PREPARATION ONLY`; commit/push `NOT RUN`; implementation, production ve vault `NOT STARTED`; `FULLY CLOSED: NO`.
+- Docs checkpoint: `COMMITTED / PUSHED` at `ddd42253f7f3c10875afb32da24f2f2dcca745cf`.
+- Next Gate: `PHONE CARD STAGE 2A IMPLEMENTATION PROMPT PREPARATION`.
+- Implementation `NOT STARTED`; production ve vault `NOT STARTED`; `FULLY CLOSED: NO`.
 
 ## Current Backlog / Inactive Candidates
 
