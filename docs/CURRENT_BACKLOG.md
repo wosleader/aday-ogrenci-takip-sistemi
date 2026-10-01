@@ -9,9 +9,13 @@
 
 ## Active Work
 
-`NONE`
+ACTIVE: `Phone Card Stage 2A — Permanent Mobile Copy Control`
 
-Şu anda otomatik olarak aktif edilmiş bir sprint, feature, remediation veya deployment gate'i yoktur.
+- State: `PRODUCT DECISION APPROVED / IMPLEMENTATION NOT STARTED`.
+- Activation: explicit kullanıcı onayı yalnız permanent mobile copy control alt dilimi içindir; historical broader Phone Card Stage 2 paketini aktive etmez.
+- Checkpoint: `docs/CHECKPOINT_PHONE_CARD_STAGE_2A_PERMANENT_MOBILE_COPY.md`.
+- Next Gate: `PRODUCT DECISION DOCS REVIEW -> USER COMMIT/PUSH APPROVAL`.
+- Docs checkpoint `PREPARATION ONLY`; commit/push `NOT RUN`; implementation, production ve vault `NOT STARTED`; `FULLY CLOSED: NO`.
 
 ## Current Backlog / Inactive Candidates
 
@@ -19,6 +23,7 @@
 
 - Status: `NOT IMPLEMENTED`
 - State: `BACKLOG / NOT ACTIVE`
+- Roadmap: `NEXT AFTER STAGE 2A FULL CLOSURE`; Stage 2A kapanmadan başlatılmaz, sonraki aktivasyon ayrıca explicit kullanıcı seçimi gerektirir.
 - Smart Operational Helpers ürün alanı uygulanmış kabul edilmeyecektir.
 - Historical dokümanlarda bununla çelişen `implemented`, `production complete`,
   `fully closed` veya benzeri Smart Operational Helpers / helper-slice kayıtları
@@ -37,8 +42,9 @@
 ### Phone Card Stage 2
 
 - Status: `SEPARATE BACKLOG`
-- State: `NOT ACTIVE`
-- Product Decision onaylı değildir; implementation başlatılmış sayılmaz.
+- Activation: `PARTIALLY ACTIVATED AS STAGE 2A ONLY`.
+- Broader Stage 2 remains `NOT ACTIVE`; yalnız permanent mobile copy control alt diliminin Product Decision'ı `USER APPROVED`dur.
+- Broader Stage 2 Product Decision onaylı değildir; Stage 2A dahil hiçbir implementation başlatılmış sayılmaz.
 - Bu kayıt Phone Card Stage 1'i yeniden açmaz.
 
 ## Known Non-Blocking Technical Debt / Coverage Notes
@@ -46,7 +52,7 @@
 Bunlar otomatik olarak aktif iş değildir:
 
 - `OperationalAlertHost` React console warning.
-- Hidden copy-control `aria-hidden` / focused accessibility warning.
+- Desktop hidden copy-control `aria-hidden` / focused accessibility warning remains separate and unresolved. Stage 2A mobile visibility contract'ı henüz uygulanmadı; generic warning tamamen çözülmüş sayılmaz.
 - Bazı mobil durumlarda reminder overlay'in satır tıklamasını intercept edebilmesi.
 - Bilinen Vite chunk-size warning / olası code-splitting incelemesi.
 - Reports `.daily-call-table-wrap` için targeted browser coverage eksikliği; bu doğrulanmış bug değildir.

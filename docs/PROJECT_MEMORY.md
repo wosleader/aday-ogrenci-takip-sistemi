@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Reports Narrow-Width / Mobile Padding Final Repository State-Flip | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Phone Card Stage 2A Product Decision Checkpoint Preparation | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # PROJECT_MEMORY — Aday Öğrenci Takip Sistemi
 
@@ -7,11 +7,21 @@ Bu dosya Codex oturumlarında ilk okunacak kısa proje hafızasıdır.
 ## Authoritative Current Work Selection
 
 - Güncel "sırada ne var?" kaynağı: `docs/CURRENT_BACKLOG.md`.
-- `ACTIVE WORK: NONE`.
-- Smart Operational Helpers authoritative current state: `NOT IMPLEMENTED / BACKLOG / NOT ACTIVE`.
+- `ACTIVE WORK: Phone Card Stage 2A — Permanent Mobile Copy Control`; `PRODUCT DECISION APPROVED / IMPLEMENTATION NOT STARTED`.
+- Smart Operational Helpers authoritative current state: `NOT IMPLEMENTED / BACKLOG / NOT ACTIVE`; `NEXT AFTER STAGE 2A FULL CLOSURE`, ayrıca explicit kullanıcı aktivasyonu gerekir.
 - WhatsApp Outbound Reconnection authoritative current state: `HOLD / INACTIVE`; ikinci bir kullanıcı talimatına kadar başlatılmaz.
 - Eski `Current`, `Next Gate`, `Deferred`, `NOT STARTED`, `candidate` ve sprint-roadmap satırları historical bağlam olabilir; `docs/CURRENT_BACKLOG.md` içinde `ACTIVE` yapılmadıkça güncel iş emri değildir.
 - Aşağıdaki historical bölümlerde bu kuralla çelişen durum etiketleri bulunabilir. Geçmiş kanıt olarak korunurlar; current work selection için kullanılmazlar.
+
+## Current Product Decision Checkpoint - Phone Card Stage 2A — Permanent Mobile Copy Control
+
+- Discovery `COMPLETE`; discovery/technical recommendation Strategy Review `PASS WITH NON-BLOCKING NOTES`; Product Decision `USER APPROVED`. Implementation `NOT STARTED`; docs checkpoint `PREPARATION ONLY`; commit/push `NOT RUN`; production/vault `NOT STARTED`; `FULLY CLOSED: NO`. Yeni implementation review veya test/build/browser QA yapılmış sayılmaz.
+- Mobile `<=640px`: mevcut number-adjacent `18x18 px` copy control kalıcı görünür; number tap ve icon tap mevcut `copyPhoneNumber()` yoluyla ayrı ayrı bir write yapar. Yaklaşık `200ms` Check/`Kopyalandı` ardından görünür Copy'ye döner; mouseleave/blur mobile control'ü gizlemez. Touch target büyütme yoktur.
+- Desktop `>=641px`: Stage 1 corrected single-click inert, `400ms` qualifying second-click, same element/phoneId/value matching, coordinator, triple-click guard ve hover/focus keyboard fallback aynen korunur. Displayed value normalize edilmeden kopyalanır; DB/call-log/phone-state/selection mutation yoktur; clipboard unavailable/rejected no-crash davranışı korunur.
+- Preferred direction: React viewport-aware derived visibility hem inline visual visibility hem `aria-hidden` için aynı sonucu kullanır; CSS-only override güvenli değildir. Desktop hidden/focused warning ayrı ve unresolved kalır; yalnız doğrudan gerekli mobile semantik düzeltme in-scope, broad accessibility refactor out-of-scope'dur.
+- Expected implementation scope: yalnız `src/features/students/StudentsPage.tsx` ve `tests/students/StudentsPagePhoneSelection.test.tsx`; `global.css` `NOT CURRENTLY REQUIRED`, yeni scope kanıtında `STOP / approval` gerekir. QA planı `390x844`, `640x800`, `641x800`, `1440x900`; henüz çalıştırılmadı.
+- Historical broader Stage 2 `PARTIALLY ACTIVATED AS STAGE 2A ONLY`; broader paket `NOT ACTIVE`. Stage 1 ve önceki closed workstream kanıtları korunur; current override eski Stage 2 notlarını implementation emrine dönüştürmez. Ayrıntılı contract ve out-of-scope: `docs/CHECKPOINT_PHONE_CARD_STAGE_2A_PERMANENT_MOBILE_COPY.md`.
+- Next Gate: `PRODUCT DECISION DOCS REVIEW -> USER COMMIT/PUSH APPROVAL`. Kullanıcı ve Strategy AI diff review tamamlanmadan implementation'a geçilmez; bu tur stage/commit/push yoktur.
 
 ## Current Final Closure - Reports Narrow-Width / Mobile Padding
 

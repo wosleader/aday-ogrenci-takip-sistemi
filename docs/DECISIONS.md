@@ -1,4 +1,4 @@
-<!-- Son guncelleme: Reports Narrow-Width / Mobile Padding Final Repository State-Flip | Branch: sprint-9-2-multi-phone-architecture-plan -->
+<!-- Son guncelleme: Phone Card Stage 2A Product Decision Checkpoint Preparation | Branch: sprint-9-2-multi-phone-architecture-plan -->
 
 # DECISIONS — Aday Öğrenci Takip Sistemi
 
@@ -9,11 +9,23 @@ Bu dosya kritik ürün kararları için kısa karar günlüğüdür. Ayrıntıl�
 ## Current Work Selection Governance
 
 - `docs/CURRENT_BACKLOG.md` "şu anda sırada ne var?" sorusunun authoritative kaynağıdır.
-- Current active work: `NONE`.
-- Smart Operational Helpers current product truth: `NOT IMPLEMENTED / BACKLOG / NOT ACTIVE`. Historical conflicting completion/closure labels current state değildir.
+- Current active work: `Phone Card Stage 2A — Permanent Mobile Copy Control`; `PRODUCT DECISION APPROVED / IMPLEMENTATION NOT STARTED`.
+- Smart Operational Helpers current product truth: `NOT IMPLEMENTED / BACKLOG / NOT ACTIVE`; `NEXT AFTER STAGE 2A FULL CLOSURE`, ayrıca explicit kullanıcı aktivasyonu gerekir. Historical conflicting completion/closure labels current state değildir.
 - WhatsApp Outbound Reconnection: `HOLD / INACTIVE`; ikinci bir kullanıcı talimatına kadar başlatılmaz.
 - Historical `Current`, `Next Gate`, `Deferred`, `NOT STARTED`, `candidate` ve sprint-number roadmap ifadeleri tek başına iş aktive edemez.
 - Yeni iş ancak explicit kullanıcı seçimiyle `ACTIVE` olur. Historical kayıtlar silinmeden geçmiş kanıt olarak korunur.
+
+## Current Product Decision — Phone Card Stage 2A — Permanent Mobile Copy Control
+
+- [Decision State] Discovery `COMPLETE`; discovery/technical recommendation Strategy Review `PASS WITH NON-BLOCKING NOTES`; Product Decision `USER APPROVED`. Implementation `NOT STARTED`; docs checkpoint `PREPARATION ONLY`; commit/push `NOT RUN`; production/vault `NOT STARTED`; `FULLY CLOSED: NO`. Bu kayıt implementation validation veya production evidence değildir.
+- [Mobile Contract] `<=640px`: mevcut number-adjacent copy icon sürekli görünür; mevcut `18x18 px` geometry aynen korunur, touch target büyütme out-of-scope'dur. Displayed number tap bir write; icon tap mevcut `copyPhoneNumber()` üzerinden bir write. Yaklaşık `200ms` Check/`Kopyalandı` sonrası Check görünür Copy'ye döner; mouseleave/blur mobile control'ü gizlemez.
+- [Desktop Preservation] `>=641px`: Stage 1 corrected single click inert; `400ms` içinde same element/phoneId/value için qualifying second click bir copy yapar. Coordinator, identity matching, triple-click guard, mevcut hover/focus copy icon ve keyboard fallback korunur; native dblclick bağımlılığı geri getirilmez.
+- [Copy Semantics] Displayed value aynen kopyalanır, normalize edilmez. DB/IndexedDB, call-log, phone-status veya selection mutation yoktur; clipboard unavailable/rejected mevcut no-crash davranışını korur.
+- [Accessibility Boundary] React viewport-aware derived visibility visual visibility ve `aria-hidden` için tek sonuç olmalıdır; CSS-only override yeterli/güvenli değildir. Mobile görünür button `aria-hidden` kalamaz. Desktop hidden/focused borç tamamen çözülmüş sayılmaz; yalnız permanent mobile control için gerekli minimal semantik düzeltme kabul edilir, broad/unrelated accessibility refactor out-of-scope'dur.
+- [Expected Scope] Yalnız `src/features/students/StudentsPage.tsx` ve `tests/students/StudentsPagePhoneSelection.test.tsx`. `global.css` `NOT CURRENTLY REQUIRED`; implementation sırasında yeni kanıt oluşursa scope genişletmeden `STOP / approval`. QA planı `390x844`, `640x800`, `641x800`, `1440x900`; acceptance ayrıntıları `docs/CHECKPOINT_PHONE_CARD_STAGE_2A_PERMANENT_MOBILE_COPY.md` içindedir, bu tur test/build/browser QA `NOT RUN`.
+- [Out of Scope] Mobile Ara button, `tel:` navigation, Turkish phone normalization, invalid-number call behavior, yeni mobile action layout, WhatsApp outbound reconnect, broader Phone Card redesign, phone schema/data, call-log semantics, reminder/appointment, import/export/backup/restore, package/dependency ve unrelated accessibility refactor yoktur.
+- [Roadmap Boundary] Historical broader Phone Card Stage 2 `PARTIALLY ACTIVATED AS STAGE 2A ONLY`; broader paket `NOT ACTIVE`, broader Product Decision onaylı değildir. Smart Operational Helpers `NOT IMPLEMENTED / BACKLOG / NOT ACTIVE`, yalnız Stage 2A full closure sonrası next ürün alanıdır ve ayrıca kullanıcı aktivasyonu gerekir. WhatsApp Outbound Reconnection `HOLD / INACTIVE` kalır. Stage 1 historical kanıtları ve önceki FULLY CLOSED workstreams değişmez.
+- [Next Gate] `PRODUCT DECISION DOCS REVIEW -> USER COMMIT/PUSH APPROVAL`. Kullanıcı ve Strategy AI diff review öncesinde implementation'a geçilmez; stage/commit/push bu görevde yasaktır.
 
 ## Current Final Closure - Reports Narrow-Width / Mobile Padding
 
